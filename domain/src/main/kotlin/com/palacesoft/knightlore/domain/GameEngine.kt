@@ -69,7 +69,7 @@ class DefaultGameEngine(private val systems: List<GameSystem>) : GameEngine {
                 CollisionSystem(roomProvider),
                 ItemSystem(roomProvider),
                 HazardSystem(roomProvider, content),
-                RoomTransitionSystem(roomProvider),
+                RoomTransitionSystem(roomProvider, content),
                 CauldronSystem(content, roomProvider),
                 LifeSystem(roomProvider),
             )

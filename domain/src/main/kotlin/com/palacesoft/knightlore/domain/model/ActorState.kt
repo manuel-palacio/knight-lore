@@ -17,4 +17,5 @@ data class ActorState(
     val behaviorState: String,  // behavior-specific state label (e.g. "PATROL_LEFT")
     val behavior: ActorBehavior,
     val form: Form?,            // null = not form-sensitive
+    val spawnPosition: Vec3f = Vec3f.ZERO,  // reference position for patrol bounds
 )

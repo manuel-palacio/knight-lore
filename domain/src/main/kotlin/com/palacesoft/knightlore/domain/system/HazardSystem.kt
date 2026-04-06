@@ -26,13 +26,9 @@ class HazardSystem(
         val events = mutableListOf<GameEvent>()
         val player = state.player
 
-        val room = roomProvider.getRoom(state.currentRoomId)
-
         // Update each actor
         val updatedActors = state.actorStates.map { actor ->
-            updateActor(actor, state, room?.actors?.find { spawn ->
-                spawn.actorType == actor.type
-            }?.position?.x, tickDelta)
+            updateActor(actor, state, tickDelta)
         }
 
         // Contact damage check
@@ -47,6 +43,7 @@ class HazardSystem(
                     val newLives = updatedPlayer.lives - 1
                     if (newLives <= 0) {
                         updatedPlayer = updatedPlayer.copy(lives = 0, damageCooldownTicks = DAMAGE_COOLDOWN_TICKS)
+                        updatedEvents += GameEvent.LifeLost
                         updatedEvents += GameEvent.GameOver
                         // Stop processing more contacts — player is already dead
                         break
@@ -55,6 +52,7 @@ class HazardSystem(
                             lives = newLives,
                             damageCooldownTicks = DAMAGE_COOLDOWN_TICKS,
                         )
+                        updatedEvents += GameEvent.LifeLost
                         // Only take damage from the first hit this tick
                         break
                     }
@@ -74,15 +72,16 @@ class HazardSystem(
     private fun updateActor(
         actor: ActorState,
         state: GameState,
-        spawnX: Float?,
         tickDelta: Float,
     ): ActorState {
         val actorTypeDef = content.actorTypes[actor.type.name.lowercase()]
         val kind = actorTypeDef?.kind
         val player = state.player
+        val patrolRadius = actorTypeDef?.patrolRadius ?: 3f
+        val spawnX = actor.spawnPosition.x
 
         return when (actor.behavior) {
-            ActorBehavior.PATROL -> updatePatrolActor(actor, spawnX, actorTypeDef?.patrolRadius ?: 3f, tickDelta)
+            ActorBehavior.PATROL -> updatePatrolActor(actor, spawnX, patrolRadius, tickDelta)
             ActorBehavior.STATIC_HAZARD -> actor  // static actors don't move
             ActorBehavior.REACTIVE -> updateReactiveActor(actor, player, tickDelta)
         }.let { updated ->
@@ -97,7 +96,7 @@ class HazardSystem(
 
     private fun updatePatrolActor(
         actor: ActorState,
-        spawnX: Float?,
+        spawnX: Float,
         patrolRadius: Float,
         tickDelta: Float,
     ): ActorState {
@@ -108,19 +107,15 @@ class HazardSystem(
         val newX = actor.position.x + if (movingLeft) -speed else speed
 
         // Check patrol bounds reversal
-        val newBehaviorState = if (spawnX != null) {
-            when {
-                newX < spawnX - patrolRadius -> "PATROL_RIGHT"
-                newX > spawnX + patrolRadius -> "PATROL_LEFT"
-                else -> actor.behaviorState
-            }
-        } else {
-            actor.behaviorState
+        val newBehaviorState = when {
+            newX < spawnX - patrolRadius -> "PATROL_RIGHT"
+            newX > spawnX + patrolRadius -> "PATROL_LEFT"
+            else -> actor.behaviorState
         }
 
         val actualX = when {
-            spawnX != null && newX < spawnX - patrolRadius -> spawnX - patrolRadius
-            spawnX != null && newX > spawnX + patrolRadius -> spawnX + patrolRadius
+            newX < spawnX - patrolRadius -> spawnX - patrolRadius
+            newX > spawnX + patrolRadius -> spawnX + patrolRadius
             else -> newX
         }
 

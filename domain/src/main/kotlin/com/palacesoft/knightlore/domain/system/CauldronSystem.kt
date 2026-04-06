@@ -10,6 +10,8 @@ import com.palacesoft.knightlore.domain.model.GameState
 import com.palacesoft.knightlore.domain.model.ItemLocation
 import com.palacesoft.knightlore.domain.rules.RoomProvider
 
+private const val DAMAGE_COOLDOWN_TICKS = 60
+
 class CauldronSystem(
     private val content: GameContent,
     private val roomProvider: RoomProvider? = null,
@@ -28,13 +30,15 @@ class CauldronSystem(
             events += GameEvent.PlayerDamaged
             val newLives = newState.player.lives - 1
             if (newLives <= 0) {
-                newState = newState.copy(player = newState.player.copy(lives = 0, damageCooldownTicks = 60))
+                newState = newState.copy(player = newState.player.copy(lives = 0, damageCooldownTicks = DAMAGE_COOLDOWN_TICKS))
+                events += GameEvent.LifeLost
                 events += GameEvent.GameOver
                 return SystemResult(newState, events)
             } else {
                 newState = newState.copy(
-                    player = newState.player.copy(lives = newLives, damageCooldownTicks = 60)
+                    player = newState.player.copy(lives = newLives, damageCooldownTicks = DAMAGE_COOLDOWN_TICKS)
                 )
+                events += GameEvent.LifeLost
             }
         }
 

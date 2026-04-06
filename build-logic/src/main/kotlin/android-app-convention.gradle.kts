@@ -7,7 +7,7 @@ configure<com.android.build.api.dsl.ApplicationExtension> {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.knightlore"
+        applicationId = "com.palacesoft.knightlore"
         minSdk = 26
         targetSdk = 35
         versionCode = 1

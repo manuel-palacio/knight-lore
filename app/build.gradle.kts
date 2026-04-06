@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.knightlore.app"
+    namespace = "com.palacesoft.knightlore.app"
 }
 
 dependencies {

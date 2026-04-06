@@ -1,8 +1,15 @@
 package com.palacesoft.knightlore.app
 
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -15,6 +22,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -71,8 +82,72 @@ fun GameScreen(sessionCoordinator: GameSessionCoordinator) {
                         )
                     },
                 )
+                GameHudOverlay(gameState = gameState)
             }
             is LoadState.Error -> Text("Error: ${state.message}", color = Color.Red)
+        }
+    }
+}
+
+@Composable
+private fun GameHudOverlay(gameState: GameState) {
+    val hudBarColor = Color.Black.copy(alpha = 0.55f)
+    val textColor = Color.White
+    val hudTextSize = 14.sp
+    val hudFontWeight = FontWeight.Bold
+    val showTransformWarning = gameState.time.ticksUntilTransform.let { it != null && it < 60 }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Top bar: day counter left + cure progress right
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.TopStart)
+                .background(hudBarColor)
+                .padding(horizontal = 12.dp, vertical = 6.dp),
+        ) {
+            Text(
+                text = "DAY ${gameState.time.dayIndex + 1} / 40",
+                color = textColor,
+                fontSize = hudTextSize,
+                fontWeight = hudFontWeight,
+                modifier = Modifier.align(Alignment.CenterStart),
+            )
+            Text(
+                text = "CURE ${gameState.cauldron.deliveredCount} / 14",
+                color = textColor,
+                fontSize = hudTextSize,
+                fontWeight = hudFontWeight,
+                modifier = Modifier.align(Alignment.CenterEnd),
+            )
+        }
+
+        // Centre: transformation warning
+        if (showTransformWarning) {
+            val infiniteTransition = rememberInfiniteTransition(label = "transform_flash")
+            val alpha by infiniteTransition.animateFloat(
+                initialValue = 1f,
+                targetValue = 0f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(durationMillis = 400),
+                    repeatMode = RepeatMode.Reverse,
+                ),
+                label = "transform_alpha",
+            )
+            Box(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .background(hudBarColor)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+            ) {
+                Text(
+                    text = "TRANSFORMING...",
+                    color = Color.Red.copy(alpha = alpha),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                )
+            }
         }
     }
 }

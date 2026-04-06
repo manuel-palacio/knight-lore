@@ -15,6 +15,18 @@ data class RoomDto(
     val exits: List<RoomExitDto> = emptyList(),
     val itemAnchors: List<ItemAnchorDto> = emptyList(),
     val actorSpawns: List<ActorSpawnDto> = emptyList(),
+    val dynamic_objects: List<DynamicObjectDto> = emptyList(),
+)
+
+@Serializable
+data class DynamicObjectDto(
+    val id: String,
+    val type: String,
+    val start_x: Int,
+    val start_y: Int,
+    val path: List<List<Int>> = emptyList(),
+    val speed: Double = 1.0,
+    val facing: String = "SOUTH",
 )
 
 @Serializable

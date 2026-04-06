@@ -7,6 +7,7 @@ import com.palacesoft.knightlore.domain.event.GameEvent
 import com.palacesoft.knightlore.domain.input.FrameInput
 import com.palacesoft.knightlore.domain.model.ActorState
 import com.palacesoft.knightlore.domain.model.CauldronState
+import com.palacesoft.knightlore.domain.model.PatrolEnemy
 import com.palacesoft.knightlore.domain.model.DayPhase
 import com.palacesoft.knightlore.domain.model.EngineConfig
 import com.palacesoft.knightlore.domain.model.Form
@@ -29,6 +30,7 @@ import com.palacesoft.knightlore.domain.system.HazardSystem
 import com.palacesoft.knightlore.domain.system.ItemSystem
 import com.palacesoft.knightlore.domain.system.LifeSystem
 import com.palacesoft.knightlore.domain.system.MovementSystem
+import com.palacesoft.knightlore.domain.system.PatrolEnemySystem
 import com.palacesoft.knightlore.domain.system.RoomTransitionSystem
 import com.palacesoft.knightlore.domain.system.TimeSystem
 import com.palacesoft.knightlore.domain.system.TransformationSystem
@@ -69,6 +71,7 @@ class DefaultGameEngine(private val systems: List<GameSystem>) : GameEngine {
                 CollisionSystem(roomProvider),
                 ItemSystem(roomProvider),
                 HazardSystem(roomProvider, content),
+                PatrolEnemySystem(),
                 RoomTransitionSystem(roomProvider, content),
                 CauldronSystem(content, roomProvider),
                 LifeSystem(roomProvider),
@@ -92,7 +95,7 @@ class DefaultGameEngine(private val systems: List<GameSystem>) : GameEngine {
 
         // 2. Build initial PlayerState
         val player = PlayerState(
-            position = Vec3f(4f, 7f, 1f),
+            position = Vec3f(4f, 4f, 0f),  // room center, clear of all wall slabs
             velocity = Vec3f.ZERO,
             facing = Direction8.NORTH,
             inventory = emptyList(),
@@ -137,7 +140,19 @@ class DefaultGameEngine(private val systems: List<GameSystem>) : GameEngine {
         // 6. Build initial ActorState list — empty for now (Phase 3/5)
         val actorStates: List<ActorState> = emptyList()
 
-        // 7. Return GameState
+        // 7. Seed patrol enemies from start room
+        val startRoom = content.rooms[startRoomId]
+        val patrolEnemies = startRoom?.patrolSpawns?.map { spawn ->
+            PatrolEnemy(
+                id = spawn.id,
+                position = Vec3f(spawn.startX, spawn.startY, 0f),
+                path = spawn.path,
+                speed = spawn.speed,
+                targetIndex = 0,
+            )
+        } ?: emptyList()
+
+        // 8. Return GameState
         return GameState(
             currentRoomId = startRoomId,
             player = player,
@@ -146,6 +161,7 @@ class DefaultGameEngine(private val systems: List<GameSystem>) : GameEngine {
             itemInstances = itemInstances,
             actorStates = actorStates,
             roomTransition = null,
+            patrolEnemies = patrolEnemies,
         )
     }
 

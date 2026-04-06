@@ -45,5 +45,19 @@ sealed interface DrawPayload {
         val colorArgb: Int,
     ) : DrawPayload
 
-    // Phase 5+: data class Sprite(val atlasId: String, val frame: Int) : DrawPayload
+    /** Draws a straight line between two absolute screen-space points. */
+    data class Line(
+        val x1: Float,
+        val y1: Float,
+        val x2: Float,
+        val y2: Float,
+        val colorArgb: Int,
+        val strokeWidth: Float = 1.5f,
+    ) : DrawPayload
+
+    /**
+     * Fills the entire screen with a solid color (screenPos is ignored).
+     * Used for dark dungeon overlay and fade effects.
+     */
+    data class ScreenFill(val colorArgb: Int) : DrawPayload
 }

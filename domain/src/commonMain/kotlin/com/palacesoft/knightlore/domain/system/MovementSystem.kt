@@ -6,9 +6,11 @@ import com.palacesoft.knightlore.core.math.Vec2f
 import com.palacesoft.knightlore.core.math.Vec3f
 import com.palacesoft.knightlore.domain.event.GameEvent
 import com.palacesoft.knightlore.domain.input.FrameInput
+import com.palacesoft.knightlore.domain.model.ExitSide
 import com.palacesoft.knightlore.domain.model.Form
 import com.palacesoft.knightlore.domain.model.GameState
 import com.palacesoft.knightlore.domain.model.MovementState
+import com.palacesoft.knightlore.domain.model.RoomDefinition
 import com.palacesoft.knightlore.domain.model.TileType
 import com.palacesoft.knightlore.domain.model.TransformPhase
 import com.palacesoft.knightlore.domain.rules.CollisionResolver
@@ -29,7 +31,7 @@ class MovementSystem(
         const val CARRY_SPEED_PENALTY = 0.8f
         const val JUMP_LOCK_TICKS = 5
         const val ENTITY_HALF_FOOTPRINT = 0.4f
-        const val ENTITY_HEIGHT = 1.8f
+        const val ENTITY_HEIGHT = 0.9f  // reduced so head clears block tops (z=1)
     }
 
     override fun update(state: GameState, input: FrameInput, tickDelta: Float): SystemResult {
@@ -79,7 +81,7 @@ class MovementSystem(
 
         // 8. Resolve against room solids
         val room = roomProvider.getRoom(state.currentRoomId)
-        val solids = room?.tiles
+        val tileSolids = room?.tiles
             ?.filter { it.type == TileType.SOLID_BLOCK }
             ?.map { tile ->
                 SolidVolume(
@@ -89,6 +91,17 @@ class MovementSystem(
                     )
                 )
             } ?: emptyList()
+
+        val wallSolids = room?.let { buildBoundaryWalls(it) } ?: emptyList()
+
+        // Implicit ground plane — entire room floor at z=0, always standable
+        val groundPlane = room?.let {
+            SolidVolume(
+                bounds = Aabb.of(Vec3f(0f, 0f, -0.1f), Vec3f(it.width.toFloat(), it.depth.toFloat(), 0f)),
+                isTopStandable = true,
+            )
+        }
+        val solids = tileSolids + wallSolids + listOfNotNull(groundPlane)
 
         val entityAabb = Aabb.of(
             Vec3f(-ENTITY_HALF_FOOTPRINT, -ENTITY_HALF_FOOTPRINT, 0f),
@@ -138,6 +151,91 @@ class MovementSystem(
 
         return SystemResult(state.copy(player = newPlayer), events)
     }
+
+    /**
+     * Builds invisible boundary SolidVolumes for room perimeter walls.
+     * Exit tiles get a gap so the player can pass through to trigger room transitions.
+     *
+     * Wall height matches the visual wall height (2 tiles). The gap spans the same
+     * two-tile width used by [RoomEntityFactory.buildWalls]: floor(width/2)-1 and floor(width/2).
+     */
+    private fun buildBoundaryWalls(room: RoomDefinition): List<SolidVolume> {
+        val w = room.width.toFloat()
+        val d = room.depth.toFloat()
+        val wallH = 2f
+        val thickness = 0.5f  // invisible collision slab thickness
+
+        // Identify which sides have exits and the gap tile positions
+        val northGapRange = if (room.exits.any { it.side == ExitSide.NORTH }) {
+            (room.width / 2 - 1).toFloat()..(room.width / 2).toFloat()
+        } else null
+        val southGapRange = if (room.exits.any { it.side == ExitSide.SOUTH }) {
+            (room.width / 2 - 1).toFloat()..(room.width / 2).toFloat()
+        } else null
+        val westGapRange = if (room.exits.any { it.side == ExitSide.WEST }) {
+            (room.depth / 2 - 1).toFloat()..(room.depth / 2).toFloat()
+        } else null
+        val eastGapRange = if (room.exits.any { it.side == ExitSide.EAST }) {
+            (room.depth / 2 - 1).toFloat()..(room.depth / 2).toFloat()
+        } else null
+
+        val walls = mutableListOf<SolidVolume>()
+
+        // Visual wall tiles are 1 unit deep inside the room:
+        //   North wall tiles: y ∈ [0, 1]    → slab covers y ∈ [-thickness, 1]
+        //   South wall tiles: y ∈ [d-1, d]  → slab covers y ∈ [d-1, d+thickness]
+        //   West wall tiles:  x ∈ [0, 1]    → slab covers x ∈ [-thickness, 1]
+        //   East wall tiles:  x ∈ [w-1, w]  → slab covers x ∈ [w-1, w+thickness]
+        // Exit gap tiles have NO slab so the player can walk through to trigger transition.
+
+        // North wall
+        if (northGapRange == null) {
+            walls += wallSlab(0f, -thickness, w, 1f, wallH)
+        } else {
+            val gapStart = northGapRange.start
+            val gapEnd = northGapRange.endInclusive + 1f
+            if (gapStart > 0f) walls += wallSlab(0f, -thickness, gapStart, 1f, wallH)
+            if (gapEnd < w)   walls += wallSlab(gapEnd, -thickness, w, 1f, wallH)
+        }
+
+        // South wall
+        if (southGapRange == null) {
+            walls += wallSlab(0f, d - 1f, w, d + thickness, wallH)
+        } else {
+            val gapStart = southGapRange.start
+            val gapEnd = southGapRange.endInclusive + 1f
+            if (gapStart > 0f) walls += wallSlab(0f, d - 1f, gapStart, d + thickness, wallH)
+            if (gapEnd < w)   walls += wallSlab(gapEnd, d - 1f, w, d + thickness, wallH)
+        }
+
+        // West wall
+        if (westGapRange == null) {
+            walls += wallSlab(-thickness, 0f, 1f, d, wallH)
+        } else {
+            val gapStart = westGapRange.start
+            val gapEnd = westGapRange.endInclusive + 1f
+            if (gapStart > 0f) walls += wallSlab(-thickness, 0f, 1f, gapStart, wallH)
+            if (gapEnd < d)   walls += wallSlab(-thickness, gapEnd, 1f, d, wallH)
+        }
+
+        // East wall
+        if (eastGapRange == null) {
+            walls += wallSlab(w - 1f, 0f, w + thickness, d, wallH)
+        } else {
+            val gapStart = eastGapRange.start
+            val gapEnd = eastGapRange.endInclusive + 1f
+            if (gapStart > 0f) walls += wallSlab(w - 1f, 0f, w + thickness, gapStart, wallH)
+            if (gapEnd < d)   walls += wallSlab(w - 1f, gapEnd, w + thickness, d, wallH)
+        }
+
+        return walls
+    }
+
+    private fun wallSlab(xMin: Float, yMin: Float, xMax: Float, yMax: Float, height: Float): SolidVolume =
+        SolidVolume(
+            bounds = Aabb.of(Vec3f(xMin, yMin, 0f), Vec3f(xMax, yMax, height)),
+            isTopStandable = false,
+        )
 
     private fun directionFromVector(v: Vec2f): Direction8 {
         val angle = kotlin.math.atan2(v.y.toDouble(), v.x.toDouble())

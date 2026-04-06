@@ -405,6 +405,30 @@
       "targetSpawnId": "spawn_n"
     }
   ],
-  "itemAnchors": [],
-  "actorSpawns": []
+  "itemAnchors": [
+    {
+      "itemId": "goblet_r002",
+      "x": 1.5,
+      "y": 2.5,
+      "z": 0.0
+    },
+    {
+      "itemId": "key_r002",
+      "x": 2.5,
+      "y": 6.5,
+      "z": 0.0
+    }
+  ],
+  "actorSpawns": [],
+  "dynamic_objects": [
+    {
+      "id": "guard_r002_01",
+      "type": "PATROL_ENEMY",
+      "start_x": 6,
+      "start_y": 2,
+      "path": [[6, 2], [6, 6]],
+      "speed": 1.5,
+      "facing": "SOUTH"
+    }
+  ]
 }

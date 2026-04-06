@@ -36,6 +36,21 @@ object ComposeSceneRenderer {
                     path.close()
                     scope.drawPath(path, argbToComposeColor(payload.colorArgb))
                 }
+                is DrawPayload.Line -> {
+                    scope.drawLine(
+                        color = argbToComposeColor(payload.colorArgb),
+                        start = Offset(payload.x1, payload.y1),
+                        end = Offset(payload.x2, payload.y2),
+                        strokeWidth = payload.strokeWidth,
+                    )
+                }
+                is DrawPayload.ScreenFill -> {
+                    scope.drawRect(
+                        color = argbToComposeColor(payload.colorArgb),
+                        topLeft = Offset.Zero,
+                        size = scope.size,
+                    )
+                }
             }
         }
     }

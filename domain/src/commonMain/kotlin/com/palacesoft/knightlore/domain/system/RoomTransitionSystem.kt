@@ -9,6 +9,7 @@ import com.palacesoft.knightlore.domain.model.ActorKind
 import com.palacesoft.knightlore.domain.model.ActorState
 import com.palacesoft.knightlore.domain.model.ExitSide
 import com.palacesoft.knightlore.domain.model.GameContent
+import com.palacesoft.knightlore.domain.model.PatrolEnemy
 import com.palacesoft.knightlore.domain.model.RoomDefinition
 import com.palacesoft.knightlore.domain.model.RoomExit
 import com.palacesoft.knightlore.domain.model.RoomTransitionState
@@ -58,11 +59,13 @@ class RoomTransitionSystem(
             )
             val newRoom = roomProvider.getRoom(transition.toRoomId)
             val spawnedActors = spawnActorsForRoom(newRoom)
+            val spawnedPatrolEnemies = spawnPatrolEnemiesForRoom(newRoom)
             SystemResult(
                 state.copy(
                     currentRoomId = transition.toRoomId,
                     player = newPlayer,
                     actorStates = spawnedActors,
+                    patrolEnemies = spawnedPatrolEnemies,
                     roomTransition = null,
                 ),
             )
@@ -88,12 +91,23 @@ class RoomTransitionSystem(
     }
 
     private fun spawnPosition(spawnId: String): Vec3f = when (spawnId) {
-        "spawn_n" -> Vec3f(4f, 0.5f, 1f)
-        "spawn_s" -> Vec3f(4f, 7.5f, 1f)
-        "spawn_e" -> Vec3f(7.5f, 4f, 1f)
-        "spawn_w" -> Vec3f(0.5f, 4f, 1f)
-        else      -> Vec3f(4f, 4f, 1f)
+        "spawn_n" -> Vec3f(4f, 1.5f, 0f)   // 1.5 tiles inside north wall (wall occupies y=0..1)
+        "spawn_s" -> Vec3f(4f, 6.5f, 0f)   // 1.5 tiles inside south wall (wall occupies y=d-1..d)
+        "spawn_e" -> Vec3f(6.5f, 4f, 0f)   // 1.5 tiles inside east wall
+        "spawn_w" -> Vec3f(1.5f, 4f, 0f)   // 1.5 tiles inside west wall
+        else      -> Vec3f(2f, 2f, 0f)     // safe fallback — corner interior, away from hazards
     }
+
+    private fun spawnPatrolEnemiesForRoom(room: RoomDefinition?): List<PatrolEnemy> =
+        room?.patrolSpawns?.map { spawn ->
+            PatrolEnemy(
+                id = spawn.id,
+                position = Vec3f(spawn.startX, spawn.startY, 0f),
+                path = spawn.path,
+                speed = spawn.speed,
+                targetIndex = 0,
+            )
+        } ?: emptyList()
 
     private fun spawnActorsForRoom(room: RoomDefinition?): List<ActorState> {
         val gameContent = content ?: return emptyList()

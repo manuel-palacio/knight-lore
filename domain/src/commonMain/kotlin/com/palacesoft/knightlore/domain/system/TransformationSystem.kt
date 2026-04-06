@@ -25,13 +25,18 @@ class TransformationSystem : GameSystem {
         var newForm = player.form
         var newVelocity = player.velocity
         var newMovementState = player.movementState
+        var newDamageCooldown = player.damageCooldownTicks
 
         // Begin transformation if at a phase boundary and not already transforming or recovering
         if (transformState.phase == TransformPhase.STABLE) {
             if (phase == DayPhase.DUSK && player.form == Form.HUMAN) {
                 newTransformState = TransformState(TransformPhase.TRANSFORMING_TO_WEREWULF, 0)
+                // Grant invincibility for the entire transform + recovery window,
+                // but never reduce existing invincibility (e.g. from a recent hit)
+                newDamageCooldown = maxOf(newDamageCooldown, TRANSFORM_TICKS + RECOVERY_TICKS + 10)
             } else if (phase == DayPhase.DAWN && player.form == Form.WEREWULF) {
                 newTransformState = TransformState(TransformPhase.TRANSFORMING_TO_HUMAN, 0)
+                newDamageCooldown = maxOf(newDamageCooldown, TRANSFORM_TICKS + RECOVERY_TICKS + 10)
             }
         }
 
@@ -82,6 +87,7 @@ class TransformationSystem : GameSystem {
             velocity = newVelocity,
             transformState = newTransformState,
             movementState = newMovementState,
+            damageCooldownTicks = newDamageCooldown,
         )
         return SystemResult(state.copy(player = newPlayer), events)
     }

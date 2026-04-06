@@ -167,6 +167,14 @@ fun GameScreen(
                             Spacer(Modifier.height(24.dp))
                             Button(onClick = {
                                 sessionCoordinator.eventHandler.dismissGameOver()
+                                // Restart in-place: fresh initialize + clear stale input
+                                scope.launch {
+                                    viewModel.startNewGame()
+                                }
+                            }) { Text("RESTART") }
+                            Spacer(Modifier.height(12.dp))
+                            Button(onClick = {
+                                sessionCoordinator.eventHandler.dismissGameOver()
                                 navController.navigate("menu") {
                                     popUpTo("menu") { inclusive = true }
                                 }

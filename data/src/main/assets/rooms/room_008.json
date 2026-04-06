@@ -410,6 +410,24 @@
       "targetSpawnId": "spawn_s"
     }
   ],
-  "itemAnchors": [],
-  "actorSpawns": []
+  "itemAnchors": [
+    {
+      "itemId": "boot_r008",
+      "x": 3.5,
+      "y": 3.5,
+      "z": 0.0
+    }
+  ],
+  "actorSpawns": [],
+  "dynamic_objects": [
+    {
+      "id": "guard_r008_01",
+      "type": "PATROL_ENEMY",
+      "start_x": 2,
+      "start_y": 3,
+      "path": [[2, 3], [6, 3]],
+      "speed": 2.2,
+      "facing": "EAST"
+    }
+  ]
 }

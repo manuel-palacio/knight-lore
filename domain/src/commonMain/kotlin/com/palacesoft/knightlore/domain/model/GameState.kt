@@ -12,4 +12,5 @@ data class GameState(
     val itemInstances: List<ItemInstance>,
     val actorStates: List<ActorState>,
     val roomTransition: RoomTransitionState?,
+    val patrolEnemies: List<PatrolEnemy> = emptyList(),
 )

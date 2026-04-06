@@ -6,6 +6,7 @@ dependencies {
     implementation(project(":core"))
     implementation(project(":domain"))
     implementation(project(":data"))
+    implementation(project(":render"))
     implementation(compose.desktop.currentOs)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.9.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")

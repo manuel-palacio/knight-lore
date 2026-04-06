@@ -30,6 +30,7 @@ import com.palacesoft.knightlore.data.asset.DesktopAssetLoader
 import com.palacesoft.knightlore.domain.DefaultGameEngine
 import com.palacesoft.knightlore.domain.event.GameEvent
 import com.palacesoft.knightlore.domain.input.FrameInput
+import com.palacesoft.knightlore.domain.model.GameContent
 import com.palacesoft.knightlore.domain.model.GameState
 import kotlinx.coroutines.*
 
@@ -51,21 +52,26 @@ private data class DesktopUiState(
 
 @Composable
 fun GameView() {
+    var gameKey by remember { mutableStateOf(0) }
     var gameState by remember { mutableStateOf<GameState?>(null) }
+    var content by remember { mutableStateOf<GameContent?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     var uiState by remember { mutableStateOf(DesktopUiState()) }
     val keyboardMapper = remember { KeyboardInputMapper() }
     val focusRequester = remember { FocusRequester() }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(gameKey) {
+        gameState = null
+        error = null
         withContext(Dispatchers.IO) {
             try {
                 val loader = DesktopAssetLoader()
                 val repo = AssetContentRepository(loader)
-                val content = repo.loadContent()
-                val roomProvider = ContentRoomProvider(content)
-                val engine = DefaultGameEngine.create(roomProvider, content)
-                var state = engine.initialize(System.currentTimeMillis(), content)
+                val loadedContent = repo.loadContent()
+                withContext(Dispatchers.Main) { content = loadedContent }
+                val roomProvider = ContentRoomProvider(loadedContent)
+                val engine = DefaultGameEngine.create(roomProvider, loadedContent)
+                var state = engine.initialize(System.currentTimeMillis(), loadedContent)
                 gameState = state
 
                 // Fixed-step accumulator — mirrors GameLoopCoordinator on Android
@@ -84,7 +90,7 @@ fun GameView() {
                     val input = keyboardMapper.buildFrameInput()
 
                     while (accumulator >= fixedStep) {
-                        val result = engine.update(state, input, fixedStep)
+                        val result = engine.update(state, input.copy(pausePressed = false), fixedStep)
                         state = result.state
                         accumulator -= fixedStep
 
@@ -132,8 +138,9 @@ fun GameView() {
             )
         } else {
             val state = gameState
-            if (state != null) {
-                DesktopGameRenderer(state = state)
+            val loadedContent = content
+            if (state != null && loadedContent != null) {
+                DesktopGameRenderer(state = state, content = loadedContent)
             } else {
                 Text(
                     text = "Loading...",
@@ -151,7 +158,7 @@ fun GameView() {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("GAME OVER", color = Color.Red, fontSize = 36.sp, fontWeight = FontWeight.Bold)
                         Spacer(Modifier.height(24.dp))
-                        Button(onClick = { uiState = DesktopUiState() }) {
+                        Button(onClick = { uiState = DesktopUiState(); gameKey++ }) {
                             Text("RESTART")
                         }
                     }

@@ -4,6 +4,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.drawscope.withTransform
 import com.palacesoft.knightlore.domain.model.GameContent
 import com.palacesoft.knightlore.domain.model.GameState
 import com.palacesoft.knightlore.render.scene.DrawCommandBuilder
@@ -14,6 +15,10 @@ fun DesktopGameRenderer(state: GameState, content: GameContent) {
     Canvas(modifier = Modifier.fillMaxSize()) {
         val commands = RoomEntityFactory.build(state, content, size.width, size.height)
         val sorted = DrawCommandBuilder.sort(commands)
-        ComposeSceneRenderer.render(this, sorted)
+        withTransform({
+            scale(2f, 2f, androidx.compose.ui.geometry.Offset(size.width / 2f, size.height / 2f))
+        }) {
+            ComposeSceneRenderer.render(this, sorted)
+        }
     }
 }

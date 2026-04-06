@@ -40,5 +40,10 @@ sealed interface DrawPayload {
         val colorArgb: Int,
     ) : DrawPayload
 
+    data class ColorPath(
+        val points: List<Vec2f>,   // absolute screen coords
+        val colorArgb: Int,
+    ) : DrawPayload
+
     // Phase 5+: data class Sprite(val atlasId: String, val frame: Int) : DrawPayload
 }

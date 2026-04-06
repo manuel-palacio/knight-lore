@@ -27,6 +27,9 @@ class GameSessionCoordinator(
     var loadedContent: GameContent? = null
         private set
 
+    var onEvents: ((List<GameEvent>) -> Unit)? = null
+    var onGameStarted: (() -> Unit)? = null
+
     suspend fun startNewGame(
         seed: Long = System.currentTimeMillis(),
         config: EngineConfig = EngineConfig(),
@@ -38,11 +41,15 @@ class GameSessionCoordinator(
         val initialState = engine.initialize(seed, content, config)
         val loop = GameLoopCoordinator(engine, initialState)
         loopCoordinator = loop
+        onGameStarted?.invoke()
         return loop
     }
 
-    fun advance(deltaSeconds: Float): List<GameEvent> =
-        loopCoordinator?.advance(deltaSeconds) ?: emptyList()
+    fun advance(deltaSeconds: Float): List<GameEvent> {
+        val events = loopCoordinator?.advance(deltaSeconds) ?: emptyList()
+        if (events.isNotEmpty()) onEvents?.invoke(events)
+        return events
+    }
 
     // TODO Phase 6: fun save(), fun resume(snapshot), fun pause()
 }

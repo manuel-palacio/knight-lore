@@ -1,17 +1,15 @@
-import com.android.build.gradle.internal.dsl.BaseAppModuleExtension
-
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
 }
 
-extensions.configure<BaseAppModuleExtension> {
-    compileSdk = 35
+configure<com.android.build.api.dsl.ApplicationExtension> {
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
         applicationId = "com.example.knightlore"
-        minSdk = 26
-        targetSdk = 35
+        minSdk = libs.versions.minSdk.get().toInt()
+        targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = 1
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

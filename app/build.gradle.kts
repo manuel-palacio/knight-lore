@@ -15,6 +15,8 @@ dependencies {
     implementation(project(":input"))
     debugImplementation(project(":feature-debug"))
 
+    implementation(libs.androidx.activity.compose)
+
     val composeBom = platform(libs.compose.bom)
     implementation(composeBom)
     implementation(libs.compose.ui)

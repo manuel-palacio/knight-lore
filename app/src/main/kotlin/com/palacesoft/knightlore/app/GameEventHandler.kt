@@ -35,6 +35,8 @@ class GameEventHandler {
 
     fun dismissGameOver()      { _uiState.update { it.copy(showGameOver = false) } }
     fun dismissQuestComplete() { _uiState.update { it.copy(showQuestComplete = false) } }
+    fun togglePause()          { _uiState.update { it.copy(isPaused = !it.isPaused) } }
+    fun resumeGame()           { _uiState.update { it.copy(isPaused = false) } }
 }
 
 data class GameUiState(
@@ -42,4 +44,5 @@ data class GameUiState(
     val showQuestComplete: Boolean = false,
     val isTransforming: Boolean = false,
     val damageFlashTicks: Int = 0,
+    val isPaused: Boolean = false,
 )

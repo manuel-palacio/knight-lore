@@ -8,6 +8,7 @@ import com.palacesoft.knightlore.domain.model.GameContent
 import com.palacesoft.knightlore.domain.model.GameState
 import com.palacesoft.knightlore.domain.model.RoomDefinition
 import com.palacesoft.knightlore.render.hud.HudRenderer
+import com.palacesoft.knightlore.render.hud.TransitionRenderer
 import com.palacesoft.knightlore.render.scene.RoomEntityFactory
 import kotlinx.coroutines.flow.StateFlow
 
@@ -55,6 +56,7 @@ class GameRenderView(
         val commands = RoomEntityFactory.build(state, content, width.toFloat(), height.toFloat())
         CanvasSceneRenderer.render(canvas, commands)
         HudRenderer.render(canvas, state, content)
+        TransitionRenderer.render(canvas, state.roomTransition)
         val room = content.rooms[state.currentRoomId]
         if (room != null) debugRenderer?.invoke(canvas, state, room, width.toFloat(), height.toFloat())
     }

@@ -21,7 +21,14 @@ import com.palacesoft.knightlore.domain.model.PlayerState
 import com.palacesoft.knightlore.domain.model.TimeState
 import com.palacesoft.knightlore.domain.model.TransformPhase
 import com.palacesoft.knightlore.domain.model.TransformState
+import com.palacesoft.knightlore.domain.rules.RoomProvider
+import com.palacesoft.knightlore.domain.system.CollisionSystem
 import com.palacesoft.knightlore.domain.system.GameSystem
+import com.palacesoft.knightlore.domain.system.LifeSystem
+import com.palacesoft.knightlore.domain.system.MovementSystem
+import com.palacesoft.knightlore.domain.system.RoomTransitionSystem
+import com.palacesoft.knightlore.domain.system.TimeSystem
+import com.palacesoft.knightlore.domain.system.TransformationSystem
 import kotlin.random.Random
 
 /**
@@ -45,6 +52,29 @@ data class GameTickResult(
 )
 
 class DefaultGameEngine(private val systems: List<GameSystem>) : GameEngine {
+
+    companion object {
+        /**
+         * Creates a DefaultGameEngine with all systems registered in the required tick order:
+         * Time → Transform → Movement → Collision → RoomTransition → Life
+         *
+         * Systems not yet implemented (Phase 5) are stubs that return state unchanged.
+         */
+        fun create(roomProvider: RoomProvider): DefaultGameEngine {
+            val systems = listOf(
+                TimeSystem(),
+                TransformationSystem(),
+                MovementSystem(roomProvider),
+                CollisionSystem(roomProvider),  // thin stub delegating to MovementSystem
+                /* ItemSystem — Phase 5 */
+                /* HazardSystem — Phase 5 — but LifeSystem covers hazard tiles for now */
+                RoomTransitionSystem(roomProvider),
+                /* CauldronSystem — Phase 5 */
+                LifeSystem(roomProvider),
+            )
+            return DefaultGameEngine(systems)
+        }
+    }
     override fun initialize(seed: Long, content: GameContent, config: EngineConfig): GameState {
         val random = Random(seed) // used for variableStartIndex and future randomisation
 

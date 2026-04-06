@@ -54,6 +54,16 @@ object CanvasSceneRenderer {
                     paint.isAntiAlias = false
                     paint.color = payload.colorArgb
                     canvas.drawPath(path, paint)
+                    // Inner shadow border (clip to shape so only inward half of stroke shows)
+                    if (payload.shadowColorArgb != null) {
+                        canvas.save()
+                        canvas.clipPath(path)
+                        paint.style = Paint.Style.STROKE
+                        paint.strokeWidth = 6f  // 3px visible inside after clip
+                        paint.color = payload.shadowColorArgb
+                        canvas.drawPath(path, paint)
+                        canvas.restore()
+                    }
                     // Outline
                     paint.style = Paint.Style.STROKE
                     paint.strokeWidth = 2f
@@ -66,6 +76,34 @@ object CanvasSceneRenderer {
                     paint.style = Paint.Style.STROKE
                     paint.strokeWidth = payload.strokeWidth
                     canvas.drawLine(payload.x1, payload.y1, payload.x2, payload.y2, paint)
+                    paint.style = Paint.Style.FILL
+                }
+                is DrawPayload.DitheredPath -> {
+                    val path = android.graphics.Path()
+                    payload.points.forEachIndexed { i, pt ->
+                        if (i == 0) path.moveTo(pt.x, pt.y) else path.lineTo(pt.x, pt.y)
+                    }
+                    path.close()
+                    val tile = android.graphics.Bitmap.createBitmap(2, 2, android.graphics.Bitmap.Config.ARGB_8888)
+                    tile.setPixel(0, 0, payload.color1)
+                    tile.setPixel(1, 1, payload.color1)
+                    tile.setPixel(0, 1, payload.color2)
+                    tile.setPixel(1, 0, payload.color2)
+                    val shader = android.graphics.BitmapShader(
+                        tile,
+                        android.graphics.Shader.TileMode.REPEAT,
+                        android.graphics.Shader.TileMode.REPEAT,
+                    )
+                    paint.shader = shader
+                    paint.style = Paint.Style.FILL
+                    paint.isAntiAlias = false
+                    canvas.drawPath(path, paint)
+                    paint.shader = null
+                    // Outline
+                    paint.style = Paint.Style.STROKE
+                    paint.strokeWidth = 2f
+                    paint.color = 0xFF_0A0808.toInt()
+                    canvas.drawPath(path, paint)
                     paint.style = Paint.Style.FILL
                 }
                 is DrawPayload.ScreenFill -> {

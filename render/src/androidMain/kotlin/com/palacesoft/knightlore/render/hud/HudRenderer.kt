@@ -21,6 +21,7 @@ object HudRenderer {
         drawBars(canvas, paint)
         drawDayCounter(canvas, state, paint)
         drawLives(canvas, state, paint)
+        drawInventorySlots(canvas, state, paint)
         drawCureProgress(canvas, state, content, paint)
         drawFormIndicator(canvas, state, paint)
         drawTransformCountdown(canvas, state, paint)
@@ -68,6 +69,35 @@ object HudRenderer {
             path.close()
             canvas.drawPath(path, paint)
         }
+    }
+
+    // Inventory slots: bottom-center — 3 slots, always visible (filled or empty outline)
+    private fun drawInventorySlots(canvas: Canvas, state: GameState, paint: Paint) {
+        val slotSize = 28f
+        val slotGap = 8f
+        val totalW = 3 * slotSize + 2 * slotGap
+        val startX = (canvas.width - totalW) / 2f
+        val slotY = canvas.height - 48f
+
+        for (i in 0 until 3) {
+            val left = startX + i * (slotSize + slotGap)
+            val right = left + slotSize
+            val top = slotY
+            val bottom = slotY + slotSize
+
+            if (i < state.player.inventory.size) {
+                // Filled slot: item highlight color
+                paint.style = Paint.Style.FILL
+                paint.color = 0xFF_FFDD44.toInt()
+                canvas.drawRect(left + 4f, top + 4f, right - 4f, bottom - 4f, paint)
+            }
+            // Slot border (always drawn)
+            paint.style = Paint.Style.STROKE
+            paint.strokeWidth = 1.5f
+            paint.color = 0xFF_6A6A8A.toInt()
+            canvas.drawRect(left, top, right, bottom, paint)
+        }
+        paint.style = Paint.Style.FILL
     }
 
     // Cure progress: bottom-left

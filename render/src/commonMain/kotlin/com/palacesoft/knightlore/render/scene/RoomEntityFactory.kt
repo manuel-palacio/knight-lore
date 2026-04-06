@@ -127,10 +127,10 @@ object RoomEntityFactory {
                         Vec2f(p.x + jitter(p.x, seed, i * 2), p.y + jitter(p.y, seed, i * 2 + 1))
                     }
 
-                    // Base stone tile
+                    // Base stone tile — dithered checkerboard
                     commands += DrawCommand(DrawLayer.FLOOR, dk, 0, id,
                         IsoProjector.toScreen(world) + offset,
-                        DrawPayload.ColorPath(jitteredPts, Colors.FLOOR_TOP))
+                        DrawPayload.DitheredPath(jitteredPts, 0xFF_16161E.toInt(), 0xFF_252535.toInt()))
 
                     // Crack lines (~1 in 4 tiles, deterministic)
                     if ((tile.gridX * 7 + tile.gridY * 13) % 4 == 0) {
@@ -176,15 +176,15 @@ object RoomEntityFactory {
                     // Top face
                     commands += DrawCommand(DrawLayer.BLOCK, dk, 2, "${id}_top",
                         IsoProjector.toScreen(Vec3f(gx, gy, gz + 1f)) + offset,
-                        DrawPayload.ColorPath(floorDiamond(gx, gy, gz + 1f, ox, oy), Colors.BLOCK_TOP))
+                        DrawPayload.ColorPath(floorDiamond(gx, gy, gz + 1f, ox, oy), Colors.BLOCK_TOP, 0xFF_0A0A14.toInt()))
                     // Left face
                     commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "${id}_left",
                         IsoProjector.toScreen(Vec3f(gx, gy + 1f, gz)) + offset,
-                        DrawPayload.ColorPath(blockFaceLeft(gx, gy, gz, ox, oy), Colors.BLOCK_LEFT))
+                        DrawPayload.ColorPath(blockFaceLeft(gx, gy, gz, ox, oy), Colors.BLOCK_LEFT, 0xFF_0A0A14.toInt()))
                     // Right face
                     commands += DrawCommand(DrawLayer.BLOCK, dk, 0, "${id}_right",
                         IsoProjector.toScreen(Vec3f(gx + 1f, gy, gz)) + offset,
-                        DrawPayload.ColorPath(blockFaceRight(gx, gy, gz, ox, oy), Colors.BLOCK_RIGHT))
+                        DrawPayload.ColorPath(blockFaceRight(gx, gy, gz, ox, oy), Colors.BLOCK_RIGHT, 0xFF_0A0A14.toInt()))
 
                     // Carved cross on top face (4-point cross along iso axes)
                     val crossColor = Colors.BLOCK_CROSS

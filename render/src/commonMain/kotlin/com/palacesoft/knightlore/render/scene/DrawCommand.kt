@@ -43,6 +43,7 @@ sealed interface DrawPayload {
     data class ColorPath(
         val points: List<Vec2f>,   // absolute screen coords
         val colorArgb: Int,
+        val shadowColorArgb: Int? = null,  // if set, draws inset shadow border
     ) : DrawPayload
 
     /** Draws a straight line between two absolute screen-space points. */
@@ -53,6 +54,16 @@ sealed interface DrawPayload {
         val y2: Float,
         val colorArgb: Int,
         val strokeWidth: Float = 1.5f,
+    ) : DrawPayload
+
+    /**
+     * Fills a polygon with a 2×2px checkerboard dither pattern.
+     * color1 is drawn at (0,0)+(1,1), color2 at (0,1)+(1,0).
+     */
+    data class DitheredPath(
+        val points: List<Vec2f>,
+        val color1: Int,
+        val color2: Int,
     ) : DrawPayload
 
     /**

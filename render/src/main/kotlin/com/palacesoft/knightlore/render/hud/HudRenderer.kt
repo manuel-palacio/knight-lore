@@ -11,19 +11,16 @@ import com.palacesoft.knightlore.domain.model.GameState
  */
 object HudRenderer {
 
-    private val paint = Paint().apply {
-        isAntiAlias = true
-    }
-
     fun render(canvas: Canvas, state: GameState, content: GameContent) {
-        drawLives(canvas, state)
-        drawDayNightBar(canvas, state)
-        drawCarriedItems(canvas, state)
-        drawCauldronRequest(canvas, state, content)
+        val paint = Paint().apply { style = Paint.Style.FILL }
+        drawLives(canvas, state, paint)
+        drawDayNightBar(canvas, state, paint)
+        drawCarriedItems(canvas, state, paint)
+        drawCauldronRequest(canvas, state, content, paint)
     }
 
     // Lives: filled circles at top-left
-    private fun drawLives(canvas: Canvas, state: GameState) {
+    private fun drawLives(canvas: Canvas, state: GameState, paint: Paint) {
         paint.style = Paint.Style.FILL
         paint.color = 0xFF_EE4444.toInt()
         val diameter = 20f
@@ -36,7 +33,7 @@ object HudRenderer {
     }
 
     // Day-night progress bar: bottom center
-    private fun drawDayNightBar(canvas: Canvas, state: GameState) {
+    private fun drawDayNightBar(canvas: Canvas, state: GameState, paint: Paint) {
         val barWidth = 300f
         val barHeight = 20f
         val barLeft = (canvas.width - barWidth) / 2f
@@ -61,7 +58,7 @@ object HudRenderer {
     }
 
     // Carried items: small squares at top-right
-    private fun drawCarriedItems(canvas: Canvas, state: GameState) {
+    private fun drawCarriedItems(canvas: Canvas, state: GameState, paint: Paint) {
         paint.style = Paint.Style.FILL
         paint.color = 0xFF_FFDD44.toInt()
         val squareSize = 16f
@@ -76,7 +73,7 @@ object HudRenderer {
     }
 
     // Cauldron request text: bottom-left
-    private fun drawCauldronRequest(canvas: Canvas, state: GameState, content: GameContent) {
+    private fun drawCauldronRequest(canvas: Canvas, state: GameState, content: GameContent, paint: Paint) {
         val nextItem = content.cureSequence.sequence.getOrNull(state.cauldron.deliveredCount)
         val label = if (nextItem != null) "NEED: $nextItem" else "DONE"
 

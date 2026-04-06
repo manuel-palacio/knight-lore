@@ -11,12 +11,8 @@ import com.palacesoft.knightlore.render.scene.DrawPayload
  */
 object CanvasSceneRenderer {
 
-    private val paint = Paint().apply {
-        style = Paint.Style.FILL
-        isAntiAlias = false
-    }
-
     fun render(canvas: Canvas, commands: List<DrawCommand>) {
+        val paint = Paint().apply { style = Paint.Style.FILL }
         for (command in commands) {
             val left = command.screenPos.x
             val top = command.screenPos.y

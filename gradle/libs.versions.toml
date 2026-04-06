@@ -7,6 +7,7 @@ compileSdk = "35"
 minSdk = "26"
 targetSdk = "35"
 composeBom = "2024.12.01"
+navigation = "2.8.5"
 coroutines = "1.9.0"
 serialization = "1.7.3"
 datastore = "1.1.1"
@@ -22,6 +23,9 @@ compose-ui = { group = "androidx.compose.ui", name = "ui" }
 compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+
+# Navigation
+androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigation" }
 
 # Coroutines
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }

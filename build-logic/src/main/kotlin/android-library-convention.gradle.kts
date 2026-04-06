@@ -6,10 +6,10 @@ plugins {
 }
 
 extensions.configure<LibraryExtension> {
-    compileSdk = libs.versions.compileSdk.get().toInt()
+    compileSdk = 35
 
     defaultConfig {
-        minSdk = libs.versions.minSdk.get().toInt()
+        minSdk = 26
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
     }
@@ -37,7 +37,7 @@ kotlin {
 }
 
 dependencies {
-    testImplementation(libs.junit5.api)
-    testImplementation(libs.junit5.params)
-    testRuntimeOnly(libs.junit5.engine)
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.11.3")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.11.3")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.11.3")
 }

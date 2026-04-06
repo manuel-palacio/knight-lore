@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.palacesoft.knightlore.app.audio.AudioManager
 import com.palacesoft.knightlore.app.audio.SoundManager
 import com.palacesoft.knightlore.app.save.AndroidSaveRepository
 import com.palacesoft.knightlore.app.session.GameSessionCoordinator
@@ -16,7 +17,7 @@ import com.palacesoft.knightlore.domain.DefaultGameEngine
 
 class MainActivity : ComponentActivity() {
 
-    private lateinit var soundManager: SoundManager
+    private lateinit var soundManager: AudioManager
 
     private val viewModel: GameSessionViewModel by lazy {
         ViewModelProvider(this, object : ViewModelProvider.Factory {

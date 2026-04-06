@@ -11,7 +11,7 @@ import com.palacesoft.knightlore.domain.event.GameEvent
  * Manages all game audio: SFX via SoundPool, ambient music via MediaPlayer.
  * Call [release] when the hosting Activity stops.
  */
-class SoundManager(context: Context) {
+class SoundManager(context: Context) : AudioManager {
 
     private val audioAttributes = AudioAttributes.Builder()
         .setUsage(AudioAttributes.USAGE_GAME)
@@ -41,17 +41,17 @@ class SoundManager(context: Context) {
     }
 
     /** Starts ambient music. Call once when gameplay begins. */
-    fun startMusic() {
+    override fun startMusic() {
         music?.takeIf { !it.isPlaying }?.start()
     }
 
     /** Pauses ambient music. */
-    fun pauseMusic() {
+    override fun pauseMusic() {
         music?.takeIf { it.isPlaying }?.pause()
     }
 
     /** Dispatches a game event to the appropriate sound(s). */
-    fun onEvent(event: GameEvent) {
+    override fun onEvent(event: GameEvent) {
         when (event) {
             is GameEvent.JumpStarted             -> play(sfxJump)
             is GameEvent.Landed                  -> play(sfxLand)
@@ -67,7 +67,7 @@ class SoundManager(context: Context) {
     }
 
     /** Releases all audio resources. Call from Activity.onStop(). */
-    fun release() {
+    override fun release() {
         soundPool.release()
         music?.release()
     }

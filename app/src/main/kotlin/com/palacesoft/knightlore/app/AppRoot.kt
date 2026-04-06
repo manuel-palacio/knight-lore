@@ -78,6 +78,7 @@ fun AppRoot(viewModel: GameSessionViewModel, settingsRepository: SettingsReposit
             val currentSettings by settingsRepository.settings.collectAsState(initial = GameSettings())
             GameScreen(
                 sessionCoordinator = viewModel.coordinator,
+                viewModel = viewModel,
                 navController = navController,
                 debugOverlayEnabled = currentSettings.debugOverlayEnabled && BuildConfig.DEBUG,
             )
@@ -96,6 +97,7 @@ fun AppRoot(viewModel: GameSessionViewModel, settingsRepository: SettingsReposit
 @Composable
 fun GameScreen(
     sessionCoordinator: GameSessionCoordinator,
+    viewModel: GameSessionViewModel,
     navController: NavHostController,
     debugOverlayEnabled: Boolean = false,
 ) {
@@ -130,9 +132,13 @@ fun GameScreen(
                             gameState = state.gameStateFlow,
                             content = sessionCoordinator.loadedContent!!,
                             onFrameAdvance = { deltaSeconds ->
-                                sessionCoordinator.submitInput(touchInput.buildFrameInput())
-                                sessionCoordinator.advance(deltaSeconds)
+                                val input = touchInput.buildFrameInput()
+                                if (input.pausePressed) sessionCoordinator.eventHandler.togglePause()
                                 touchInput.clearOneShotFlags()
+                                if (!sessionCoordinator.eventHandler.uiState.value.isPaused) {
+                                    sessionCoordinator.submitInput(input)
+                                    sessionCoordinator.advance(deltaSeconds)
+                                }
                             },
                         ).also { view ->
                             if (debugOverlayEnabled && BuildConfig.DEBUG) {
@@ -185,6 +191,32 @@ fun GameScreen(
                             Spacer(Modifier.height(24.dp))
                             Button(onClick = { sessionCoordinator.eventHandler.dismissQuestComplete() }) {
                                 Text("CONTINUE")
+                            }
+                        }
+                    }
+                }
+
+                // Pause overlay
+                if (uiState.isPaused) {
+                    Box(
+                        modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.75f)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("PAUSED", color = Color.White, fontSize = 36.sp, fontWeight = FontWeight.Bold)
+                            Spacer(Modifier.height(24.dp))
+                            Button(onClick = { sessionCoordinator.eventHandler.resumeGame() }) {
+                                Text("RESUME")
+                            }
+                            Spacer(Modifier.height(12.dp))
+                            Button(onClick = {
+                                sessionCoordinator.eventHandler.resumeGame()
+                                viewModel.saveGame()
+                                navController.navigate("menu") {
+                                    popUpTo("menu") { inclusive = true }
+                                }
+                            }) {
+                                Text("SAVE & QUIT")
                             }
                         }
                     }

@@ -7,9 +7,13 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,6 +31,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -44,13 +49,13 @@ fun AppRoot(sessionCoordinator: GameSessionCoordinator) {
             MainMenuScreen(onNewGame = { navController.navigate("game") })
         }
         composable("game") {
-            GameScreen(sessionCoordinator = sessionCoordinator)
+            GameScreen(sessionCoordinator = sessionCoordinator, navController = navController)
         }
     }
 }
 
 @Composable
-fun GameScreen(sessionCoordinator: GameSessionCoordinator) {
+fun GameScreen(sessionCoordinator: GameSessionCoordinator, navController: NavHostController) {
     var loadState by remember { mutableStateOf<LoadState>(LoadState.Loading) }
 
     LaunchedEffect(Unit) {
@@ -71,6 +76,7 @@ fun GameScreen(sessionCoordinator: GameSessionCoordinator) {
             is LoadState.Ready -> {
                 val ready = loadState as LoadState.Ready
                 val gameState by ready.gameStateFlow.collectAsState()
+                val uiState by sessionCoordinator.eventHandler.uiState.collectAsState()
                 AndroidView(
                     modifier = Modifier.fillMaxSize(),
                     factory = { context ->
@@ -83,6 +89,50 @@ fun GameScreen(sessionCoordinator: GameSessionCoordinator) {
                     },
                 )
                 GameHudOverlay(gameState = gameState)
+
+                // Damage flash overlay
+                if (uiState.damageFlashTicks > 0) {
+                    val alpha = (uiState.damageFlashTicks / 12f).coerceIn(0f, 0.4f)
+                    Box(modifier = Modifier.fillMaxSize().background(Color.Red.copy(alpha = alpha)))
+                }
+
+                // Game Over overlay
+                if (uiState.showGameOver) {
+                    Box(
+                        modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.8f)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("GAME OVER", color = Color.Red, fontSize = 36.sp, fontWeight = FontWeight.Bold)
+                            Spacer(Modifier.height(24.dp))
+                            Button(onClick = {
+                                sessionCoordinator.eventHandler.dismissGameOver()
+                                navController.navigate("menu")
+                            }) { Text("MAIN MENU") }
+                        }
+                    }
+                }
+
+                // Quest Complete overlay
+                if (uiState.showQuestComplete) {
+                    Box(
+                        modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.8f)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                "QUEST COMPLETE!",
+                                color = Color(0xFFFFDD44),
+                                fontSize = 32.sp,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            Spacer(Modifier.height(24.dp))
+                            Button(onClick = { sessionCoordinator.eventHandler.dismissQuestComplete() }) {
+                                Text("CONTINUE")
+                            }
+                        }
+                    }
+                }
             }
             is LoadState.Error -> Text("Error: ${state.message}", color = Color.Red)
         }

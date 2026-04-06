@@ -8,6 +8,8 @@ import com.palacesoft.knightlore.domain.model.GameContent
 import com.palacesoft.knightlore.domain.model.GameState
 import com.palacesoft.knightlore.domain.model.ItemInstance
 import com.palacesoft.knightlore.domain.model.ItemLocation
+import com.palacesoft.knightlore.domain.model.PlayerState
+import com.palacesoft.knightlore.domain.model.TransformPhase
 import com.palacesoft.knightlore.domain.model.TileType
 import com.palacesoft.knightlore.render.iso.IsoProjector
 
@@ -95,7 +97,8 @@ object RoomEntityFactory {
         }
 
         // 4. Player
-        val playerColor = if (state.player.form == Form.HUMAN) Colors.PLAYER_HUMAN else Colors.PLAYER_WOLF
+        val player = state.player
+        val playerColor = resolvePlayerColor(player)
         val playerScreen = IsoProjector.toScreen(state.player.position) + offset
         commands += DrawCommand(
             layer = DrawLayer.PLAYER,
@@ -106,5 +109,25 @@ object RoomEntityFactory {
         )
 
         return DrawCommandBuilder.sort(commands)
+    }
+
+    private fun resolvePlayerColor(player: PlayerState): Int {
+        // Damage blink: alternate between normal and dim every 5 ticks when cooldown active
+        val blink = player.damageCooldownTicks > 0 && (player.damageCooldownTicks % 10 < 5)
+        if (blink) return 0xFF_888888.toInt()  // grey during blink frames
+
+        return when (player.transformState.phase) {
+            TransformPhase.STABLE -> {
+                if (player.form == Form.HUMAN) Colors.PLAYER_HUMAN else Colors.PLAYER_WOLF
+            }
+            TransformPhase.TRANSFORMING_TO_WEREWULF -> {
+                // Flicker between human and wolf color every 4 ticks
+                if (player.transformState.progressTicks % 8 < 4) Colors.PLAYER_HUMAN else Colors.PLAYER_WOLF
+            }
+            TransformPhase.TRANSFORMING_TO_HUMAN -> {
+                if (player.transformState.progressTicks % 8 < 4) Colors.PLAYER_WOLF else Colors.PLAYER_HUMAN
+            }
+            TransformPhase.RECOVERING -> 0xFF_FFAA44.toInt()  // amber during recovery
+        }
     }
 }

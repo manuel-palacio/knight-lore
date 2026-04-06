@@ -2,8 +2,10 @@ package com.palacesoft.knightlore.render.hud
 
 import android.graphics.Canvas
 import android.graphics.Paint
+import com.palacesoft.knightlore.domain.model.Form
 import com.palacesoft.knightlore.domain.model.GameContent
 import com.palacesoft.knightlore.domain.model.GameState
+import com.palacesoft.knightlore.domain.model.TransformPhase
 
 /**
  * Renders the HUD overlay onto the canvas in screen-space.
@@ -14,6 +16,7 @@ object HudRenderer {
     fun render(canvas: Canvas, state: GameState, content: GameContent) {
         val paint = Paint().apply { style = Paint.Style.FILL }
         drawLives(canvas, state, paint)
+        drawFormIndicator(canvas, state, paint)
         drawDayNightBar(canvas, state, paint)
         drawCarriedItems(canvas, state, paint)
         drawCauldronRequest(canvas, state, content, paint)
@@ -30,6 +33,24 @@ object HudRenderer {
             val left = 16f + i * spacing
             canvas.drawOval(left, top, left + diameter, top + diameter, paint)
         }
+    }
+
+    // Form indicator: top center
+    private fun drawFormIndicator(canvas: Canvas, state: GameState, paint: Paint) {
+        val label = when (state.player.transformState.phase) {
+            TransformPhase.STABLE -> if (state.player.form == Form.HUMAN) "HUMAN" else "WEREWULF"
+            TransformPhase.TRANSFORMING_TO_WEREWULF, TransformPhase.TRANSFORMING_TO_HUMAN -> "CHANGING..."
+            TransformPhase.RECOVERING -> "RECOVERING"
+        }
+        val color = when (state.player.form) {
+            Form.HUMAN -> 0xFF_44BB88.toInt()    // teal
+            Form.WEREWULF -> 0xFF_8844CC.toInt() // purple
+        }
+        paint.style = Paint.Style.FILL
+        paint.color = color
+        paint.textSize = 24f
+        paint.textAlign = Paint.Align.CENTER
+        canvas.drawText(label, canvas.width / 2f, 36f, paint)
     }
 
     // Day-night progress bar: bottom center

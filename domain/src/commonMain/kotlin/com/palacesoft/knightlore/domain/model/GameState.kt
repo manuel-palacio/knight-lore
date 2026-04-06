@@ -1,7 +1,9 @@
 package com.palacesoft.knightlore.domain.model
 
 import com.palacesoft.knightlore.core.ids.RoomId
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class GameState(
     val currentRoomId: RoomId,
     val player: PlayerState,

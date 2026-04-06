@@ -2,13 +2,17 @@ package com.palacesoft.knightlore.domain.model
 
 import com.palacesoft.knightlore.core.ids.ActorId
 import com.palacesoft.knightlore.core.math.Vec3f
+import kotlinx.serialization.Serializable
 
+@Serializable
 enum class ActorBehavior { PATROL, STATIC_HAZARD, REACTIVE }
 
+@Serializable
 enum class ActorType {
     GUARD, GHOST, ROBOT, DRUID, BALL, CAULDRON_GUARDIAN
 }
 
+@Serializable
 data class ActorState(
     val id: ActorId,
     val type: ActorType,

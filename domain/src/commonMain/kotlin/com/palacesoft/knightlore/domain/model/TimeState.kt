@@ -1,7 +1,11 @@
 package com.palacesoft.knightlore.domain.model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 enum class DayPhase { DAY, DUSK, NIGHT, DAWN }
 
+@Serializable
 data class TimeState(
     val tick: Long,                      // absolute tick counter since game start
     val dayIndex: Int,                   // 0-based, max 39

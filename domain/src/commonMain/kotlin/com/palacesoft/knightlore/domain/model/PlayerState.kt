@@ -3,18 +3,24 @@ package com.palacesoft.knightlore.domain.model
 import com.palacesoft.knightlore.core.ids.ItemId
 import com.palacesoft.knightlore.core.math.Direction8
 import com.palacesoft.knightlore.core.math.Vec3f
+import kotlinx.serialization.Serializable
 
+@Serializable
 enum class Form { HUMAN, WEREWULF }
 
+@Serializable
 enum class TransformPhase { STABLE, TRANSFORMING_TO_WEREWULF, TRANSFORMING_TO_HUMAN, RECOVERING }
 
+@Serializable
 enum class MovementState { IDLE, WALKING, JUMP_ASCENT, JUMP_DESCENT, LANDING, TRANSFORMING }
 
+@Serializable
 data class TransformState(
     val phase: TransformPhase,
     val progressTicks: Int,  // how many ticks into current phase
 )
 
+@Serializable
 data class PlayerState(
     val form: Form,
     val position: Vec3f,

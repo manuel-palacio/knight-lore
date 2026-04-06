@@ -4,7 +4,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -17,7 +20,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun MainMenuScreen(onNewGame: () -> Unit) {
+fun MainMenuScreen(
+    hasSave: Boolean = false,
+    onContinue: () -> Unit = {},
+    onNewGame: () -> Unit,
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -39,6 +46,12 @@ fun MainMenuScreen(onNewGame: () -> Unit) {
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color(0xFF8899AA),
             )
+            if (hasSave) {
+                Button(onClick = onContinue, modifier = Modifier.fillMaxWidth(0.6f)) {
+                    Text("CONTINUE", fontSize = 18.sp)
+                }
+                Spacer(Modifier.height(12.dp))
+            }
             Button(
                 onClick = onNewGame,
                 colors = ButtonDefaults.buttonColors(

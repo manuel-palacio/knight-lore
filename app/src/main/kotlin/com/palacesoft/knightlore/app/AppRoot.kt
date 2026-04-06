@@ -36,20 +36,32 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.palacesoft.knightlore.app.session.GameSessionCoordinator
+import com.palacesoft.knightlore.app.session.GameSessionViewModel
 import com.palacesoft.knightlore.app.ui.MainMenuScreen
 import com.palacesoft.knightlore.domain.model.GameState
 import com.palacesoft.knightlore.render.GameRenderView
 import kotlinx.coroutines.flow.StateFlow
 
 @Composable
-fun AppRoot(sessionCoordinator: GameSessionCoordinator) {
+fun AppRoot(viewModel: GameSessionViewModel) {
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = "menu") {
         composable("menu") {
-            MainMenuScreen(onNewGame = { navController.navigate("game") })
+            val hasSave by viewModel.hasSave.collectAsState()
+            MainMenuScreen(
+                hasSave = hasSave,
+                onContinue = {
+                    viewModel.continueGame()
+                    navController.navigate("game")
+                },
+                onNewGame = {
+                    viewModel.startNewGame()
+                    navController.navigate("game")
+                },
+            )
         }
         composable("game") {
-            GameScreen(sessionCoordinator = sessionCoordinator, navController = navController)
+            GameScreen(sessionCoordinator = viewModel.coordinator, navController = navController)
         }
     }
 }
@@ -59,12 +71,14 @@ fun GameScreen(sessionCoordinator: GameSessionCoordinator, navController: NavHos
     var loadState by remember { mutableStateOf<LoadState>(LoadState.Loading) }
 
     LaunchedEffect(Unit) {
-        loadState = try {
-            sessionCoordinator.startNewGame()
-            LoadState.Ready(sessionCoordinator.gameState!!)
-        } catch (e: Exception) {
-            LoadState.Error(e.message ?: "Unknown error")
+        // Poll until the coordinator's game state becomes available (set by the ViewModel).
+        var attempts = 0
+        while (sessionCoordinator.gameState == null && attempts < 200) {
+            kotlinx.coroutines.delay(50)
+            attempts++
         }
+        loadState = sessionCoordinator.gameState?.let { LoadState.Ready(it) }
+            ?: LoadState.Error("Failed to start game")
     }
 
     Box(

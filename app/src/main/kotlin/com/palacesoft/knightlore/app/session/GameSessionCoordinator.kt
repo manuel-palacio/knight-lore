@@ -9,12 +9,12 @@ import com.palacesoft.knightlore.domain.model.EngineConfig
 import com.palacesoft.knightlore.domain.model.GameContent
 import com.palacesoft.knightlore.domain.model.GameState
 import com.palacesoft.knightlore.domain.rules.RoomProvider
+import com.palacesoft.knightlore.domain.save.SaveSnapshot
 import kotlinx.coroutines.flow.StateFlow
 
 /**
  * High-level coordinator for a game session.
  * Owns the GameLoopCoordinator and exposes game state as a Flow.
- * Full implementation in Phase 6 (save/resume, settings).
  */
 class GameSessionCoordinator(
     private val contentRepository: ContentRepository,
@@ -33,6 +33,11 @@ class GameSessionCoordinator(
     var onEvents: ((List<GameEvent>) -> Unit)? = null
     var onGameStarted: (() -> Unit)? = null
 
+    var currentSeed: Long = System.currentTimeMillis()
+        private set
+    var currentConfig: EngineConfig = EngineConfig()
+        private set
+
     suspend fun startNewGame(
         seed: Long = System.currentTimeMillis(),
         config: EngineConfig = EngineConfig(),
@@ -44,6 +49,22 @@ class GameSessionCoordinator(
         val initialState = engine.initialize(seed, content, config)
         val loop = GameLoopCoordinator(engine, initialState)
         loopCoordinator = loop
+        currentSeed = seed
+        currentConfig = config
+        onGameStarted?.invoke()
+        return loop
+    }
+
+    suspend fun resumeFromSnapshot(snapshot: SaveSnapshot): GameLoopCoordinator {
+        val content = contentRepository.loadContent()
+        loadedContent = content
+        val roomProvider = ContentRoomProvider(content)
+        val engine = engineFactory(roomProvider, content)
+        // Restore state directly — no re-initialization
+        val loop = GameLoopCoordinator(engine, snapshot.state)
+        loopCoordinator = loop
+        currentSeed = snapshot.seed
+        currentConfig = snapshot.config
         onGameStarted?.invoke()
         return loop
     }
@@ -54,6 +75,4 @@ class GameSessionCoordinator(
         eventHandler.handleEvents(events)
         return events
     }
-
-    // TODO Phase 6: fun save(), fun resume(snapshot), fun pause()
 }

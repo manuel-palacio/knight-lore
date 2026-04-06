@@ -10,6 +10,7 @@ import com.palacesoft.knightlore.app.audio.SoundManager
 import com.palacesoft.knightlore.app.save.AndroidSaveRepository
 import com.palacesoft.knightlore.app.session.GameSessionCoordinator
 import com.palacesoft.knightlore.app.session.GameSessionViewModel
+import com.palacesoft.knightlore.app.settings.SettingsRepository
 import com.palacesoft.knightlore.data.asset.AssetContentRepository
 import com.palacesoft.knightlore.domain.DefaultGameEngine
 
@@ -36,8 +37,9 @@ class MainActivity : ComponentActivity() {
         soundManager = SoundManager(this)
         viewModel.coordinator.onEvents = { events -> events.forEach { soundManager.onEvent(it) } }
         viewModel.coordinator.onGameStarted = { soundManager.startMusic() }
+        val settingsRepository = SettingsRepository(this)
         setContent {
-            AppRoot(viewModel = viewModel)
+            AppRoot(viewModel = viewModel, settingsRepository = settingsRepository)
         }
     }
 

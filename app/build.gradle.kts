@@ -13,7 +13,7 @@ dependencies {
     implementation(project(":data"))
     implementation(project(":render"))
     implementation(project(":input"))
-    debugImplementation(project(":feature-debug"))
+    implementation(project(":feature-debug"))
 
     implementation(libs.androidx.activity.compose)
 
@@ -27,6 +27,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.datastore.preferences)
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
 }

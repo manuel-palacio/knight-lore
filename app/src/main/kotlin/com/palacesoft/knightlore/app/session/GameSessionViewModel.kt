@@ -2,6 +2,7 @@ package com.palacesoft.knightlore.app.session
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.palacesoft.knightlore.app.settings.Difficulty
 import com.palacesoft.knightlore.domain.model.EngineConfig
 import com.palacesoft.knightlore.domain.save.SaveRepository
 import com.palacesoft.knightlore.domain.save.SaveSnapshot
@@ -28,7 +29,11 @@ class GameSessionViewModel(
         }
     }
 
-    fun startNewGame(config: EngineConfig = EngineConfig()) {
+    fun startNewGame(difficulty: Difficulty = Difficulty.MODERN) {
+        val config = when (difficulty) {
+            Difficulty.CLASSIC -> EngineConfig(playerLives = 3)
+            Difficulty.MODERN -> EngineConfig()
+        }
         viewModelScope.launch {
             saveRepository.delete()
             coordinator.startNewGame(config = config)

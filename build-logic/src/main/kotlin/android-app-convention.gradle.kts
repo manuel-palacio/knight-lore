@@ -35,6 +35,7 @@ configure<com.android.build.api.dsl.ApplicationExtension> {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

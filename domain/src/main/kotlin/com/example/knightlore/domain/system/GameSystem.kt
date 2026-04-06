@@ -10,5 +10,5 @@ interface GameSystem {
 
 data class SystemResult(
     val state: GameState,
-    val events: List<GameEvent>,
+    val events: List<GameEvent> = emptyList(),
 )

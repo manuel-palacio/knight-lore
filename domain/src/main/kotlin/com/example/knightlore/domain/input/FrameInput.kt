@@ -1,13 +1,25 @@
 package com.example.knightlore.domain.input
 
-import com.example.knightlore.core.math.Direction8
+import com.example.knightlore.core.math.Vec2f
 
 data class FrameInput(
-    val moveDirection: Direction8?,  // null = no movement
-    val jumpPressed: Boolean,
-    val actionPressed: Boolean,      // pick up / drop / interact
+    val moveVector: Vec2f,              // normalized 2D movement intent (0,0 = no movement)
+    val jumpPressed: Boolean,           // jump button just pressed this tick
+    val jumpHeld: Boolean,              // jump button held (variable height)
+    val actionPressed: Boolean,         // pickup / interact
+    val dropPressed: Boolean,           // drop carried item
+    val cycleInventoryPressed: Boolean, // cycle which carried item is active
+    val pausePressed: Boolean,
 ) {
     companion object {
-        val IDLE = FrameInput(moveDirection = null, jumpPressed = false, actionPressed = false)
+        val IDLE = FrameInput(
+            moveVector = Vec2f.ZERO,
+            jumpPressed = false,
+            jumpHeld = false,
+            actionPressed = false,
+            dropPressed = false,
+            cycleInventoryPressed = false,
+            pausePressed = false,
+        )
     }
 }

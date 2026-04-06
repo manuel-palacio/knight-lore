@@ -5,10 +5,21 @@ import com.example.knightlore.core.ids.RoomId
 import com.example.knightlore.core.math.Vec3f
 
 enum class ItemType {
-    SKULL, CAULDRON_INGREDIENT, KEY, TORCH, SWORD,
-    // Generic object types, any subset of these can be part of the 14-item cure sequence
-    OBJECT_A, OBJECT_B, OBJECT_C, OBJECT_D, OBJECT_E,
-    OBJECT_F, OBJECT_G, OBJECT_H, OBJECT_I, OBJECT_J,
+    // The 14-step cure sequence items (canonical Knight Lore names)
+    CRYSTAL_BALL,
+    GOBLET,
+    WINE_BOTTLE,
+    GEM,
+    POISON_VIAL,
+    BOOT,
+    TEACUP,
+    // Structural items
+    KEY,
+    TORCH,
+    SKULL,
+    // Additional room objects
+    CAULDRON_INGREDIENT,
+    ORNAMENT,
 }
 
 sealed interface ItemLocation {

@@ -58,13 +58,6 @@ object HudRenderer {
         }
         paint.color = fillColor
         canvas.drawRect(barLeft, barTop, barLeft + fillWidth, barTop + barHeight, paint)
-
-        // Label text "DAY" centered above bar
-        paint.color = 0xFF_FFFFFF.toInt()
-        paint.textSize = 36f
-        paint.textAlign = Paint.Align.CENTER
-        canvas.drawText("DAY", canvas.width / 2f, barTop - 4f, paint)
-        paint.textAlign = Paint.Align.LEFT // reset
     }
 
     // Carried items: small squares at top-right
@@ -85,7 +78,7 @@ object HudRenderer {
     // Cauldron request text: bottom-left
     private fun drawCauldronRequest(canvas: Canvas, state: GameState, content: GameContent) {
         val nextItem = content.cureSequence.sequence.getOrNull(state.cauldron.deliveredCount)
-        val label = if (nextItem != null) "NEED: $nextItem" else "NEED: DONE"
+        val label = if (nextItem != null) "NEED: $nextItem" else "DONE"
 
         paint.style = Paint.Style.FILL
         paint.color = 0xFF_FFFFFF.toInt()

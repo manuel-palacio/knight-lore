@@ -2,7 +2,6 @@ package com.palacesoft.knightlore.render.hud
 
 import android.graphics.Canvas
 import android.graphics.Paint
-import com.palacesoft.knightlore.domain.model.Form
 import com.palacesoft.knightlore.domain.model.GameContent
 import com.palacesoft.knightlore.domain.model.GameState
 import com.palacesoft.knightlore.domain.model.TransformPhase
@@ -15,97 +14,34 @@ object HudRenderer {
 
     fun render(canvas: Canvas, state: GameState, content: GameContent) {
         val paint = Paint().apply { style = Paint.Style.FILL }
-        drawLives(canvas, state, paint)
         drawFormIndicator(canvas, state, paint)
-        drawDayNightBar(canvas, state, paint)
         drawCarriedItems(canvas, state, paint)
         drawCauldronRequest(canvas, state, content, paint)
     }
 
-    // Lives: filled circles at top-left
-    private fun drawLives(canvas: Canvas, state: GameState, paint: Paint) {
-        paint.style = Paint.Style.FILL
-        paint.color = 0xFF_EE4444.toInt()
-        val diameter = 20f
-        val spacing = 28f
-        val top = 16f
-        for (i in 0 until state.player.lives) {
-            val left = 16f + i * spacing
-            canvas.drawOval(left, top, left + diameter, top + diameter, paint)
-        }
-    }
-
-    // Form indicator: top center
+    // Form indicator: bottom-center, only shown during active transformation/recovery
     private fun drawFormIndicator(canvas: Canvas, state: GameState, paint: Paint) {
-        val label = when (state.player.transformState.phase) {
-            TransformPhase.STABLE -> if (state.player.form == Form.HUMAN) "HUMAN" else "WEREWULF"
-            TransformPhase.TRANSFORMING_TO_WEREWULF -> "→ WEREWULF"
-            TransformPhase.TRANSFORMING_TO_HUMAN -> "→ HUMAN"
+        val phase = state.player.transformState.phase
+        if (phase == TransformPhase.STABLE) return
+
+        val label = when (phase) {
+            TransformPhase.TRANSFORMING_TO_WEREWULF -> "TRANSFORMING → WEREWULF"
+            TransformPhase.TRANSFORMING_TO_HUMAN -> "TRANSFORMING → HUMAN"
             TransformPhase.RECOVERING -> "RECOVERING"
+            TransformPhase.STABLE -> return
         }
-        val color = when (state.player.form) {
-            Form.HUMAN -> 0xFF_44BB88.toInt()    // teal
-            Form.WEREWULF -> 0xFF_8844CC.toInt() // purple
+        val color = when (phase) {
+            TransformPhase.TRANSFORMING_TO_WEREWULF -> 0xFF_8844CC.toInt()
+            TransformPhase.TRANSFORMING_TO_HUMAN    -> 0xFF_44BB88.toInt()
+            TransformPhase.RECOVERING               -> 0xFF_FFAA44.toInt()
+            TransformPhase.STABLE                   -> 0xFF_FFFFFF.toInt()
         }
+
         paint.style = Paint.Style.FILL
         paint.color = color
-        paint.textSize = 24f
+        paint.textSize = 18f
         paint.textAlign = Paint.Align.CENTER
-        canvas.drawText(label, canvas.width / 2f, 36f, paint)
-
-        // Draw progress bar during active transformation or recovery
-        val phase = state.player.transformState.phase
-        if (phase != TransformPhase.STABLE) {
-            val maxTicks = when (phase) {
-                TransformPhase.TRANSFORMING_TO_WEREWULF, TransformPhase.TRANSFORMING_TO_HUMAN -> 60
-                TransformPhase.RECOVERING -> 30
-                TransformPhase.STABLE -> 1  // unreachable
-            }
-            val progress = (state.player.transformState.progressTicks.toFloat() / maxTicks).coerceIn(0f, 1f)
-            val barWidth = 120f
-            val barHeight = 6f
-            val barLeft = (canvas.width - barWidth) / 2f
-            val barTop = 44f
-
-            // Background
-            paint.color = 0xFF_333333.toInt()
-            canvas.drawRect(barLeft, barTop, barLeft + barWidth, barTop + barHeight, paint)
-
-            // Fill — use the target form color
-            val fillColor = when (phase) {
-                TransformPhase.TRANSFORMING_TO_WEREWULF -> 0xFF_8844CC.toInt()
-                TransformPhase.TRANSFORMING_TO_HUMAN    -> 0xFF_44BB88.toInt()
-                TransformPhase.RECOVERING               -> 0xFF_FFAA44.toInt()
-                TransformPhase.STABLE                   -> 0xFF_FFFFFF.toInt()
-            }
-            paint.color = fillColor
-            canvas.drawRect(barLeft, barTop, barLeft + barWidth * progress, barTop + barHeight, paint)
-        }
-    }
-
-    // Day-night progress bar: bottom center
-    private fun drawDayNightBar(canvas: Canvas, state: GameState, paint: Paint) {
-        val barWidth = 300f
-        val barHeight = 20f
-        val barLeft = (canvas.width - barWidth) / 2f
-        val barTop = canvas.height - barHeight - 16f
-
-        // Background
-        paint.style = Paint.Style.FILL
-        paint.color = 0xFF_333333.toInt()
-        canvas.drawRect(barLeft, barTop, barLeft + barWidth, barTop + barHeight, paint)
-
-        // Fill
-        val progress = state.time.phaseProgress.coerceIn(0f, 1f)
-        val fillWidth = barWidth * progress
-        val fillColor = if (progress >= 0.8f) {
-            // Pulse between amber and orange every 15 ticks
-            if (state.time.tick % 30 < 15) 0xFF_FF4400.toInt() else 0xFF_FFAA00.toInt()
-        } else {
-            0xFF_FFAA00.toInt()
-        }
-        paint.color = fillColor
-        canvas.drawRect(barLeft, barTop, barLeft + fillWidth, barTop + barHeight, paint)
+        canvas.drawText(label, canvas.width / 2f, canvas.height - 60f, paint)
     }
 
     // Carried items: small squares at top-right

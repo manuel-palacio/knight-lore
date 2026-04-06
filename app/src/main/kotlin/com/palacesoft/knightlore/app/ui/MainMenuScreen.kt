@@ -4,9 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -41,7 +39,6 @@ fun MainMenuScreen(onNewGame: () -> Unit) {
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color(0xFF8899AA),
             )
-            Spacer(modifier = Modifier.height(16.dp))
             Button(
                 onClick = onNewGame,
                 colors = ButtonDefaults.buttonColors(

@@ -22,6 +22,7 @@ import com.palacesoft.knightlore.domain.model.TimeState
 import com.palacesoft.knightlore.domain.model.TransformPhase
 import com.palacesoft.knightlore.domain.model.TransformState
 import com.palacesoft.knightlore.domain.system.GameSystem
+import kotlin.random.Random
 
 /**
  * Systems must run in this order for correct state propagation:
@@ -45,6 +46,14 @@ data class GameTickResult(
 
 class DefaultGameEngine(private val systems: List<GameSystem>) : GameEngine {
     override fun initialize(seed: Long, content: GameContent, config: EngineConfig): GameState {
+        val random = Random(seed) // used for variableStartIndex and future randomisation
+
+        val startIndex = if (content.cureSequence.variableStartIndex) {
+            random.nextInt(content.cureSequence.sequence.size)
+        } else {
+            0
+        }
+
         // 1. Locate the start room
         val startRoomId = content.progression.startRoomId
         content.rooms[startRoomId]
@@ -79,7 +88,7 @@ class DefaultGameEngine(private val systems: List<GameSystem>) : GameEngine {
         // 4. Build initial CauldronState
         val cauldron = CauldronState(
             requestQueue = content.cureSequence.sequence,
-            deliveredCount = 0,
+            deliveredCount = startIndex,  // start delivery count at seed-determined offset
             isComplete = false,
         )
 
@@ -113,12 +122,12 @@ class DefaultGameEngine(private val systems: List<GameSystem>) : GameEngine {
         val idValue = itemId.value
         // Try exact match first
         content.itemTypes[idValue]?.let { return it.family }
-        // Try prefix match: strip trailing _NN suffix (e.g. "crystal_ball_01" -> "crystal_ball")
-        val prefixMatch = content.itemTypes.entries.find { (key, _) ->
-            idValue.startsWith(key)
-        }
-        if (prefixMatch != null) return prefixMatch.value.family
-        return ItemType.ORNAMENT
+        // Try prefix match: longest match wins (e.g. "crystal_ball_01" -> "crystal_ball")
+        return content.itemTypes.entries
+            .filter { (key, _) -> idValue.startsWith(key) }
+            .maxByOrNull { (key, _) -> key.length }
+            ?.value?.family
+            ?: ItemType.ORNAMENT
     }
 
     override fun update(previous: GameState, input: FrameInput, deltaSeconds: Float): GameTickResult {

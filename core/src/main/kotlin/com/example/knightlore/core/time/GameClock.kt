@@ -10,11 +10,15 @@ package com.example.knightlore.core.time
  */
 class GameClock(private val fixedStepSeconds: Float) {
 
+    init {
+        require(fixedStepSeconds > 0f) { "fixedStepSeconds must be positive, got $fixedStepSeconds" }
+    }
+
     private var accumulator: Float = 0f
 
     /** Call each frame with the real delta time in seconds. */
     fun advance(deltaSeconds: Float) {
-        accumulator += deltaSeconds
+        accumulator += deltaSeconds.coerceAtMost(fixedStepSeconds * 8f)
     }
 
     /**

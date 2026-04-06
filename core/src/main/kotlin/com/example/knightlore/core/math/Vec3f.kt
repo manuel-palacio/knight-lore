@@ -10,13 +10,15 @@ data class Vec3f(val x: Float, val y: Float, val z: Float) {
 
     operator fun times(scalar: Float): Vec3f = Vec3f(x * scalar, y * scalar, z * scalar)
 
+    operator fun div(scalar: Float): Vec3f = Vec3f(x / scalar, y / scalar, z / scalar)
+
     operator fun unaryMinus(): Vec3f = Vec3f(-x, -y, -z)
 
     fun length(): Float = sqrt(x * x + y * y + z * z)
 
     fun normalized(): Vec3f {
         val len = length()
-        return if (len == 0f) ZERO else Vec3f(x / len, y / len, z / len)
+        return if (len < EPSILON) ZERO else Vec3f(x / len, y / len, z / len)
     }
 
     fun dot(other: Vec3f): Float = x * other.x + y * other.y + z * other.z
@@ -35,5 +37,6 @@ data class Vec3f(val x: Float, val y: Float, val z: Float) {
         val ONE = Vec3f(1f, 1f, 1f)
         /** Up direction: positive Z axis. */
         val UP = Vec3f(0f, 0f, 1f)
+        private const val EPSILON = 1e-6f
     }
 }

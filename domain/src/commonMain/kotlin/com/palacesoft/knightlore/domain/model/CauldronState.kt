@@ -1,5 +1,8 @@
 package com.palacesoft.knightlore.domain.model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class CauldronState(
     val requestQueue: List<ItemType>,   // ordered list of 14 items Melkhior wants
     val deliveredCount: Int,            // how many have been delivered so far

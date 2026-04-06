@@ -1,7 +1,9 @@
 package com.palacesoft.knightlore.core.math
 
 import kotlin.math.sqrt
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class Vec3f(val x: Float, val y: Float, val z: Float) {
 
     operator fun plus(other: Vec3f): Vec3f = Vec3f(x + other.x, y + other.y, z + other.z)

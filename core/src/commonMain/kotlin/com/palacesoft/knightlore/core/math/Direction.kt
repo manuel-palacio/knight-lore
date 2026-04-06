@@ -1,6 +1,7 @@
 package com.palacesoft.knightlore.core.math
 
 import kotlin.math.sqrt
+import kotlinx.serialization.Serializable
 
 /**
  * 8-directional enum for isometric movement.
@@ -11,6 +12,7 @@ import kotlin.math.sqrt
  * On screen (isometric projection):
  *   NORTH maps to up-left, EAST maps to up-right, SOUTH maps to down-right, WEST maps to down-left.
  */
+@Serializable
 enum class Direction8 {
     NORTH,
     NORTHEAST,

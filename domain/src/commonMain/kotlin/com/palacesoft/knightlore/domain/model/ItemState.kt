@@ -3,7 +3,9 @@ package com.palacesoft.knightlore.domain.model
 import com.palacesoft.knightlore.core.ids.ItemId
 import com.palacesoft.knightlore.core.ids.RoomId
 import com.palacesoft.knightlore.core.math.Vec3f
+import kotlinx.serialization.Serializable
 
+@Serializable
 enum class ItemType {
     // The 14-step cure sequence items (canonical Knight Lore names)
     CRYSTAL_BALL,
@@ -22,11 +24,15 @@ enum class ItemType {
     ORNAMENT,
 }
 
+@Serializable
 sealed interface ItemLocation {
+    @Serializable
     data class InRoom(val roomId: RoomId, val position: Vec3f) : ItemLocation
+    @Serializable
     data object CarriedByPlayer : ItemLocation
 }
 
+@Serializable
 data class ItemInstance(
     val id: ItemId,
     val type: ItemType,

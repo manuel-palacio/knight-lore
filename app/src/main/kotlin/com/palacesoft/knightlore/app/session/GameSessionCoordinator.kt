@@ -5,6 +5,7 @@ import com.palacesoft.knightlore.data.asset.ContentRepository
 import com.palacesoft.knightlore.domain.GameEngine
 import com.palacesoft.knightlore.domain.event.GameEvent
 import com.palacesoft.knightlore.domain.model.EngineConfig
+import com.palacesoft.knightlore.domain.model.GameContent
 import com.palacesoft.knightlore.domain.model.GameState
 import com.palacesoft.knightlore.domain.rules.RoomProvider
 import kotlinx.coroutines.flow.StateFlow
@@ -23,11 +24,15 @@ class GameSessionCoordinator(
     val gameState: StateFlow<GameState>?
         get() = loopCoordinator?.state
 
+    var loadedContent: GameContent? = null
+        private set
+
     suspend fun startNewGame(
         seed: Long = System.currentTimeMillis(),
         config: EngineConfig = EngineConfig(),
     ): GameLoopCoordinator {
         val content = contentRepository.loadContent()
+        loadedContent = content
         val roomProvider = ContentRoomProvider(content)
         val engine = engineFactory(roomProvider)
         val initialState = engine.initialize(seed, content, config)

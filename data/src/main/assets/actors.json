@@ -1,0 +1,4 @@
+[
+  { "id": "guard_patrol", "kind": "GUARD_PATROL", "patrolRadius": 3.0, "contactDamage": 1, "formReactive": false },
+  { "id": "ghost", "kind": "GHOST", "patrolRadius": 4.0, "contactDamage": 1, "formReactive": true }
+]

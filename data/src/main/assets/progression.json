@@ -1,0 +1,13 @@
+{
+  "totalRequiredItems": 14,
+  "startRoomId": "room_002",
+  "cauldronRoomId": "room_001",
+  "cureMode": "MODERN",
+  "sequence": [
+    "CRYSTAL_BALL", "GOBLET", "WINE_BOTTLE", "GEM",
+    "CRYSTAL_BALL", "POISON_VIAL", "BOOT",
+    "TEACUP", "GEM", "POISON_VIAL", "BOOT",
+    "GOBLET", "TEACUP", "WINE_BOTTLE"
+  ],
+  "variableStartIndex": false
+}

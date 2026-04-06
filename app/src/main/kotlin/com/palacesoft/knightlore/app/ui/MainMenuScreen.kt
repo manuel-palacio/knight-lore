@@ -24,6 +24,7 @@ fun MainMenuScreen(
     hasSave: Boolean = false,
     onContinue: () -> Unit = {},
     onNewGame: () -> Unit,
+    onSettings: () -> Unit = {},
 ) {
     Box(
         modifier = Modifier
@@ -60,6 +61,15 @@ fun MainMenuScreen(
                 ),
             ) {
                 Text("NEW GAME", letterSpacing = 4.sp)
+            }
+            Button(
+                onClick = onSettings,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF1A1430),
+                    contentColor = Color(0xFF8899AA),
+                ),
+            ) {
+                Text("SETTINGS", letterSpacing = 4.sp)
             }
         }
     }

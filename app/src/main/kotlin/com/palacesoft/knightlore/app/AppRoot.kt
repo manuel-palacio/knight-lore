@@ -22,6 +22,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,20 +36,29 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.palacesoft.knightlore.app.input.TouchInputOverlay
+import com.palacesoft.knightlore.app.input.TouchInputState
 import com.palacesoft.knightlore.app.session.GameSessionCoordinator
 import com.palacesoft.knightlore.app.session.GameSessionViewModel
+import com.palacesoft.knightlore.app.settings.GameSettings
+import com.palacesoft.knightlore.app.settings.SettingsRepository
 import com.palacesoft.knightlore.app.ui.MainMenuScreen
+import com.palacesoft.knightlore.app.ui.SettingsScreen
+import com.palacesoft.knightlore.debug.DebugOverlayRenderer
 import com.palacesoft.knightlore.domain.model.Form
 import com.palacesoft.knightlore.domain.model.GameState
 import com.palacesoft.knightlore.render.GameRenderView
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
 @Composable
-fun AppRoot(viewModel: GameSessionViewModel) {
+fun AppRoot(viewModel: GameSessionViewModel, settingsRepository: SettingsRepository) {
     val navController = rememberNavController()
+    val scope = rememberCoroutineScope()
     NavHost(navController = navController, startDestination = "menu") {
         composable("menu") {
             val hasSave by viewModel.hasSave.collectAsState()
+            val currentSettings by settingsRepository.settings.collectAsState(initial = GameSettings())
             MainMenuScreen(
                 hasSave = hasSave,
                 onContinue = {
@@ -56,20 +66,41 @@ fun AppRoot(viewModel: GameSessionViewModel) {
                     navController.navigate("game")
                 },
                 onNewGame = {
-                    viewModel.startNewGame()
+                    viewModel.startNewGame(currentSettings.difficulty)
                     navController.navigate("game")
+                },
+                onSettings = {
+                    navController.navigate("settings")
                 },
             )
         }
         composable("game") {
-            GameScreen(sessionCoordinator = viewModel.coordinator, navController = navController)
+            val currentSettings by settingsRepository.settings.collectAsState(initial = GameSettings())
+            GameScreen(
+                sessionCoordinator = viewModel.coordinator,
+                navController = navController,
+                debugOverlayEnabled = currentSettings.debugOverlayEnabled && BuildConfig.DEBUG,
+            )
+        }
+        composable("settings") {
+            val currentSettings by settingsRepository.settings.collectAsState(initial = GameSettings())
+            SettingsScreen(
+                settings = currentSettings,
+                onSave = { updated -> scope.launch { settingsRepository.save(updated) } },
+                onBack = { navController.popBackStack() },
+            )
         }
     }
 }
 
 @Composable
-fun GameScreen(sessionCoordinator: GameSessionCoordinator, navController: NavHostController) {
+fun GameScreen(
+    sessionCoordinator: GameSessionCoordinator,
+    navController: NavHostController,
+    debugOverlayEnabled: Boolean = false,
+) {
     var loadState by remember { mutableStateOf<LoadState>(LoadState.Loading) }
+    val touchInput = remember { TouchInputState() }
 
     LaunchedEffect(Unit) {
         // Poll until the coordinator's game state becomes available (set by the ViewModel).
@@ -98,11 +129,20 @@ fun GameScreen(sessionCoordinator: GameSessionCoordinator, navController: NavHos
                             context = context,
                             gameState = state.gameStateFlow,
                             content = sessionCoordinator.loadedContent!!,
-                            onFrameAdvance = { deltaSeconds -> sessionCoordinator.advance(deltaSeconds) },
-                        )
+                            onFrameAdvance = { deltaSeconds ->
+                                sessionCoordinator.submitInput(touchInput.buildFrameInput())
+                                sessionCoordinator.advance(deltaSeconds)
+                                touchInput.clearOneShotFlags()
+                            },
+                        ).also { view ->
+                            if (debugOverlayEnabled && BuildConfig.DEBUG) {
+                                view.debugRenderer = DebugOverlayRenderer::render
+                            }
+                        }
                     },
                 )
                 GameHudOverlay(gameState = gameState)
+                TouchInputOverlay(state = touchInput, modifier = Modifier.fillMaxSize())
 
                 // Damage flash overlay
                 if (uiState.damageFlashTicks > 0) {

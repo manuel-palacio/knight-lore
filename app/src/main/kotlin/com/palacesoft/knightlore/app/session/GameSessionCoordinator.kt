@@ -5,6 +5,7 @@ import com.palacesoft.knightlore.data.ContentRoomProvider
 import com.palacesoft.knightlore.data.asset.ContentRepository
 import com.palacesoft.knightlore.domain.GameEngine
 import com.palacesoft.knightlore.domain.event.GameEvent
+import com.palacesoft.knightlore.domain.input.FrameInput
 import com.palacesoft.knightlore.domain.model.EngineConfig
 import com.palacesoft.knightlore.domain.model.GameContent
 import com.palacesoft.knightlore.domain.model.GameState
@@ -67,6 +68,10 @@ class GameSessionCoordinator(
         currentConfig = snapshot.config
         onGameStarted?.invoke()
         return loop
+    }
+
+    fun submitInput(input: FrameInput) {
+        loopCoordinator?.submitInput(input)
     }
 
     fun advance(deltaSeconds: Float): List<GameEvent> {

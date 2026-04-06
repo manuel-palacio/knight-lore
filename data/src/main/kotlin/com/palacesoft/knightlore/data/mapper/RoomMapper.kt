@@ -65,7 +65,7 @@ object RoomMapper {
         }
 
         val theme = parseRoomTheme(dto.theme, dto.id)
-        val special = parseRoomSpecial(dto.special)
+        val special = parseRoomSpecial(dto.special, dto.id)
 
         return RoomDefinition(
             id = roomId,
@@ -99,12 +99,13 @@ object RoomMapper {
         }
     }
 
-    private fun parseRoomSpecial(special: String?): RoomSpecial? {
-        return when (special?.uppercase()) {
-            "CAULDRON" -> RoomSpecial.CauldronRoom
-            "START" -> RoomSpecial.StartRoom
-            null -> null
-            else -> null
+    private fun parseRoomSpecial(value: String?, roomId: String): RoomSpecial? = when (value) {
+        null -> null
+        "CAULDRON" -> RoomSpecial.CauldronRoom
+        "START" -> RoomSpecial.StartRoom
+        else -> {
+            logger.warning("Unknown room special '$value' in room '$roomId', treating as null")
+            null
         }
     }
 }

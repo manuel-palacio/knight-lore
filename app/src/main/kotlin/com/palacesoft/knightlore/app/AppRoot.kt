@@ -108,7 +108,7 @@ fun GameScreen(sessionCoordinator: GameSessionCoordinator, navController: NavHos
                             Button(onClick = {
                                 sessionCoordinator.eventHandler.dismissGameOver()
                                 navController.navigate("menu") {
-                                    popUpTo(0) { inclusive = true }
+                                    popUpTo("menu") { inclusive = true }
                                 }
                             }) { Text("MAIN MENU") }
                         }

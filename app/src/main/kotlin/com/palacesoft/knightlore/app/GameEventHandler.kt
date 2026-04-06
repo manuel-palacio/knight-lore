@@ -4,6 +4,7 @@ import com.palacesoft.knightlore.domain.event.GameEvent
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 /**
  * Translates domain GameEvents into UI-level state changes.
@@ -15,26 +16,25 @@ class GameEventHandler {
     val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
 
     fun handleEvents(events: List<GameEvent>) {
-        var current = _uiState.value
-        for (event in events) {
-            current = when (event) {
-                is GameEvent.GameOver         -> current.copy(showGameOver = true)
-                is GameEvent.QuestCompleted   -> current.copy(showQuestComplete = true)
-                is GameEvent.TransformationStarted -> current.copy(isTransforming = true)
-                is GameEvent.TransformationCompleted -> current.copy(isTransforming = false)
-                is GameEvent.PlayerDamaged    -> current.copy(damageFlashTicks = 12)
-                else -> current
+        _uiState.update { current ->
+            // Decrement first — ensures PlayerDamaged in this batch resets to full 12, not 11
+            var next = if (current.damageFlashTicks > 0) current.copy(damageFlashTicks = current.damageFlashTicks - 1) else current
+            for (event in events) {
+                next = when (event) {
+                    is GameEvent.GameOver               -> next.copy(showGameOver = true)
+                    is GameEvent.QuestCompleted         -> next.copy(showQuestComplete = true)
+                    is GameEvent.TransformationStarted  -> next.copy(isTransforming = true)
+                    is GameEvent.TransformationCompleted -> next.copy(isTransforming = false)
+                    is GameEvent.PlayerDamaged          -> next.copy(damageFlashTicks = 12)
+                    else                               -> next
+                }
             }
+            next
         }
-        // Decrement damageFlashTicks each call (called once per frame)
-        if (current.damageFlashTicks > 0) {
-            current = current.copy(damageFlashTicks = current.damageFlashTicks - 1)
-        }
-        _uiState.value = current
     }
 
-    fun dismissGameOver()    { _uiState.value = _uiState.value.copy(showGameOver = false) }
-    fun dismissQuestComplete() { _uiState.value = _uiState.value.copy(showQuestComplete = false) }
+    fun dismissGameOver()      { _uiState.update { it.copy(showGameOver = false) } }
+    fun dismissQuestComplete() { _uiState.update { it.copy(showQuestComplete = false) } }
 }
 
 data class GameUiState(

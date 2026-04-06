@@ -1,6 +1,7 @@
 plugins {
     id("android-library-convention")
     alias(libs.plugins.ksp)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -8,6 +9,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":core"))
     implementation(project(":domain"))
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)

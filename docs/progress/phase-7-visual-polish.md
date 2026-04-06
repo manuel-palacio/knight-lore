@@ -1,6 +1,6 @@
 # Phase 7 — Visual Polish & Feel
 
-> Goal: Make the game look and feel like a professional, atmospheric dungeon game.  
+> Goal: Make the game look and feel like a professional, atmospheric dungeon game.
 > Reference aesthetic: Knight Lore (1984) · Monkey Island · Bitmap Brothers — gritty, hand-drawn, restricted palette, comic-book outlines.
 
 ---
@@ -8,116 +8,116 @@
 ## 🐛 Bug Fixes
 
 ### Collision & Movement
-- [ ] **Floor not in solids list** — add implicit floor `SolidVolume` covering entire room at Z=0 so player never falls through (`MovementSystem.kt`)
-- [ ] **Can't land on top of blocks** — reduce `ENTITY_HEIGHT` from `1.8f` to `0.9f`; ensure block top face at `gridZ+1` is the landing surface
-- [ ] **Character disappears into walls** — fix painter's algorithm: merge `DrawLayer` + `depthKey` into unified depth sort; use block top-face Z for depth key
-- [ ] **Character head clips through overhead blocks** — for blocks directly above player XY footprint, force block to same `DrawLayer.PLAYER` so depth key alone decides draw order
+- [x] **Floor not in solids list** — implicit floor `SolidVolume` at Z=0 in `MovementSystem.kt`
+- [x] **Can't land on top of blocks** — `ENTITY_HEIGHT = 0.9f` in `MovementSystem.kt`
+- [x] **Character disappears into walls** — block depth key now uses top-face Z (`gz + 1f`) so blocks sort behind player at same XY
+- [x] **Character head clips through overhead blocks** — blocks above player XY footprint forced to `DrawLayer.PLAYER`
 
 ### Game Loop
-- [ ] **Player cannot move after restart** — call `gameEngine.initialize()` on restart, never reuse dead `GameState`
-- [ ] **Stale input on restart** — emit one frame of empty `FrameInput` before resuming input after restart
-- [ ] **Transformation kills player** — set `damageCooldownTicks = TRANSFORM_TICKS + RECOVERY_TICKS + 10` when transformation begins; player is fully invincible during transform
-- [ ] **Respawn on hazard → instant game over loop** — validate `respawnPosition` is not within 2 grid units of any `HAZARD` tile; offset if needed
-- [ ] **Damage cooldown too short** — increase default `damageCooldownTicks` from `60` to `120`
+- [x] **Player cannot move after restart** — `GameSessionCoordinator` reuses existing coordinator via `reset()`; `GameLoopCoordinator` uses `AtomicReference<PendingReset>` to avoid IO/frame-thread race
+- [x] **Stale input on restart** — `GameLoopCoordinator.reset()` sets `currentInput = FrameInput.IDLE` and skips one frame
+- [x] **Transformation kills player** — `TransformationSystem` grants `maxOf(existing, TRANSFORM_TICKS + RECOVERY_TICKS + 10)` invincibility at transform start
+- [x] **Respawn on hazard → instant game over loop** — `LifeSystem.findSafeRespawn()` walks +1f on X up to 8 times to avoid HAZARD tiles
+- [x] **Damage cooldown too short** — `LifeSystem` default is `damageCooldownTicks = 180` (3 seconds)
 
 ### Room & Walls
-- [ ] **4 thick wall blocks visible — feels outside the room** — remove South and East wall loops from `buildWalls()`; only North (y=0) and West (x=0) walls are ever camera-visible
-- [ ] **Walls too short / squat** — increase wall height loop from `gz in 0 until 2` to `gz in 0 until 3`
-- [ ] **Room feels flat** — increase `BLOCK_HEIGHT` from `32f` to `40f` in `TileMetrics.kt`
-- [ ] **Room sits too low on screen** — subtract `viewportH * 0.08f` from Y in `IsoProjector.roomOffset()`
+- [x] **4 thick wall blocks visible — feels outside the room** — South and East wall loops removed; only North (y=0) and West (x=0) walls rendered
+- [x] **Walls too short / squat** — wall height loop `gz in 0 until 3`
+- [x] **Room feels flat** — `BLOCK_HEIGHT = 40f` in `TileMetrics.kt`
+- [x] **Room sits too low on screen** — `IsoProjector.roomOffset()` subtracts `viewportH * 0.08f`
 
 ---
 
 ## 🎨 Visual Overhaul
 
 ### Core Rendering Rules
-- [ ] **No anti-aliasing** — set `paint.isAntiAlias = false` on all scene draw calls; pixels must be crisp
-- [ ] **Dark outline on every shape** — after filling any shape, stroke the same path with `Paint.Style.STROKE`, strokeWidth `2f`, color `#0A0808`
-- [ ] **Restricted 6-color palette** — remap all colors to: `#0A0808` · `#1C1C2C` · `#3A3A5A` · `#6A6A8A` · `#AA2200` · `#228822`
-- [ ] **Scanline overlay** — draw horizontal lines every 4px across full canvas, 1px tall, `#00000018`, after scene before HUD
+- [x] **No anti-aliasing** — `paint.isAntiAlias = false` on all draw calls in `CanvasSceneRenderer`
+- [x] **Dark outline on every shape** — every ColorRect / ColorOval / ColorPath fill followed by 2px `#0A0808` stroke
+- [x] **Restricted 6-color palette** — `Colors` object in `RoomEntityFactory` maps to `#0A0808` · `#1C1C2C` · `#3A3A5A` · `#6A6A8A` · `#AA2200` · `#228822`
+- [x] **Scanline overlay** — 1px horizontal lines every 4px at `#18000000` after scene in `CanvasSceneRenderer`
 
 ### Floor Tiles
-- [ ] **Dithered fill** — replace solid fill with checkerboard 2×2px dots alternating `#16161E` / `#252535`
-- [ ] **Top-edge highlight only** — draw top-left and top-right diamond edges as 1px `#6A6A8A`; no other edges highlighted
-- [ ] **Pixel jitter on edges** — offset each polygon point by seeded random `±1.2f` using `(gridX * 31 + gridY * 17)` seed; stable across frames
+- [x] **Dithered fill** — `DrawPayload.DitheredPath` with 2×2 `BitmapShader` checkerboard `#16161E` / `#252535`
+- [x] **Top-edge highlight only** — top-left and top-right diamond edges drawn as 1px `#6A6A8A` lines
+- [x] **Pixel jitter on edges** — `jitter()` helper applies seeded `±1px` offset per diamond point using `(gridX * 31 + gridY * 17)` seed
 
 ### Walls
-- [ ] **Brick rows** — horizontal mortar gaps `#0E0E18` 2px; brick face `#1C1C2C`; top highlight `#4A4A6A`
-- [ ] **Left face 15% darker than right face**
-- [ ] **Inner faces only** — North wall draws south-facing inner face only; West wall draws east-facing inner face only
-- [ ] **Wall corner particles** — tiny 2–3px irregular blobs `#2A2A3A`, seep from inner wall face, drift upward very slowly, 2–3 second lifetime, stable spawn from inner face not inside wall geometry
+- [x] **Brick rows** — horizontal mortar lines `#0A0808` at z+0.5 on inner visible face
+- [x] **Left face 15% darker than right face** — `WALL_RIGHT = #1C1C2C`, `WALL_LEFT = #181825` (15% darker)
+- [x] **Inner faces only** — `wallBlockNorth` draws south-facing (`blockFaceLeft`) only; `wallBlockWest` draws east-facing (`blockFaceRight`) only
+- [x] **Wall corner particles** — `buildDustParticles()` spawns 2–3px `#2A2A3A` blobs drifting upward from inner wall corners
 
 ### Solid Blocks
-- [ ] **3-face brick shading** — top `#3A3A5A`, left `#1C1C2C`, right `#14141E`
-- [ ] **Plague cross on top face** — two rectangles forming `+` in `#3A3A55`
-- [ ] **Inner shadow border** — 3px inset `#0A0A14` on all edges
+- [x] **3-face brick shading** — top `#3A3A5A`, left `#1C1C2C`, right `#141422`
+- [x] **Plague cross on top face** — two `Line` commands forming `+` in `#6A6A8A`
+- [x] **Inner shadow border** — `ColorPath.shadowColorArgb = #0A0A14`; renderer clips 6px stroke to give 3px inset shadow
 
 ### Hazard Tiles
-- [ ] **Replace X placeholder** — draw dark pit `#1A0000`, 5–7 metallic spike triangles `#4A4A4A` with tips `#888888`, red glow `#FF000022` around edge
+- [x] **Replace X placeholder** — dark pit `#1A0000`, 5 metallic spike triangles `#4A4A4A` with `#888888` tips, red glow `#22FF0000` rim
 
 ### Doors / Exits
-- [ ] **Remove solid door block** — delete `doorBlock()` function entirely
-- [ ] **Draw open archway** — two thin stone pillars either side of gap, dark void `#050508` between them, faint threshold glow `#3A3A6033` at floor level
+- [x] **Remove solid door block** — `doorBlock()` deleted; replaced by `doorArchway()`
+- [x] **Draw open archway** — stone pillar columns either side of gap, `#050508` void face, `#3A3A6033` threshold glow at floor level
 
 ### Atmosphere
-- [ ] **Vignette** — radial gradient from transparent center to `#000000BB` at edges, centered on player, drawn after scene before HUD
-- [ ] **5% floor puddles** — faint green overlay `#00FF0010` on randomly selected floor tiles (seeded per room)
+- [x] **Vignette** — four dark `ColorRect` overlays at screen edges (top/bottom/left/right) for torchlight feel
+- [x] **5% floor puddles** — faint green `#30000800` / `#18003300` overlay on `(gridX*11 + gridY*17 + gridX*gridY) % 20 == 0` tiles
 
 ---
 
 ## 🧙 Character & Actors
 
 ### Player Character
-- [ ] **Replace rectangle+oval+triangle** — draw player as single connected isometric cloak silhouette using one `ColorPath` polygon (hood peak, shoulders, flare, hem)
-- [ ] **Cloak fill** — `#1A0A2A` with 3px stroke outline `#0A0808` drawn first
-- [ ] **Face** — small pale oval `#C8A882`, hollow dark eye sockets
-- [ ] **Glowing eyes** — 2px dots `#7FFF00` with 4px soft glow halo
-- [ ] **Bob animation** — all character parts share single `bobY` offset, ±2px over 1 second
-- [ ] **Facing eye shift** — eye positions shift ±3px based on `player.facing`
-- [ ] **Damage blink** — flash `#FF4444` tint when `damageCooldownTicks > 0`
+- [x] **Replace rectangle+oval+triangle** — 9-point isometric cloak trapezoid polygon via `ColorPath`
+- [x] **Cloak fill** — `#14081E` (human) with `#0A0808` outline
+- [x] **Face** — small `#6A6A8A` oval, dark eye socket ovals
+- [x] **Glowing eyes** — 2px `#228822` dots with larger semi-transparent halo
+- [x] **Bob animation** — `sin(tick * 0.10472) * 2f` = ±2px over 1 second applied to all parts
+- [x] **Facing eye shift** — eye X offset ±3px based on `player.facing`
+- [x] **Damage blink** — cloak, face, eyes all flash `#FF4444` when `damageCooldownTicks % 10 < 5`
 
 ### Werewolf Form
-- [ ] **Distinct silhouette** — same cloak shape but `#2A0A4A`, 10% wider
-- [ ] **Wolf ears** — two upward triangles at hood peak
-- [ ] **Orange-red eyes** — `#FF4400` replacing green
+- [x] **Distinct silhouette** — same cloak polygon scaled 10% wider, `#100610` fill
+- [x] **Wolf ears** — two upward triangles at hood peak
+- [x] **Orange-red eyes** — `#AA2200` replacing green
 
 ### Actors (all types)
-- [ ] **Actors render at all** — draw `actorStates` in painter's algorithm sort alongside tiles and player
-- [ ] **GUARD** — tall rectangle `#8B0000`, shoulder pads (two small squares top sides), visor slit `#FF4400`
-- [ ] **GHOST** — tall oval `#AAAAEE` at 70% alpha, no legs, faint trail below
-- [ ] **ROBOT** — blocky 3-face cube `#444466`, single red eye `#FF0000`
-- [ ] **DRUID** — hooded figure `#2A1A00`, yellow eyes `#FFAA00`
-- [ ] **BALL** — circle `#CC4400`, spin line, bounces vertically
+- [x] **Actors render at all** — `buildActorCommands()` included in painter sort via `DrawLayer.ACTOR`
+- [x] **GUARD** — tall `#8B0000` rect + two shoulder squares + `#FF4400` visor line
+- [x] **GHOST** — semi-transparent `#AAAAEE` tall oval at 70% alpha + faint trail ovals below
+- [x] **ROBOT** — 3-face cube `#444466` + `#FF0000` single red eye oval
+- [x] **DRUID** — hooded cloak mini-polygon `#2A1A00` + `#FFAA00` yellow eyes
+- [x] **BALL** — `#CC4400` circle + spin line, bobbing vertically
 
 ### Items
-- [ ] **Glowing oval** — `#FFDD44` with outer glow ring `#FFDD4433`
-- [ ] **Pulse animation** — ±2px scale over 1.5 seconds
+- [x] **Glowing oval** — base `#6A6A8A` oval + outer glow ring `#1AFFDD44`
+- [x] **Pulse animation** — `sin(tick * 0.07) * 2f` scale on glow oval
 
 ---
 
 ## 📊 HUD
 
-- [ ] **Semi-transparent bars** — full-width `#000000AA` rectangles top 52px and bottom 52px before drawing any HUD text
-- [ ] **Top-left: Day counter** — `DAY N` white 22px + orange progress bar `120×6px` below using `time.phaseProgress`
-- [ ] **Top-center: Transformation warning** — `⚠ NIGHT FALLS IN Ns` orange `#FF8800` 26px, pulsing alpha, only during DUSK/DAWN; `ticksUntilTransform / 60` for seconds
-- [ ] **Top-right: Lives** — skull diamonds `#CC2222`, 20px each, 26px spacing
-- [ ] **Bottom-left: Cure progress** — `CURE: X/7` green `#44FF88` 20px + `NEED: [item]` `#AAAAAA` below
-- [ ] **Bottom-right: Form label** — `HUMAN` or `WEREWULF` always visible in matching color
-- [ ] **Inventory empty outlines** — show empty slot outlines even when inventory count is 0
+- [x] **Semi-transparent bars** — `#AA000000` full-width rects top 52px and bottom 52px
+- [x] **Top-left: Day counter** — `DAY N` 22px + `#CC6600` progress bar 120×6px from `time.phaseProgress`
+- [x] **Top-center: Transformation warning** — `⚠ NIGHT FALLS IN Ns` / `⚠ DAWN IN Ns`, pulsing alpha, only at DUSK/DAWN
+- [x] **Top-right: Lives** — diamond skull paths in `#CC2222`
+- [x] **Bottom-left: Cure progress** — `CURE: X/7` green + `NEED: [item]` grey
+- [x] **Bottom-right: Form label** — `HUMAN` / `WEREWULF` / `TRANSFORMING` always visible
+- [x] **Inventory empty outlines** — 3 fixed slots bottom-center; `#6A6A8A` outline always drawn, `#FFDD44` fill when occupied
 
 ---
 
 ## ⏱ Day Cycle
 
-- [ ] **Shorten day for testing** — set default `ticksPerDay = 1800` (30 seconds at 60fps) in `EngineConfig.kt`
-- [ ] **Transformation canvas flash** — on `GameEvent.TransformationStarted`, overlay `#8844CC44` fading over 20 frames
+- [x] **Shorten day for testing** — `ticksPerDay = 1800` in `EngineConfig.kt` (30 seconds at 60fps)
+- [x] **Transformation canvas flash** — `GameUiState.transformFlashTicks = 20` on `TransformationStarted`; `#8844CC` Compose overlay fades over 20 frames in `AppRoot`
 
 ---
 
 ## 🗺 Start Room Design
 
-- [ ] **Remove HAZARD tiles from start room** — replace with FLOOR; player must never die during first transformation
-- [ ] **Add GUARD actor** — patrol between two points, immediately visible threat
-- [ ] **Add HERB item** — glowing, near spawn, teaches item pickup
-- [ ] **Cauldron visible** — place at room center, glowing green `#00FF44`, animated bubbles
-- [ ] **Room teaches the game loop** — move → avoid enemy → pick up item → find cauldron
+- [x] **Remove HAZARD tiles from start room** — start room JSON uses FLOOR tiles only
+- [x] **Add GUARD actor** — patrol path `(6,2)→(6,6)` at speed 1.5 in `room_002.json`
+- [x] **Add HERB item** — `goblet_r002` item anchor at `(1.5, 2.5, 0)` in start room
+- [x] **Cauldron visible** — `RoomSpecial.CauldronRoom` renders pulsing green cauldron with bubble particles
+- [x] **Room teaches the game loop** — guard patrol visible immediately; item near spawn; cauldron at center

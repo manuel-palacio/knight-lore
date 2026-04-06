@@ -57,13 +57,15 @@ sealed interface DrawPayload {
     ) : DrawPayload
 
     /**
-     * Fills a polygon with a 2×2px checkerboard dither pattern.
-     * color1 is drawn at (0,0)+(1,1), color2 at (0,1)+(1,0).
+     * Fills a polygon with a dither pattern.
+     * horizontal=false (default): 2×2px checkerboard — color1 at (0,0)+(1,1), color2 at (0,1)+(1,0).
+     * horizontal=true: 2px horizontal rows alternating color1/color2 — ZX Spectrum wall look.
      */
     data class DitheredPath(
         val points: List<Vec2f>,
         val color1: Int,
         val color2: Int,
+        val horizontal: Boolean = false,
     ) : DrawPayload
 
     /**

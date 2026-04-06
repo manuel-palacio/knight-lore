@@ -1,16 +1,16 @@
 # Phase 3 — Simulation
 
-**Status:** ⏳ Pending (requires Phase 2 complete)
+**Status:** ✅ Complete
 
 ## Tasks
 
-- [ ] **3.1** Implement `CollisionSystem` + `CollisionResolver` — AABB sweep, axis-separated resolution, floor/landing detection
-- [ ] **3.2** Implement `MovementSystem` — 8-direction walk, jump, gravity, form-speed differences, transformation lock
-- [ ] **3.3** Add jump state tracking to `PlayerState` — `jumpLockTicks`, `MovementState` enum (already added in Phase 2)
-- [ ] **3.4** Implement `RoomTransitionSystem` — exit trigger geometry, spawn lookup, input lock during fade
-- [ ] **3.5** Implement `LifeSystem` — hazard contact, damage cooldown, respawn, game-over
-- [ ] **3.6** Wire `GameLoopCoordinator` — fixed-step loop with spiral-of-death cap
-- [ ] **3.7** Register all systems in correct tick order
+- [x] **3.1** Implement `CollisionSystem` + `CollisionResolver` — AABB sweep, axis-separated resolution, floor/landing detection
+- [x] **3.2** Implement `MovementSystem` — 8-direction walk, jump, gravity, form-speed differences, transformation lock
+- [x] **3.3** Add jump state tracking to `PlayerState` — `jumpLockTicks`, `MovementState` enum (added in Phase 2)
+- [x] **3.4** Implement `RoomTransitionSystem` — exit trigger geometry, spawn lookup, input lock during fade
+- [x] **3.5** Implement `LifeSystem` — hazard contact, damage cooldown, respawn, game-over
+- [x] **3.6** Wire `GameLoopCoordinator` — fixed-step loop with spiral-of-death cap, `StateFlow<GameState>`
+- [x] **3.7** Register all systems in correct tick order via `DefaultGameEngine.create(roomProvider)`
 
 ## Movement Constants
 - `WALK_SPEED_HUMAN = 4.0f` tiles/sec

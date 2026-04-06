@@ -52,6 +52,35 @@ object HudRenderer {
         paint.textSize = 24f
         paint.textAlign = Paint.Align.CENTER
         canvas.drawText(label, canvas.width / 2f, 36f, paint)
+
+        // Draw progress bar during active transformation or recovery
+        val phase = state.player.transformState.phase
+        if (phase != TransformPhase.STABLE) {
+            val maxTicks = when (phase) {
+                TransformPhase.TRANSFORMING_TO_WEREWULF, TransformPhase.TRANSFORMING_TO_HUMAN -> 60
+                TransformPhase.RECOVERING -> 30
+                TransformPhase.STABLE -> 1  // unreachable
+            }
+            val progress = (state.player.transformState.progressTicks.toFloat() / maxTicks).coerceIn(0f, 1f)
+            val barWidth = 120f
+            val barHeight = 6f
+            val barLeft = (canvas.width - barWidth) / 2f
+            val barTop = 44f
+
+            // Background
+            paint.color = 0xFF_333333.toInt()
+            canvas.drawRect(barLeft, barTop, barLeft + barWidth, barTop + barHeight, paint)
+
+            // Fill — use the target form color
+            val fillColor = when (phase) {
+                TransformPhase.TRANSFORMING_TO_WEREWULF -> 0xFF_8844CC.toInt()
+                TransformPhase.TRANSFORMING_TO_HUMAN    -> 0xFF_44BB88.toInt()
+                TransformPhase.RECOVERING               -> 0xFF_FFAA44.toInt()
+                TransformPhase.STABLE                   -> 0xFF_FFFFFF.toInt()
+            }
+            paint.color = fillColor
+            canvas.drawRect(barLeft, barTop, barLeft + barWidth * progress, barTop + barHeight, paint)
+        }
     }
 
     // Day-night progress bar: bottom center

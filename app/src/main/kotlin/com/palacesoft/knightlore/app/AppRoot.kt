@@ -103,6 +103,7 @@ fun GameScreen(
 ) {
     var loadState by remember { mutableStateOf<LoadState>(LoadState.Loading) }
     val touchInput = remember { TouchInputState() }
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         // Poll until the coordinator's game state becomes available (set by the ViewModel).
@@ -154,6 +155,12 @@ fun GameScreen(
                 if (uiState.damageFlashTicks > 0) {
                     val alpha = (uiState.damageFlashTicks / 12f).coerceIn(0f, 0.4f)
                     Box(modifier = Modifier.fillMaxSize().background(Color.Red.copy(alpha = alpha)))
+                }
+
+                // Transformation flash overlay — purple #8844CC at ~27% max alpha, fades over 20 frames
+                if (uiState.transformFlashTicks > 0) {
+                    val alpha = (uiState.transformFlashTicks / 20f) * (0x44 / 255f)
+                    Box(modifier = Modifier.fillMaxSize().background(Color(0xFF8844CC).copy(alpha = alpha)))
                 }
 
                 // Game Over overlay

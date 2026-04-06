@@ -37,9 +37,11 @@ object RoomEntityFactory {
         const val FLOOR_CRACK    = BLACK
         const val FLOOR_GLOW_BASE = 0x30_000800.toInt()  // tinted dark (still green-ish)
         const val FLOOR_GLOW_OVER = 0x18_003300.toInt()
-        const val WALL_TOP       = MID_STONE
-        const val WALL_LEFT      = DARK_STONE
-        const val WALL_RIGHT     = 0xFF_141422.toInt()  // slightly darker than DARK_STONE
+        const val WALL_TOP          = MID_STONE
+        const val WALL_LEFT_D1      = 0xFF_1C1C2A.toInt()  // south-facing dither color 1
+        const val WALL_LEFT_D2      = 0xFF_141420.toInt()  // south-facing dither color 2
+        const val WALL_RIGHT_D1     = 0xFF_141420.toInt()  // east-facing dither color 1
+        const val WALL_RIGHT_D2     = 0xFF_0E0E18.toInt()  // east-facing dither color 2
         const val WALL_MORTAR    = BLACK
         const val WALL_HIGHLIGHT = HIGHLIGHT
         const val WALL_MOSS      = LIFE_GREEN
@@ -169,20 +171,27 @@ object RoomEntityFactory {
                         DrawPayload.Line(pts[0].x, pts[0].y, pts[1].x, pts[1].y, Colors.HIGHLIGHT, 1f))
                 }
                 TileType.SOLID_BLOCK -> {
-                    val footWorld = Vec3f(gx + 0.5f, gy + 1f, gz)
+                    // Use top-face Z for depth key so blocks sort behind player standing at same XY
+                    val footWorld = Vec3f(gx + 0.5f, gy + 1f, gz + 1f)
                     val dk = IsoProjector.depthKey(footWorld)
+                    // Blocks directly above the player's XY footprint must render in front of player
+                    val playerPos = state.player.position
+                    val isAbovePlayer = gz.toFloat() >= playerPos.z &&
+                        gx <= playerPos.x && playerPos.x < gx + 1f &&
+                        gy <= playerPos.y && playerPos.y < gy + 1f
+                    val blockLayer = if (isAbovePlayer) DrawLayer.PLAYER else DrawLayer.BLOCK
                     val id = "tile_${tile.gridX}_${tile.gridY}_${tile.gridZ}"
 
                     // Top face
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 2, "${id}_top",
+                    commands += DrawCommand(blockLayer, dk, 2, "${id}_top",
                         IsoProjector.toScreen(Vec3f(gx, gy, gz + 1f)) + offset,
                         DrawPayload.ColorPath(floorDiamond(gx, gy, gz + 1f, ox, oy), Colors.BLOCK_TOP, 0xFF_0A0A14.toInt()))
                     // Left face
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "${id}_left",
+                    commands += DrawCommand(blockLayer, dk, 1, "${id}_left",
                         IsoProjector.toScreen(Vec3f(gx, gy + 1f, gz)) + offset,
                         DrawPayload.ColorPath(blockFaceLeft(gx, gy, gz, ox, oy), Colors.BLOCK_LEFT, 0xFF_0A0A14.toInt()))
                     // Right face
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 0, "${id}_right",
+                    commands += DrawCommand(blockLayer, dk, 0, "${id}_right",
                         IsoProjector.toScreen(Vec3f(gx + 1f, gy, gz)) + offset,
                         DrawPayload.ColorPath(blockFaceRight(gx, gy, gz, ox, oy), Colors.BLOCK_RIGHT, 0xFF_0A0A14.toInt()))
 
@@ -192,10 +201,10 @@ object RoomEntityFactory {
                     val cH2 = pt(gx + 0.8f, gy + 0.5f, gz + 1f, ox, oy)
                     val cV1 = pt(gx + 0.5f, gy + 0.2f, gz + 1f, ox, oy)
                     val cV2 = pt(gx + 0.5f, gy + 0.8f, gz + 1f, ox, oy)
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 3, "${id}_cross_h",
+                    commands += DrawCommand(blockLayer, dk, 3, "${id}_cross_h",
                         Vec2f(cH1.x, cH1.y),
                         DrawPayload.Line(cH1.x, cH1.y, cH2.x, cH2.y, crossColor, 1.5f))
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 3, "${id}_cross_v",
+                    commands += DrawCommand(blockLayer, dk, 3, "${id}_cross_v",
                         Vec2f(cV1.x, cV1.y),
                         DrawPayload.Line(cV1.x, cV1.y, cV2.x, cV2.y, crossColor, 1.5f))
                 }
@@ -336,10 +345,10 @@ object RoomEntityFactory {
                 commands += DrawCommand(DrawLayer.BLOCK, dk, 2, "${id}_top",
                     IsoProjector.toScreen(Vec3f(gx, gy, bz + 1f)) + offset,
                     DrawPayload.ColorPath(floorDiamond(gx, gy, bz + 1f, ox, oy), Colors.WALL_TOP))
-                // South-facing inner face (blockFaceLeft = y+1 face)
+                // South-facing inner face (blockFaceLeft = y+1 face) — horizontal dither rows
                 commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "${id}_left",
                     IsoProjector.toScreen(Vec3f(gx, gy + 1f, bz)) + offset,
-                    DrawPayload.ColorPath(blockFaceLeft(gx, gy, bz, ox, oy), Colors.WALL_LEFT))
+                    DrawPayload.DitheredPath(blockFaceLeft(gx, gy, bz, ox, oy), Colors.WALL_LEFT_D1, Colors.WALL_LEFT_D2, horizontal = true))
 
                 // Mortar line on the visible (left/south) face
                 val ml1 = pt(gx, gy + 1f, bz + 0.5f, ox, oy)
@@ -380,10 +389,10 @@ object RoomEntityFactory {
                 commands += DrawCommand(DrawLayer.BLOCK, dk, 2, "${id}_top",
                     IsoProjector.toScreen(Vec3f(gx, gy, bz + 1f)) + offset,
                     DrawPayload.ColorPath(floorDiamond(gx, gy, bz + 1f, ox, oy), Colors.WALL_TOP))
-                // East-facing inner face (blockFaceRight = x+1 face)
+                // East-facing inner face (blockFaceRight = x+1 face) — horizontal dither rows
                 commands += DrawCommand(DrawLayer.BLOCK, dk, 0, "${id}_right",
                     IsoProjector.toScreen(Vec3f(gx + 1f, gy, bz)) + offset,
-                    DrawPayload.ColorPath(blockFaceRight(gx, gy, bz, ox, oy), Colors.WALL_RIGHT))
+                    DrawPayload.DitheredPath(blockFaceRight(gx, gy, bz, ox, oy), Colors.WALL_RIGHT_D1, Colors.WALL_RIGHT_D2, horizontal = true))
 
                 // Mortar line on the visible (right/east) face
                 val mr1 = pt(gx + 1f, gy, bz + 0.5f, ox, oy)

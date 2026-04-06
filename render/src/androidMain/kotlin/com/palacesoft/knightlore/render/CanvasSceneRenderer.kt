@@ -84,11 +84,23 @@ object CanvasSceneRenderer {
                         if (i == 0) path.moveTo(pt.x, pt.y) else path.lineTo(pt.x, pt.y)
                     }
                     path.close()
-                    val tile = android.graphics.Bitmap.createBitmap(2, 2, android.graphics.Bitmap.Config.ARGB_8888)
-                    tile.setPixel(0, 0, payload.color1)
-                    tile.setPixel(1, 1, payload.color1)
-                    tile.setPixel(0, 1, payload.color2)
-                    tile.setPixel(1, 0, payload.color2)
+                    val tile = if (payload.horizontal) {
+                        // 1×4 bitmap: 2px color1 rows then 2px color2 rows
+                        android.graphics.Bitmap.createBitmap(1, 4, android.graphics.Bitmap.Config.ARGB_8888).also {
+                            it.setPixel(0, 0, payload.color1)
+                            it.setPixel(0, 1, payload.color1)
+                            it.setPixel(0, 2, payload.color2)
+                            it.setPixel(0, 3, payload.color2)
+                        }
+                    } else {
+                        // 2×2 checkerboard
+                        android.graphics.Bitmap.createBitmap(2, 2, android.graphics.Bitmap.Config.ARGB_8888).also {
+                            it.setPixel(0, 0, payload.color1)
+                            it.setPixel(1, 1, payload.color1)
+                            it.setPixel(0, 1, payload.color2)
+                            it.setPixel(1, 0, payload.color2)
+                        }
+                    }
                     val shader = android.graphics.BitmapShader(
                         tile,
                         android.graphics.Shader.TileMode.REPEAT,

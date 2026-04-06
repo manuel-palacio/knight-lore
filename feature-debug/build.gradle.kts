@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.knightlore.debug"
+    namespace = "com.palacesoft.knightlore.debug"
 }
 
 dependencies {

@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.knightlore.input"
+    namespace = "com.palacesoft.knightlore.input"
 }
 
 dependencies {

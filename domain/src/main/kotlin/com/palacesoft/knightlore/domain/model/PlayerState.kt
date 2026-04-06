@@ -8,6 +8,8 @@ enum class Form { HUMAN, WEREWULF }
 
 enum class TransformPhase { STABLE, TRANSFORMING_TO_WEREWULF, TRANSFORMING_TO_HUMAN }
 
+enum class MovementState { IDLE, WALKING, JUMP_ASCENT, JUMP_DESCENT, LANDING, TRANSFORMING }
+
 data class TransformState(
     val phase: TransformPhase,
     val progressTicks: Int,  // how many ticks into current phase
@@ -23,4 +25,6 @@ data class PlayerState(
     val lives: Int,
     val transformState: TransformState,
     val damageCooldownTicks: Int,  // invincibility frames after hit
+    val jumpLockTicks: Int = 0,   // anti-double-jump cooldown
+    val movementState: MovementState = MovementState.IDLE,
 )

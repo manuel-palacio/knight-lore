@@ -406,11 +406,10 @@
   "itemAnchors": [],
   "actorSpawns": [
     {
-      "actorId": "guard_patrol",
+      "actorType": "GUARD",
       "x": 4.0,
       "y": 4.0,
-      "z": 1.0,
-      "spawnId": "spawn_guard_010"
+      "z": 1.0
     }
   ]
 }

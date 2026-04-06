@@ -1,9 +1,26 @@
 package com.palacesoft.knightlore.domain
 
+import com.palacesoft.knightlore.core.ids.ItemId
+import com.palacesoft.knightlore.core.math.Direction8
+import com.palacesoft.knightlore.core.math.Vec3f
 import com.palacesoft.knightlore.domain.event.GameEvent
 import com.palacesoft.knightlore.domain.input.FrameInput
+import com.palacesoft.knightlore.domain.model.ActorState
+import com.palacesoft.knightlore.domain.model.CauldronState
+import com.palacesoft.knightlore.domain.model.DayPhase
+import com.palacesoft.knightlore.domain.model.EngineConfig
+import com.palacesoft.knightlore.domain.model.Form
 import com.palacesoft.knightlore.domain.model.GameContent
 import com.palacesoft.knightlore.domain.model.GameState
+import com.palacesoft.knightlore.domain.model.ItemInstance
+import com.palacesoft.knightlore.domain.model.ItemLocation
+import com.palacesoft.knightlore.domain.model.ItemType
+import com.palacesoft.knightlore.domain.model.ItemTypeDefinition
+import com.palacesoft.knightlore.domain.model.MovementState
+import com.palacesoft.knightlore.domain.model.PlayerState
+import com.palacesoft.knightlore.domain.model.TimeState
+import com.palacesoft.knightlore.domain.model.TransformPhase
+import com.palacesoft.knightlore.domain.model.TransformState
 import com.palacesoft.knightlore.domain.system.GameSystem
 
 /**
@@ -17,7 +34,7 @@ import com.palacesoft.knightlore.domain.system.GameSystem
  * TransformationSystem drives the actual state machine autonomously based on DayPhase.
  */
 interface GameEngine {
-    fun initialize(seed: Long, content: GameContent): GameState
+    fun initialize(seed: Long, content: GameContent, config: EngineConfig = EngineConfig()): GameState
     fun update(previous: GameState, input: FrameInput, deltaSeconds: Float): GameTickResult
 }
 
@@ -27,10 +44,81 @@ data class GameTickResult(
 )
 
 class DefaultGameEngine(private val systems: List<GameSystem>) : GameEngine {
-    override fun initialize(seed: Long, content: GameContent): GameState {
-        // TODO Phase 2: load from content
-        // For now, return a stub initial state using seed
-        TODO("Implemented in Phase 2 when ContentRepository exists")
+    override fun initialize(seed: Long, content: GameContent, config: EngineConfig): GameState {
+        // 1. Locate the start room
+        val startRoomId = content.progression.startRoomId
+        content.rooms[startRoomId]
+            ?: throw IllegalStateException("Start room not found: $startRoomId")
+
+        // 2. Build initial PlayerState
+        val player = PlayerState(
+            position = Vec3f(4f, 7f, 1f),
+            velocity = Vec3f.ZERO,
+            facing = Direction8.NORTH,
+            inventory = emptyList(),
+            airborne = false,
+            lives = config.playerLives,
+            form = Form.HUMAN,
+            transformState = TransformState(TransformPhase.STABLE, 0),
+            damageCooldownTicks = 0,
+            jumpLockTicks = 0,
+            movementState = MovementState.IDLE,
+        )
+
+        // 3. Build initial TimeState
+        val time = TimeState(
+            tick = 0L,
+            dayIndex = 0,
+            ticksInDay = 0,
+            ticksPerDay = config.ticksPerDay,
+            phase = DayPhase.DAY,
+            phaseProgress = 0f,
+            ticksUntilTransform = null,
+        )
+
+        // 4. Build initial CauldronState
+        val cauldron = CauldronState(
+            requestQueue = content.cureSequence.sequence,
+            deliveredCount = 0,
+            isComplete = false,
+        )
+
+        // 5. Seed item instances from ALL rooms' itemAnchors
+        val itemInstances: List<ItemInstance> = content.rooms.values.flatMap { room ->
+            room.itemAnchors.map { anchor ->
+                ItemInstance(
+                    id = anchor.itemId,
+                    type = resolveItemType(anchor.itemId, content),
+                    location = ItemLocation.InRoom(room.id, anchor.spawnPosition),
+                )
+            }
+        }
+
+        // 6. Build initial ActorState list — empty for now (Phase 3/5)
+        val actorStates: List<ActorState> = emptyList()
+
+        // 7. Return GameState
+        return GameState(
+            currentRoomId = startRoomId,
+            player = player,
+            time = time,
+            cauldron = cauldron,
+            itemInstances = itemInstances,
+            actorStates = actorStates,
+            roomTransition = null,
+        )
+    }
+
+    private fun resolveItemType(itemId: ItemId, content: GameContent): ItemType {
+        val idValue = itemId.value
+        // Try exact match first
+        content.itemTypes[idValue]?.let { return it.family }
+        // Try prefix match: strip trailing _NN suffix (e.g. "crystal_ball_01" -> "crystal_ball")
+        val prefixMatch = content.itemTypes.entries.find { (key, _) ->
+            idValue.startsWith(key)
+        }
+        if (prefixMatch != null) return prefixMatch.value.family
+        return ItemType.ORNAMENT
     }
 
     override fun update(previous: GameState, input: FrameInput, deltaSeconds: Float): GameTickResult {

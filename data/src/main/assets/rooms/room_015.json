@@ -1,0 +1,416 @@
+{
+  "id": "room_015",
+  "width": 8,
+  "depth": 8,
+  "height": 6,
+  "theme": "CASTLE",
+  "tiles": [
+    {
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 0,
+      "y": 1,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 0,
+      "y": 2,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 0,
+      "y": 3,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 0,
+      "y": 4,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 0,
+      "y": 5,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 0,
+      "y": 6,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 0,
+      "y": 7,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 1,
+      "y": 0,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 1,
+      "y": 1,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 1,
+      "y": 2,
+      "z": 0,
+      "type": "HAZARD"
+    },
+    {
+      "x": 1,
+      "y": 3,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 1,
+      "y": 4,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 1,
+      "y": 5,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 1,
+      "y": 6,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 1,
+      "y": 7,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 2,
+      "y": 0,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 2,
+      "y": 1,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 2,
+      "y": 2,
+      "z": 0,
+      "type": "HAZARD"
+    },
+    {
+      "x": 2,
+      "y": 3,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 2,
+      "y": 4,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 2,
+      "y": 5,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 2,
+      "y": 6,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 2,
+      "y": 7,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 3,
+      "y": 0,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 3,
+      "y": 1,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 3,
+      "y": 2,
+      "z": 0,
+      "type": "HAZARD"
+    },
+    {
+      "x": 3,
+      "y": 3,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 3,
+      "y": 4,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 3,
+      "y": 5,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 3,
+      "y": 6,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 3,
+      "y": 7,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 4,
+      "y": 0,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 4,
+      "y": 1,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 4,
+      "y": 2,
+      "z": 0,
+      "type": "HAZARD"
+    },
+    {
+      "x": 4,
+      "y": 3,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 4,
+      "y": 4,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 4,
+      "y": 5,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 4,
+      "y": 6,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 4,
+      "y": 7,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 5,
+      "y": 0,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 5,
+      "y": 1,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 5,
+      "y": 2,
+      "z": 0,
+      "type": "HAZARD"
+    },
+    {
+      "x": 5,
+      "y": 3,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 5,
+      "y": 4,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 5,
+      "y": 5,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 5,
+      "y": 6,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 5,
+      "y": 7,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 6,
+      "y": 0,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 6,
+      "y": 1,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 6,
+      "y": 2,
+      "z": 0,
+      "type": "HAZARD"
+    },
+    {
+      "x": 6,
+      "y": 3,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 6,
+      "y": 4,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 6,
+      "y": 5,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 6,
+      "y": 6,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 6,
+      "y": 7,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 7,
+      "y": 0,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 7,
+      "y": 1,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 7,
+      "y": 2,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 7,
+      "y": 3,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 7,
+      "y": 4,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 7,
+      "y": 5,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 7,
+      "y": 6,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 7,
+      "y": 7,
+      "z": 0,
+      "type": "FLOOR"
+    }
+  ],
+  "interactives": [],
+  "exits": [
+    {
+      "side": "WEST",
+      "targetRoomId": "room_014",
+      "targetSpawnId": "spawn_e"
+    },
+    {
+      "side": "SOUTH",
+      "targetRoomId": "room_001",
+      "targetSpawnId": "spawn_n"
+    }
+  ],
+  "itemAnchors": [],
+  "actorSpawns": [
+    {
+      "actorId": "guard_patrol",
+      "x": 3.0,
+      "y": 3.0,
+      "z": 1.0,
+      "spawnId": "spawn_guard_015"
+    }
+  ]
+}

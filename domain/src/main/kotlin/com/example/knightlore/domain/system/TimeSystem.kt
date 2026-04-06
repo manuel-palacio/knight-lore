@@ -14,7 +14,14 @@ class TimeSystem : GameSystem {
 
         if (newTicksInDay >= time.ticksPerDay) {
             newTicksInDay = 0
-            newDayIndex += 1
+            newDayIndex = time.dayIndex + 1
+            if (newDayIndex > 39) {
+                // Quest failed — 40 days elapsed
+                return SystemResult(
+                    state.copy(time = time.copy(ticksInDay = 0, dayIndex = 39, phase = DayPhase.DAY)),
+                    listOf(GameEvent.GameOver)
+                )
+            }
         }
 
         val newTimeOfDay = newTicksInDay.toFloat() / time.ticksPerDay.toFloat()

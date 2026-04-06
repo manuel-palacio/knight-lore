@@ -27,6 +27,15 @@ object ComposeSceneRenderer {
                         size = Size(payload.widthPx, payload.heightPx),
                     )
                 }
+                is DrawPayload.ColorPath -> {
+                    if (payload.points.isEmpty()) continue
+                    val path = androidx.compose.ui.graphics.Path()
+                    payload.points.forEachIndexed { i, pt ->
+                        if (i == 0) path.moveTo(pt.x, pt.y) else path.lineTo(pt.x, pt.y)
+                    }
+                    path.close()
+                    scope.drawPath(path, argbToComposeColor(payload.colorArgb))
+                }
             }
         }
     }

@@ -37,6 +37,16 @@ object CanvasSceneRenderer {
                         paint,
                     )
                 }
+                is DrawPayload.ColorPath -> {
+                    val path = android.graphics.Path()
+                    payload.points.forEachIndexed { i, pt ->
+                        if (i == 0) path.moveTo(pt.x, pt.y) else path.lineTo(pt.x, pt.y)
+                    }
+                    path.close()
+                    paint.color = payload.colorArgb
+                    paint.style = Paint.Style.FILL
+                    canvas.drawPath(path, paint)
+                }
             }
         }
     }

@@ -22,7 +22,7 @@ data class TileStack(val gridX: Int, val gridY: Int, val gridZ: Int, val type: T
 
 enum class TileType { FLOOR, SOLID_BLOCK, HAZARD, EMPTY }
 
-data class ActorSpawn(val actorType: String, val position: Vec3f)
+data class ActorSpawn(val actorType: ActorType, val position: Vec3f)
 
 data class InteractiveDef(val id: String, val position: Vec3f, val kind: InteractiveKind)
 

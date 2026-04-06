@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.StateFlow
  */
 class GameSessionCoordinator(
     private val contentRepository: ContentRepository,
-    private val engineFactory: (RoomProvider) -> GameEngine,
+    private val engineFactory: (RoomProvider, GameContent) -> GameEngine,
 ) {
     private var loopCoordinator: GameLoopCoordinator? = null
 
@@ -34,7 +34,7 @@ class GameSessionCoordinator(
         val content = contentRepository.loadContent()
         loadedContent = content
         val roomProvider = ContentRoomProvider(content)
-        val engine = engineFactory(roomProvider)
+        val engine = engineFactory(roomProvider, content)
         val initialState = engine.initialize(seed, content, config)
         val loop = GameLoopCoordinator(engine, initialState)
         loopCoordinator = loop

@@ -47,10 +47,10 @@ class TransformationSystemTest {
         }
         assertEquals(TransformPhase.TRANSFORMING_TO_WEREWULF, state.player.transformState.phase)
 
-        // 60th tick — completes
+        // 60th tick — completes transformation but enters RECOVERING phase
         val result = system.update(state, idle, 1f / 60f)
         assertEquals(Form.WEREWULF, result.state.player.form)
-        assertEquals(TransformPhase.STABLE, result.state.player.transformState.phase)
+        assertEquals(TransformPhase.RECOVERING, result.state.player.transformState.phase)
         assertTrue(result.events.contains(GameEvent.TransformationCompleted))
     }
 
@@ -76,6 +76,47 @@ class TransformationSystemTest {
         )
         val result = system.update(state, idle, 1f / 60f)
         assertEquals(Vec3f.ZERO, result.state.player.velocity)
+    }
+
+    @Test
+    fun transformSystem_enterRecovery_afterTransformCompletes() {
+        var state = testGameState(
+            player = testPlayerState(
+                form = Form.HUMAN,
+                transformState = TransformState(TransformPhase.TRANSFORMING_TO_WEREWULF, 0),
+            ),
+            time = testTimeState(phase = DayPhase.DUSK),
+        )
+
+        // Advance 60 ticks to complete transformation
+        repeat(TRANSFORM_TICKS) {
+            state = system.update(state, idle, 1f / 60f).state
+        }
+
+        // Should now be in RECOVERING phase with the new form
+        assertEquals(Form.WEREWULF, state.player.form)
+        assertEquals(TransformPhase.RECOVERING, state.player.transformState.phase)
+    }
+
+    @Test
+    fun transformSystem_recovering_goesToStable_after30Ticks() {
+        var state = testGameState(
+            player = testPlayerState(
+                form = Form.WEREWULF,
+                transformState = TransformState(TransformPhase.RECOVERING, 0),
+            ),
+            time = testTimeState(phase = DayPhase.DUSK),
+        )
+
+        // Advance 29 ticks — still recovering
+        repeat(29) {
+            state = system.update(state, idle, 1f / 60f).state
+        }
+        assertEquals(TransformPhase.RECOVERING, state.player.transformState.phase)
+
+        // 30th tick — goes to STABLE
+        state = system.update(state, idle, 1f / 60f).state
+        assertEquals(TransformPhase.STABLE, state.player.transformState.phase)
     }
 
     @Test

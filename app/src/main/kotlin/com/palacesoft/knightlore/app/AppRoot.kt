@@ -38,6 +38,7 @@ import androidx.navigation.compose.rememberNavController
 import com.palacesoft.knightlore.app.session.GameSessionCoordinator
 import com.palacesoft.knightlore.app.session.GameSessionViewModel
 import com.palacesoft.knightlore.app.ui.MainMenuScreen
+import com.palacesoft.knightlore.domain.model.Form
 import com.palacesoft.knightlore.domain.model.GameState
 import com.palacesoft.knightlore.render.GameRenderView
 import kotlinx.coroutines.flow.StateFlow
@@ -88,15 +89,14 @@ fun GameScreen(sessionCoordinator: GameSessionCoordinator, navController: NavHos
         when (val state = loadState) {
             is LoadState.Loading -> CircularProgressIndicator(color = Color.White)
             is LoadState.Ready -> {
-                val ready = loadState as LoadState.Ready
-                val gameState by ready.gameStateFlow.collectAsState()
+                val gameState by state.gameStateFlow.collectAsState()
                 val uiState by sessionCoordinator.eventHandler.uiState.collectAsState()
                 AndroidView(
                     modifier = Modifier.fillMaxSize(),
                     factory = { context ->
                         GameRenderView(
                             context = context,
-                            gameState = ready.gameStateFlow,
+                            gameState = state.gameStateFlow,
                             content = sessionCoordinator.loadedContent!!,
                             onFrameAdvance = { deltaSeconds -> sessionCoordinator.advance(deltaSeconds) },
                         )
@@ -161,7 +161,8 @@ private fun GameHudOverlay(gameState: GameState) {
     val textColor = Color.White
     val hudTextSize = 14.sp
     val hudFontWeight = FontWeight.Bold
-    val showTransformWarning = gameState.time.ticksUntilTransform.let { it != null && it < 60 }
+    val showTransformWarning = gameState.player.form == Form.HUMAN &&
+        gameState.time.ticksUntilTransform.let { it != null && it < 60 }
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Top bar: day counter left + cure progress right

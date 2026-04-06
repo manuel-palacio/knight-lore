@@ -1,15 +1,15 @@
 # Phase 4 — Rendering
 
-**Status:** ⏳ Pending (requires Phase 3 complete)
+**Status:** ✅ Complete
 
 ## Tasks
 
-- [ ] **4.1** Implement `IsoProjector` — projection, depthKey, room centering
-- [ ] **4.2** Implement `DrawCommandBuilder` — 4-key sort (layer, depth, priority, id), stable ordering
-- [ ] **4.3** Implement `RoomEntityFactory` — maps `GameState` + `GameContent` → `RenderEntity` list
-- [ ] **4.4** Implement `CanvasSceneRenderer` — placeholder sprites (colored shapes), correct draw order
-- [ ] **4.5** Wire `GameSurfaceView` / `GameScreen` — Compose `AndroidView` integration
-- [ ] **4.6** Implement `HudRenderer` — lives, day-night bar (pulsing at 80% of phase), carried items, current cauldron request
+- [x] **4.1** Implement `IsoProjector` — projection, depthKey, room centering
+- [x] **4.2** Implement `DrawCommandBuilder` — 4-key sort (layer, depth, priority, id), stable ordering
+- [x] **4.3** Implement `RoomEntityFactory` — maps `GameState` + `GameContent` → `RenderEntity` list
+- [x] **4.4** Implement `CanvasSceneRenderer` — placeholder sprites (colored shapes), correct draw order
+- [x] **4.5** Wire `GameSurfaceView` / `GameScreen` — Compose `AndroidView` integration
+- [x] **4.6** Implement `HudRenderer` — lives, day-night bar (pulsing at 80% of phase), carried items, current cauldron request
 
 ## Rendering Notes
 - Custom Android Canvas renderer (not LibGDX)

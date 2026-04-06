@@ -544,6 +544,113 @@ object RoomEntityFactory {
                 westGaps.maxOrNull() == y)
             else wallBlockWest(0f, y.toFloat())
         }
+
+        // Exit markers for all four sides — independent of which walls are drawn.
+        // NORTH/WEST exits already get full doorArchway treatment above.
+        // SOUTH/EAST exits have no wall, so draw a simpler threshold marker.
+        fun drawExitMarker(gx: Float, gy: Float, side: ExitSide, withPillars: Boolean) {
+            val dk = IsoProjector.depthKey(Vec3f(gx + 0.5f, gy + 1f, 0f))
+            val id = "exit_marker_${gx.toInt()}_${gy.toInt()}"
+
+            // Threshold floor tile in lighter stone
+            commands += DrawCommand(DrawLayer.FLOOR, dk, 10, "${id}_floor",
+                IsoProjector.toScreen(Vec3f(gx, gy, 0f)) + offset,
+                DrawPayload.ColorPath(floorDiamond(gx, gy, 0f, ox, oy), 0xFF_252535.toInt()))
+
+            // Dark void face above threshold — which face depends on camera-visible side
+            val voidPts = when (side) {
+                ExitSide.SOUTH, ExitSide.NORTH -> listOf(
+                    pt(gx,      gy + 1f, 0f, ox, oy),
+                    pt(gx + 1f, gy + 1f, 0f, ox, oy),
+                    pt(gx + 1f, gy + 1f, 2f, ox, oy),
+                    pt(gx,      gy + 1f, 2f, ox, oy),
+                )
+                ExitSide.EAST, ExitSide.WEST -> listOf(
+                    pt(gx + 1f, gy,      0f, ox, oy),
+                    pt(gx + 1f, gy + 1f, 0f, ox, oy),
+                    pt(gx + 1f, gy + 1f, 2f, ox, oy),
+                    pt(gx + 1f, gy,      2f, ox, oy),
+                )
+            }
+            commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "${id}_void",
+                IsoProjector.toScreen(Vec3f(gx, gy + 1f, 0f)) + offset,
+                DrawPayload.ColorPath(voidPts, 0xFF_050508.toInt()))
+
+            // Faint blue-purple glow line at floor level
+            val (gp1, gp2) = when (side) {
+                ExitSide.SOUTH, ExitSide.NORTH -> Pair(
+                    pt(gx,      gy + 1f, 0f, ox, oy),
+                    pt(gx + 1f, gy + 1f, 0f, ox, oy),
+                )
+                ExitSide.EAST, ExitSide.WEST -> Pair(
+                    pt(gx + 1f, gy,      0f, ox, oy),
+                    pt(gx + 1f, gy + 1f, 0f, ox, oy),
+                )
+            }
+            commands += DrawCommand(DrawLayer.FLOOR, dk, 11, "${id}_glow",
+                Vec2f(gp1.x, gp1.y),
+                DrawPayload.Line(gp1.x, gp1.y, gp2.x, gp2.y, 0x33_4444AA.toInt(), 2f))
+
+            // Thin stone pillars for walled exits (North/West) — not needed for South/East
+            if (withPillars) {
+                for (gz in 0 until 3) {
+                    val bz = gz.toFloat()
+                    val pdk = IsoProjector.depthKey(Vec3f(gx + 0.15f, gy + 1f, bz))
+                    commands += DrawCommand(DrawLayer.BLOCK, pdk, 2, "${id}_pillar_l_top_$gz",
+                        IsoProjector.toScreen(Vec3f(gx, gy, bz + 1f)) + offset,
+                        DrawPayload.ColorPath(listOf(
+                            pt(gx,        gy,      bz + 1f, ox, oy),
+                            pt(gx + 0.2f, gy,      bz + 1f, ox, oy),
+                            pt(gx + 0.2f, gy + 1f, bz + 1f, ox, oy),
+                            pt(gx,        gy + 1f, bz + 1f, ox, oy),
+                        ), Colors.WALL_TOP))
+                    commands += DrawCommand(DrawLayer.BLOCK, pdk, 1, "${id}_pillar_l_face_$gz",
+                        IsoProjector.toScreen(Vec3f(gx, gy + 1f, bz)) + offset,
+                        DrawPayload.DitheredPath(listOf(
+                            pt(gx,        gy + 1f, bz,      ox, oy),
+                            pt(gx + 0.2f, gy + 1f, bz,      ox, oy),
+                            pt(gx + 0.2f, gy + 1f, bz + 1f, ox, oy),
+                            pt(gx,        gy + 1f, bz + 1f, ox, oy),
+                        ), Colors.WALL_LEFT_D1, Colors.WALL_LEFT_D2, horizontal = true))
+                    val pdk2 = IsoProjector.depthKey(Vec3f(gx + 0.9f, gy + 1f, bz))
+                    commands += DrawCommand(DrawLayer.BLOCK, pdk2, 2, "${id}_pillar_r_top_$gz",
+                        IsoProjector.toScreen(Vec3f(gx + 0.8f, gy, bz + 1f)) + offset,
+                        DrawPayload.ColorPath(listOf(
+                            pt(gx + 0.8f, gy,      bz + 1f, ox, oy),
+                            pt(gx + 1f,   gy,      bz + 1f, ox, oy),
+                            pt(gx + 1f,   gy + 1f, bz + 1f, ox, oy),
+                            pt(gx + 0.8f, gy + 1f, bz + 1f, ox, oy),
+                        ), Colors.WALL_TOP))
+                    commands += DrawCommand(DrawLayer.BLOCK, pdk2, 1, "${id}_pillar_r_face_$gz",
+                        IsoProjector.toScreen(Vec3f(gx + 0.8f, gy + 1f, bz)) + offset,
+                        DrawPayload.DitheredPath(listOf(
+                            pt(gx + 0.8f, gy + 1f, bz,      ox, oy),
+                            pt(gx + 1f,   gy + 1f, bz,      ox, oy),
+                            pt(gx + 1f,   gy + 1f, bz + 1f, ox, oy),
+                            pt(gx + 0.8f, gy + 1f, bz + 1f, ox, oy),
+                        ), Colors.WALL_LEFT_D1, Colors.WALL_LEFT_D2, horizontal = true))
+                }
+            }
+        }
+
+        // Draw exit markers for SOUTH and EAST exits (no wall drawn, need explicit marker)
+        for (exit in room.exits) {
+            when (exit.side) {
+                ExitSide.SOUTH -> {
+                    val gx = (w / 2 - 1).toFloat()
+                    val gy = (d - 1).toFloat()
+                    drawExitMarker(gx, gy, ExitSide.SOUTH, withPillars = false)
+                    drawExitMarker(gx + 1f, gy, ExitSide.SOUTH, withPillars = false)
+                }
+                ExitSide.EAST -> {
+                    val gx = (w - 1).toFloat()
+                    val gy = (d / 2 - 1).toFloat()
+                    drawExitMarker(gx, gy, ExitSide.EAST, withPillars = false)
+                    drawExitMarker(gx, gy + 1f, ExitSide.EAST, withPillars = false)
+                }
+                ExitSide.NORTH, ExitSide.WEST -> { /* handled by doorArchway above */ }
+            }
+        }
     }
 
     // ── Cauldron ─────────────────────────────────────────────────────────────

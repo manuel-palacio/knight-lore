@@ -471,20 +471,20 @@ object RoomEntityFactory {
                         ), Colors.WALL_TOP))
                     commands += DrawCommand(DrawLayer.BLOCK, pdk, 1, "${pid}_left",
                         IsoProjector.toScreen(Vec3f(gx, gy + 1f, bz)) + offset,
-                        DrawPayload.ColorPath(listOf(
+                        DrawPayload.DitheredPath(listOf(
                             pt(gx,        gy + 1f, bz,      ox, oy),
                             pt(gx + 0.3f, gy + 1f, bz,      ox, oy),
                             pt(gx + 0.3f, gy + 1f, bz + 1f, ox, oy),
                             pt(gx,        gy + 1f, bz + 1f, ox, oy),
-                        ), Colors.WALL_LEFT))
+                        ), Colors.WALL_LEFT_D1, Colors.WALL_LEFT_D2, horizontal = true))
                     commands += DrawCommand(DrawLayer.BLOCK, pdk, 0, "${pid}_right",
                         IsoProjector.toScreen(Vec3f(gx + 0.3f, gy, bz)) + offset,
-                        DrawPayload.ColorPath(listOf(
+                        DrawPayload.DitheredPath(listOf(
                             pt(gx + 0.3f, gy,      bz,      ox, oy),
                             pt(gx + 0.3f, gy + 1f, bz,      ox, oy),
                             pt(gx + 0.3f, gy + 1f, bz + 1f, ox, oy),
                             pt(gx + 0.3f, gy,      bz + 1f, ox, oy),
-                        ), Colors.WALL_RIGHT))
+                        ), Colors.WALL_RIGHT_D1, Colors.WALL_RIGHT_D2, horizontal = true))
                 }
             }
 
@@ -504,20 +504,20 @@ object RoomEntityFactory {
                         ), Colors.WALL_TOP))
                     commands += DrawCommand(DrawLayer.BLOCK, pdk, 1, "${pid}_left",
                         IsoProjector.toScreen(Vec3f(gx + 0.7f, gy + 1f, bz)) + offset,
-                        DrawPayload.ColorPath(listOf(
+                        DrawPayload.DitheredPath(listOf(
                             pt(gx + 0.7f, gy + 1f, bz,      ox, oy),
                             pt(gx + 1f,   gy + 1f, bz,      ox, oy),
                             pt(gx + 1f,   gy + 1f, bz + 1f, ox, oy),
                             pt(gx + 0.7f, gy + 1f, bz + 1f, ox, oy),
-                        ), Colors.WALL_LEFT))
+                        ), Colors.WALL_LEFT_D1, Colors.WALL_LEFT_D2, horizontal = true))
                     commands += DrawCommand(DrawLayer.BLOCK, pdk, 0, "${pid}_right",
                         IsoProjector.toScreen(Vec3f(gx + 1f, gy, bz)) + offset,
-                        DrawPayload.ColorPath(listOf(
+                        DrawPayload.DitheredPath(listOf(
                             pt(gx + 1f, gy,      bz,      ox, oy),
                             pt(gx + 1f, gy + 1f, bz,      ox, oy),
                             pt(gx + 1f, gy + 1f, bz + 1f, ox, oy),
                             pt(gx + 1f, gy,      bz + 1f, ox, oy),
-                        ), Colors.WALL_RIGHT))
+                        ), Colors.WALL_RIGHT_D1, Colors.WALL_RIGHT_D2, horizontal = true))
                 }
 
                 // 6. If isLast: threshold glow line at z=0 across gap width

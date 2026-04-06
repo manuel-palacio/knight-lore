@@ -16,6 +16,7 @@ data class RoomDefinition(
     val itemAnchors: List<ItemAnchor>,
     val theme: RoomTheme,
     val special: RoomSpecial? = null,
+    val patrolSpawns: List<PatrolSpawn> = emptyList(),
 )
 
 data class TileStack(val gridX: Int, val gridY: Int, val gridZ: Int, val type: TileType)

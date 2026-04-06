@@ -420,6 +420,24 @@
       "targetSpawnId": "spawn_n"
     }
   ],
-  "itemAnchors": [],
-  "actorSpawns": []
+  "itemAnchors": [
+    {
+      "itemId": "wine_bottle_r006",
+      "x": 2.5,
+      "y": 3.5,
+      "z": 0.0
+    }
+  ],
+  "actorSpawns": [],
+  "dynamic_objects": [
+    {
+      "id": "guard_r006_01",
+      "type": "PATROL_ENEMY",
+      "start_x": 5,
+      "start_y": 2,
+      "path": [[5, 2], [5, 6]],
+      "speed": 2.0,
+      "facing": "SOUTH"
+    }
+  ]
 }

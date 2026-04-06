@@ -419,6 +419,24 @@
       "targetSpawnId": "spawn_n"
     }
   ],
-  "itemAnchors": [],
-  "actorSpawns": []
+  "itemAnchors": [
+    {
+      "itemId": "gem_r003",
+      "x": 5.5,
+      "y": 5.5,
+      "z": 0.0
+    }
+  ],
+  "actorSpawns": [],
+  "dynamic_objects": [
+    {
+      "id": "guard_r003_01",
+      "type": "PATROL_ENEMY",
+      "start_x": 2,
+      "start_y": 2,
+      "path": [[2, 2], [5, 2], [5, 5], [2, 5]],
+      "speed": 1.8,
+      "facing": "SOUTH"
+    }
+  ]
 }

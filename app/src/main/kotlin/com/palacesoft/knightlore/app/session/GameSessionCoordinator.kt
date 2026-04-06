@@ -48,7 +48,13 @@ class GameSessionCoordinator(
         val roomProvider = ContentRoomProvider(content)
         val engine = engineFactory(roomProvider, content)
         val initialState = engine.initialize(seed, content, config)
-        val loop = GameLoopCoordinator(engine, initialState)
+        val existing = loopCoordinator
+        val loop = if (existing != null) {
+            existing.reset(initialState, engine)
+            existing
+        } else {
+            GameLoopCoordinator(engine, initialState)
+        }
         loopCoordinator = loop
         currentSeed = seed
         currentConfig = config

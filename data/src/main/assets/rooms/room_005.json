@@ -391,6 +391,17 @@
     }
   ],
   "interactives": [],
+  "dynamic_objects": [
+    {
+      "id": "goblin_001",
+      "type": "PATROL_ENEMY",
+      "start_x": 6,
+      "start_y": 2,
+      "path": [[6,2],[4,2],[4,4],[6,4]],
+      "speed": 0.8,
+      "facing": "SOUTH"
+    }
+  ],
   "exits": [
     {
       "side": "NORTH",

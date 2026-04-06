@@ -10,6 +10,8 @@ import com.palacesoft.knightlore.domain.model.ExitSide
 import com.palacesoft.knightlore.domain.model.InteractiveDef
 import com.palacesoft.knightlore.domain.model.InteractiveKind
 import com.palacesoft.knightlore.domain.model.ItemAnchor
+import com.palacesoft.knightlore.domain.model.PatrolPoint
+import com.palacesoft.knightlore.domain.model.PatrolSpawn
 import com.palacesoft.knightlore.domain.model.RoomDefinition
 import com.palacesoft.knightlore.domain.model.RoomExit
 import com.palacesoft.knightlore.domain.model.RoomSpecial
@@ -67,6 +69,18 @@ object RoomMapper {
         val theme = parseRoomTheme(dto.theme, dto.id)
         val special = parseRoomSpecial(dto.special, dto.id)
 
+        val patrolSpawns = dto.dynamic_objects
+            .filter { it.type == "PATROL_ENEMY" }
+            .map { obj ->
+                PatrolSpawn(
+                    id = obj.id,
+                    startX = obj.start_x.toFloat(),
+                    startY = obj.start_y.toFloat(),
+                    path = obj.path.map { wp -> PatrolPoint(wp[0].toFloat(), wp[1].toFloat()) },
+                    speed = obj.speed.toFloat(),
+                )
+            }
+
         return RoomDefinition(
             id = roomId,
             width = dto.width,
@@ -79,6 +93,7 @@ object RoomMapper {
             itemAnchors = itemAnchors,
             theme = theme,
             special = special,
+            patrolSpawns = patrolSpawns,
         )
     }
 

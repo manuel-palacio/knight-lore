@@ -6,10 +6,12 @@ import com.palacesoft.knightlore.app.settings.Difficulty
 import com.palacesoft.knightlore.domain.model.EngineConfig
 import com.palacesoft.knightlore.domain.save.SaveRepository
 import com.palacesoft.knightlore.domain.save.SaveSnapshot
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Bridges GameSessionCoordinator lifecycle with Android ViewModel lifecycle.
@@ -32,19 +34,23 @@ class GameSessionViewModel(
     fun startNewGame(difficulty: Difficulty = Difficulty.MODERN) {
         val config = when (difficulty) {
             Difficulty.CLASSIC -> EngineConfig(playerLives = 3)
-            Difficulty.MODERN -> EngineConfig()
+            Difficulty.MODERN  -> EngineConfig()
         }
         viewModelScope.launch {
-            saveRepository.delete()
-            coordinator.startNewGame(config = config)
+            withContext(Dispatchers.IO) {
+                saveRepository.delete()
+                coordinator.startNewGame(config = config)
+            }
             _hasSave.value = false
         }
     }
 
     fun continueGame() {
         viewModelScope.launch {
-            val snapshot = saveRepository.load() ?: return@launch
-            coordinator.resumeFromSnapshot(snapshot)
+            withContext(Dispatchers.IO) {
+                val snapshot = saveRepository.load() ?: return@withContext
+                coordinator.resumeFromSnapshot(snapshot)
+            }
         }
     }
 

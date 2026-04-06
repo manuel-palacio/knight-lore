@@ -1,13 +1,19 @@
 plugins {
-    id("android-library-convention")
+    id("kotlin-multiplatform-convention")
 }
 
 android {
     namespace = "com.palacesoft.knightlore.render"
 }
 
-dependencies {
-    implementation(project(":domain"))
-    implementation(project(":core"))
-    implementation(libs.kotlinx.coroutines.core)
+kotlin {
+    sourceSets {
+        commonMain.dependencies {
+            implementation(project(":domain"))
+            implementation(project(":core"))
+        }
+        androidMain.dependencies {
+            implementation(libs.kotlinx.coroutines.core)
+        }
+    }
 }

@@ -229,39 +229,39 @@ fun GameScreen(
 
 @Composable
 private fun GameHudOverlay(gameState: GameState) {
-    val hudBarColor = Color.Black.copy(alpha = 0.55f)
     val textColor = Color.White
-    val hudTextSize = 14.sp
-    val hudFontWeight = FontWeight.Bold
+    val cornerTextSize = 13.sp
+    val cornerWeight = FontWeight.Bold
+    val shadowColor = Color.Black.copy(alpha = 0.8f)
     val showTransformWarning = gameState.player.form == Form.HUMAN &&
         gameState.time.ticksUntilTransform.let { it != null && it < 60 }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Top bar: day counter left + cure progress right
-        Box(
+        // Top-left: lives as hearts
+        Text(
+            text = "♥".repeat(gameState.player.lives.coerceAtLeast(0)),
+            color = Color(0xFFEE4444),
+            fontSize = cornerTextSize,
+            fontWeight = cornerWeight,
             modifier = Modifier
-                .fillMaxWidth()
                 .align(Alignment.TopStart)
-                .background(hudBarColor)
-                .padding(horizontal = 12.dp, vertical = 6.dp),
-        ) {
-            Text(
-                text = "DAY ${gameState.time.dayIndex + 1} / 40",
-                color = textColor,
-                fontSize = hudTextSize,
-                fontWeight = hudFontWeight,
-                modifier = Modifier.align(Alignment.CenterStart),
-            )
-            Text(
-                text = "CURE ${gameState.cauldron.deliveredCount} / 14",
-                color = textColor,
-                fontSize = hudTextSize,
-                fontWeight = hudFontWeight,
-                modifier = Modifier.align(Alignment.CenterEnd),
-            )
-        }
+                .background(shadowColor)
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+        )
 
-        // Centre: transformation warning
+        // Top-right: day counter
+        Text(
+            text = "DAY ${gameState.time.dayIndex + 1} / 40",
+            color = textColor,
+            fontSize = cornerTextSize,
+            fontWeight = cornerWeight,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .background(shadowColor)
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+        )
+
+        // Centre: transformation warning (flashing, brief)
         if (showTransformWarning) {
             val infiniteTransition = rememberInfiniteTransition(label = "transform_flash")
             val alpha by infiniteTransition.animateFloat(
@@ -273,20 +273,17 @@ private fun GameHudOverlay(gameState: GameState) {
                 ),
                 label = "transform_alpha",
             )
-            Box(
+            Text(
+                text = "TRANSFORMING...",
+                color = Color.Red.copy(alpha = alpha),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .background(hudBarColor)
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-            ) {
-                Text(
-                    text = "TRANSFORMING...",
-                    color = Color.Red.copy(alpha = alpha),
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                )
-            }
+                    .background(shadowColor)
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+            )
         }
     }
 }

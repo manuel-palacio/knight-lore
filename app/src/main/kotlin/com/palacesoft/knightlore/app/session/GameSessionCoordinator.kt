@@ -1,5 +1,6 @@
 package com.palacesoft.knightlore.app.session
 
+import com.palacesoft.knightlore.app.GameEventHandler
 import com.palacesoft.knightlore.data.ContentRoomProvider
 import com.palacesoft.knightlore.data.asset.ContentRepository
 import com.palacesoft.knightlore.domain.GameEngine
@@ -27,6 +28,8 @@ class GameSessionCoordinator(
     var loadedContent: GameContent? = null
         private set
 
+    val eventHandler = GameEventHandler()
+
     var onEvents: ((List<GameEvent>) -> Unit)? = null
     var onGameStarted: (() -> Unit)? = null
 
@@ -48,6 +51,7 @@ class GameSessionCoordinator(
     fun advance(deltaSeconds: Float): List<GameEvent> {
         val events = loopCoordinator?.advance(deltaSeconds) ?: emptyList()
         if (events.isNotEmpty()) onEvents?.invoke(events)
+        eventHandler.handleEvents(events)
         return events
     }
 

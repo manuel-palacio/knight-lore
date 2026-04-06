@@ -39,7 +39,8 @@ object HudRenderer {
     private fun drawFormIndicator(canvas: Canvas, state: GameState, paint: Paint) {
         val label = when (state.player.transformState.phase) {
             TransformPhase.STABLE -> if (state.player.form == Form.HUMAN) "HUMAN" else "WEREWULF"
-            TransformPhase.TRANSFORMING_TO_WEREWULF, TransformPhase.TRANSFORMING_TO_HUMAN -> "CHANGING..."
+            TransformPhase.TRANSFORMING_TO_WEREWULF -> "→ WEREWULF"
+            TransformPhase.TRANSFORMING_TO_HUMAN -> "→ HUMAN"
             TransformPhase.RECOVERING -> "RECOVERING"
         }
         val color = when (state.player.form) {

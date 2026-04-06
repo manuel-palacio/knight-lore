@@ -1,9 +1,14 @@
 package com.palacesoft.knightlore.domain.system
 
+import com.palacesoft.knightlore.core.ids.ActorId
 import com.palacesoft.knightlore.core.math.Vec3f
 import com.palacesoft.knightlore.domain.event.GameEvent
 import com.palacesoft.knightlore.domain.input.FrameInput
+import com.palacesoft.knightlore.domain.model.ActorBehavior
+import com.palacesoft.knightlore.domain.model.ActorKind
+import com.palacesoft.knightlore.domain.model.ActorState
 import com.palacesoft.knightlore.domain.model.ExitSide
+import com.palacesoft.knightlore.domain.model.GameContent
 import com.palacesoft.knightlore.domain.model.RoomDefinition
 import com.palacesoft.knightlore.domain.model.RoomExit
 import com.palacesoft.knightlore.domain.model.RoomTransitionState
@@ -13,6 +18,7 @@ import com.palacesoft.knightlore.domain.rules.RoomProvider
 
 class RoomTransitionSystem(
     private val roomProvider: RoomProvider,
+    private val content: GameContent? = null,
     private val transitionDurationTicks: Int = 12,  // ~200ms at 60 ticks/sec
 ) : GameSystem {
 
@@ -50,11 +56,13 @@ class RoomTransitionSystem(
                 velocity = Vec3f.ZERO,
                 airborne = false,
             )
+            val newRoom = roomProvider.getRoom(transition.toRoomId)
+            val spawnedActors = spawnActorsForRoom(newRoom)
             SystemResult(
                 state.copy(
                     currentRoomId = transition.toRoomId,
                     player = newPlayer,
-                    actorStates = emptyList(), // clear actors; Phase 5 will respawn them
+                    actorStates = spawnedActors,
                     roomTransition = null,
                 ),
             )
@@ -85,5 +93,30 @@ class RoomTransitionSystem(
         "spawn_e" -> Vec3f(7.5f, 4f, 1f)
         "spawn_w" -> Vec3f(0.5f, 4f, 1f)
         else      -> Vec3f(4f, 4f, 1f)
+    }
+
+    private fun spawnActorsForRoom(room: RoomDefinition?): List<ActorState> {
+        val gameContent = content ?: return emptyList()
+        return room?.actors?.mapIndexed { index, spawn ->
+            val typeDef = gameContent.actorTypes[spawn.actorType.name.lowercase()]
+            val behavior = when (typeDef?.kind) {
+                ActorKind.GUARD_PATROL -> ActorBehavior.PATROL
+                ActorKind.GHOST -> ActorBehavior.PATROL  // GHOST movement handled in HazardSystem
+                ActorKind.SPIKE_BEAST -> ActorBehavior.STATIC_HAZARD
+                ActorKind.FORM_REACTIVE -> ActorBehavior.REACTIVE
+                null -> ActorBehavior.PATROL
+            }
+            val spawnPos = spawn.position
+            ActorState(
+                id = ActorId("${spawn.actorType.name.lowercase()}_${index + 1}"),
+                type = spawn.actorType,
+                position = spawnPos,
+                velocity = Vec3f.ZERO,
+                behaviorState = "PATROL_RIGHT",
+                behavior = behavior,
+                form = null,
+                spawnPosition = spawnPos,
+            )
+        } ?: emptyList()
     }
 }

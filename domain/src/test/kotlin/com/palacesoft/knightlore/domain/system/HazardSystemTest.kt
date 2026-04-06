@@ -64,7 +64,7 @@ class HazardSystemTest {
         }
     }
 
-    private fun makePatrolActor(posX: Float, state: String = "PATROL_RIGHT") = ActorState(
+    private fun makePatrolActor(posX: Float, state: String = "PATROL_RIGHT", spawnX: Float = 5f) = ActorState(
         id = ActorId("guard_01"),
         type = ActorType.GUARD,
         position = Vec3f(posX, 5f, 1f),
@@ -72,6 +72,7 @@ class HazardSystemTest {
         behaviorState = state,
         behavior = ActorBehavior.PATROL,
         form = null,
+        spawnPosition = Vec3f(spawnX, 5f, 1f),
     )
 
     @Test

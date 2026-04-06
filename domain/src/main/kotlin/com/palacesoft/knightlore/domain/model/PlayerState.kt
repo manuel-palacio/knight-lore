@@ -6,7 +6,7 @@ import com.palacesoft.knightlore.core.math.Vec3f
 
 enum class Form { HUMAN, WEREWULF }
 
-enum class TransformPhase { STABLE, TRANSFORMING_TO_WEREWULF, TRANSFORMING_TO_HUMAN }
+enum class TransformPhase { STABLE, TRANSFORMING_TO_WEREWULF, TRANSFORMING_TO_HUMAN, RECOVERING }
 
 enum class MovementState { IDLE, WALKING, JUMP_ASCENT, JUMP_DESCENT, LANDING, TRANSFORMING }
 

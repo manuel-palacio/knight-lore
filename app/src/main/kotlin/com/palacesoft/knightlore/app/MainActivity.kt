@@ -12,7 +12,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val coordinator = GameSessionCoordinator(
             contentRepository = AssetContentRepository(AndroidAssetLoader(this)),
-            engineFactory = { roomProvider -> DefaultGameEngine.create(roomProvider) },
+            engineFactory = { roomProvider, content -> DefaultGameEngine.create(roomProvider, content) },
         )
         setContent {
             AppRoot(sessionCoordinator = coordinator)

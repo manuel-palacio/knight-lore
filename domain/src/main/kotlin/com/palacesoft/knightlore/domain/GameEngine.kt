@@ -22,8 +22,11 @@ import com.palacesoft.knightlore.domain.model.TimeState
 import com.palacesoft.knightlore.domain.model.TransformPhase
 import com.palacesoft.knightlore.domain.model.TransformState
 import com.palacesoft.knightlore.domain.rules.RoomProvider
+import com.palacesoft.knightlore.domain.system.CauldronSystem
 import com.palacesoft.knightlore.domain.system.CollisionSystem
 import com.palacesoft.knightlore.domain.system.GameSystem
+import com.palacesoft.knightlore.domain.system.HazardSystem
+import com.palacesoft.knightlore.domain.system.ItemSystem
 import com.palacesoft.knightlore.domain.system.LifeSystem
 import com.palacesoft.knightlore.domain.system.MovementSystem
 import com.palacesoft.knightlore.domain.system.RoomTransitionSystem
@@ -56,20 +59,18 @@ class DefaultGameEngine(private val systems: List<GameSystem>) : GameEngine {
     companion object {
         /**
          * Creates a DefaultGameEngine with all systems registered in the required tick order:
-         * Time → Transform → Movement → Collision → RoomTransition → Life
-         *
-         * Systems not yet implemented (Phase 5) are stubs that return state unchanged.
+         * Time → Transform → Movement → Collision → Item → Hazard → RoomTransition → Cauldron → Life
          */
-        fun create(roomProvider: RoomProvider): DefaultGameEngine {
+        fun create(roomProvider: RoomProvider, content: GameContent): DefaultGameEngine {
             val systems = listOf(
                 TimeSystem(),
                 TransformationSystem(),
                 MovementSystem(roomProvider),
-                CollisionSystem(roomProvider),  // thin stub delegating to MovementSystem
-                /* ItemSystem — Phase 5 */
-                /* HazardSystem — Phase 5 — but LifeSystem covers hazard tiles for now */
+                CollisionSystem(roomProvider),
+                ItemSystem(roomProvider),
+                HazardSystem(roomProvider, content),
                 RoomTransitionSystem(roomProvider),
-                /* CauldronSystem — Phase 5 */
+                CauldronSystem(content, roomProvider),
                 LifeSystem(roomProvider),
             )
             return DefaultGameEngine(systems)

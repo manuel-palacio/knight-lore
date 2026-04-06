@@ -3,7 +3,14 @@ package com.palacesoft.knightlore.domain
 import com.palacesoft.knightlore.core.ids.RoomId
 import com.palacesoft.knightlore.core.math.Vec3f
 import com.palacesoft.knightlore.domain.input.FrameInput
+import com.palacesoft.knightlore.domain.model.ActorKind
+import com.palacesoft.knightlore.domain.model.ActorTypeDefinition
+import com.palacesoft.knightlore.domain.model.CureMode
+import com.palacesoft.knightlore.domain.model.CureSequenceDefinition
 import com.palacesoft.knightlore.domain.model.ExitSide
+import com.palacesoft.knightlore.domain.model.GameContent
+import com.palacesoft.knightlore.domain.model.ItemType
+import com.palacesoft.knightlore.domain.model.ProgressionDefinition
 import com.palacesoft.knightlore.domain.model.RoomDefinition
 import com.palacesoft.knightlore.domain.model.RoomExit
 import com.palacesoft.knightlore.domain.model.RoomTheme
@@ -43,10 +50,25 @@ class GameEngineIntegrationTest {
         }
     }
 
+    private fun minimalContent(rooms: Map<RoomId, RoomDefinition>): GameContent = GameContent(
+        rooms = rooms,
+        itemTypes = emptyMap(),
+        actorTypes = mapOf(
+            "guard" to ActorTypeDefinition("guard", ActorKind.GUARD_PATROL, 3f, 1, false),
+        ),
+        cureSequence = CureSequenceDefinition(CureMode.MODERN, emptyList(), false),
+        progression = ProgressionDefinition(
+            totalRequiredItems = 0,
+            startRoomId = testRoomId,
+            cauldronRoomId = RoomId("cauldron"),
+        ),
+    )
+
     @Test
     fun `gameEngine_fullTick_updatesTimeState`() {
-        val roomProvider = roomProviderOf(testRoomId to minimalRoom(testRoomId))
-        val engine = DefaultGameEngine.create(roomProvider)
+        val room = minimalRoom(testRoomId)
+        val roomProvider = roomProviderOf(testRoomId to room)
+        val engine = DefaultGameEngine.create(roomProvider, minimalContent(mapOf(testRoomId to room)))
         val initial = testGameState()
 
         val result = engine.update(initial, FrameInput.IDLE, 1f / 60f)
@@ -60,7 +82,7 @@ class GameEngineIntegrationTest {
         val hazardTile = TileStack(gridX = 4, gridY = 4, gridZ = 0, type = TileType.HAZARD)
         val hazardRoom = minimalRoom(testRoomId, tiles = listOf(hazardTile))
         val roomProvider = roomProviderOf(testRoomId to hazardRoom)
-        val engine = DefaultGameEngine.create(roomProvider)
+        val engine = DefaultGameEngine.create(roomProvider, minimalContent(mapOf(testRoomId to hazardRoom)))
 
         val initial = testGameState(
             player = testPlayerState(
@@ -88,7 +110,8 @@ class GameEngineIntegrationTest {
             testRoomId to room,
             northRoomId to northRoom,
         )
-        val engine = DefaultGameEngine.create(roomProvider)
+        val rooms = mapOf(testRoomId to room, northRoomId to northRoom)
+        val engine = DefaultGameEngine.create(roomProvider, minimalContent(rooms))
 
         val initial = testGameState(
             player = testPlayerState(position = Vec3f(4f, -0.1f, 1f))

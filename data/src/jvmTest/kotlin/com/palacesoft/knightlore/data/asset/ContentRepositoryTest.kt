@@ -74,7 +74,7 @@ class ContentRepositoryTest {
         val repo = AssetContentRepository(buildFileAssetLoader())
         val content = runBlocking { repo.loadContent() }
         val roomIds = content.rooms.keys.map { it.value }.toSet()
-        for ((roomId, room) in content.rooms) {
+        for ((roomId, room) in content.rooms.entries) {
             for (exit in room.exits) {
                 assertTrue(
                     exit.targetRoomId.value in roomIds,

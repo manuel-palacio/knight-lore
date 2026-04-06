@@ -1,7 +1,13 @@
 plugins {
-    id("kotlin-jvm-convention")
+    id("kotlin-multiplatform-convention")
 }
 
-dependencies {
-    implementation(libs.kotlinx.coroutines.core)
+kotlin {
+    sourceSets {
+        commonMain.dependencies {}
+    }
+}
+
+android {
+    namespace = "com.palacesoft.knightlore.core"
 }

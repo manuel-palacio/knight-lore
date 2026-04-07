@@ -9,7 +9,7 @@ Paste each STEP into Claude Code sequentially. Test after each one.
 
 ---
 
-## STEP 1 — ZX Spectrum Palette (5 min)
+## ✅ STEP 1 — ZX Spectrum Palette (5 min)
 
 ```
 File: core/src/commonMain/kotlin/com/palacesoft/knightlore/core/TileMetrics.kt
@@ -65,7 +65,7 @@ Commit: `feat(core): authentic ZX Spectrum 15-color palette in ZXPalette`
 
 ---
 
-## STEP 2 — Dithered Textures on All Surfaces (15 min)
+## ✅ STEP 2 — Dithered Textures (pre-existing) on All Surfaces (15 min)
 
 ```
 File: render/src/commonMain/kotlin/com/palacesoft/knightlore/render/scene/RoomEntityFactory.kt
@@ -129,7 +129,7 @@ Commit: `feat(render): dithered stone textures + checker floors`
 
 ---
 
-## STEP 3 — 3-Face Block Shading (20 min)
+## ✅ STEP 3 — 3-Face Block Shading (pre-existing) (20 min)
 
 ```
 File: RoomEntityFactory.kt
@@ -203,7 +203,7 @@ Commit: `feat(render): 3-face shaded blocks (top/left/right lighting)`
 
 ---
 
-## STEP 4 — Black Outlines on Everything (10 min)
+## ✅ STEP 4 — Black Outlines (pre-existing) on Everything (10 min)
 
 ```
 File: RoomEntityFactory.kt
@@ -255,7 +255,7 @@ Commit: `feat(render): black outlines on all blocks — ZX Spectrum crisp look`
 
 ---
 
-## STEP 5 — Multi-Part Sabreman + Wolf Character (20 min)
+## ✅ STEP 5 — Multi-Part Sabreman + Wolf Character (20 min)
 
 ```
 Find player DrawCommand emission code.
@@ -362,7 +362,7 @@ Commit: `feat(render): multi-part Sabreman human/wolf with ZX Spectrum aesthetic
 
 ---
 
-## STEP 6 — Environmental Details (30 min)
+## ✅ STEP 6 — Environmental Details (pre-existing) (30 min)
 
 ```
 File: RoomEntityFactory.kt
@@ -434,7 +434,7 @@ Commit: `feat(render): environmental details — torches, cracks, webs, puddles`
 
 ---
 
-## STEP 7 — Screen Scanline Effect + Vignette (10 min)
+## ✅ STEP 7 — Screen Scanline Effect (pre-existing) + Vignette (10 min)
 
 ```
 Find the scene renderer (CanvasSceneRenderer or equivalent in app/desktop).

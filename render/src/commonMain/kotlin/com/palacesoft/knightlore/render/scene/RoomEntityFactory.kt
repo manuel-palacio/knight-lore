@@ -564,10 +564,17 @@ object RoomEntityFactory {
                 val id = "wall_${gx.toInt()}_${gy.toInt()}_$gz"
                 val isTop = gz == 2
 
-                // Top face
-                commands += DrawCommand(DrawLayer.BLOCK, dk, 2, "${id}_top",
-                    IsoProjector.toScreen(Vec3f(gx, gy, bz + 1f)) + offset,
-                    DrawPayload.ColorPath(floorDiamond(gx, gy, bz + 1f, ox, oy), wTop))
+                // Top face — only on the topmost block to avoid shelf appearance
+                if (isTop) {
+                    commands += DrawCommand(DrawLayer.BLOCK, dk, 2, "${id}_top",
+                        IsoProjector.toScreen(Vec3f(gx, gy, bz + 1f)) + offset,
+                        DrawPayload.ColorPath(floorDiamond(gx, gy, bz + 1f, ox, oy), wTop))
+                    val h1 = pt(gx, gy, bz + 1f, ox, oy)
+                    val h2 = pt(gx, gy + 1f, bz + 1f, ox, oy)
+                    commands += DrawCommand(DrawLayer.BLOCK, dk, 4, "${id}_highlight",
+                        Vec2f(h1.x, h1.y),
+                        DrawPayload.Line(h1.x, h1.y, h2.x, h2.y, Colors.WALL_HIGHLIGHT, 1f))
+                }
                 // South-facing inner face (blockFaceLeft = y+1 face) — horizontal dither rows
                 commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "${id}_left",
                     IsoProjector.toScreen(Vec3f(gx, gy + 1f, bz)) + offset,
@@ -579,15 +586,6 @@ object RoomEntityFactory {
                 commands += DrawCommand(DrawLayer.BLOCK, dk, 3, "${id}_mortar_l",
                     Vec2f(ml1.x, ml1.y),
                     DrawPayload.Line(ml1.x, ml1.y, ml2.x, ml2.y, Colors.WALL_MORTAR, 1f))
-
-                // Top-edge light highlight on topmost block
-                if (isTop) {
-                    val h1 = pt(gx, gy, bz + 1f, ox, oy)
-                    val h2 = pt(gx, gy + 1f, bz + 1f, ox, oy)
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 4, "${id}_highlight",
-                        Vec2f(h1.x, h1.y),
-                        DrawPayload.Line(h1.x, h1.y, h2.x, h2.y, Colors.WALL_HIGHLIGHT, 1f))
-                }
 
                 // CAVERN: stalactite hint — narrow triangles hanging from wall top
                 if (roomType == RoomType.CAVERN && (gx.toInt() * 7 + 3) % 5 == 0) {
@@ -710,10 +708,17 @@ object RoomEntityFactory {
                 val id = "wall_${gx.toInt()}_${gy.toInt()}_$gz"
                 val isTop = gz == 2
 
-                // Top face
-                commands += DrawCommand(DrawLayer.BLOCK, dk, 2, "${id}_top",
-                    IsoProjector.toScreen(Vec3f(gx, gy, bz + 1f)) + offset,
-                    DrawPayload.ColorPath(floorDiamond(gx, gy, bz + 1f, ox, oy), wTop))
+                // Top face — only on the topmost block to avoid shelf appearance
+                if (isTop) {
+                    commands += DrawCommand(DrawLayer.BLOCK, dk, 2, "${id}_top",
+                        IsoProjector.toScreen(Vec3f(gx, gy, bz + 1f)) + offset,
+                        DrawPayload.ColorPath(floorDiamond(gx, gy, bz + 1f, ox, oy), wTop))
+                    val h1 = pt(gx, gy, bz + 1f, ox, oy)
+                    val h2 = pt(gx + 1f, gy, bz + 1f, ox, oy)
+                    commands += DrawCommand(DrawLayer.BLOCK, dk, 4, "${id}_highlight",
+                        Vec2f(h1.x, h1.y),
+                        DrawPayload.Line(h1.x, h1.y, h2.x, h2.y, Colors.WALL_HIGHLIGHT, 1f))
+                }
                 // East-facing inner face (blockFaceRight = x+1 face) — horizontal dither rows
                 commands += DrawCommand(DrawLayer.BLOCK, dk, 0, "${id}_right",
                     IsoProjector.toScreen(Vec3f(gx + 1f, gy, bz)) + offset,
@@ -725,15 +730,6 @@ object RoomEntityFactory {
                 commands += DrawCommand(DrawLayer.BLOCK, dk, 3, "${id}_mortar_r",
                     Vec2f(mr1.x, mr1.y),
                     DrawPayload.Line(mr1.x, mr1.y, mr2.x, mr2.y, Colors.WALL_MORTAR, 1f))
-
-                // Top-edge light highlight on topmost block
-                if (isTop) {
-                    val h1 = pt(gx, gy, bz + 1f, ox, oy)
-                    val h2 = pt(gx, gy + 1f, bz + 1f, ox, oy)
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 4, "${id}_highlight",
-                        Vec2f(h1.x, h1.y),
-                        DrawPayload.Line(h1.x, h1.y, h2.x, h2.y, Colors.WALL_HIGHLIGHT, 1f))
-                }
 
                 // Moss patch (~1 in 7 wall columns, only on lower block)
                 if (!isTop && (gx.toInt() * 5 + gy.toInt() * 9) % 7 == 0) {

@@ -168,7 +168,7 @@ class DefaultGameEngine(private val systems: List<GameSystem>) : GameEngine {
             )
         } ?: emptyList()
 
-        // 8. Seed patrol enemies from start room
+        // 8. Seed patrol enemies from the START room only (other rooms are seeded on transition)
         val patrolEnemies = startRoom?.patrolSpawns?.map { spawn ->
             PatrolEnemy(
                 id = spawn.id,
@@ -179,7 +179,7 @@ class DefaultGameEngine(private val systems: List<GameSystem>) : GameEngine {
             )
         } ?: emptyList()
 
-        // 8. Seed dynamic blocks from start room blockSpawns
+        // 9. Seed dynamic blocks from start room (other rooms seeded on transition)
         val dynamicBlocks: List<BlockState> = startRoom?.blockSpawns?.map { spawn ->
             BlockState(
                 id = spawn.id,

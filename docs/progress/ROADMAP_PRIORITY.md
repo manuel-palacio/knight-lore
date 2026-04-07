@@ -7,7 +7,7 @@ Current scores: Playability 3/10 · Puzzles 2/10 · HUD 7/10 · Graphics 5/10 ·
 
 ---
 
-## PHASE 1 — Fix the Exits (Graphics foundation) 🔴 BLOCKER
+## PHASE 1 — Fix the Exits (Graphics foundation) ✅ DONE
 
 **Why first:** Everything else looks bad while exits are broken. Two systems fight each other.
 The blue sci-fi portal glow clashes with stone palette. Jambs render at full block width instead
@@ -66,7 +66,7 @@ botched arch at this resolution.
 
 ---
 
-## PHASE 2 — Distinct Item Visuals 🔴 HIGH PRIORITY
+## PHASE 2 — Distinct Item Visuals ✅ DONE (basic — colors/sizes per type)
 
 **Why:** The HUD says `NEED: crystal_ball` but every item in the world looks identical
 (gold pulsing oval). The player cannot act on the HUD information. This breaks the core loop.

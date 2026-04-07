@@ -1,0 +1,26 @@
+build:
+  maxIssues: 0
+
+complexity:
+  active: true
+  ComplexCondition:
+    active: true
+    threshold: 4
+  LongMethod:
+    active: true
+    threshold: 80
+  TooManyFunctions:
+    active: true
+    thresholdInFiles: 20
+    thresholdInClasses: 15
+
+naming:
+  active: true
+
+style:
+  active: true
+  MagicNumber:
+    active: false   # disabled: render constants are intentional numeric literals
+
+comments:
+  active: false   # KDoc is encouraged but not enforced by detekt

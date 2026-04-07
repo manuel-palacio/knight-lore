@@ -39,8 +39,10 @@ class RoomTransitionSystem(
             fromRoomId = state.currentRoomId,
             toRoomId = exit.targetRoomId,
             targetSpawnId = exit.targetSpawnId,
-            phase = TransitionPhase.FADING_OUT,
+            phase = TransitionPhase.SLIDING_OUT,
             ticksRemaining = transitionDurationTicks,
+            exitSide = exit.side,
+            totalTicks = transitionDurationTicks,
         )
         return SystemResult(
             state.copy(roomTransition = newTransition),
@@ -77,7 +79,7 @@ class RoomTransitionSystem(
             val updatedTransition = transition.copy(
                 ticksRemaining = remaining,
                 phase = if (remaining <= transitionDurationTicks / 2)
-                    TransitionPhase.FADING_IN else TransitionPhase.FADING_OUT,
+                    TransitionPhase.SLIDING_IN else TransitionPhase.SLIDING_OUT,
             )
             SystemResult(state.copy(roomTransition = updatedTransition))
         }

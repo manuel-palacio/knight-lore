@@ -92,16 +92,42 @@ fun DesktopHud(state: GameState, modifier: Modifier = Modifier) {
                 )
             }
 
-            // Top-right: lives
-            val livesSymbol = if (state.player.lives > 0) {
-                "💀".repeat(state.player.lives.coerceAtMost(5))
-            } else "—"
-            Text(
-                text = livesSymbol,
-                color = red,
-                fontSize = 18.sp,
+            // Top-right: lives count + day/night indicator
+            Row(
                 modifier = Modifier.align(Alignment.CenterEnd),
-            )
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                // Day/night phase icon
+                val phaseLabel = when (state.time.phase) {
+                    DayPhase.NIGHT -> "NIGHT"
+                    DayPhase.DUSK -> "DUSK"
+                    DayPhase.DAWN -> "DAWN"
+                    DayPhase.DAY -> "DAY"
+                }
+                val phaseColor = when (state.time.phase) {
+                    DayPhase.NIGHT -> Color(0xFF6688CC)
+                    DayPhase.DUSK -> Color(0xFFFF8800)
+                    DayPhase.DAWN -> Color(0xFFFFAAAA)
+                    DayPhase.DAY -> Color(0xFFFFD040)
+                }
+                Text(
+                    text = phaseLabel,
+                    color = phaseColor,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+                // Lives count
+                val livesColor = when {
+                    state.player.lives <= 1 -> red
+                    else -> white
+                }
+                Text(
+                    text = "LIVES: ${state.player.lives}",
+                    color = livesColor,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
         }
 
         // ── Bottom bar ───────────────────────────────────────────────────────

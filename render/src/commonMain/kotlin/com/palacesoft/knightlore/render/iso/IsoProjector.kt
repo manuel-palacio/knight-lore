@@ -3,6 +3,8 @@ package com.palacesoft.knightlore.render.iso
 import com.palacesoft.knightlore.core.geometry.TileMetrics
 import com.palacesoft.knightlore.core.math.Vec2f
 import com.palacesoft.knightlore.core.math.Vec3f
+import com.palacesoft.knightlore.domain.model.ExitSide
+import com.palacesoft.knightlore.domain.model.RoomTransitionState
 
 /**
  * Converts world-space positions to screen-space pixel positions using the
@@ -47,5 +49,44 @@ object IsoProjector {
             x = viewportW / 2f - centerScreen.x,
             y = viewportH / 2f - centerScreen.y - viewportH * TileMetrics.ROOM_VERTICAL_BIAS,
         )
+    }
+
+    /**
+     * During a room transition, compute a pixel offset to slide the room in/out.
+     * The outgoing room slides out in the exit direction; the incoming slides in
+     * from the opposite side. An ease-in-out cubic is applied for smooth motion.
+     *
+     * @param transition current transition state (null = no transition, returns ZERO)
+     * @param viewWidth  viewport pixel width
+     * @param viewHeight viewport pixel height
+     * @param isOutgoing true = apply to the FROM room; false = apply to the TO room
+     */
+    fun transitionOffset(
+        transition: RoomTransitionState?,
+        viewWidth: Float,
+        viewHeight: Float,
+        isOutgoing: Boolean,
+    ): Vec2f {
+        transition ?: return Vec2f.ZERO
+        val progress = 1f - transition.ticksRemaining.toFloat() / transition.totalTicks.toFloat()
+        // Ease-in-out cubic
+        val t = if (progress < 0.5f) 4f * progress * progress * progress
+                else 1f - (-2f * progress + 2f).let { it * it * it } / 2f
+
+        // Direction vector for the exit side (isometric: NORTH = up-left, EAST = up-right etc.)
+        val (dx, dy) = when (transition.exitSide) {
+            ExitSide.NORTH -> -0.5f to -0.5f
+            ExitSide.SOUTH ->  0.5f to  0.5f
+            ExitSide.EAST  ->  0.5f to -0.5f
+            ExitSide.WEST  -> -0.5f to  0.5f
+        }
+        val slideX = dx * viewWidth
+        val slideY = dy * viewHeight
+
+        return if (isOutgoing) {
+            Vec2f(slideX * t, slideY * t)
+        } else {
+            Vec2f(slideX * (t - 1f), slideY * (t - 1f))
+        }
     }
 }

@@ -66,7 +66,14 @@ class BlockPhysicsSystem(private val roomProvider: RoomProvider) : GameSystem {
                 }
                 if (otherBlockAt) return@map block
 
-                block.copy(gridX = targetX, gridY = targetY)
+                block.copy(
+                    gridX = targetX,
+                    gridY = targetY,
+                    slideFrom = com.palacesoft.knightlore.core.math.Vec3f(
+                        block.gridX.toFloat(), block.gridY.toFloat(), block.gridZ.toFloat()
+                    ),
+                    slideTick = state.time.tick.toInt(),
+                )
             }
         } else {
             state.dynamicBlocks
@@ -77,7 +84,15 @@ class BlockPhysicsSystem(private val roomProvider: RoomProvider) : GameSystem {
         val py = player.position.y
         val pz = player.position.z
 
-        val updatedBlocks = afterPush.map { block ->
+        val currentTick = state.time.tick.toInt()
+        val updatedBlocks = afterPush.map { block0 ->
+            // Clear completed slide animations
+            val block = if (block0.slideFrom != null &&
+                (currentTick - block0.slideTick) >= BlockState.SLIDE_DURATION_TICKS
+            ) {
+                block0.copy(slideFrom = null, slideTick = 0)
+            } else block0
+
             val gx = block.gridX.toFloat()
             val gy = block.gridY.toFloat()
             val gz = block.gridZ.toFloat()

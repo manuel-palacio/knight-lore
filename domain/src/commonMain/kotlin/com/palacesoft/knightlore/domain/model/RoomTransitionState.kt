@@ -4,7 +4,7 @@ import com.palacesoft.knightlore.core.ids.RoomId
 import kotlinx.serialization.Serializable
 
 @Serializable
-enum class TransitionPhase { FADING_OUT, FADING_IN }
+enum class TransitionPhase { FADING_OUT, FADING_IN, SLIDING_OUT, SLIDING_IN }
 
 @Serializable
 data class RoomTransitionState(
@@ -13,4 +13,6 @@ data class RoomTransitionState(
     val targetSpawnId: String,
     val phase: TransitionPhase,
     val ticksRemaining: Int,
+    val exitSide: ExitSide = ExitSide.NORTH,
+    val totalTicks: Int = 20,
 )

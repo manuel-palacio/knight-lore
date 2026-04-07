@@ -11,6 +11,8 @@ data class SolidVolume(
 data class ResolvedMove(
     val resolvedPos: Vec3f,
     val hitWall: Boolean,
+    val hitWallX: Boolean,
+    val hitWallY: Boolean,
     val landedOnSurface: Boolean,
     val surfaceZ: Float?,
 )
@@ -40,7 +42,8 @@ class CollisionResolver {
         solids: List<SolidVolume>,
     ): ResolvedMove {
         var resolvedPos = currentPos
-        var hitWall = false
+        var hitWallX = false
+        var hitWallY = false
         var landedOnSurface = false
         var surfaceZ: Float? = null
 
@@ -49,7 +52,7 @@ class CollisionResolver {
         val xBounds = entityWorldBounds(xTestPos, entityAabb)
         val xBlocked = solids.any { it.bounds.intersects(xBounds) }
         val resolvedX = if (xBlocked) {
-            hitWall = true
+            hitWallX = true
             currentPos.x
         } else {
             intendedPos.x
@@ -61,7 +64,7 @@ class CollisionResolver {
         val yBounds = entityWorldBounds(yTestPos, entityAabb)
         val yBlocked = solids.any { it.bounds.intersects(yBounds) }
         val resolvedY = if (yBlocked) {
-            hitWall = true
+            hitWallY = true
             currentPos.y
         } else {
             intendedPos.y
@@ -112,7 +115,9 @@ class CollisionResolver {
 
         return ResolvedMove(
             resolvedPos = resolvedPos,
-            hitWall = hitWall,
+            hitWall = hitWallX || hitWallY,
+            hitWallX = hitWallX,
+            hitWallY = hitWallY,
             landedOnSurface = landedOnSurface,
             surfaceZ = surfaceZ,
         )

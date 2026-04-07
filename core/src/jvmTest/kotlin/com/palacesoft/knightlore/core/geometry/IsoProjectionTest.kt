@@ -16,9 +16,9 @@ class IsoProjectionTest {
     fun isoProjection_xAxis_movesDownRight() {
         // Moving along +X: screen x increases (right), screen y increases (down)
         val result = IsoProjection.toScreen(1f, 0f, 0f)
-        // sx = (1 - 0) * 48 = 48, sy = (1 + 0) * 24 - 0 = 24
+        // sx = (1 - 0) * HALF_TILE_WIDTH(48) = 48, sy = (1 + 0) * HALF_TILE_HEIGHT(20) = 20
         assertEquals(48f, result.x, 1e-4f)
-        assertEquals(24f, result.y, 1e-4f)
+        assertEquals(20f, result.y, 1e-4f)
         assertTrue(result.x > 0f, "Moving along +X should move right on screen")
         assertTrue(result.y > 0f, "Moving along +X should move down on screen")
     }
@@ -27,9 +27,9 @@ class IsoProjectionTest {
     fun isoProjection_yAxis_movesDownLeft() {
         // Moving along +Y: screen x decreases (left), screen y increases (down)
         val result = IsoProjection.toScreen(0f, 1f, 0f)
-        // sx = (0 - 1) * 48 = -48, sy = (0 + 1) * 24 - 0 = 24
+        // sx = (0 - 1) * HALF_TILE_WIDTH(48) = -48, sy = (0 + 1) * HALF_TILE_HEIGHT(20) = 20
         assertEquals(-48f, result.x, 1e-4f)
-        assertEquals(24f, result.y, 1e-4f)
+        assertEquals(20f, result.y, 1e-4f)
         assertTrue(result.x < 0f, "Moving along +Y should move left on screen")
         assertTrue(result.y > 0f, "Moving along +Y should move down on screen")
     }
@@ -38,9 +38,9 @@ class IsoProjectionTest {
     fun isoProjection_zAxis_movesUp() {
         // Moving along +Z: screen y decreases (up), screen x unchanged
         val result = IsoProjection.toScreen(0f, 0f, 1f)
-        // sx = 0, sy = 0 - 1 * 40 = -40
+        // sx = 0, sy = 0 - 1 * BLOCK_HEIGHT(48) = -48
         assertEquals(0f, result.x, 1e-4f)
-        assertEquals(-40f, result.y, 1e-4f)
+        assertEquals(-48f, result.y, 1e-4f)
         assertTrue(result.y < 0f, "Moving along +Z should move up on screen")
     }
 

@@ -251,7 +251,7 @@ object RoomEntityFactory {
                     // Use depth comparison to decide layer: blocks "in front of" player go to FOREGROUND,
                     // blocks "behind" player stay in BLOCK. This implements the painter's algorithm correctly.
                     val playerPos = state.player.position
-                    val playerDk = IsoProjector.depthKey(Vec3f(playerPos.x + 0.5f, playerPos.y + 0.5f, 0f))
+                    val playerDk = IsoProjector.depthKey(Vec3f(playerPos.x + 0.5f, playerPos.y + 0.5f, playerPos.z))
                     val blockLayer = if (dk > playerDk) DrawLayer.FOREGROUND else DrawLayer.BLOCK
                     val id = "tile_${tile.gridX}_${tile.gridY}_${tile.gridZ}"
 
@@ -474,7 +474,7 @@ object RoomEntityFactory {
         val dk = IsoProjector.depthKey(footWorld)
 
         val playerPos = state.player.position
-        val playerDk = IsoProjector.depthKey(Vec3f(playerPos.x + 0.5f, playerPos.y + 0.5f, 0f))
+        val playerDk = IsoProjector.depthKey(Vec3f(playerPos.x + 0.5f, playerPos.y + 0.5f, playerPos.z))
         val blockLayer = if (dk > playerDk) DrawLayer.FOREGROUND else DrawLayer.BLOCK
         val id = "dblock_${block.id}"
 

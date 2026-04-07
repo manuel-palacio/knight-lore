@@ -45,7 +45,7 @@ object IsoProjector {
         val centerScreen = toScreen(roomWidth / 2f, roomDepth / 2f, 0f)
         return Vec2f(
             x = viewportW / 2f - centerScreen.x,
-            y = viewportH / 2f - centerScreen.y - viewportH * 0.08f,
+            y = viewportH / 2f - centerScreen.y - viewportH * 0.12f,
         )
     }
 }

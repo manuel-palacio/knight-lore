@@ -454,5 +454,7 @@
       "z": 3.0
     }
   ],
-  "actorSpawns": []
+  "actorSpawns": [
+    { "actorType": "GUARD", "x": 2.5, "y": 2.5, "z": 0.0 }
+  ]
 }

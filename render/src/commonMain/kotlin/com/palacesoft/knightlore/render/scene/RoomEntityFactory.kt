@@ -816,6 +816,7 @@ object RoomEntityFactory {
             }
         }
 
+        // Clean rectangular doorway: dark void (z=0..2), narrow jamb columns, lintel at z=2.
         fun doorArchway(gx: Float, gy: Float, isFirst: Boolean, isLast: Boolean, side: ExitSide, targetRoomId: RoomId? = null) {
             val dk = IsoProjector.depthKey(Vec3f(gx + 0.5f, gy + 1f, 0f))
             val id = "door_${gx.toInt()}_${gy.toInt()}"
@@ -825,165 +826,95 @@ object RoomEntityFactory {
                 IsoProjector.toScreen(Vec3f(gx, gy, 0f)) + offset,
                 DrawPayload.ColorPath(floorDiamond(gx, gy, 0f, ox, oy), Colors.FLOOR_TOP))
 
-            // Build the arch from wall blocks:
-            // - isFirst tile: draw a JAMB (wall column) on the left side + arch springer at z=2
-            // - isLast tile: draw a JAMB on the right side + arch springer at z=2 + keystone at z=2
-            // - Both tiles: dark void at z=0..2 in the opening center
-
             if (side == ExitSide.NORTH) {
-                // Dark void — the passage visible through the opening
-                val voidLeft = if (isFirst) gx + 0.35f else gx
-                val voidRight = if (isLast) gx + 0.65f else gx + 1f
-                val voidPts = listOf(
-                    pt(voidLeft,  gy + 1f, 0f, ox, oy),
-                    pt(voidRight, gy + 1f, 0f, ox, oy),
-                    pt(voidRight, gy + 1f, 2f, ox, oy),
-                    pt(voidLeft,  gy + 1f, 2f, ox, oy),
-                )
+                // Dark void z=0..2
+                val voidL = if (isFirst) gx + 0.35f else gx
+                val voidR = if (isLast) gx + 0.65f else gx + 1f
                 commands += DrawCommand(DrawLayer.BLOCK, dk, 0, "${id}_void",
-                    IsoProjector.toScreen(Vec3f(voidLeft, gy + 1f, 0f)) + offset,
-                    DrawPayload.ColorPath(voidPts, ZXPalette.BLACK))
+                    IsoProjector.toScreen(Vec3f(voidL, gy + 1f, 0f)) + offset,
+                    DrawPayload.ColorPath(listOf(
+                        pt(voidL, gy + 1f, 0f, ox, oy), pt(voidR, gy + 1f, 0f, ox, oy),
+                        pt(voidR, gy + 1f, 2f, ox, oy), pt(voidL, gy + 1f, 2f, ox, oy),
+                    ), ZXPalette.BLACK))
 
-                // Jamb: narrow wall column on the outer edge of this gap tile
+                // Left jamb — narrow quad [gx, gx+0.35] on the y+1 face
                 if (isFirst) {
-                    // Left jamb: x=[gx, gx+0.35], z=0..3
-                    for (jz in 0 until 3) {
+                    for (jz in 0 until 2) {
                         val jdk = IsoProjector.depthKey(Vec3f(gx + 0.15f, gy + 1f, jz.toFloat()))
-                        val jid = "${id}_jl_$jz"
-                        if (jz == 2) {
-                            commands += DrawCommand(DrawLayer.BLOCK, jdk, 2, "${jid}_top",
-                                IsoProjector.toScreen(Vec3f(gx, gy, jz + 1f)) + offset,
-                                DrawPayload.ColorPath(floorDiamond(gx, gy, jz + 1f, ox, oy), wTop))
-                        }
-                        commands += DrawCommand(DrawLayer.BLOCK, jdk, 1, "${jid}_face",
+                        commands += DrawCommand(DrawLayer.BLOCK, jdk, 1, "${id}_jl_$jz",
                             IsoProjector.toScreen(Vec3f(gx, gy + 1f, jz.toFloat())) + offset,
-                            DrawPayload.DitheredPath(blockFaceLeft(gx, gy, jz.toFloat(), ox, oy), wFD1, wFD2, horizontal = true))
+                            DrawPayload.DitheredPath(listOf(
+                                pt(gx, gy + 1f, jz.toFloat(), ox, oy), pt(gx + 0.35f, gy + 1f, jz.toFloat(), ox, oy),
+                                pt(gx + 0.35f, gy + 1f, jz + 1f, ox, oy), pt(gx, gy + 1f, jz + 1f, ox, oy),
+                            ), wFD1, wFD2, horizontal = true))
                     }
                 }
+                // Right jamb — narrow quad [gx+0.65, gx+1]
                 if (isLast) {
-                    // Right jamb: x=[gx+0.65, gx+1], z=0..3
-                    for (jz in 0 until 3) {
+                    for (jz in 0 until 2) {
                         val jdk = IsoProjector.depthKey(Vec3f(gx + 0.85f, gy + 1f, jz.toFloat()))
-                        val jid = "${id}_jr_$jz"
-                        if (jz == 2) {
-                            commands += DrawCommand(DrawLayer.BLOCK, jdk, 2, "${jid}_top",
-                                IsoProjector.toScreen(Vec3f(gx, gy, jz + 1f)) + offset,
-                                DrawPayload.ColorPath(floorDiamond(gx, gy, jz + 1f, ox, oy), wTop))
-                        }
-                        commands += DrawCommand(DrawLayer.BLOCK, jdk, 1, "${jid}_face",
-                            IsoProjector.toScreen(Vec3f(gx, gy + 1f, jz.toFloat())) + offset,
-                            DrawPayload.DitheredPath(blockFaceLeft(gx, gy, jz.toFloat(), ox, oy), wFD1, wFD2, horizontal = true))
+                        commands += DrawCommand(DrawLayer.BLOCK, jdk, 1, "${id}_jr_$jz",
+                            IsoProjector.toScreen(Vec3f(gx + 0.65f, gy + 1f, jz.toFloat())) + offset,
+                            DrawPayload.DitheredPath(listOf(
+                                pt(gx + 0.65f, gy + 1f, jz.toFloat(), ox, oy), pt(gx + 1f, gy + 1f, jz.toFloat(), ox, oy),
+                                pt(gx + 1f, gy + 1f, jz + 1f, ox, oy), pt(gx + 0.65f, gy + 1f, jz + 1f, ox, oy),
+                            ), wFD1, wFD2, horizontal = true))
                     }
                 }
 
-                // Arch top: wall block at z=2 spanning the gap (the lintel/keystone)
-                val archDk = IsoProjector.depthKey(Vec3f(gx + 0.5f, gy + 1f, 2f))
-                commands += DrawCommand(DrawLayer.BLOCK, archDk, 2, "${id}_arch_top",
-                    IsoProjector.toScreen(Vec3f(gx, gy, 3f)) + offset,
-                    DrawPayload.ColorPath(floorDiamond(gx, gy, 3f, ox, oy), wTop))
-                commands += DrawCommand(DrawLayer.BLOCK, archDk, 1, "${id}_arch_face",
-                    IsoProjector.toScreen(Vec3f(gx, gy + 1f, 2f)) + offset,
-                    DrawPayload.DitheredPath(blockFaceLeft(gx, gy, 2f, ox, oy), wFD1, wFD2, horizontal = true))
+                // Lintel at z=2 — top face + inner face
+                val ldk = IsoProjector.depthKey(Vec3f(gx + 0.5f, gy + 1f, 2f))
+                commands += DrawCommand(DrawLayer.BLOCK, ldk, 2, "${id}_lintel_top",
+                    IsoProjector.toScreen(Vec3f(gx, gy, 2f)) + offset,
+                    DrawPayload.ColorPath(floorDiamond(gx, gy, 2f, ox, oy), wTop))
+                commands += DrawCommand(DrawLayer.BLOCK, ldk, 1, "${id}_lintel_face",
+                    IsoProjector.toScreen(Vec3f(gx, gy + 1f, 1f)) + offset,
+                    DrawPayload.DitheredPath(blockFaceLeft(gx, gy, 1f, ox, oy), wFD1, wFD2, horizontal = true))
 
-                // Arch springers — filled triangular blocks at the corners where
-                // jambs meet the lintel, creating the curved arch shape from solid wall material.
-                if (isFirst) {
-                    // Left springer: triangle filling the corner between left jamb and lintel
-                    val sprPts = listOf(
-                        pt(gx,        gy + 1f, 1.2f, ox, oy),  // jamb inner edge at z=1.2
-                        pt(gx + 0.5f, gy + 1f, 2f,   ox, oy),  // curve midpoint at z=2
-                        pt(gx,        gy + 1f, 2f,   ox, oy),  // jamb top at z=2
-                    )
-                    commands += DrawCommand(DrawLayer.BLOCK, archDk, 2, "${id}_spr_l",
-                        IsoProjector.toScreen(Vec3f(gx, gy + 1f, 1.2f)) + offset,
-                        DrawPayload.DitheredPath(sprPts, wFD1, wFD2, horizontal = true))
-                }
-                if (isLast) {
-                    // Right springer
-                    val sprPts = listOf(
-                        pt(gx + 1f,   gy + 1f, 1.2f, ox, oy),
-                        pt(gx + 0.5f, gy + 1f, 2f,   ox, oy),
-                        pt(gx + 1f,   gy + 1f, 2f,   ox, oy),
-                    )
-                    commands += DrawCommand(DrawLayer.BLOCK, archDk, 2, "${id}_spr_r",
-                        IsoProjector.toScreen(Vec3f(gx + 0.5f, gy + 1f, 1.2f)) + offset,
-                        DrawPayload.DitheredPath(sprPts, wFD1, wFD2, horizontal = true))
-                }
-            } else {
-                // WEST wall archway — on the east-facing (x+1) face
+            } else { // WEST
                 val faceX = gx + 1f
-                val voidTop = if (isFirst) gy + 0.35f else gy
-                val voidBot = if (isLast) gy + 0.65f else gy + 1f
-                val voidPts = listOf(
-                    pt(faceX, voidTop, 0f, ox, oy),
-                    pt(faceX, voidBot, 0f, ox, oy),
-                    pt(faceX, voidBot, 2f, ox, oy),
-                    pt(faceX, voidTop, 2f, ox, oy),
-                )
+                val voidT = if (isFirst) gy + 0.35f else gy
+                val voidB = if (isLast) gy + 0.65f else gy + 1f
                 commands += DrawCommand(DrawLayer.BLOCK, dk, 0, "${id}_void",
-                    IsoProjector.toScreen(Vec3f(faceX, voidTop, 0f)) + offset,
-                    DrawPayload.ColorPath(voidPts, ZXPalette.BLACK))
+                    IsoProjector.toScreen(Vec3f(faceX, voidT, 0f)) + offset,
+                    DrawPayload.ColorPath(listOf(
+                        pt(faceX, voidT, 0f, ox, oy), pt(faceX, voidB, 0f, ox, oy),
+                        pt(faceX, voidB, 2f, ox, oy), pt(faceX, voidT, 2f, ox, oy),
+                    ), ZXPalette.BLACK))
 
-                // Jambs
+                // Top jamb — narrow quad [gy, gy+0.35]
                 if (isFirst) {
-                    for (jz in 0 until 3) {
-                        val jdk = IsoProjector.depthKey(Vec3f(gx + 1f, gy + 0.15f, jz.toFloat()))
-                        val jid = "${id}_jl_$jz"
-                        if (jz == 2) {
-                            commands += DrawCommand(DrawLayer.BLOCK, jdk, 2, "${jid}_top",
-                                IsoProjector.toScreen(Vec3f(gx, gy, jz + 1f)) + offset,
-                                DrawPayload.ColorPath(floorDiamond(gx, gy, jz + 1f, ox, oy), wTop))
-                        }
-                        commands += DrawCommand(DrawLayer.BLOCK, jdk, 1, "${jid}_face",
+                    for (jz in 0 until 2) {
+                        val jdk = IsoProjector.depthKey(Vec3f(faceX, gy + 0.15f, jz.toFloat()))
+                        commands += DrawCommand(DrawLayer.BLOCK, jdk, 1, "${id}_jl_$jz",
                             IsoProjector.toScreen(Vec3f(faceX, gy, jz.toFloat())) + offset,
-                            DrawPayload.DitheredPath(blockFaceRight(gx, gy, jz.toFloat(), ox, oy), wFR1, wFR2, horizontal = true))
+                            DrawPayload.DitheredPath(listOf(
+                                pt(faceX, gy, jz.toFloat(), ox, oy), pt(faceX, gy + 0.35f, jz.toFloat(), ox, oy),
+                                pt(faceX, gy + 0.35f, jz + 1f, ox, oy), pt(faceX, gy, jz + 1f, ox, oy),
+                            ), wFR1, wFR2, horizontal = true))
                     }
                 }
+                // Bottom jamb — narrow quad [gy+0.65, gy+1]
                 if (isLast) {
-                    for (jz in 0 until 3) {
-                        val jdk = IsoProjector.depthKey(Vec3f(gx + 1f, gy + 0.85f, jz.toFloat()))
-                        val jid = "${id}_jr_$jz"
-                        if (jz == 2) {
-                            commands += DrawCommand(DrawLayer.BLOCK, jdk, 2, "${jid}_top",
-                                IsoProjector.toScreen(Vec3f(gx, gy, jz + 1f)) + offset,
-                                DrawPayload.ColorPath(floorDiamond(gx, gy, jz + 1f, ox, oy), wTop))
-                        }
-                        commands += DrawCommand(DrawLayer.BLOCK, jdk, 1, "${jid}_face",
-                            IsoProjector.toScreen(Vec3f(faceX, gy, jz.toFloat())) + offset,
-                            DrawPayload.DitheredPath(blockFaceRight(gx, gy, jz.toFloat(), ox, oy), wFR1, wFR2, horizontal = true))
+                    for (jz in 0 until 2) {
+                        val jdk = IsoProjector.depthKey(Vec3f(faceX, gy + 0.85f, jz.toFloat()))
+                        commands += DrawCommand(DrawLayer.BLOCK, jdk, 1, "${id}_jr_$jz",
+                            IsoProjector.toScreen(Vec3f(faceX, gy + 0.65f, jz.toFloat())) + offset,
+                            DrawPayload.DitheredPath(listOf(
+                                pt(faceX, gy + 0.65f, jz.toFloat(), ox, oy), pt(faceX, gy + 1f, jz.toFloat(), ox, oy),
+                                pt(faceX, gy + 1f, jz + 1f, ox, oy), pt(faceX, gy + 0.65f, jz + 1f, ox, oy),
+                            ), wFR1, wFR2, horizontal = true))
                     }
                 }
 
-                // Arch top: lintel at z=2
-                val archDk = IsoProjector.depthKey(Vec3f(faceX, gy + 0.5f, 2f))
-                commands += DrawCommand(DrawLayer.BLOCK, archDk, 2, "${id}_arch_top",
-                    IsoProjector.toScreen(Vec3f(gx, gy, 3f)) + offset,
-                    DrawPayload.ColorPath(floorDiamond(gx, gy, 3f, ox, oy), wTop))
-                commands += DrawCommand(DrawLayer.BLOCK, archDk, 1, "${id}_arch_face",
-                    IsoProjector.toScreen(Vec3f(faceX, gy, 2f)) + offset,
-                    DrawPayload.DitheredPath(blockFaceRight(gx, gy, 2f, ox, oy), wFR1, wFR2, horizontal = true))
-
-                // Arch springers — filled triangular blocks at corners
-                if (isFirst) {
-                    val sprPts = listOf(
-                        pt(faceX, gy,        1.2f, ox, oy),
-                        pt(faceX, gy + 0.5f, 2f,   ox, oy),
-                        pt(faceX, gy,        2f,   ox, oy),
-                    )
-                    commands += DrawCommand(DrawLayer.BLOCK, archDk, 2, "${id}_spr_l",
-                        IsoProjector.toScreen(Vec3f(faceX, gy, 1.2f)) + offset,
-                        DrawPayload.DitheredPath(sprPts, wFR1, wFR2, horizontal = true))
-                }
-                if (isLast) {
-                    val sprPts = listOf(
-                        pt(faceX, gy + 1f,   1.2f, ox, oy),
-                        pt(faceX, gy + 0.5f, 2f,   ox, oy),
-                        pt(faceX, gy + 1f,   2f,   ox, oy),
-                    )
-                    commands += DrawCommand(DrawLayer.BLOCK, archDk, 2, "${id}_spr_r",
-                        IsoProjector.toScreen(Vec3f(faceX, gy + 0.5f, 1.2f)) + offset,
-                        DrawPayload.DitheredPath(sprPts, wFR1, wFR2, horizontal = true))
-                }
+                // Lintel at z=2
+                val ldk = IsoProjector.depthKey(Vec3f(faceX, gy + 0.5f, 2f))
+                commands += DrawCommand(DrawLayer.BLOCK, ldk, 2, "${id}_lintel_top",
+                    IsoProjector.toScreen(Vec3f(gx, gy, 2f)) + offset,
+                    DrawPayload.ColorPath(floorDiamond(gx, gy, 2f, ox, oy), wTop))
+                commands += DrawCommand(DrawLayer.BLOCK, ldk, 1, "${id}_lintel_face",
+                    IsoProjector.toScreen(Vec3f(faceX, gy, 1f)) + offset,
+                    DrawPayload.DitheredPath(blockFaceRight(gx, gy, 1f, ox, oy), wFR1, wFR2, horizontal = true))
             }
         }
 
@@ -1009,133 +940,93 @@ object RoomEntityFactory {
             else wallBlockWest(0f, y.toFloat())
         }
 
-        // Exit markers for all four sides — independent of which walls are drawn.
-        // NORTH/WEST exits already get full doorArchway treatment above.
-        // SOUTH/EAST exits have no wall, so draw a simpler threshold marker.
-        fun drawExitMarker(gx: Float, gy: Float, side: ExitSide, withPillars: Boolean, targetRoomId: RoomId? = null) {
-            val dk = IsoProjector.depthKey(Vec3f(gx + 0.5f, gy + 1f, 0f))
-            val id = "exit_marker_${gx.toInt()}_${gy.toInt()}"
-
-            // Threshold floor tile — distinctly lighter to draw the eye toward exit
-            commands += DrawCommand(DrawLayer.FLOOR, dk, 10, "${id}_floor",
-                IsoProjector.toScreen(Vec3f(gx, gy, 0f)) + offset,
-                DrawPayload.ColorPath(floorDiamond(gx, gy, 0f, ox, oy), 0xFF_4A4A6A.toInt()))
-            // Second floor highlight (inset diamond)
-            val inFloor = listOf(
-                pt(gx + 0.1f, gy + 0.1f, 0f, ox, oy),
-                pt(gx + 0.9f, gy + 0.1f, 0f, ox, oy),
-                pt(gx + 0.9f, gy + 0.9f, 0f, ox, oy),
-                pt(gx + 0.1f, gy + 0.9f, 0f, ox, oy),
-            )
-            commands += DrawCommand(DrawLayer.FLOOR, dk, 11, "${id}_floor_hi",
-                IsoProjector.toScreen(Vec3f(gx, gy, 0f)) + offset,
-                DrawPayload.ColorPath(inFloor, 0xFF_5A5A7E.toInt()))
-
-            // Void face above threshold (slightly visible dark, not pure black)
-            val voidPts = when (side) {
-                ExitSide.SOUTH, ExitSide.NORTH -> listOf(
-                    pt(gx,      gy + 1f, 0f, ox, oy),
-                    pt(gx + 1f, gy + 1f, 0f, ox, oy),
-                    pt(gx + 1f, gy + 1f, 2f, ox, oy),
-                    pt(gx,      gy + 1f, 2f, ox, oy),
-                )
-                ExitSide.EAST, ExitSide.WEST -> listOf(
-                    pt(gx + 1f, gy,      0f, ox, oy),
-                    pt(gx + 1f, gy + 1f, 0f, ox, oy),
-                    pt(gx + 1f, gy + 1f, 2f, ox, oy),
-                    pt(gx + 1f, gy,      2f, ox, oy),
-                )
-            }
-            commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "${id}_void",
-                IsoProjector.toScreen(Vec3f(gx, gy + 1f, 0f)) + offset,
-                DrawPayload.ColorPath(voidPts, 0xFF_0C0C18.toInt()))
-
-            // Visible glow line at floor level — blue/purple portal shimmer
-            val (gp1, gp2) = when (side) {
-                ExitSide.SOUTH, ExitSide.NORTH -> Pair(
-                    pt(gx,      gy + 1f, 0f, ox, oy),
-                    pt(gx + 1f, gy + 1f, 0f, ox, oy),
-                )
-                ExitSide.EAST, ExitSide.WEST -> Pair(
-                    pt(gx + 1f, gy,      0f, ox, oy),
-                    pt(gx + 1f, gy + 1f, 0f, ox, oy),
-                )
-            }
-            commands += DrawCommand(DrawLayer.FLOOR, dk, 12, "${id}_glow",
-                Vec2f(gp1.x, gp1.y),
-                DrawPayload.Line(gp1.x, gp1.y, gp2.x, gp2.y, 0xBB_6666CC.toInt(), 3f))
-
-            // Thin stone pillars for walled exits (North/West) — not needed for South/East
-            if (withPillars) {
-                for (gz in 0 until 3) {
-                    val bz = gz.toFloat()
-                    val pdk = IsoProjector.depthKey(Vec3f(gx + 0.15f, gy + 1f, bz))
-                    commands += DrawCommand(DrawLayer.BLOCK, pdk, 2, "${id}_pillar_l_top_$gz",
-                        IsoProjector.toScreen(Vec3f(gx, gy, bz + 1f)) + offset,
-                        DrawPayload.ColorPath(listOf(
-                            pt(gx,        gy,      bz + 1f, ox, oy),
-                            pt(gx + 0.2f, gy,      bz + 1f, ox, oy),
-                            pt(gx + 0.2f, gy + 1f, bz + 1f, ox, oy),
-                            pt(gx,        gy + 1f, bz + 1f, ox, oy),
-                        ), wTop))
-                    commands += DrawCommand(DrawLayer.BLOCK, pdk, 1, "${id}_pillar_l_face_$gz",
-                        IsoProjector.toScreen(Vec3f(gx, gy + 1f, bz)) + offset,
-                        DrawPayload.DitheredPath(listOf(
-                            pt(gx,        gy + 1f, bz,      ox, oy),
-                            pt(gx + 0.2f, gy + 1f, bz,      ox, oy),
-                            pt(gx + 0.2f, gy + 1f, bz + 1f, ox, oy),
-                            pt(gx,        gy + 1f, bz + 1f, ox, oy),
-                        ), wFD1, wFD2, horizontal = true))
-                    val pdk2 = IsoProjector.depthKey(Vec3f(gx + 0.9f, gy + 1f, bz))
-                    commands += DrawCommand(DrawLayer.BLOCK, pdk2, 2, "${id}_pillar_r_top_$gz",
-                        IsoProjector.toScreen(Vec3f(gx + 0.8f, gy, bz + 1f)) + offset,
-                        DrawPayload.ColorPath(listOf(
-                            pt(gx + 0.8f, gy,      bz + 1f, ox, oy),
-                            pt(gx + 1f,   gy,      bz + 1f, ox, oy),
-                            pt(gx + 1f,   gy + 1f, bz + 1f, ox, oy),
-                            pt(gx + 0.8f, gy + 1f, bz + 1f, ox, oy),
-                        ), wTop))
-                    commands += DrawCommand(DrawLayer.BLOCK, pdk2, 1, "${id}_pillar_r_face_$gz",
-                        IsoProjector.toScreen(Vec3f(gx + 0.8f, gy + 1f, bz)) + offset,
-                        DrawPayload.DitheredPath(listOf(
-                            pt(gx + 0.8f, gy + 1f, bz,      ox, oy),
-                            pt(gx + 1f,   gy + 1f, bz,      ox, oy),
-                            pt(gx + 1f,   gy + 1f, bz + 1f, ox, oy),
-                            pt(gx + 0.8f, gy + 1f, bz + 1f, ox, oy),
-                        ), wFD1, wFD2, horizontal = true))
-                }
-            }
-
-            // Unexplored marker: pulsing 3-dot indicator near archway
-            if (targetRoomId != null && targetRoomId !in visitedRooms) {
-                val markerAlpha = (0x44 + (kotlin.math.sin(tick.toDouble() * 0.1) * 0x44).toInt()).coerceIn(0x20, 0x88)
-                val markerPt = when (side) {
-                    ExitSide.SOUTH, ExitSide.NORTH -> pt(gx + 0.5f, gy + 1f, 1.5f, ox, oy)
-                    ExitSide.EAST, ExitSide.WEST   -> pt(gx + 1f,   gy + 0.5f, 1.5f, ox, oy)
-                }
-                val markerColor = (markerAlpha shl 24) or 0x6A6A8A
-                for (di in 0..2) {
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 12 + di, "${id}_marker_$di",
-                        Vec2f(markerPt.x - 1f, markerPt.y - 6f + di * 4f),
-                        DrawPayload.ColorOval(3f, 3f, markerColor))
-                }
-            }
-        }
-
-        // Draw exit markers for SOUTH and EAST exits — arch pillars on both sides
+        // South/East exits: plain dark opening with two solid half-wall pillars (no glow).
         for (exit in room.exits) {
             when (exit.side) {
                 ExitSide.SOUTH -> {
-                    val gx = (w / 2 - 1).toFloat()
-                    val gy = (d - 1).toFloat()
-                    drawExitMarker(gx, gy, ExitSide.SOUTH, withPillars = true, exit.targetRoomId)
-                    drawExitMarker(gx + 1f, gy, ExitSide.SOUTH, withPillars = true, exit.targetRoomId)
+                    val gapX0 = (w / 2 - 1).toFloat()
+                    val gapY = (d - 1).toFloat()
+                    for (gi in 0..1) {
+                        val egx = gapX0 + gi
+                        val edk = IsoProjector.depthKey(Vec3f(egx + 0.5f, gapY + 1f, 0f))
+                        val eid = "sexit_${egx.toInt()}_${gapY.toInt()}"
+                        // Floor
+                        commands += DrawCommand(DrawLayer.FLOOR, edk, 0, "${eid}_floor",
+                            IsoProjector.toScreen(Vec3f(egx, gapY, 0f)) + offset,
+                            DrawPayload.ColorPath(floorDiamond(egx, gapY, 0f, ox, oy), Colors.FLOOR_TOP))
+                        // Dark void on south face
+                        val vL = if (gi == 0) egx + 0.35f else egx
+                        val vR = if (gi == 1) egx + 0.65f else egx + 1f
+                        commands += DrawCommand(DrawLayer.BLOCK, edk, 0, "${eid}_void",
+                            IsoProjector.toScreen(Vec3f(vL, gapY + 1f, 0f)) + offset,
+                            DrawPayload.ColorPath(listOf(
+                                pt(vL, gapY + 1f, 0f, ox, oy), pt(vR, gapY + 1f, 0f, ox, oy),
+                                pt(vR, gapY + 1f, 2f, ox, oy), pt(vL, gapY + 1f, 2f, ox, oy),
+                            ), ZXPalette.BLACK))
+                        // Left pillar on first tile
+                        if (gi == 0) {
+                            for (jz in 0 until 2) {
+                                commands += DrawCommand(DrawLayer.BLOCK, edk, 1, "${eid}_pl_$jz",
+                                    IsoProjector.toScreen(Vec3f(egx, gapY + 1f, jz.toFloat())) + offset,
+                                    DrawPayload.DitheredPath(listOf(
+                                        pt(egx, gapY + 1f, jz.toFloat(), ox, oy), pt(egx + 0.35f, gapY + 1f, jz.toFloat(), ox, oy),
+                                        pt(egx + 0.35f, gapY + 1f, jz + 1f, ox, oy), pt(egx, gapY + 1f, jz + 1f, ox, oy),
+                                    ), wFD1, wFD2, horizontal = true))
+                            }
+                        }
+                        // Right pillar on last tile
+                        if (gi == 1) {
+                            for (jz in 0 until 2) {
+                                commands += DrawCommand(DrawLayer.BLOCK, edk, 1, "${eid}_pr_$jz",
+                                    IsoProjector.toScreen(Vec3f(egx + 0.65f, gapY + 1f, jz.toFloat())) + offset,
+                                    DrawPayload.DitheredPath(listOf(
+                                        pt(egx + 0.65f, gapY + 1f, jz.toFloat(), ox, oy), pt(egx + 1f, gapY + 1f, jz.toFloat(), ox, oy),
+                                        pt(egx + 1f, gapY + 1f, jz + 1f, ox, oy), pt(egx + 0.65f, gapY + 1f, jz + 1f, ox, oy),
+                                    ), wFD1, wFD2, horizontal = true))
+                            }
+                        }
+                    }
                 }
                 ExitSide.EAST -> {
-                    val gx = (w - 1).toFloat()
-                    val gy = (d / 2 - 1).toFloat()
-                    drawExitMarker(gx, gy, ExitSide.EAST, withPillars = true, exit.targetRoomId)
-                    drawExitMarker(gx, gy + 1f, ExitSide.EAST, withPillars = true, exit.targetRoomId)
+                    val gapX = (w - 1).toFloat()
+                    val gapY0 = (d / 2 - 1).toFloat()
+                    val faceX = gapX + 1f
+                    for (gi in 0..1) {
+                        val egy = gapY0 + gi
+                        val edk = IsoProjector.depthKey(Vec3f(gapX + 0.5f, egy + 1f, 0f))
+                        val eid = "eexit_${gapX.toInt()}_${egy.toInt()}"
+                        commands += DrawCommand(DrawLayer.FLOOR, edk, 0, "${eid}_floor",
+                            IsoProjector.toScreen(Vec3f(gapX, egy, 0f)) + offset,
+                            DrawPayload.ColorPath(floorDiamond(gapX, egy, 0f, ox, oy), Colors.FLOOR_TOP))
+                        val vT = if (gi == 0) egy + 0.35f else egy
+                        val vB = if (gi == 1) egy + 0.65f else egy + 1f
+                        commands += DrawCommand(DrawLayer.BLOCK, edk, 0, "${eid}_void",
+                            IsoProjector.toScreen(Vec3f(faceX, vT, 0f)) + offset,
+                            DrawPayload.ColorPath(listOf(
+                                pt(faceX, vT, 0f, ox, oy), pt(faceX, vB, 0f, ox, oy),
+                                pt(faceX, vB, 2f, ox, oy), pt(faceX, vT, 2f, ox, oy),
+                            ), ZXPalette.BLACK))
+                        if (gi == 0) {
+                            for (jz in 0 until 2) {
+                                commands += DrawCommand(DrawLayer.BLOCK, edk, 1, "${eid}_pl_$jz",
+                                    IsoProjector.toScreen(Vec3f(faceX, egy, jz.toFloat())) + offset,
+                                    DrawPayload.DitheredPath(listOf(
+                                        pt(faceX, egy, jz.toFloat(), ox, oy), pt(faceX, egy + 0.35f, jz.toFloat(), ox, oy),
+                                        pt(faceX, egy + 0.35f, jz + 1f, ox, oy), pt(faceX, egy, jz + 1f, ox, oy),
+                                    ), wFR1, wFR2, horizontal = true))
+                            }
+                        }
+                        if (gi == 1) {
+                            for (jz in 0 until 2) {
+                                commands += DrawCommand(DrawLayer.BLOCK, edk, 1, "${eid}_pr_$jz",
+                                    IsoProjector.toScreen(Vec3f(faceX, egy + 0.65f, jz.toFloat())) + offset,
+                                    DrawPayload.DitheredPath(listOf(
+                                        pt(faceX, egy + 0.65f, jz.toFloat(), ox, oy), pt(faceX, egy + 1f, jz.toFloat(), ox, oy),
+                                        pt(faceX, egy + 1f, jz + 1f, ox, oy), pt(faceX, egy + 0.65f, jz + 1f, ox, oy),
+                                    ), wFR1, wFR2, horizontal = true))
+                            }
+                        }
+                    }
                 }
                 ExitSide.NORTH, ExitSide.WEST -> { /* handled by doorArchway above */ }
             }

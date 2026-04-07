@@ -33,3 +33,46 @@ object TileMetrics {
     /** Vertical bias correction for room centering. Shifts the room up by 6% of viewport height to correct for isometric rooms appearing too low in the viewport. */
     const val ROOM_VERTICAL_BIAS = 0.06f
 }
+
+/**
+ * Authentic ZX Spectrum 15-color palette.
+ * Knight Lore on the Spectrum used BRIGHT WHITE/CYAN for all geometry on a BLACK background.
+ * Semantic aliases map game concepts to palette colors.
+ */
+object ZXPalette {
+    // Standard colors
+    const val BLACK    = 0xFF_000000.toInt()
+    const val BLUE     = 0xFF_0000AA.toInt()
+    const val RED      = 0xFF_AA0000.toInt()
+    const val MAGENTA  = 0xFF_AA00AA.toInt()
+    const val GREEN    = 0xFF_00AA00.toInt()
+    const val CYAN     = 0xFF_00AAAA.toInt()
+    const val YELLOW   = 0xFF_AA5500.toInt()
+    const val WHITE    = 0xFF_AAAAAA.toInt()
+
+    // BRIGHT variants
+    const val B_BLUE    = 0xFF_0055FF.toInt()
+    const val B_RED     = 0xFF_FF5555.toInt()
+    const val B_MAGENTA = 0xFF_FF55FF.toInt()
+    const val B_GREEN   = 0xFF_55FF55.toInt()
+    const val B_CYAN    = 0xFF_55FFFF.toInt()
+    const val B_YELLOW  = 0xFF_FFFF55.toInt()
+    const val B_WHITE   = 0xFF_FFFFFF.toInt()
+
+    // Semantic aliases for game use
+    val STONE_DARK  = BLUE
+    val STONE_MID   = WHITE
+    val STONE_LIGHT = B_WHITE
+    val FLOOR_A     = BLACK
+    val FLOOR_B     = BLUE
+    val SKIN        = B_YELLOW
+    val CAPE        = RED
+    val METAL       = B_CYAN
+    val WOLF_FUR    = YELLOW
+    val WOLF_DARK   = RED
+    val WOLF_EYE    = B_RED
+    val GOLD_ITEM   = B_YELLOW
+    val CAULDRON    = CYAN
+    val TORCH       = B_YELLOW
+    val TORCH_BASE  = YELLOW
+}

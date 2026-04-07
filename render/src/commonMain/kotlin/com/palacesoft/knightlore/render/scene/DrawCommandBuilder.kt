@@ -5,10 +5,9 @@ package com.palacesoft.knightlore.render.scene
  * isometric occlusion.
  *
  * Sort order (ascending = drawn first = behind):
- * 1. layer group: FLOOR (0) → scene objects (1) → HUD (2)
- * 2. depthKey — within the scene group, depth governs everything so
- *    the player correctly occludes blocks it stands south of, and
- *    blocks correctly occlude the player when north of it.
+ * 1. layer group: FLOOR (0) → scene objects (1) → EFFECT (2) → HUD (3)
+ * 2. depthKey — within the scene group, depth governs all occlusion so
+ *    blocks, actors, and the player interleave correctly by world position.
  * 3. priority — tiebreaker for same-position entities
  * 4. entityId — alphabetical for sort stability
  */
@@ -23,15 +22,20 @@ object DrawCommandBuilder {
             )
         )
 
-    /** Maps layers to render buckets. Higher = drawn later (in front). */
+    /**
+     * Maps layers to render buckets.
+     * BLOCK, ITEM, ACTOR, PLAYER, and FOREGROUND all share scene group 1
+     * so they depth-sort together — this allows blocks to correctly occlude
+     * actors/player and vice versa based on world position alone.
+     */
     private fun sceneGroup(layer: DrawLayer): Int = when (layer) {
         DrawLayer.FLOOR       -> 0
-        DrawLayer.BLOCK       -> 1  // depth-sorted world geometry
-        DrawLayer.ITEM        -> 2
-        DrawLayer.ACTOR       -> 3
-        DrawLayer.PLAYER      -> 4  // player renders after actors
-        DrawLayer.FOREGROUND  -> 5  // blocks above player (render in front of player)
-        DrawLayer.EFFECT      -> 6
-        DrawLayer.HUD         -> 7
+        DrawLayer.BLOCK       -> 1  // all scene objects depth-sort together
+        DrawLayer.ITEM        -> 1
+        DrawLayer.ACTOR       -> 1
+        DrawLayer.PLAYER      -> 1
+        DrawLayer.FOREGROUND  -> 1
+        DrawLayer.EFFECT      -> 2
+        DrawLayer.HUD         -> 3
     }
 }

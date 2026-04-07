@@ -32,28 +32,28 @@ object RoomEntityFactory {
 
     private object Colors {
         val BLACK       = ZXPalette.BLACK
-        val DARK_STONE  = ZXPalette.BLUE             // deep blue-black stone
-        val MID_STONE   = ZXPalette.WHITE            // mid grey stone
-        val HIGHLIGHT   = ZXPalette.B_WHITE           // bright white highlights
-        val DANGER_RED  = ZXPalette.B_RED             // hazard, damage
-        val LIFE_GREEN  = ZXPalette.B_GREEN           // cauldron, items
+        val DARK_STONE  = ZXPalette.STONE_DARK
+        val MID_STONE   = ZXPalette.STONE_MID
+        val HIGHLIGHT   = ZXPalette.STONE_CREAM
+        val DANGER_RED  = ZXPalette.B_RED
+        val LIFE_GREEN  = ZXPalette.B_GREEN
 
-        val FLOOR_TOP      = ZXPalette.BLUE
+        val FLOOR_TOP      = ZXPalette.FLOOR_B
         val FLOOR_CRACK    = BLACK
         val FLOOR_GLOW_BASE = 0x30_000800.toInt()
         val FLOOR_GLOW_OVER = 0x18_003300.toInt()
-        val WALL_TOP          = ZXPalette.B_WHITE
-        val WALL_LEFT_D1      = ZXPalette.WHITE       // south-facing dither
-        val WALL_LEFT_D2      = ZXPalette.BLUE
-        val WALL_RIGHT_D1     = ZXPalette.BLUE        // east-facing dither (darker)
+        val WALL_TOP          = ZXPalette.STONE_CREAM
+        val WALL_LEFT_D1      = ZXPalette.STONE_MID     // south-facing dither
+        val WALL_LEFT_D2      = ZXPalette.STONE_DARK
+        val WALL_RIGHT_D1     = ZXPalette.STONE_DARK     // east-facing dither (darker)
         val WALL_RIGHT_D2     = ZXPalette.BLACK
         val WALL_MORTAR    = BLACK
         val WALL_HIGHLIGHT = HIGHLIGHT
         val WALL_MOSS      = ZXPalette.GREEN
-        val BLOCK_TOP      = ZXPalette.B_WHITE
-        val BLOCK_LEFT     = ZXPalette.WHITE
-        val BLOCK_RIGHT    = ZXPalette.BLUE
-        val BLOCK_CROSS    = ZXPalette.CYAN
+        val BLOCK_TOP      = ZXPalette.STONE_CREAM
+        val BLOCK_LEFT     = ZXPalette.STONE_MID
+        val BLOCK_RIGHT    = ZXPalette.STONE_DARK
+        val BLOCK_CROSS    = ZXPalette.STONE_LIGHT
         val GOBLIN_TOP     = ZXPalette.B_GREEN
         val GOBLIN_LEFT    = ZXPalette.GREEN
         val GOBLIN_RIGHT   = 0xFF_005500.toInt()
@@ -79,42 +79,42 @@ object RoomEntityFactory {
     private fun paletteFor(theme: RoomTheme): ThemePalette = when (theme) {
         RoomTheme.CASTLE -> ThemePalette(
             floor1     = ZXPalette.BLACK,
-            floor2     = ZXPalette.BLUE,
-            wallTop    = ZXPalette.B_WHITE,
-            wallFaceD1 = ZXPalette.WHITE,
-            wallFaceD2 = ZXPalette.BLUE,
-            wallFaceR1 = ZXPalette.BLUE,
-            wallFaceR2 = ZXPalette.BLACK,
-            blockTop   = ZXPalette.B_WHITE,
-            blockLeft  = ZXPalette.WHITE,
-            blockRight = ZXPalette.BLUE,
-            fogColor   = 0x30_000010.toInt(),
+            floor2     = ZXPalette.FLOOR_B,
+            wallTop    = ZXPalette.STONE_CREAM,
+            wallFaceD1 = ZXPalette.STONE_MID,
+            wallFaceD2 = ZXPalette.STONE_DARK,
+            wallFaceR1 = ZXPalette.STONE_DARK,
+            wallFaceR2 = 0xFF_2A2820.toInt(),
+            blockTop   = ZXPalette.STONE_CREAM,
+            blockLeft  = ZXPalette.STONE_MID,
+            blockRight = ZXPalette.STONE_DARK,
+            fogColor   = 0x20_000000.toInt(),
         )
         RoomTheme.DUNGEON -> ThemePalette(
             floor1     = ZXPalette.BLACK,
-            floor2     = ZXPalette.YELLOW,
-            wallTop    = ZXPalette.B_YELLOW,
-            wallFaceD1 = ZXPalette.YELLOW,
-            wallFaceD2 = ZXPalette.RED,
-            wallFaceR1 = ZXPalette.RED,
-            wallFaceR2 = ZXPalette.BLACK,
-            blockTop   = ZXPalette.B_YELLOW,
-            blockLeft  = ZXPalette.YELLOW,
-            blockRight = ZXPalette.RED,
-            fogColor   = 0x30_100800.toInt(),
+            floor2     = 0xFF_1A1208.toInt(),        // warm dark brown floor
+            wallTop    = 0xFF_8A7A50.toInt(),         // tan dungeon stone
+            wallFaceD1 = 0xFF_6A5A38.toInt(),
+            wallFaceD2 = 0xFF_4A3A20.toInt(),
+            wallFaceR1 = 0xFF_4A3A20.toInt(),
+            wallFaceR2 = 0xFF_2A2010.toInt(),
+            blockTop   = 0xFF_8A7A50.toInt(),
+            blockLeft  = 0xFF_6A5A38.toInt(),
+            blockRight = 0xFF_4A3A20.toInt(),
+            fogColor   = 0x20_100800.toInt(),
         )
         RoomTheme.TOWER -> ThemePalette(
             floor1     = ZXPalette.BLACK,
-            floor2     = ZXPalette.CYAN,
-            wallTop    = ZXPalette.B_CYAN,
-            wallFaceD1 = ZXPalette.CYAN,
-            wallFaceD2 = ZXPalette.BLUE,
-            wallFaceR1 = ZXPalette.BLUE,
-            wallFaceR2 = ZXPalette.BLACK,
-            blockTop   = ZXPalette.B_CYAN,
-            blockLeft  = ZXPalette.CYAN,
-            blockRight = ZXPalette.BLUE,
-            fogColor   = 0x30_000820.toInt(),
+            floor2     = 0xFF_141820.toInt(),         // cool dark grey-blue floor
+            wallTop    = 0xFF_8A8A98.toInt(),         // cool grey tower stone
+            wallFaceD1 = 0xFF_6A6A78.toInt(),
+            wallFaceD2 = 0xFF_4A4A58.toInt(),
+            wallFaceR1 = 0xFF_4A4A58.toInt(),
+            wallFaceR2 = 0xFF_2A2A38.toInt(),
+            blockTop   = 0xFF_8A8A98.toInt(),
+            blockLeft  = 0xFF_6A6A78.toInt(),
+            blockRight = 0xFF_4A4A58.toInt(),
+            fogColor   = 0x20_000010.toInt(),
         )
     }
 
@@ -902,31 +902,32 @@ object RoomEntityFactory {
                             DrawPayload.Line(p0.x, p0.y, p1.x, p1.y, wTop, 2f))
                     }
                 } else {
-                    // West wall: arch on the east-facing (x+1) face
-                    val archStartY = gx - 1f  // reuse gx as gy for west wall gaps
-                    val archEndY = gx + 1f
+                    // West wall: arch on the east-facing (x+1) face at x = gx+1
+                    val faceX = gx + 1f
+                    val archStartY = gy - 1f   // first gap tile Y
+                    val archEndY = gy + 1f     // past last gap tile Y
                     val archPts = mutableListOf<Vec2f>()
-                    archPts += pt(gy + 1f, archStartY, 1f, ox, oy)  // note: for west wall, swap usage
+                    archPts += pt(faceX, archStartY, 1f, ox, oy)
                     for (i in 0..archSegments) {
                         val t = i.toFloat() / archSegments
                         val ay = archStartY + t * (archEndY - archStartY)
                         val az = 1f + kotlin.math.sin(t * kotlin.math.PI).toFloat() * 1.8f
-                        archPts += pt(gy + 1f, ay, az, ox, oy)
+                        archPts += pt(faceX, ay, az, ox, oy)
                     }
-                    archPts += pt(gy + 1f, archEndY, 1f, ox, oy)
+                    archPts += pt(faceX, archEndY, 1f, ox, oy)
                     commands += DrawCommand(DrawLayer.BLOCK, archDk, 2, "${id}_arch",
-                        IsoProjector.toScreen(Vec3f(gy + 1f, archStartY, 1f)) + offset,
+                        IsoProjector.toScreen(Vec3f(faceX, archStartY, 1f)) + offset,
                         DrawPayload.DitheredPath(archPts, wFR1, wFR2, horizontal = true))
 
                     for (i in 0 until archSegments) {
                         val t0 = i.toFloat() / archSegments
                         val t1 = (i + 1f) / archSegments
-                        val ay0 = archStartY + t0 * 2f
+                        val ay0 = archStartY + t0 * (archEndY - archStartY)
                         val az0 = 1f + kotlin.math.sin(t0 * kotlin.math.PI).toFloat() * 1.8f
-                        val ay1 = archStartY + t1 * 2f
+                        val ay1 = archStartY + t1 * (archEndY - archStartY)
                         val az1 = 1f + kotlin.math.sin(t1 * kotlin.math.PI).toFloat() * 1.8f
-                        val p0 = pt(gy + 1f, ay0, az0, ox, oy)
-                        val p1 = pt(gy + 1f, ay1, az1, ox, oy)
+                        val p0 = pt(faceX, ay0, az0, ox, oy)
+                        val p1 = pt(faceX, ay1, az1, ox, oy)
                         commands += DrawCommand(DrawLayer.BLOCK, archDk, 3, "${id}_arch_line_$i",
                             Vec2f(p0.x, p0.y),
                             DrawPayload.Line(p0.x, p0.y, p1.x, p1.y, wTop, 2f))
@@ -1504,13 +1505,13 @@ object RoomEntityFactory {
 
         // ── Colors ──────────────────────────────────────────────────────────────────
         val blinkColor = ZXPalette.B_RED
-        val skinColor = if (blinking) blinkColor else ZXPalette.B_YELLOW
+        val skinColor = if (blinking) blinkColor else 0xFF_E8C880.toInt()  // warm skin
         val tunicColor = if (blinking) blinkColor else
-            if (isWerewulf) ZXPalette.YELLOW else ZXPalette.B_CYAN     // bright explorer tunic
-        val tunicDark = if (isWerewulf) ZXPalette.RED else ZXPalette.CYAN
-        val bootColor = if (isWerewulf) ZXPalette.RED else ZXPalette.BLUE
-        val hatColor = if (blinking) blinkColor else ZXPalette.B_WHITE  // bright pith helmet
-        val hatBand = ZXPalette.CYAN
+            if (isWerewulf) ZXPalette.WOLF_FUR else 0xFF_C8B040.toInt()  // yellow-green tunic
+        val tunicDark = if (isWerewulf) ZXPalette.WOLF_DARK else 0xFF_8A7828.toInt()
+        val bootColor = if (isWerewulf) ZXPalette.WOLF_DARK else 0xFF_6A5A30.toInt()
+        val hatColor = if (blinking) blinkColor else 0xFF_CCCCCC.toInt()  // silver-white helmet
+        val hatBand = 0xFF_888888.toInt()
 
         // ── Walk cycle ──────────────────────────────────────────────────────────────
         val isMoving = player.movementState == MovementState.WALKING

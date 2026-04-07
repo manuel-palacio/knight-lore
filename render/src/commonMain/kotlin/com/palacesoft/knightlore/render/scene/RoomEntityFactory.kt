@@ -963,19 +963,26 @@ object RoomEntityFactory {
                     IsoProjector.toScreen(Vec3f(faceX, gy, 2f)) + offset,
                     DrawPayload.DitheredPath(blockFaceRight(gx, gy, 2f, ox, oy), wFR1, wFR2, horizontal = true))
 
-                // Arch curve line
+                // Arch springers — filled triangular blocks at corners
+                if (isFirst) {
+                    val sprPts = listOf(
+                        pt(faceX, gy,        1.2f, ox, oy),
+                        pt(faceX, gy + 0.5f, 2f,   ox, oy),
+                        pt(faceX, gy,        2f,   ox, oy),
+                    )
+                    commands += DrawCommand(DrawLayer.BLOCK, archDk, 2, "${id}_spr_l",
+                        IsoProjector.toScreen(Vec3f(faceX, gy, 1.2f)) + offset,
+                        DrawPayload.DitheredPath(sprPts, wFR1, wFR2, horizontal = true))
+                }
                 if (isLast) {
-                    val ay0 = gy - 1f; val ay1 = gy + 1f
-                    for (i in 0 until 8) {
-                        val t0 = i / 8f; val t1 = (i + 1) / 8f
-                        val cy0 = ay0 + t0 * 2f; val cz0 = kotlin.math.sin(t0 * kotlin.math.PI).toFloat() * 1.5f
-                        val cy1 = ay0 + t1 * 2f; val cz1 = kotlin.math.sin(t1 * kotlin.math.PI).toFloat() * 1.5f
-                        val p0 = pt(faceX, cy0, cz0, ox, oy)
-                        val p1 = pt(faceX, cy1, cz1, ox, oy)
-                        commands += DrawCommand(DrawLayer.BLOCK, archDk, 3, "${id}_curve_$i",
-                            Vec2f(p0.x, p0.y),
-                            DrawPayload.Line(p0.x, p0.y, p1.x, p1.y, wTop, 2.5f))
-                    }
+                    val sprPts = listOf(
+                        pt(faceX, gy + 1f,   1.2f, ox, oy),
+                        pt(faceX, gy + 0.5f, 2f,   ox, oy),
+                        pt(faceX, gy + 1f,   2f,   ox, oy),
+                    )
+                    commands += DrawCommand(DrawLayer.BLOCK, archDk, 2, "${id}_spr_r",
+                        IsoProjector.toScreen(Vec3f(faceX, gy + 0.5f, 1.2f)) + offset,
+                        DrawPayload.DitheredPath(sprPts, wFR1, wFR2, horizontal = true))
                 }
             }
         }

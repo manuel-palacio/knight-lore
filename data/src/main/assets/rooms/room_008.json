@@ -400,9 +400,17 @@
       "y": 4,
       "z": 2,
       "type": "SOLID_BLOCK"
+    },
+    {
+      "x": 6,
+      "y": 2,
+      "z": 1,
+      "type": "SOLID_BLOCK"
     }
   ],
-  "interactives": [],
+  "interactives": [
+    { "id": "block_r008_p", "x": 4, "y": 2, "z": 0, "pushable": true }
+  ],
   "exits": [
     {
       "side": "NORTH",
@@ -416,6 +424,12 @@
       "x": 3.5,
       "y": 3.5,
       "z": 0.0
+    },
+    {
+      "itemId": "helm_r008",
+      "x": 6.0,
+      "y": 2.0,
+      "z": 1.0
     }
   ],
   "actorSpawns": [],

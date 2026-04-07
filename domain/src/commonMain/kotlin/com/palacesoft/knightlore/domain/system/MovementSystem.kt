@@ -123,8 +123,8 @@ class MovementSystem(
         // 9. Post-resolution: compute final velocity (zero axes that were blocked)
         val finalVz = if (resolved.landedOnSurface) 0f else
             if (resolved.resolvedPos.z == player.position.z && vz < 0) 0f else newVelocity.z
-        val finalVx = if (resolved.hitWall) 0f else newVelocity.x
-        val finalVy = if (resolved.hitWall) 0f else newVelocity.y
+        val finalVx = if (resolved.hitWallX) 0f else newVelocity.x
+        val finalVy = if (resolved.hitWallY) 0f else newVelocity.y
         val finalVelocity = Vec3f(finalVx, finalVy, finalVz)
 
         // 10. Update airborne flag

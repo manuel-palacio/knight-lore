@@ -885,19 +885,29 @@ object RoomEntityFactory {
                     IsoProjector.toScreen(Vec3f(gx, gy + 1f, 2f)) + offset,
                     DrawPayload.DitheredPath(blockFaceLeft(gx, gy, 2f, ox, oy), wFD1, wFD2, horizontal = true))
 
-                // Arch curve line on the void face — traces a semicircle from jamb to jamb
+                // Arch springers — filled triangular blocks at the corners where
+                // jambs meet the lintel, creating the curved arch shape from solid wall material.
+                if (isFirst) {
+                    // Left springer: triangle filling the corner between left jamb and lintel
+                    val sprPts = listOf(
+                        pt(gx,        gy + 1f, 1.2f, ox, oy),  // jamb inner edge at z=1.2
+                        pt(gx + 0.5f, gy + 1f, 2f,   ox, oy),  // curve midpoint at z=2
+                        pt(gx,        gy + 1f, 2f,   ox, oy),  // jamb top at z=2
+                    )
+                    commands += DrawCommand(DrawLayer.BLOCK, archDk, 2, "${id}_spr_l",
+                        IsoProjector.toScreen(Vec3f(gx, gy + 1f, 1.2f)) + offset,
+                        DrawPayload.DitheredPath(sprPts, wFD1, wFD2, horizontal = true))
+                }
                 if (isLast) {
-                    val ax0 = gx - 1f; val ax1 = gx + 1f
-                    for (i in 0 until 8) {
-                        val t0 = i / 8f; val t1 = (i + 1) / 8f
-                        val cx0 = ax0 + t0 * 2f; val cz0 = kotlin.math.sin(t0 * kotlin.math.PI).toFloat() * 1.5f
-                        val cx1 = ax0 + t1 * 2f; val cz1 = kotlin.math.sin(t1 * kotlin.math.PI).toFloat() * 1.5f
-                        val p0 = pt(cx0, gy + 1f, cz0, ox, oy)
-                        val p1 = pt(cx1, gy + 1f, cz1, ox, oy)
-                        commands += DrawCommand(DrawLayer.BLOCK, archDk, 3, "${id}_curve_$i",
-                            Vec2f(p0.x, p0.y),
-                            DrawPayload.Line(p0.x, p0.y, p1.x, p1.y, wTop, 2.5f))
-                    }
+                    // Right springer
+                    val sprPts = listOf(
+                        pt(gx + 1f,   gy + 1f, 1.2f, ox, oy),
+                        pt(gx + 0.5f, gy + 1f, 2f,   ox, oy),
+                        pt(gx + 1f,   gy + 1f, 2f,   ox, oy),
+                    )
+                    commands += DrawCommand(DrawLayer.BLOCK, archDk, 2, "${id}_spr_r",
+                        IsoProjector.toScreen(Vec3f(gx + 0.5f, gy + 1f, 1.2f)) + offset,
+                        DrawPayload.DitheredPath(sprPts, wFD1, wFD2, horizontal = true))
                 }
             } else {
                 // WEST wall archway — on the east-facing (x+1) face

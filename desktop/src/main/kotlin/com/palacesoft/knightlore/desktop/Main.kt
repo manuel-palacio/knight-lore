@@ -64,6 +64,7 @@ fun GameView() {
     LaunchedEffect(gameKey) {
         gameState = null
         error = null
+        keyboardMapper.reset()
         withContext(Dispatchers.IO) {
             try {
                 val loader = DesktopAssetLoader()
@@ -184,7 +185,7 @@ fun GameView() {
         }
     }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(gameKey) {
         focusRequester.requestFocus()
     }
 }

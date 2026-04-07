@@ -16,6 +16,17 @@ class KeyboardInputMapper {
     @Volatile private var actionPressed = false
     @Volatile private var dropPressed = false
 
+    /** Clears all held and single-frame state. Call on game restart to prevent stuck keys. */
+    fun reset() {
+        left = false
+        right = false
+        up = false
+        down = false
+        jumpPressed = false
+        actionPressed = false
+        dropPressed = false
+    }
+
     fun onKeyEvent(event: KeyEvent) {
         val pressed = event.type == KeyEventType.KeyDown
 

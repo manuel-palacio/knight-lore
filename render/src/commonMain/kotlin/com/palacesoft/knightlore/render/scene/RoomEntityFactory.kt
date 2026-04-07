@@ -564,7 +564,7 @@ object RoomEntityFactory {
 
         // North wall block: visible faces = top + south-facing inner face (blockFaceLeft)
         fun wallBlockNorth(gx: Float, gy: Float) {
-            for (gz in 0 until 2) {
+            for (gz in 0 until 3) {
                 val bz = gz.toFloat()
                 val footWorld = Vec3f(gx + 0.5f, gy + 1f, bz)
                 val dk = IsoProjector.depthKey(footWorld)
@@ -710,7 +710,7 @@ object RoomEntityFactory {
 
         // West wall block: visible faces = top + east-facing inner face (blockFaceRight)
         fun wallBlockWest(gx: Float, gy: Float) {
-            for (gz in 0 until 2) {
+            for (gz in 0 until 3) {
                 val bz = gz.toFloat()
                 val footWorld = Vec3f(gx + 0.5f, gy + 1f, bz)
                 val dk = IsoProjector.depthKey(footWorld)

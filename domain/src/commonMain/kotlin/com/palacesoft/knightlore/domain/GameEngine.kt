@@ -6,6 +6,7 @@ import com.palacesoft.knightlore.core.math.Vec3f
 import com.palacesoft.knightlore.domain.event.GameEvent
 import com.palacesoft.knightlore.domain.input.FrameInput
 import com.palacesoft.knightlore.domain.model.ActorState
+import com.palacesoft.knightlore.domain.model.BlockState
 import com.palacesoft.knightlore.domain.model.CauldronState
 import com.palacesoft.knightlore.domain.model.PatrolEnemy
 import com.palacesoft.knightlore.domain.model.DayPhase
@@ -23,6 +24,7 @@ import com.palacesoft.knightlore.domain.model.TimeState
 import com.palacesoft.knightlore.domain.model.TransformPhase
 import com.palacesoft.knightlore.domain.model.TransformState
 import com.palacesoft.knightlore.domain.rules.RoomProvider
+import com.palacesoft.knightlore.domain.system.BlockPhysicsSystem
 import com.palacesoft.knightlore.domain.system.CauldronSystem
 import com.palacesoft.knightlore.domain.system.CollisionSystem
 import com.palacesoft.knightlore.domain.system.GameSystem
@@ -68,6 +70,7 @@ class DefaultGameEngine(private val systems: List<GameSystem>) : GameEngine {
                 TimeSystem(),
                 TransformationSystem(),
                 MovementSystem(roomProvider),
+                BlockPhysicsSystem(roomProvider),
                 CollisionSystem(roomProvider),
                 ItemSystem(roomProvider),
                 HazardSystem(roomProvider, content),
@@ -152,7 +155,18 @@ class DefaultGameEngine(private val systems: List<GameSystem>) : GameEngine {
             )
         } ?: emptyList()
 
-        // 8. Return GameState
+        // 8. Seed dynamic blocks from start room blockSpawns
+        val dynamicBlocks: List<BlockState> = startRoom?.blockSpawns?.map { spawn ->
+            BlockState(
+                id = spawn.id,
+                gridX = spawn.gridX,
+                gridY = spawn.gridY,
+                gridZ = spawn.gridZ,
+                pushable = spawn.pushable,
+            )
+        } ?: emptyList()
+
+        // 9. Return GameState
         return GameState(
             currentRoomId = startRoomId,
             player = player,
@@ -163,6 +177,7 @@ class DefaultGameEngine(private val systems: List<GameSystem>) : GameEngine {
             roomTransition = null,
             patrolEnemies = patrolEnemies,
             visitedRooms = setOf(startRoomId),
+            dynamicBlocks = dynamicBlocks,
         )
     }
 

@@ -7,6 +7,7 @@ import com.palacesoft.knightlore.domain.input.FrameInput
 import com.palacesoft.knightlore.domain.model.ActorBehavior
 import com.palacesoft.knightlore.domain.model.ActorKind
 import com.palacesoft.knightlore.domain.model.ActorState
+import com.palacesoft.knightlore.domain.model.BlockState
 import com.palacesoft.knightlore.domain.model.ExitSide
 import com.palacesoft.knightlore.domain.model.GameContent
 import com.palacesoft.knightlore.domain.model.PatrolEnemy
@@ -60,12 +61,14 @@ class RoomTransitionSystem(
             val newRoom = roomProvider.getRoom(transition.toRoomId)
             val spawnedActors = spawnActorsForRoom(newRoom)
             val spawnedPatrolEnemies = spawnPatrolEnemiesForRoom(newRoom)
+            val spawnedBlocks = spawnBlocksForRoom(newRoom)
             SystemResult(
                 state.copy(
                     currentRoomId = transition.toRoomId,
                     player = newPlayer,
                     actorStates = spawnedActors,
                     patrolEnemies = spawnedPatrolEnemies,
+                    dynamicBlocks = spawnedBlocks,
                     roomTransition = null,
                     visitedRooms = state.visitedRooms + transition.toRoomId,
                 ),
@@ -107,6 +110,17 @@ class RoomTransitionSystem(
                 path = spawn.path,
                 speed = spawn.speed,
                 targetIndex = 0,
+            )
+        } ?: emptyList()
+
+    private fun spawnBlocksForRoom(room: RoomDefinition?): List<BlockState> =
+        room?.blockSpawns?.map { spawn ->
+            BlockState(
+                id = spawn.id,
+                gridX = spawn.gridX,
+                gridY = spawn.gridY,
+                gridZ = spawn.gridZ,
+                pushable = spawn.pushable,
             )
         } ?: emptyList()
 

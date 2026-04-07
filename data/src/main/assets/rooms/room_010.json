@@ -388,7 +388,10 @@
       "y": 7,
       "z": 0,
       "type": "FLOOR"
-    }
+    },
+    { "x": 2, "y": 2, "z": 0, "type": "HAZARD" },
+    { "x": 5, "y": 6, "z": 0, "type": "HAZARD" },
+    { "x": 6, "y": 3, "z": 0, "type": "HAZARD" }
   ],
   "interactives": [],
   "exits": [

@@ -16,6 +16,7 @@ data class RoomDto(
     val itemAnchors: List<ItemAnchorDto> = emptyList(),
     val actorSpawns: List<ActorSpawnDto> = emptyList(),
     val dynamic_objects: List<DynamicObjectDto> = emptyList(),
+    val blocks: List<BlockSpawnDto> = emptyList(),
 )
 
 @Serializable
@@ -43,3 +44,6 @@ data class ItemAnchorDto(val itemId: String, val x: Float, val y: Float, val z: 
 
 @Serializable
 data class ActorSpawnDto(val actorType: String, val x: Float, val y: Float, val z: Float)
+
+@Serializable
+data class BlockSpawnDto(val id: String, val x: Int, val y: Int, val z: Int, val pushable: Boolean = true)

@@ -21,10 +21,10 @@ class TransformationSystemTest {
     private val idle = FrameInput.IDLE
 
     @Test
-    fun transformSystem_beginsTransform_atDusk() {
+    fun transformSystem_beginsTransform_atNight() {
         val state = testGameState(
             player = testPlayerState(form = Form.HUMAN, transformState = TransformState(TransformPhase.STABLE, 0)),
-            time = testTimeState(phase = DayPhase.DUSK),
+            time = testTimeState(phase = DayPhase.NIGHT),
         )
         val result = system.update(state, idle, 1f / 60f)
         assertEquals(TransformPhase.TRANSFORMING_TO_WEREWULF, result.state.player.transformState.phase)
@@ -55,10 +55,10 @@ class TransformationSystemTest {
     }
 
     @Test
-    fun transformSystem_beginsHumanReturn_atDawn() {
+    fun transformSystem_beginsHumanReturn_atDay() {
         val state = testGameState(
             player = testPlayerState(form = Form.WEREWULF, transformState = TransformState(TransformPhase.STABLE, 0)),
-            time = testTimeState(phase = DayPhase.DAWN),
+            time = testTimeState(phase = DayPhase.DAY),
         )
         val result = system.update(state, idle, 1f / 60f)
         assertEquals(TransformPhase.TRANSFORMING_TO_HUMAN, result.state.player.transformState.phase)

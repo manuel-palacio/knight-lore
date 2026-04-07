@@ -20,9 +20,12 @@ data class RoomDefinition(
     val special: RoomSpecial? = null,
     val patrolSpawns: List<PatrolSpawn> = emptyList(),
     val roomType: RoomType = RoomType.DUNGEON,
+    val blockSpawns: List<BlockSpawn> = emptyList(),
 )
 
 data class TileStack(val gridX: Int, val gridY: Int, val gridZ: Int, val type: TileType)
+
+data class BlockSpawn(val id: String, val gridX: Int, val gridY: Int, val gridZ: Int, val pushable: Boolean = true)
 
 enum class TileType { FLOOR, SOLID_BLOCK, HAZARD, EMPTY }
 

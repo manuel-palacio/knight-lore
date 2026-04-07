@@ -465,5 +465,11 @@
       "path": [[2, 2], [5, 2], [5, 5], [2, 5]],
       "speed": 1.5
     }
+  ],
+  "blocks": [
+    { "id": "block_r001_a", "x": 2, "y": 3, "z": 0, "pushable": true },
+    { "id": "block_r001_b", "x": 5, "y": 3, "z": 0, "pushable": true },
+    { "id": "block_r001_c", "x": 2, "y": 5, "z": 0, "pushable": true },
+    { "id": "block_r001_d", "x": 5, "y": 5, "z": 0, "pushable": true }
   ]
 }

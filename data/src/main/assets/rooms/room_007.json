@@ -408,9 +408,7 @@
       "type": "SOLID_BLOCK"
     }
   ],
-  "interactives": [
-    { "id": "block_r007_fall", "x": 3, "y": 5, "z": 1, "pushable": false }
-  ],
+  "interactives": [],
   "exits": [
     {
       "side": "SOUTH",
@@ -438,6 +436,20 @@
     }
   ],
   "actorSpawns": [
-    { "actorType": "GUARD", "x": 3.5, "y": 1.5, "z": 0.0 }
+    {
+      "actorType": "GUARD",
+      "x": 3.5,
+      "y": 1.5,
+      "z": 0.0
+    }
+  ],
+  "blocks": [
+    {
+      "id": "block_r007_fall",
+      "x": 3,
+      "y": 5,
+      "z": 1,
+      "pushable": false
+    }
   ]
 }

@@ -401,12 +401,20 @@
       "z": 1,
       "type": "SOLID_BLOCK"
     },
-    { "x": 3, "y": 6, "z": 0, "type": "HAZARD" },
-    { "x": 6, "y": 2, "z": 0, "type": "HAZARD" }
+    {
+      "x": 3,
+      "y": 6,
+      "z": 0,
+      "type": "HAZARD"
+    },
+    {
+      "x": 6,
+      "y": 2,
+      "z": 0,
+      "type": "HAZARD"
+    }
   ],
-  "interactives": [
-    { "id": "block_r006_p", "x": 5, "y": 3, "z": 0, "pushable": true }
-  ],
+  "interactives": [],
   "exits": [
     {
       "side": "NORTH",
@@ -445,9 +453,27 @@
       "type": "PATROL_ENEMY",
       "start_x": 5,
       "start_y": 2,
-      "path": [[5, 2], [5, 6]],
+      "path": [
+        [
+          5,
+          2
+        ],
+        [
+          5,
+          6
+        ]
+      ],
       "speed": 2.0,
       "facing": "SOUTH"
+    }
+  ],
+  "blocks": [
+    {
+      "id": "block_r006_p",
+      "x": 5,
+      "y": 3,
+      "z": 0,
+      "pushable": true
     }
   ]
 }

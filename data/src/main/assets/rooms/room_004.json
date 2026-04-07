@@ -438,9 +438,7 @@
       "type": "SOLID_BLOCK"
     }
   ],
-  "interactives": [
-    { "id": "block_r004_p", "x": 2, "y": 4, "z": 0, "pushable": true }
-  ],
+  "interactives": [],
   "exits": [
     {
       "side": "WEST",
@@ -463,6 +461,20 @@
     }
   ],
   "actorSpawns": [
-    { "actorType": "GUARD", "x": 2.5, "y": 2.5, "z": 0.0 }
+    {
+      "actorType": "GUARD",
+      "x": 2.5,
+      "y": 2.5,
+      "z": 0.0
+    }
+  ],
+  "blocks": [
+    {
+      "id": "block_r004_p",
+      "x": 2,
+      "y": 4,
+      "z": 0,
+      "pushable": true
+    }
   ]
 }

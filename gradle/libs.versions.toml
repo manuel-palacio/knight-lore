@@ -15,6 +15,7 @@ room = "2.6.1"
 composeMultiplatform = "1.7.3"
 junit5 = "5.11.3"
 mockk = "1.13.13"
+detekt = "1.23.7"
 
 [libraries]
 # Compose BOM
@@ -59,3 +60,4 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 jetbrains-compose = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }

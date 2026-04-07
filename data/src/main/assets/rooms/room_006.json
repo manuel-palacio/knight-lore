@@ -404,7 +404,9 @@
     { "x": 3, "y": 6, "z": 0, "type": "HAZARD" },
     { "x": 6, "y": 2, "z": 0, "type": "HAZARD" }
   ],
-  "interactives": [],
+  "interactives": [
+    { "id": "block_r006_p", "x": 5, "y": 3, "z": 0, "pushable": true }
+  ],
   "exits": [
     {
       "side": "NORTH",
@@ -428,6 +430,12 @@
       "x": 2.5,
       "y": 3.5,
       "z": 0.0
+    },
+    {
+      "itemId": "amulet_r006",
+      "x": 5.0,
+      "y": 5.0,
+      "z": 1.0
     }
   ],
   "actorSpawns": [],

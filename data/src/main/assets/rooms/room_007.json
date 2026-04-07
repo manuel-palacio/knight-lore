@@ -183,7 +183,7 @@
       "x": 3,
       "y": 5,
       "z": 0,
-      "type": "FLOOR"
+      "type": "HAZARD"
     },
     {
       "x": 3,
@@ -408,7 +408,9 @@
       "type": "SOLID_BLOCK"
     }
   ],
-  "interactives": [],
+  "interactives": [
+    { "id": "block_r007_fall", "x": 3, "y": 5, "z": 1, "pushable": false }
+  ],
   "exits": [
     {
       "side": "SOUTH",
@@ -427,6 +429,12 @@
       "x": 6.0,
       "y": 1.0,
       "z": 4.0
+    },
+    {
+      "itemId": "ring_r007",
+      "x": 3.0,
+      "y": 5.0,
+      "z": 1.0
     }
   ],
   "actorSpawns": [

@@ -228,14 +228,14 @@ object RoomEntityFactory {
                             DrawPayload.Line(c1.x, c1.y, c2.x, c2.y, Colors.FLOOR_CRACK, 1f))
                     }
 
-                    // Floor edge highlights — top-left and top-right edges catch light
-                    // pts[0]=north, pts[1]=east, pts[2]=south, pts[3]=west
+                    // Floor edge highlights — subtle grid lines
+                    val gridColor = 0x30_6A6A50.toInt()  // dim olive, semi-transparent
                     commands += DrawCommand(DrawLayer.FLOOR, dk, 5, "${id}_hl_l",
                         Vec2f(pts[3].x, pts[3].y),
-                        DrawPayload.Line(pts[3].x, pts[3].y, pts[0].x, pts[0].y, Colors.HIGHLIGHT, 1f))
+                        DrawPayload.Line(pts[3].x, pts[3].y, pts[0].x, pts[0].y, gridColor, 0.5f))
                     commands += DrawCommand(DrawLayer.FLOOR, dk, 5, "${id}_hl_r",
                         Vec2f(pts[0].x, pts[0].y),
-                        DrawPayload.Line(pts[0].x, pts[0].y, pts[1].x, pts[1].y, Colors.HIGHLIGHT, 1f))
+                        DrawPayload.Line(pts[0].x, pts[0].y, pts[1].x, pts[1].y, gridColor, 0.5f))
                 }
                 TileType.SOLID_BLOCK -> {
                     // Depth key based on front-bottom corner (gy+1 is the camera-facing edge)
@@ -471,18 +471,18 @@ object RoomEntityFactory {
         val blockLayer = if (dk > playerDk) DrawLayer.FOREGROUND else DrawLayer.BLOCK
         val id = "dblock_${block.id}"
 
-        // Top face — slightly lighter than static blocks to distinguish
+        // Top face — slightly lighter than static blocks to distinguish pushable
         commands += DrawCommand(blockLayer, dk, 2, "${id}_top",
             IsoProjector.toScreen(Vec3f(gx, gy, gz + 1f)) + offset,
-            DrawPayload.ColorPath(floorDiamond(gx, gy, gz + 1f, ox, oy), 0xFF_4A4A6E.toInt(), 0xFF_0A0A14.toInt()))
+            DrawPayload.ColorPath(floorDiamond(gx, gy, gz + 1f, ox, oy), ZXPalette.STONE_CREAM, ZXPalette.STONE_DARK))
         // Left face
         commands += DrawCommand(blockLayer, dk, 1, "${id}_left",
             IsoProjector.toScreen(Vec3f(gx, gy + 1f, gz)) + offset,
-            DrawPayload.ColorPath(blockFaceLeft(gx, gy, gz, ox, oy), 0xFF_2A2A4A.toInt(), 0xFF_0A0A14.toInt()))
+            DrawPayload.ColorPath(blockFaceLeft(gx, gy, gz, ox, oy), ZXPalette.STONE_LIGHT, ZXPalette.STONE_DARK))
         // Right face
         commands += DrawCommand(blockLayer, dk, 0, "${id}_right",
             IsoProjector.toScreen(Vec3f(gx + 1f, gy, gz)) + offset,
-            DrawPayload.ColorPath(blockFaceRight(gx, gy, gz, ox, oy), 0xFF_1E1E3A.toInt(), 0xFF_0A0A14.toInt()))
+            DrawPayload.ColorPath(blockFaceRight(gx, gy, gz, ox, oy), ZXPalette.STONE_DARK, ZXPalette.BLACK))
 
         // Pushable: arrow glyph on left (south) face pointing in push direction
         if (block.pushable && block.velocityZ == 0f) {
@@ -1612,24 +1612,24 @@ object RoomEntityFactory {
                 DrawPayload.ColorRect(12f, 2f, hatBand))
         } else {
             // ════════════════════════════════════════════════════════════════════════
-            // WEREWOLF FORM — hunched, wider, feral
+            // WEREWOLF FORM — large hunched grey beast (matching reference)
             // ════════════════════════════════════════════════════════════════════════
-            val ws = 1.2f
-            val legH = 8f * legHeightMul
-            val furColor = if (blinking) blinkColor else ZXPalette.YELLOW
-            val furDark = ZXPalette.RED
+            val ws = 1.4f
+            val legH = 12f * legHeightMul
+            val furColor = if (blinking) blinkColor else 0xFF_7A7A88.toInt()  // grey wolf
+            val furDark = 0xFF_4A4A58.toInt()  // dark grey shadow
 
-            // Hind legs
+            // Hind legs — larger
             commands += DrawCommand(DrawLayer.PLAYER, dk, 0, "player_boot_l",
-                Vec2f(cx - 8f, oy - legH + leftLegFwd + bob),
-                DrawPayload.ColorRect(5f, legH, furDark))
+                Vec2f(cx - 10f, oy - legH + leftLegFwd + bob),
+                DrawPayload.ColorRect(7f, legH, furDark))
             commands += DrawCommand(DrawLayer.PLAYER, dk, 0, "player_boot_r",
                 Vec2f(cx + 3f, oy - legH + rightLegFwd + bob),
-                DrawPayload.ColorRect(5f, legH, furDark))
+                DrawPayload.ColorRect(7f, legH, furDark))
 
-            // Hunched body — wider and lower
-            val bodyTop = oy - 30f + bob
-            val bodyBot = oy - 8f + bob
+            // Hunched body — wider and taller
+            val bodyTop = oy - 40f + bob
+            val bodyBot = oy - 10f + bob
             val bodyPts = listOf(
                 Vec2f(cx - 12f * ws, bodyTop),
                 Vec2f(cx + 12f * ws, bodyTop),
@@ -1659,55 +1659,64 @@ object RoomEntityFactory {
             // Claws
             commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_claw_l",
                 Vec2f(cx - 15f * ws, bodyTop + 16f + leftLegFwd * 0.5f),
-                DrawPayload.ColorOval(5f, 3f, ZXPalette.B_YELLOW))
+                DrawPayload.ColorOval(5f, 3f, 0xFF_AAAAAA.toInt()))
             commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_claw_r",
                 Vec2f(cx + 10f * ws, bodyTop + 16f + rightLegFwd * 0.5f),
-                DrawPayload.ColorOval(5f, 3f, ZXPalette.B_YELLOW))
+                DrawPayload.ColorOval(5f, 3f, 0xFF_AAAAAA.toInt()))
 
-            // Wolf head — forward-pointing
+            // Wolf head — large, forward-pointing
             commands += DrawCommand(DrawLayer.PLAYER, dk, 3, "player_head",
-                Vec2f(cx - 7f, oy - 40f + bob),
-                DrawPayload.ColorOval(14f, 12f, furColor))
+                Vec2f(cx - 10f, oy - 52f + bob),
+                DrawPayload.ColorOval(20f, 16f, furColor))
 
             // Snout
             val facingShift = when (player.facing.name) {
-                "WEST", "NORTHWEST", "SOUTHWEST" -> -3f
-                "EAST", "NORTHEAST", "SOUTHEAST" -> 3f
+                "WEST", "NORTHWEST", "SOUTHWEST" -> -4f
+                "EAST", "NORTHEAST", "SOUTHEAST" -> 4f
                 else -> 0f
             }
             commands += DrawCommand(DrawLayer.PLAYER, dk, 4, "player_snout",
-                Vec2f(cx - 4f + facingShift, oy - 36f + bob),
-                DrawPayload.ColorOval(8f, 5f, ZXPalette.RED))
+                Vec2f(cx - 5f + facingShift, oy - 46f + bob),
+                DrawPayload.ColorOval(10f, 7f, furDark))
 
-            // Eyes — glowing amber
-            val eyeColor = if (blinking) blinkColor else ZXPalette.B_RED
+            // Eyes — white glowing
+            val eyeColor = if (blinking) blinkColor else ZXPalette.B_WHITE
+            // Eyes — red glowing
             commands += DrawCommand(DrawLayer.PLAYER, dk, 5, "player_eye_l",
-                Vec2f(cx - 4f + facingShift, oy - 39f + bob),
-                DrawPayload.ColorOval(3f, 2f, eyeColor))
+                Vec2f(cx - 5f + facingShift, oy - 50f + bob),
+                DrawPayload.ColorOval(3f, 3f, eyeColor))
             commands += DrawCommand(DrawLayer.PLAYER, dk, 5, "player_eye_r",
-                Vec2f(cx + 2f + facingShift, oy - 39f + bob),
-                DrawPayload.ColorOval(3f, 2f, eyeColor))
+                Vec2f(cx + 2f + facingShift, oy - 50f + bob),
+                DrawPayload.ColorOval(3f, 3f, eyeColor))
 
-            // Pointed ears
+            // Pointed ears — tall, distinctive
             commands += DrawCommand(DrawLayer.PLAYER, dk, 4, "player_ear_l",
-                Vec2f(cx - 7f, oy - 44f + bob), DrawPayload.ColorPath(listOf(
-                    Vec2f(cx - 7f, oy - 40f + bob),
-                    Vec2f(cx - 4f, oy - 40f + bob),
-                    Vec2f(cx - 5f, oy - 48f + bob),
+                Vec2f(cx - 10f, oy - 58f + bob), DrawPayload.ColorPath(listOf(
+                    Vec2f(cx - 10f, oy - 50f + bob),
+                    Vec2f(cx - 5f, oy - 50f + bob),
+                    Vec2f(cx - 7f, oy - 62f + bob),
                 ), furColor))
             commands += DrawCommand(DrawLayer.PLAYER, dk, 4, "player_ear_r",
-                Vec2f(cx + 4f, oy - 44f + bob), DrawPayload.ColorPath(listOf(
-                    Vec2f(cx + 4f, oy - 40f + bob),
-                    Vec2f(cx + 7f, oy - 40f + bob),
-                    Vec2f(cx + 6f, oy - 48f + bob),
+                Vec2f(cx + 5f, oy - 58f + bob), DrawPayload.ColorPath(listOf(
+                    Vec2f(cx + 5f, oy - 50f + bob),
+                    Vec2f(cx + 10f, oy - 50f + bob),
+                    Vec2f(cx + 8f, oy - 62f + bob),
                 ), furColor))
+
+            // Fangs
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 5, "player_fang_l",
+                Vec2f(cx - 3f + facingShift, oy - 43f + bob),
+                DrawPayload.ColorRect(2f, 4f, 0xFF_DDDDDD.toInt()))
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 5, "player_fang_r",
+                Vec2f(cx + 2f + facingShift, oy - 43f + bob),
+                DrawPayload.ColorRect(2f, 4f, 0xFF_DDDDDD.toInt()))
 
             // Tail
             commands += DrawCommand(DrawLayer.PLAYER, dk, 0, "player_tail",
-                Vec2f(cx + 8f, oy - 10f + bob), DrawPayload.ColorPath(listOf(
-                    Vec2f(cx + 8f * ws, oy - 12f + bob),
-                    Vec2f(cx + 16f * ws, oy - 18f + bob),
-                    Vec2f(cx + 14f * ws, oy - 14f + bob),
+                Vec2f(cx + 10f, oy - 14f + bob), DrawPayload.ColorPath(listOf(
+                    Vec2f(cx + 10f * ws, oy - 16f + bob),
+                    Vec2f(cx + 20f * ws, oy - 24f + bob),
+                    Vec2f(cx + 18f * ws, oy - 20f + bob),
                 ), furColor))
         }
     }

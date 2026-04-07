@@ -12,6 +12,7 @@ import com.palacesoft.knightlore.domain.model.GameContent
 import com.palacesoft.knightlore.domain.model.GameState
 import com.palacesoft.knightlore.domain.model.ItemInstance
 import com.palacesoft.knightlore.domain.model.ItemLocation
+import com.palacesoft.knightlore.domain.model.ItemType
 import com.palacesoft.knightlore.domain.model.MovementState
 import com.palacesoft.knightlore.domain.model.PlayerState
 import com.palacesoft.knightlore.domain.model.RoomDefinition
@@ -390,7 +391,7 @@ object RoomEntityFactory {
             buildDynamicBlockCommands(block, state, offset, commands, tick)
         }
 
-        // 3. Items
+        // 3. Items — distinct visuals per item type
         state.itemInstances
             .filterIsInstance<ItemInstance>()
             .forEach { item ->
@@ -400,17 +401,38 @@ object RoomEntityFactory {
                 val screen = IsoProjector.toScreen(world) + offset
                 val dk = IsoProjector.depthKey(world)
                 val pulseFactor = kotlin.math.sin(tick.toDouble() * 0.07).toFloat()
-                val glowW = 28f + pulseFactor * 2f
-                val glowH = 20f + pulseFactor * 2f
-                // Outer glow ring
-                commands += DrawCommand(DrawLayer.ITEM, dk, 0,
-                    "item_${item.id.value}_glow",
-                    Vec2f(screen.x - 2f, screen.y - 2f),
-                    DrawPayload.ColorOval(glowW, glowH, 0x1A_FFDD44.toInt()))
-                // Base oval
-                commands += DrawCommand(DrawLayer.ITEM, dk, 1,
-                    "item_${item.id.value}", screen,
-                    DrawPayload.ColorOval(24f, 16f, Colors.ITEM))
+                val id = "item_${item.id.value}"
+
+                // Per-type color and size
+                val (itemColor, itemW, itemH, glowColor) = when (item.type) {
+                    ItemType.CRYSTAL_BALL   -> listOf(0xFF_AACCFF.toInt(), 20f, 20f, 0x20_8888FF.toInt())
+                    ItemType.GOBLET         -> listOf(0xFF_FFD700.toInt(), 16f, 20f, 0x20_FFAA00.toInt())
+                    ItemType.WINE_BOTTLE    -> listOf(0xFF_8B0000.toInt(), 12f, 24f, 0x20_FF2222.toInt())
+                    ItemType.GEM            -> listOf(0xFF_FF2266.toInt(), 16f, 14f, 0x20_FF4488.toInt())
+                    ItemType.POISON_VIAL    -> listOf(0xFF_44CC44.toInt(), 12f, 22f, 0x20_22FF22.toInt())
+                    ItemType.BOOT           -> listOf(0xFF_8B6914.toInt(), 20f, 16f, 0x20_AA8822.toInt())
+                    ItemType.TEACUP         -> listOf(0xFF_6688CC.toInt(), 18f, 14f, 0x20_4466AA.toInt())
+                    ItemType.KEY            -> listOf(0xFF_CCAA44.toInt(), 18f, 10f, 0x20_FFDD44.toInt())
+                    ItemType.TORCH          -> listOf(0xFF_FF8800.toInt(), 10f, 24f, 0x20_FF6600.toInt())
+                    ItemType.SKULL          -> listOf(0xFF_DDDDCC.toInt(), 16f, 16f, 0x20_AAAAAA.toInt())
+                    else                    -> listOf(0xFF_FFDD44.toInt(), 20f, 16f, 0x1A_FFDD44.toInt())
+                }
+                val color = itemColor as Int
+                val w = (itemW as Float) + pulseFactor * 2f
+                val h = (itemH as Float) + pulseFactor * 2f
+                val glow = glowColor as Int
+
+                // Glow
+                commands += DrawCommand(DrawLayer.ITEM, dk, 0, "${id}_glow",
+                    Vec2f(screen.x - w / 2f - 2f, screen.y - h / 2f - 2f),
+                    DrawPayload.ColorOval(w + 8f, h + 8f, glow))
+                // Item shape
+                commands += DrawCommand(DrawLayer.ITEM, dk, 1, id, screen,
+                    DrawPayload.ColorOval(w, h, color))
+                // Specular highlight
+                commands += DrawCommand(DrawLayer.ITEM, dk, 2, "${id}_hl",
+                    Vec2f(screen.x + 2f, screen.y - 2f),
+                    DrawPayload.ColorOval(w * 0.4f, h * 0.3f, 0x66_FFFFFF.toInt()))
             }
 
         // 4. Patrol enemies — dark green isometric block

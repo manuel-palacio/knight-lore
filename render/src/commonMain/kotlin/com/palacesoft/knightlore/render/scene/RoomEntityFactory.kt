@@ -1518,24 +1518,24 @@ object RoomEntityFactory {
         // ── Colors ──────────────────────────────────────────────────────────────────
         val cloakColor = when {
             blinking   -> 0xFF_FF4444.toInt()
-            isWerewulf -> 0xFF_1A0A2A.toInt()
-            else       -> 0xFF_140820.toInt()
+            isWerewulf -> 0xFF_3A1848.toInt()   // visible dark purple
+            else       -> 0xFF_2A1838.toInt()   // visible dark indigo
         }
         val armorColor = when {
             blinking   -> 0xFF_FF4444.toInt()
-            isWerewulf -> 0xFF_2A1840.toInt()
-            else       -> 0xFF_1E1E30.toInt()
+            isWerewulf -> 0xFF_4A2860.toInt()   // muted purple armor
+            else       -> 0xFF_3A3A58.toInt()   // steel-blue armor
         }
-        val armorHighlight = if (isWerewulf) 0xFF_5A2A8A.toInt() else 0xFF_3A3A5A.toInt()
-        val legColor   = if (isWerewulf) 0xFF_140820.toInt() else 0xFF_140820.toInt()
-        val beltColor  = if (isWerewulf) 0xFF_AA4400.toInt() else 0xFF_3A3A5A.toInt()
-        val skinColor  = if (blinking) 0xFF_FF4444.toInt() else 0xFF_C8A882.toInt()
+        val armorHighlight = if (isWerewulf) 0xFF_7A4AAA.toInt() else 0xFF_5A5A7A.toInt()
+        val legColor   = if (isWerewulf) 0xFF_2A1238.toInt() else 0xFF_2A2240.toInt()
+        val beltColor  = if (isWerewulf) 0xFF_CC5500.toInt() else 0xFF_5A5A7A.toInt()
+        val skinColor  = if (blinking) 0xFF_FF4444.toInt() else 0xFF_D4B896.toInt()
         val eyeColor   = when {
             blinking   -> 0xFF_FF4444.toInt()
-            isWerewulf -> 0xFF_FF4400.toInt()
-            else       -> 0xFF_7FFF00.toInt()
+            isWerewulf -> 0xFF_FF6600.toInt()   // brighter orange-red
+            else       -> 0xFF_88FF22.toInt()   // brighter lime green
         }
-        val furColor   = 0xFF_3A1A5A.toInt()
+        val furColor   = 0xFF_5A2A7A.toInt()
 
         // ── Walk cycle ──────────────────────────────────────────────────────────────
         val isMoving = player.movementState == MovementState.WALKING

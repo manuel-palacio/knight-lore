@@ -837,7 +837,7 @@ object RoomEntityFactory {
             }
         }
 
-        fun doorArchway(gx: Float, gy: Float, isFirst: Boolean, isLast: Boolean, targetRoomId: RoomId? = null) {
+        fun doorArchway(gx: Float, gy: Float, isFirst: Boolean, isLast: Boolean, side: ExitSide, targetRoomId: RoomId? = null) {
             val footWorld = Vec3f(gx + 0.5f, gy + 1f, 0f)
             val dk = IsoProjector.depthKey(footWorld)
             val id = "door_${gx.toInt()}_${gy.toInt()}"
@@ -850,31 +850,34 @@ object RoomEntityFactory {
             val openLeft  = if (isFirst) gx + 0.3f else gx
             val openRight = if (isLast)  gx + 0.7f else gx + 1f
 
-            // 2. Dark void on y-face (gy+1 face): fill opening from z=0 to z=3
-            val voidYPts = listOf(
-                pt(openLeft,  gy + 1f, 0f, ox, oy),
-                pt(openRight, gy + 1f, 0f, ox, oy),
-                pt(openRight, gy + 1f, 3f, ox, oy),
-                pt(openLeft,  gy + 1f, 3f, ox, oy),
-            )
-            commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "${id}_void_y",
-                IsoProjector.toScreen(Vec3f(openLeft, gy + 1f, 0f)) + offset,
-                DrawPayload.ColorPath(voidYPts, 0xFF_0A0A0F.toInt()))
+            // 2. Dark void — only on the face that belongs to this wall side
+            if (side == ExitSide.NORTH) {
+                val voidYPts = listOf(
+                    pt(openLeft,  gy + 1f, 0f, ox, oy),
+                    pt(openRight, gy + 1f, 0f, ox, oy),
+                    pt(openRight, gy + 1f, 2f, ox, oy),
+                    pt(openLeft,  gy + 1f, 2f, ox, oy),
+                )
+                commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "${id}_void_y",
+                    IsoProjector.toScreen(Vec3f(openLeft, gy + 1f, 0f)) + offset,
+                    DrawPayload.ColorPath(voidYPts, 0xFF_0A0A0F.toInt()))
+            } else {
+                val openTop = if (isFirst) gy + 0.3f else gy
+                val openBot = if (isLast)  gy + 0.7f else gy + 1f
+                val voidXPts = listOf(
+                    pt(gx + 1f, openTop, 0f, ox, oy),
+                    pt(gx + 1f, openBot, 0f, ox, oy),
+                    pt(gx + 1f, openBot, 2f, ox, oy),
+                    pt(gx + 1f, openTop, 2f, ox, oy),
+                )
+                commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "${id}_void_x",
+                    IsoProjector.toScreen(Vec3f(gx + 1f, openTop, 0f)) + offset,
+                    DrawPayload.ColorPath(voidXPts, 0xFF_0A0A0F.toInt()))
+            }
 
-            // 3. Dark void on x-face (gx..gx+1 at gy): fill opening from z=0 to z=3
-            val voidXPts = listOf(
-                pt(gx + 1f, gy,      0f, ox, oy),
-                pt(gx + 1f, gy + 1f, 0f, ox, oy),
-                pt(gx + 1f, gy + 1f, 3f, ox, oy),
-                pt(gx + 1f, gy,      3f, ox, oy),
-            )
-            commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "${id}_void_x",
-                IsoProjector.toScreen(Vec3f(gx + 1f, gy, 0f)) + offset,
-                DrawPayload.ColorPath(voidXPts, 0xFF_0A0A0F.toInt()))
-
-            // 4. If isFirst: draw left pillar [gx, gx+0.3] height z=0..3
+            // 4. If isFirst: draw left pillar [gx, gx+0.3] height z=0..2
             if (isFirst) {
-                for (gz in 0 until 3) {
+                for (gz in 0 until 2) {
                     val bz = gz.toFloat()
                     val pid = "${id}_pillar_l_$gz"
                     val pdk = IsoProjector.depthKey(Vec3f(gx + 0.15f, gy + 1f, bz))
@@ -905,9 +908,9 @@ object RoomEntityFactory {
                 }
             }
 
-            // 5. If isLast: draw right pillar [gx+0.7, gx+1] height z=0..3
+            // 5. If isLast: draw right pillar [gx+0.7, gx+1] height z=0..2
             if (isLast) {
-                for (gz in 0 until 3) {
+                for (gz in 0 until 2) {
                     val bz = gz.toFloat()
                     val pid = "${id}_pillar_r_$gz"
                     val pdk = IsoProjector.depthKey(Vec3f(gx + 0.85f, gy + 1f, bz))
@@ -967,6 +970,7 @@ object RoomEntityFactory {
             if (x in northGaps) doorArchway(x.toFloat(), 0f,
                 northGaps.minOrNull() == x,
                 northGaps.maxOrNull() == x,
+                ExitSide.NORTH,
                 northExitTarget)
             else wallBlockNorth(x.toFloat(), 0f)
         }
@@ -975,6 +979,7 @@ object RoomEntityFactory {
             if (y in westGaps) doorArchway(0f, y.toFloat(),
                 westGaps.minOrNull() == y,
                 westGaps.maxOrNull() == y,
+                ExitSide.WEST,
                 westExitTarget)
             else wallBlockWest(0f, y.toFloat())
         }

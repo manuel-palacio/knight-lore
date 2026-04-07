@@ -21,6 +21,7 @@ import com.palacesoft.knightlore.domain.model.RoomType
 import com.palacesoft.knightlore.domain.model.TransformPhase
 import com.palacesoft.knightlore.domain.model.BlockState
 import com.palacesoft.knightlore.domain.model.TileType
+import com.palacesoft.knightlore.core.geometry.ZXPalette
 import com.palacesoft.knightlore.render.iso.IsoProjector
 
 /**
@@ -30,42 +31,34 @@ import com.palacesoft.knightlore.render.iso.IsoProjector
 object RoomEntityFactory {
 
     private object Colors {
-        const val BLACK       = 0xFF_0A0808.toInt()   // outlines, deep shadow
-        const val DARK_STONE  = 0xFF_1C1C2C.toInt()   // floor, wall base
-        const val MID_STONE   = 0xFF_3A3A5A.toInt()   // block faces, wall top
-        const val HIGHLIGHT   = 0xFF_6A6A8A.toInt()   // top edges, specular
-        const val DANGER_RED  = 0xFF_AA2200.toInt()   // hazard, damage indicators
-        const val LIFE_GREEN  = 0xFF_228822.toInt()   // cauldron, item glow, health
+        val BLACK       = ZXPalette.BLACK
+        val DARK_STONE  = ZXPalette.BLUE             // deep blue-black stone
+        val MID_STONE   = ZXPalette.WHITE            // mid grey stone
+        val HIGHLIGHT   = ZXPalette.B_WHITE           // bright white highlights
+        val DANGER_RED  = ZXPalette.B_RED             // hazard, damage
+        val LIFE_GREEN  = ZXPalette.B_GREEN           // cauldron, items
 
-        // Aliases for readability — all map to the 6 above
-        const val FLOOR_TOP      = DARK_STONE
-        const val FLOOR_CRACK    = BLACK
-        const val FLOOR_GLOW_BASE = 0x30_000800.toInt()  // tinted dark (still green-ish)
-        const val FLOOR_GLOW_OVER = 0x18_003300.toInt()
-        const val WALL_TOP          = MID_STONE
-        const val WALL_LEFT_D1      = 0xFF_1C1C2A.toInt()  // south-facing dither color 1
-        const val WALL_LEFT_D2      = 0xFF_141420.toInt()  // south-facing dither color 2
-        const val WALL_RIGHT_D1     = 0xFF_141420.toInt()  // east-facing dither color 1
-        const val WALL_RIGHT_D2     = 0xFF_0E0E18.toInt()  // east-facing dither color 2
-        const val WALL_MORTAR    = BLACK
-        const val WALL_HIGHLIGHT = HIGHLIGHT
-        const val WALL_MOSS      = LIFE_GREEN
-        const val BLOCK_TOP      = MID_STONE
-        const val BLOCK_LEFT     = DARK_STONE
-        const val BLOCK_RIGHT    = 0xFF_141422.toInt()
-        const val BLOCK_CROSS    = HIGHLIGHT
-        const val CLOAK_HUMAN    = 0xFF_14081E.toInt()  // near-black, dark stone range
-        const val CLOAK_WOLF     = 0xFF_100610.toInt()
-        const val SKIN           = HIGHLIGHT             // #6A6A8A — pale stone-grey
-        const val HANDS          = HIGHLIGHT
-        const val EYES_HUMAN     = LIFE_GREEN
-        const val EYES_WOLF      = DANGER_RED
-        const val CLOAK_BLINK    = DANGER_RED
-        const val GOBLIN_TOP     = LIFE_GREEN
-        const val GOBLIN_LEFT    = 0xFF_122212.toInt()
-        const val GOBLIN_RIGHT   = 0xFF_0A180A.toInt()
-        const val ITEM           = HIGHLIGHT
-        const val ACTOR          = DANGER_RED
+        val FLOOR_TOP      = ZXPalette.BLUE
+        val FLOOR_CRACK    = BLACK
+        val FLOOR_GLOW_BASE = 0x30_000800.toInt()
+        val FLOOR_GLOW_OVER = 0x18_003300.toInt()
+        val WALL_TOP          = ZXPalette.B_WHITE
+        val WALL_LEFT_D1      = ZXPalette.WHITE       // south-facing dither
+        val WALL_LEFT_D2      = ZXPalette.BLUE
+        val WALL_RIGHT_D1     = ZXPalette.BLUE        // east-facing dither (darker)
+        val WALL_RIGHT_D2     = ZXPalette.BLACK
+        val WALL_MORTAR    = BLACK
+        val WALL_HIGHLIGHT = HIGHLIGHT
+        val WALL_MOSS      = ZXPalette.GREEN
+        val BLOCK_TOP      = ZXPalette.B_WHITE
+        val BLOCK_LEFT     = ZXPalette.WHITE
+        val BLOCK_RIGHT    = ZXPalette.BLUE
+        val BLOCK_CROSS    = ZXPalette.CYAN
+        val GOBLIN_TOP     = ZXPalette.B_GREEN
+        val GOBLIN_LEFT    = ZXPalette.GREEN
+        val GOBLIN_RIGHT   = 0xFF_005500.toInt()
+        val ITEM           = ZXPalette.B_YELLOW
+        val ACTOR          = ZXPalette.B_RED
     }
 
     /** Per-theme color palette — floor, wall, and block tints vary by room theme. */
@@ -85,42 +78,42 @@ object RoomEntityFactory {
 
     private fun paletteFor(theme: RoomTheme): ThemePalette = when (theme) {
         RoomTheme.CASTLE -> ThemePalette(
-            floor1     = 0xFF_222236.toInt(),
-            floor2     = 0xFF_2E2E46.toInt(),
-            wallTop    = 0xFF_4A4A6E.toInt(),
-            wallFaceD1 = 0xFF_2E2E46.toInt(),
-            wallFaceD2 = 0xFF_1E1E32.toInt(),
-            wallFaceR1 = 0xFF_1E1E32.toInt(),
-            wallFaceR2 = 0xFF_161626.toInt(),
-            blockTop   = 0xFF_4A4A6E.toInt(),
-            blockLeft  = 0xFF_2E2E46.toInt(),
-            blockRight = 0xFF_1E1E32.toInt(),
+            floor1     = ZXPalette.BLACK,
+            floor2     = ZXPalette.BLUE,
+            wallTop    = ZXPalette.B_WHITE,
+            wallFaceD1 = ZXPalette.WHITE,
+            wallFaceD2 = ZXPalette.BLUE,
+            wallFaceR1 = ZXPalette.BLUE,
+            wallFaceR2 = ZXPalette.BLACK,
+            blockTop   = ZXPalette.B_WHITE,
+            blockLeft  = ZXPalette.WHITE,
+            blockRight = ZXPalette.BLUE,
             fogColor   = 0x30_000010.toInt(),
         )
         RoomTheme.DUNGEON -> ThemePalette(
-            floor1     = 0xFF_251A0E.toInt(),
-            floor2     = 0xFF_362514.toInt(),
-            wallTop    = 0xFF_5A3E20.toInt(),
-            wallFaceD1 = 0xFF_3A2818.toInt(),
-            wallFaceD2 = 0xFF_28180C.toInt(),
-            wallFaceR1 = 0xFF_28180C.toInt(),
-            wallFaceR2 = 0xFF_1C1008.toInt(),
-            blockTop   = 0xFF_5A3E20.toInt(),
-            blockLeft  = 0xFF_3A2818.toInt(),
-            blockRight = 0xFF_28180C.toInt(),
+            floor1     = ZXPalette.BLACK,
+            floor2     = ZXPalette.YELLOW,
+            wallTop    = ZXPalette.B_YELLOW,
+            wallFaceD1 = ZXPalette.YELLOW,
+            wallFaceD2 = ZXPalette.RED,
+            wallFaceR1 = ZXPalette.RED,
+            wallFaceR2 = ZXPalette.BLACK,
+            blockTop   = ZXPalette.B_YELLOW,
+            blockLeft  = ZXPalette.YELLOW,
+            blockRight = ZXPalette.RED,
             fogColor   = 0x30_100800.toInt(),
         )
         RoomTheme.TOWER -> ThemePalette(
-            floor1     = 0xFF_1A1E28.toInt(),
-            floor2     = 0xFF_262C3A.toInt(),
-            wallTop    = 0xFF_3A4460.toInt(),
-            wallFaceD1 = 0xFF_262C3A.toInt(),
-            wallFaceD2 = 0xFF_1A1E28.toInt(),
-            wallFaceR1 = 0xFF_181E30.toInt(),
-            wallFaceR2 = 0xFF_101422.toInt(),
-            blockTop   = 0xFF_3A4460.toInt(),
-            blockLeft  = 0xFF_262C3A.toInt(),
-            blockRight = 0xFF_181E30.toInt(),
+            floor1     = ZXPalette.BLACK,
+            floor2     = ZXPalette.CYAN,
+            wallTop    = ZXPalette.B_CYAN,
+            wallFaceD1 = ZXPalette.CYAN,
+            wallFaceD2 = ZXPalette.BLUE,
+            wallFaceR1 = ZXPalette.BLUE,
+            wallFaceR2 = ZXPalette.BLACK,
+            blockTop   = ZXPalette.B_CYAN,
+            blockLeft  = ZXPalette.CYAN,
+            blockRight = ZXPalette.BLUE,
             fogColor   = 0x30_000820.toInt(),
         )
     }
@@ -1514,14 +1507,14 @@ object RoomEntityFactory {
         val cx = ox
 
         // ── Colors ──────────────────────────────────────────────────────────────────
-        val blinkColor = 0xFF_FF4444.toInt()
-        val skinColor = if (blinking) blinkColor else 0xFF_E0C8A0.toInt()
+        val blinkColor = ZXPalette.B_RED
+        val skinColor = if (blinking) blinkColor else ZXPalette.B_YELLOW
         val tunicColor = if (blinking) blinkColor else
-            if (isWerewulf) 0xFF_5A3A28.toInt() else 0xFF_B08040.toInt()  // khaki explorer tunic
-        val tunicDark = if (isWerewulf) 0xFF_3A2018.toInt() else 0xFF_8A6030.toInt()
-        val bootColor = if (isWerewulf) 0xFF_3A2A1A.toInt() else 0xFF_5A3A20.toInt()
-        val hatColor = if (blinking) blinkColor else 0xFF_C8A868.toInt()   // pith helmet tan
-        val hatBand = 0xFF_8A6030.toInt()
+            if (isWerewulf) ZXPalette.YELLOW else ZXPalette.B_CYAN     // bright explorer tunic
+        val tunicDark = if (isWerewulf) ZXPalette.RED else ZXPalette.CYAN
+        val bootColor = if (isWerewulf) ZXPalette.RED else ZXPalette.BLUE
+        val hatColor = if (blinking) blinkColor else ZXPalette.B_WHITE  // bright pith helmet
+        val hatBand = ZXPalette.CYAN
 
         // ── Walk cycle ──────────────────────────────────────────────────────────────
         val isMoving = player.movementState == MovementState.WALKING
@@ -1565,7 +1558,7 @@ object RoomEntityFactory {
             // Belt
             commands += DrawCommand(DrawLayer.PLAYER, dk, 3, "player_belt",
                 Vec2f(cx - 8f, oy - 18f + bob),
-                DrawPayload.ColorRect(16f, 2f, 0xFF_5A3A20.toInt()))
+                DrawPayload.ColorRect(16f, 2f, ZXPalette.YELLOW))
 
             // Arms (simple rectangles)
             val armTop = oy - 34f + bob
@@ -1602,10 +1595,10 @@ object RoomEntityFactory {
             }
             commands += DrawCommand(DrawLayer.PLAYER, dk, 5, "player_eye_l",
                 Vec2f(cx - 3f + facingShift, oy - 46f + bob),
-                DrawPayload.ColorOval(2f, 2f, 0xFF_2A1A10.toInt()))
+                DrawPayload.ColorOval(2f, 2f, ZXPalette.BLACK))
             commands += DrawCommand(DrawLayer.PLAYER, dk, 5, "player_eye_r",
                 Vec2f(cx + 1f + facingShift, oy - 46f + bob),
-                DrawPayload.ColorOval(2f, 2f, 0xFF_2A1A10.toInt()))
+                DrawPayload.ColorOval(2f, 2f, ZXPalette.BLACK))
 
             // Pith helmet — the iconic Sabreman hat
             // Dome
@@ -1626,8 +1619,8 @@ object RoomEntityFactory {
             // ════════════════════════════════════════════════════════════════════════
             val ws = 1.2f
             val legH = 8f * legHeightMul
-            val furColor = if (blinking) blinkColor else 0xFF_5A3828.toInt()
-            val furDark = 0xFF_3A2018.toInt()
+            val furColor = if (blinking) blinkColor else ZXPalette.YELLOW
+            val furDark = ZXPalette.RED
 
             // Hind legs
             commands += DrawCommand(DrawLayer.PLAYER, dk, 0, "player_boot_l",
@@ -1669,10 +1662,10 @@ object RoomEntityFactory {
             // Claws
             commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_claw_l",
                 Vec2f(cx - 15f * ws, bodyTop + 16f + leftLegFwd * 0.5f),
-                DrawPayload.ColorOval(5f, 3f, 0xFF_CCAA88.toInt()))
+                DrawPayload.ColorOval(5f, 3f, ZXPalette.B_YELLOW))
             commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_claw_r",
                 Vec2f(cx + 10f * ws, bodyTop + 16f + rightLegFwd * 0.5f),
-                DrawPayload.ColorOval(5f, 3f, 0xFF_CCAA88.toInt()))
+                DrawPayload.ColorOval(5f, 3f, ZXPalette.B_YELLOW))
 
             // Wolf head — forward-pointing
             commands += DrawCommand(DrawLayer.PLAYER, dk, 3, "player_head",
@@ -1687,10 +1680,10 @@ object RoomEntityFactory {
             }
             commands += DrawCommand(DrawLayer.PLAYER, dk, 4, "player_snout",
                 Vec2f(cx - 4f + facingShift, oy - 36f + bob),
-                DrawPayload.ColorOval(8f, 5f, 0xFF_4A2A18.toInt()))
+                DrawPayload.ColorOval(8f, 5f, ZXPalette.RED))
 
             // Eyes — glowing amber
-            val eyeColor = if (blinking) blinkColor else 0xFF_FF8800.toInt()
+            val eyeColor = if (blinking) blinkColor else ZXPalette.B_RED
             commands += DrawCommand(DrawLayer.PLAYER, dk, 5, "player_eye_l",
                 Vec2f(cx - 4f + facingShift, oy - 39f + bob),
                 DrawPayload.ColorOval(3f, 2f, eyeColor))

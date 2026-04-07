@@ -59,20 +59,21 @@ object ZXPalette {
     const val B_YELLOW  = 0xFF_FFFF55.toInt()
     const val B_WHITE   = 0xFF_FFFFFF.toInt()
 
-    // Semantic aliases for game use
-    val STONE_DARK  = BLUE
-    val STONE_MID   = WHITE
-    val STONE_LIGHT = B_WHITE
-    val FLOOR_A     = BLACK
-    val FLOOR_B     = BLUE
-    val SKIN        = B_YELLOW
-    val CAPE        = RED
-    val METAL       = B_CYAN
-    val WOLF_FUR    = YELLOW
-    val WOLF_DARK   = RED
-    val WOLF_EYE    = B_RED
-    val GOLD_ITEM   = B_YELLOW
-    val CAULDRON    = CYAN
-    val TORCH       = B_YELLOW
-    val TORCH_BASE  = YELLOW
+    // ── Warm earth-tone aliases matching Knight Lore GBC palette ──
+    const val STONE_DARK  = 0xFF_3A3828.toInt()   // dark olive shadow
+    const val STONE_MID   = 0xFF_6A6A50.toInt()   // olive-grey wall face
+    const val STONE_LIGHT = 0xFF_9A9A78.toInt()   // light tan highlight / top
+    const val STONE_CREAM = 0xFF_B0AA88.toInt()    // cream wall top
+    const val FLOOR_A     = BLACK
+    const val FLOOR_B     = 0xFF_1A1810.toInt()   // very dark olive floor
+    const val SKIN        = B_YELLOW
+    const val CAPE        = RED
+    const val METAL       = 0xFF_AAAAAA.toInt()   // silver grey helmet
+    const val WOLF_FUR    = 0xFF_8A8A9A.toInt()   // grey wolf body
+    const val WOLF_DARK   = 0xFF_5A5A6A.toInt()   // darker grey wolf shadow
+    const val WOLF_EYE    = B_WHITE               // white wolf eyes
+    const val GOLD_ITEM   = B_YELLOW
+    const val CAULDRON    = 0xFF_AA4400.toInt()    // warm red-brown cauldron
+    const val TORCH       = B_YELLOW
+    const val TORCH_BASE  = YELLOW
 }

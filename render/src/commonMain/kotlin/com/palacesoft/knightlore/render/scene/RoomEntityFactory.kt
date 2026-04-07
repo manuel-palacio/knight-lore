@@ -842,121 +842,124 @@ object RoomEntityFactory {
             val dk = IsoProjector.depthKey(footWorld)
             val id = "door_${gx.toInt()}_${gy.toInt()}"
 
-            // 1. Floor diamond at z=0
+            // 1. Threshold floor tile — lighter to draw the eye toward exit
             commands += DrawCommand(DrawLayer.FLOOR, dk, 0, "${id}_floor",
                 IsoProjector.toScreen(Vec3f(gx, gy, 0f)) + offset,
-                DrawPayload.ColorPath(floorDiamond(gx, gy, 0f, ox, oy), Colors.FLOOR_TOP))
+                DrawPayload.ColorPath(floorDiamond(gx, gy, 0f, ox, oy), 0xFF_2A2A3E.toInt()))
 
-            val openLeft  = if (isFirst) gx + 0.3f else gx
-            val openRight = if (isLast)  gx + 0.7f else gx + 1f
-
-            // 2. Dark void — only on the face that belongs to this wall side
+            // 2. Dark void behind the gap — the passage through the doorway
             if (side == ExitSide.NORTH) {
-                val voidYPts = listOf(
-                    pt(openLeft,  gy + 1f, 0f, ox, oy),
-                    pt(openRight, gy + 1f, 0f, ox, oy),
-                    pt(openRight, gy + 1f, 2f, ox, oy),
-                    pt(openLeft,  gy + 1f, 2f, ox, oy),
+                val voidPts = listOf(
+                    pt(gx, gy + 1f, 0f, ox, oy),
+                    pt(gx + 1f, gy + 1f, 0f, ox, oy),
+                    pt(gx + 1f, gy + 1f, 3f, ox, oy),
+                    pt(gx, gy + 1f, 3f, ox, oy),
                 )
-                commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "${id}_void_y",
-                    IsoProjector.toScreen(Vec3f(openLeft, gy + 1f, 0f)) + offset,
-                    DrawPayload.ColorPath(voidYPts, 0xFF_0A0A0F.toInt()))
+                commands += DrawCommand(DrawLayer.BLOCK, dk, 0, "${id}_void",
+                    IsoProjector.toScreen(Vec3f(gx, gy + 1f, 0f)) + offset,
+                    DrawPayload.ColorPath(voidPts, 0xFF_060610.toInt()))
             } else {
-                val openTop = if (isFirst) gy + 0.3f else gy
-                val openBot = if (isLast)  gy + 0.7f else gy + 1f
-                val voidXPts = listOf(
-                    pt(gx + 1f, openTop, 0f, ox, oy),
-                    pt(gx + 1f, openBot, 0f, ox, oy),
-                    pt(gx + 1f, openBot, 2f, ox, oy),
-                    pt(gx + 1f, openTop, 2f, ox, oy),
+                val voidPts = listOf(
+                    pt(gx + 1f, gy, 0f, ox, oy),
+                    pt(gx + 1f, gy + 1f, 0f, ox, oy),
+                    pt(gx + 1f, gy + 1f, 3f, ox, oy),
+                    pt(gx + 1f, gy, 3f, ox, oy),
                 )
-                commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "${id}_void_x",
-                    IsoProjector.toScreen(Vec3f(gx + 1f, openTop, 0f)) + offset,
-                    DrawPayload.ColorPath(voidXPts, 0xFF_0A0A0F.toInt()))
+                commands += DrawCommand(DrawLayer.BLOCK, dk, 0, "${id}_void",
+                    IsoProjector.toScreen(Vec3f(gx + 1f, gy, 0f)) + offset,
+                    DrawPayload.ColorPath(voidPts, 0xFF_060610.toInt()))
             }
 
-            // 4. If isFirst: draw left pillar [gx, gx+0.3] height z=0..2
-            if (isFirst) {
-                for (gz in 0 until 2) {
-                    val bz = gz.toFloat()
-                    val pid = "${id}_pillar_l_$gz"
-                    val pdk = IsoProjector.depthKey(Vec3f(gx + 0.15f, gy + 1f, bz))
-                    commands += DrawCommand(DrawLayer.BLOCK, pdk, 2, "${pid}_top",
-                        IsoProjector.toScreen(Vec3f(gx, gy, bz + 1f)) + offset,
-                        DrawPayload.ColorPath(listOf(
-                            pt(gx,        gy,      bz + 1f, ox, oy),
-                            pt(gx + 0.3f, gy,      bz + 1f, ox, oy),
-                            pt(gx + 0.3f, gy + 1f, bz + 1f, ox, oy),
-                            pt(gx,        gy + 1f, bz + 1f, ox, oy),
-                        ), wTop))
-                    commands += DrawCommand(DrawLayer.BLOCK, pdk, 1, "${pid}_left",
-                        IsoProjector.toScreen(Vec3f(gx, gy + 1f, bz)) + offset,
-                        DrawPayload.DitheredPath(listOf(
-                            pt(gx,        gy + 1f, bz,      ox, oy),
-                            pt(gx + 0.3f, gy + 1f, bz,      ox, oy),
-                            pt(gx + 0.3f, gy + 1f, bz + 1f, ox, oy),
-                            pt(gx,        gy + 1f, bz + 1f, ox, oy),
-                        ), wFD1, wFD2, horizontal = true))
-                    commands += DrawCommand(DrawLayer.BLOCK, pdk, 0, "${pid}_right",
-                        IsoProjector.toScreen(Vec3f(gx + 0.3f, gy, bz)) + offset,
-                        DrawPayload.DitheredPath(listOf(
-                            pt(gx + 0.3f, gy,      bz,      ox, oy),
-                            pt(gx + 0.3f, gy + 1f, bz,      ox, oy),
-                            pt(gx + 0.3f, gy + 1f, bz + 1f, ox, oy),
-                            pt(gx + 0.3f, gy,      bz + 1f, ox, oy),
-                        ), wFR1, wFR2, horizontal = true))
-                }
-            }
-
-            // 5. If isLast: draw right pillar [gx+0.7, gx+1] height z=0..2
+            // 3. Curved arch — drawn once on the last gap tile, spanning the 2-tile opening.
+            //    Approximates a semicircular arch like the original Knight Lore.
             if (isLast) {
-                for (gz in 0 until 2) {
-                    val bz = gz.toFloat()
-                    val pid = "${id}_pillar_r_$gz"
-                    val pdk = IsoProjector.depthKey(Vec3f(gx + 0.85f, gy + 1f, bz))
-                    commands += DrawCommand(DrawLayer.BLOCK, pdk, 2, "${pid}_top",
-                        IsoProjector.toScreen(Vec3f(gx + 0.7f, gy, bz + 1f)) + offset,
-                        DrawPayload.ColorPath(listOf(
-                            pt(gx + 0.7f, gy,      bz + 1f, ox, oy),
-                            pt(gx + 1f,   gy,      bz + 1f, ox, oy),
-                            pt(gx + 1f,   gy + 1f, bz + 1f, ox, oy),
-                            pt(gx + 0.7f, gy + 1f, bz + 1f, ox, oy),
-                        ), wTop))
-                    commands += DrawCommand(DrawLayer.BLOCK, pdk, 1, "${pid}_left",
-                        IsoProjector.toScreen(Vec3f(gx + 0.7f, gy + 1f, bz)) + offset,
-                        DrawPayload.DitheredPath(listOf(
-                            pt(gx + 0.7f, gy + 1f, bz,      ox, oy),
-                            pt(gx + 1f,   gy + 1f, bz,      ox, oy),
-                            pt(gx + 1f,   gy + 1f, bz + 1f, ox, oy),
-                            pt(gx + 0.7f, gy + 1f, bz + 1f, ox, oy),
-                        ), wFD1, wFD2, horizontal = true))
-                    commands += DrawCommand(DrawLayer.BLOCK, pdk, 0, "${pid}_right",
-                        IsoProjector.toScreen(Vec3f(gx + 1f, gy, bz)) + offset,
-                        DrawPayload.DitheredPath(listOf(
-                            pt(gx + 1f, gy,      bz,      ox, oy),
-                            pt(gx + 1f, gy + 1f, bz,      ox, oy),
-                            pt(gx + 1f, gy + 1f, bz + 1f, ox, oy),
-                            pt(gx + 1f, gy,      bz + 1f, ox, oy),
-                        ), wFR1, wFR2, horizontal = true))
+                val archStartX = gx - 1f  // first gap tile X
+                val archEndX = gx + 1f    // past last gap tile X
+                val archMidX = (archStartX + archEndX) / 2f
+                val archDk = IsoProjector.depthKey(Vec3f(archMidX, gy + 1f, 2f))
+
+                // Arch curve: semicircular profile from z=1 on the edges to z=2.8 at center.
+                // 8 points approximate the curve on the visible wall face.
+                val archSegments = 8
+                if (side == ExitSide.NORTH) {
+                    val archPts = mutableListOf<Vec2f>()
+                    // Bottom edge (straight across at z=1)
+                    archPts += pt(archStartX, gy + 1f, 1f, ox, oy)
+                    // Curve upward to center
+                    for (i in 0..archSegments) {
+                        val t = i.toFloat() / archSegments
+                        val ax = archStartX + t * (archEndX - archStartX)
+                        val az = 1f + kotlin.math.sin(t * kotlin.math.PI).toFloat() * 1.8f
+                        archPts += pt(ax, gy + 1f, az, ox, oy)
+                    }
+                    // Close bottom edge
+                    archPts += pt(archEndX, gy + 1f, 1f, ox, oy)
+                    commands += DrawCommand(DrawLayer.BLOCK, archDk, 2, "${id}_arch",
+                        IsoProjector.toScreen(Vec3f(archStartX, gy + 1f, 1f)) + offset,
+                        DrawPayload.DitheredPath(archPts, wFD1, wFD2, horizontal = true))
+
+                    // Arch outline — darker line tracing the curve for definition
+                    for (i in 0 until archSegments) {
+                        val t0 = i.toFloat() / archSegments
+                        val t1 = (i + 1f) / archSegments
+                        val ax0 = archStartX + t0 * 2f
+                        val az0 = 1f + kotlin.math.sin(t0 * kotlin.math.PI).toFloat() * 1.8f
+                        val ax1 = archStartX + t1 * 2f
+                        val az1 = 1f + kotlin.math.sin(t1 * kotlin.math.PI).toFloat() * 1.8f
+                        val p0 = pt(ax0, gy + 1f, az0, ox, oy)
+                        val p1 = pt(ax1, gy + 1f, az1, ox, oy)
+                        commands += DrawCommand(DrawLayer.BLOCK, archDk, 3, "${id}_arch_line_$i",
+                            Vec2f(p0.x, p0.y),
+                            DrawPayload.Line(p0.x, p0.y, p1.x, p1.y, wTop, 2f))
+                    }
+                } else {
+                    // West wall: arch on the east-facing (x+1) face
+                    val archStartY = gx - 1f  // reuse gx as gy for west wall gaps
+                    val archEndY = gx + 1f
+                    val archPts = mutableListOf<Vec2f>()
+                    archPts += pt(gy + 1f, archStartY, 1f, ox, oy)  // note: for west wall, swap usage
+                    for (i in 0..archSegments) {
+                        val t = i.toFloat() / archSegments
+                        val ay = archStartY + t * (archEndY - archStartY)
+                        val az = 1f + kotlin.math.sin(t * kotlin.math.PI).toFloat() * 1.8f
+                        archPts += pt(gy + 1f, ay, az, ox, oy)
+                    }
+                    archPts += pt(gy + 1f, archEndY, 1f, ox, oy)
+                    commands += DrawCommand(DrawLayer.BLOCK, archDk, 2, "${id}_arch",
+                        IsoProjector.toScreen(Vec3f(gy + 1f, archStartY, 1f)) + offset,
+                        DrawPayload.DitheredPath(archPts, wFR1, wFR2, horizontal = true))
+
+                    for (i in 0 until archSegments) {
+                        val t0 = i.toFloat() / archSegments
+                        val t1 = (i + 1f) / archSegments
+                        val ay0 = archStartY + t0 * 2f
+                        val az0 = 1f + kotlin.math.sin(t0 * kotlin.math.PI).toFloat() * 1.8f
+                        val ay1 = archStartY + t1 * 2f
+                        val az1 = 1f + kotlin.math.sin(t1 * kotlin.math.PI).toFloat() * 1.8f
+                        val p0 = pt(gy + 1f, ay0, az0, ox, oy)
+                        val p1 = pt(gy + 1f, ay1, az1, ox, oy)
+                        commands += DrawCommand(DrawLayer.BLOCK, archDk, 3, "${id}_arch_line_$i",
+                            Vec2f(p0.x, p0.y),
+                            DrawPayload.Line(p0.x, p0.y, p1.x, p1.y, wTop, 2f))
+                    }
                 }
 
-                // 6. If isLast: threshold glow line at z=0 across gap width
-                val g1 = pt(openLeft,  gy + 1f, 0f, ox, oy)
-                val g2 = pt(openRight, gy + 1f, 0f, ox, oy)
-                val glowColor = (0x66_3A3A60.toInt())
+                // Threshold glow line on the floor
+                val g1 = pt(archStartX, gy + 1f, 0f, ox, oy)
+                val g2 = pt(archEndX, gy + 1f, 0f, ox, oy)
                 commands += DrawCommand(DrawLayer.FLOOR, dk, 5, "${id}_glow_line",
                     Vec2f(g1.x, g1.y),
-                    DrawPayload.Line(g1.x, g1.y, g2.x, g2.y, glowColor, 1f))
+                    DrawPayload.Line(g1.x, g1.y, g2.x, g2.y, 0x44_6A6A8A.toInt(), 1.5f))
             }
 
-            // Unexplored marker for NORTH/WEST exits — pulsing 3-dot indicator
+            // 4. Unexplored marker — pulsing dots above the doorway
             if (isLast && targetRoomId != null && targetRoomId !in visitedRooms) {
                 val markerAlpha = (0x44 + (kotlin.math.sin(tick.toDouble() * 0.1) * 0x44).toInt()).coerceIn(0x20, 0x88)
-                val markerPt = pt(gx + 0.5f, gy + 1f, 1.5f, ox, oy)
-                val markerColor = (markerAlpha shl 24) or 0x6A6A8A
+                val markerPt = pt(gx + 0.5f, gy + 0.5f, 2.5f, ox, oy)
+                val markerColor = (markerAlpha shl 24) or 0x8A8AAA
                 for (di in 0..2) {
                     commands += DrawCommand(DrawLayer.BLOCK, dk, 12 + di, "${id}_marker_$di",
-                        Vec2f(markerPt.x - 1f, markerPt.y - 6f + di * 4f),
+                        Vec2f(markerPt.x - 4f + di * 4f, markerPt.y - 2f),
                         DrawPayload.ColorOval(3f, 3f, markerColor))
                 }
             }

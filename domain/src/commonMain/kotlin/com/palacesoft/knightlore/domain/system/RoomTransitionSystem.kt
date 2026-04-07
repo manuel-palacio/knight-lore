@@ -67,6 +67,7 @@ class RoomTransitionSystem(
                     actorStates = spawnedActors,
                     patrolEnemies = spawnedPatrolEnemies,
                     roomTransition = null,
+                    visitedRooms = state.visitedRooms + transition.toRoomId,
                 ),
             )
         } else {

@@ -162,6 +162,7 @@ class DefaultGameEngine(private val systems: List<GameSystem>) : GameEngine {
             actorStates = actorStates,
             roomTransition = null,
             patrolEnemies = patrolEnemies,
+            visitedRooms = setOf(startRoomId),
         )
     }
 

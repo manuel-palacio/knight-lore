@@ -1,5 +1,6 @@
 package com.palacesoft.knightlore.render.scene
 
+import com.palacesoft.knightlore.core.ids.RoomId
 import com.palacesoft.knightlore.core.math.Vec2f
 import com.palacesoft.knightlore.core.math.Vec3f
 import com.palacesoft.knightlore.domain.model.ActorState
@@ -11,9 +12,11 @@ import com.palacesoft.knightlore.domain.model.GameContent
 import com.palacesoft.knightlore.domain.model.GameState
 import com.palacesoft.knightlore.domain.model.ItemInstance
 import com.palacesoft.knightlore.domain.model.ItemLocation
+import com.palacesoft.knightlore.domain.model.MovementState
 import com.palacesoft.knightlore.domain.model.PlayerState
 import com.palacesoft.knightlore.domain.model.RoomDefinition
 import com.palacesoft.knightlore.domain.model.RoomSpecial
+import com.palacesoft.knightlore.domain.model.RoomType
 import com.palacesoft.knightlore.domain.model.TransformPhase
 import com.palacesoft.knightlore.domain.model.TileType
 import com.palacesoft.knightlore.render.iso.IsoProjector
@@ -110,6 +113,7 @@ object RoomEntityFactory {
         val commands = mutableListOf<DrawCommand>()
         val ox = offset.x; val oy = offset.y
         val tick = state.time.tick
+        val roomType = room.roomType
 
         // 1. Floor and block tiles
         room.tiles.forEach { tile ->
@@ -129,10 +133,38 @@ object RoomEntityFactory {
                         Vec2f(p.x + jitter(p.x, seed, i * 2), p.y + jitter(p.y, seed, i * 2 + 1))
                     }
 
+                    // CRYPT floor: darker base tiles
+                    val floorColor1 = if (roomType == RoomType.CRYPT) 0xFF_101018.toInt() else 0xFF_16161E.toInt()
+                    val floorColor2 = if (roomType == RoomType.CRYPT) 0xFF_1A1A28.toInt() else 0xFF_252535.toInt()
+
                     // Base stone tile — dithered checkerboard
                     commands += DrawCommand(DrawLayer.FLOOR, dk, 0, id,
                         IsoProjector.toScreen(world) + offset,
-                        DrawPayload.DitheredPath(jitteredPts, 0xFF_16161E.toInt(), 0xFF_252535.toInt()))
+                        DrawPayload.DitheredPath(jitteredPts, floorColor1, floorColor2))
+
+                    // CRYPT coffin lid — every 5th tile
+                    if (roomType == RoomType.CRYPT && (tile.gridX * 3 + tile.gridY * 7) % 5 == 0) {
+                        val coffinPts = listOf(
+                            pt(gx + 0.15f, gy + 0.3f, gz, ox, oy),
+                            pt(gx + 0.85f, gy + 0.3f, gz, ox, oy),
+                            pt(gx + 0.85f, gy + 0.7f, gz, ox, oy),
+                            pt(gx + 0.15f, gy + 0.7f, gz, ox, oy),
+                        )
+                        commands += DrawCommand(DrawLayer.FLOOR, dk, 3, "${id}_coffin",
+                            IsoProjector.toScreen(world) + offset,
+                            DrawPayload.ColorPath(coffinPts, 0xFF_1A1A28.toInt()))
+                        // Cross inset on coffin lid
+                        val ch1 = pt(gx + 0.3f, gy + 0.5f, gz, ox, oy)
+                        val ch2 = pt(gx + 0.7f, gy + 0.5f, gz, ox, oy)
+                        val cv1 = pt(gx + 0.5f, gy + 0.33f, gz, ox, oy)
+                        val cv2 = pt(gx + 0.5f, gy + 0.67f, gz, ox, oy)
+                        commands += DrawCommand(DrawLayer.FLOOR, dk, 4, "${id}_coffin_h",
+                            Vec2f(ch1.x, ch1.y),
+                            DrawPayload.Line(ch1.x, ch1.y, ch2.x, ch2.y, 0xFF_2A2A38.toInt(), 1f))
+                        commands += DrawCommand(DrawLayer.FLOOR, dk, 4, "${id}_coffin_v",
+                            Vec2f(cv1.x, cv1.y),
+                            DrawPayload.Line(cv1.x, cv1.y, cv2.x, cv2.y, 0xFF_2A2A38.toInt(), 1f))
+                    }
 
                     // Crack lines (~1 in 4 tiles, deterministic)
                     if ((tile.gridX * 7 + tile.gridY * 13) % 4 == 0) {
@@ -159,6 +191,70 @@ object RoomEntityFactory {
                         commands += DrawCommand(DrawLayer.FLOOR, dk, 3, "${id}_glow_over",
                             IsoProjector.toScreen(world) + offset,
                             DrawPayload.ColorPath(pts, Colors.FLOOR_GLOW_OVER))
+                    }
+
+                    // Stone slab variation — every 3rd tile: lighter dither overlay to break up uniformity
+                    if ((tile.gridX + tile.gridY) % 3 == 0) {
+                        commands += DrawCommand(DrawLayer.FLOOR, dk, 4, "${id}_slab",
+                            IsoProjector.toScreen(world) + offset,
+                            DrawPayload.DitheredPath(jitteredPts, 0xFF_1E1E2E.toInt(), 0xFF_2A2A3E.toInt()))
+                    }
+
+                    // Blood smear — 1-in-30 tiles: asymmetric blob + splatter dots
+                    if ((tile.gridX * 13 + tile.gridY * 7 + tile.gridX * tile.gridY * 3) % 30 == 0) {
+                        // Blob — not aligned to tile grid, slightly offset
+                        val blobPts = listOf(
+                            pt(gx + 0.15f, gy + 0.3f, gz, ox, oy),
+                            pt(gx + 0.55f, gy + 0.2f, gz, ox, oy),
+                            pt(gx + 0.7f,  gy + 0.5f, gz, ox, oy),
+                            pt(gx + 0.45f, gy + 0.75f, gz, ox, oy),
+                            pt(gx + 0.2f,  gy + 0.65f, gz, ox, oy),
+                        )
+                        commands += DrawCommand(DrawLayer.FLOOR, dk, 6, "${id}_blood",
+                            IsoProjector.toScreen(world) + offset,
+                            DrawPayload.ColorPath(blobPts, 0xFF_3A0000.toInt()))
+                        // Splatter dots
+                        for (di in 0..2) {
+                            val dotSeed = tile.gridX * 17 + tile.gridY * 11 + di * 7
+                            val dotX = gx + 0.1f + ((dotSeed * 23 and 0xFF) / 255f) * 0.8f
+                            val dotY = gy + 0.1f + ((dotSeed * 31 and 0xFF) / 255f) * 0.8f
+                            val dotPt = pt(dotX, dotY, gz, ox, oy)
+                            commands += DrawCommand(DrawLayer.FLOOR, dk, 7, "${id}_splat_$di",
+                                Vec2f(dotPt.x - 1f, dotPt.y - 1f),
+                                DrawPayload.ColorOval(2f, 1.5f, 0xFF_2A0000.toInt()))
+                        }
+                    }
+
+                    // Scattered bones — 1-in-40 tiles: two thin crossed line segments
+                    if ((tile.gridX * 19 + tile.gridY * 11) % 40 == 0) {
+                        val b1 = pt(gx + 0.2f, gy + 0.4f, gz, ox, oy)
+                        val b2 = pt(gx + 0.8f, gy + 0.6f, gz, ox, oy)
+                        val b3 = pt(gx + 0.3f, gy + 0.7f, gz, ox, oy)
+                        val b4 = pt(gx + 0.7f, gy + 0.3f, gz, ox, oy)
+                        commands += DrawCommand(DrawLayer.FLOOR, dk, 6, "${id}_bone1",
+                            Vec2f(b1.x, b1.y),
+                            DrawPayload.Line(b1.x, b1.y, b2.x, b2.y, 0xFF_5A5A4A.toInt(), 1f))
+                        commands += DrawCommand(DrawLayer.FLOOR, dk, 6, "${id}_bone2",
+                            Vec2f(b3.x, b3.y),
+                            DrawPayload.Line(b3.x, b3.y, b4.x, b4.y, 0xFF_5A5A4A.toInt(), 1f))
+                    }
+
+                    // Rubble near walls — 1-in-15 tiles near perimeter
+                    val nearWall = tile.gridX <= 1 || tile.gridY <= 1 || tile.gridX >= room.width - 2 || tile.gridY >= room.depth - 2
+                    if (nearWall && (tile.gridX * 7 + tile.gridY * 23) % 15 == 0) {
+                        // 2–3 tiny triangle chips
+                        val numChips = 2 + (tile.gridX * tile.gridY) % 2
+                        for (ci in 0 until numChips) {
+                            val chipSeed = tile.gridX * 41 + tile.gridY * 37 + ci * 13
+                            val cx2 = gx + 0.1f + ((chipSeed * 29 and 0xFF) / 255f) * 0.8f
+                            val cy2 = gy + 0.1f + ((chipSeed * 43 and 0xFF) / 255f) * 0.8f
+                            val cp1 = pt(cx2, cy2, gz, ox, oy)
+                            val cp2 = pt(cx2 + 0.07f, cy2 + 0.04f, gz, ox, oy)
+                            val cp3 = pt(cx2 + 0.04f, cy2 + 0.09f, gz, ox, oy)
+                            commands += DrawCommand(DrawLayer.FLOOR, dk, 6, "${id}_chip_$ci",
+                                Vec2f(cp1.x, cp1.y),
+                                DrawPayload.ColorPath(listOf(cp1, cp2, cp3), 0xFF_2A2A3A.toInt()))
+                        }
                     }
 
                     // Floor edge highlights — top-left and top-right edges catch light
@@ -207,6 +303,51 @@ object RoomEntityFactory {
                     commands += DrawCommand(blockLayer, dk, 3, "${id}_cross_v",
                         Vec2f(cV1.x, cV1.y),
                         DrawPayload.Line(cV1.x, cV1.y, cV2.x, cV2.y, crossColor, 1.5f))
+
+                    // Worn stone edge — 1-in-4 blocks: inset top face outline for worn look
+                    if ((tile.gridX * 5 + tile.gridY * 11 + tile.gridZ * 3) % 4 == 0) {
+                        val inset = 0.06f
+                        val wornPts = listOf(
+                            pt(gx + inset,        gy + inset,        gz + 1f, ox, oy),
+                            pt(gx + 1f - inset,   gy + inset,        gz + 1f, ox, oy),
+                            pt(gx + 1f - inset,   gy + 1f - inset,   gz + 1f, ox, oy),
+                            pt(gx + inset,        gy + 1f - inset,   gz + 1f, ox, oy),
+                        )
+                        commands += DrawCommand(blockLayer, dk, 5, "${id}_worn",
+                            IsoProjector.toScreen(Vec3f(gx, gy, gz + 1f)) + offset,
+                            DrawPayload.ColorPath(wornPts, 0xFF_2E2E4A.toInt()))
+                    }
+
+                    // Carved rune — 1-in-6 blocks: 3 line segments on left (south) face
+                    if ((tile.gridX * 7 + tile.gridY * 13 + tile.gridZ * 17) % 6 == 0) {
+                        // 3 rune lines: horizontal + two diagonals
+                        val r1 = pt(gx + 0.3f, gy + 1f, gz + 0.65f, ox, oy)
+                        val r2 = pt(gx + 0.7f, gy + 1f, gz + 0.65f, ox, oy)
+                        val r3 = pt(gx + 0.3f, gy + 1f, gz + 0.35f, ox, oy)
+                        val r4 = pt(gx + 0.5f, gy + 1f, gz + 0.75f, ox, oy)
+                        val r5 = pt(gx + 0.7f, gy + 1f, gz + 0.35f, ox, oy)
+                        val r6 = pt(gx + 0.5f, gy + 1f, gz + 0.55f, ox, oy)
+                        commands += DrawCommand(blockLayer, dk, 4, "${id}_rune1",
+                            Vec2f(r1.x, r1.y), DrawPayload.Line(r1.x, r1.y, r2.x, r2.y, 0xFF_4A4A6A.toInt(), 1f))
+                        commands += DrawCommand(blockLayer, dk, 4, "${id}_rune2",
+                            Vec2f(r3.x, r3.y), DrawPayload.Line(r3.x, r3.y, r4.x, r4.y, 0xFF_4A4A6A.toInt(), 1f))
+                        commands += DrawCommand(blockLayer, dk, 4, "${id}_rune3",
+                            Vec2f(r5.x, r5.y), DrawPayload.Line(r5.x, r5.y, r6.x, r6.y, 0xFF_4A4A6A.toInt(), 1f))
+                    }
+
+                    // Lichen — 1-in-8 blocks: 2-3 blobs on top face
+                    if ((tile.gridX * 11 + tile.gridY * 7 + tile.gridZ * 5) % 8 == 0) {
+                        val numLichen = 2 + (tile.gridX + tile.gridY) % 2
+                        for (li in 0 until numLichen) {
+                            val lSeed = tile.gridX * 53 + tile.gridY * 47 + li * 31
+                            val lx = gx + 0.15f + ((lSeed * 37 and 0xFF) / 255f) * 0.7f
+                            val ly = gy + 0.15f + ((lSeed * 41 and 0xFF) / 255f) * 0.7f
+                            val lPt = pt(lx, ly, gz + 1f, ox, oy)
+                            commands += DrawCommand(blockLayer, dk, 6, "${id}_lichen_$li",
+                                Vec2f(lPt.x - 2f, lPt.y - 1.5f),
+                                DrawPayload.ColorOval(4f, 3f, 0xFF_2A4A2A.toInt()))
+                        }
+                    }
                 }
                 TileType.HAZARD -> {
                     val dk = IsoProjector.depthKey(world)
@@ -246,7 +387,77 @@ object RoomEntityFactory {
         }
 
         // 2. Perimeter walls
-        buildWalls(room, offset, commands)
+        buildWalls(room, offset, commands, tick, roomType, state.visitedRooms)
+
+        // FLOODED room: water plane over floor tiles
+        if (roomType == RoomType.FLOODED) {
+            for (tile in room.tiles) {
+                if (tile.type != TileType.FLOOR) continue
+                val gx2 = tile.gridX.toFloat()
+                val gy2 = tile.gridY.toFloat()
+                val gz2 = tile.gridZ.toFloat()
+                val world2 = Vec3f(gx2, gy2, gz2)
+                val dk2 = IsoProjector.depthKey(world2)
+                val waterPts = floorDiamond(gx2, gy2, gz2, ox, oy)
+                // Water plane: semi-transparent blue
+                commands += DrawCommand(DrawLayer.FLOOR, dk2, 9, "water_${tile.gridX}_${tile.gridY}",
+                    IsoProjector.toScreen(world2) + offset,
+                    DrawPayload.ColorPath(waterPts, 0x88_002244.toInt()))
+                // Ripple line — animated with tick and tile position
+                val ripplePhase = (tick * 0.08 + tile.gridX * 0.5).toFloat()
+                val rippleY = (kotlin.math.sin(ripplePhase.toDouble()) * 3.0).toFloat()
+                val rpl1 = pt(gx2 + 0.1f, gy2 + 0.5f, gz2, ox, oy)
+                val rpl2 = pt(gx2 + 0.9f, gy2 + 0.5f, gz2, ox, oy)
+                commands += DrawCommand(DrawLayer.FLOOR, dk2, 10, "ripple_${tile.gridX}_${tile.gridY}",
+                    Vec2f(rpl1.x, rpl1.y + rippleY),
+                    DrawPayload.Line(rpl1.x, rpl1.y + rippleY, rpl2.x, rpl2.y + rippleY, 0xAA_002244.toInt(), 1f))
+            }
+        }
+
+        // THRONE_ANTECHAMBER: decorative column markers + raised dais hint
+        if (roomType == RoomType.THRONE_ANTECHAMBER) {
+            // Two column markers either side of room center
+            val midX = room.width / 2f
+            val midY = room.depth / 2f
+            for (side in listOf(-1f, 1f)) {
+                val colX = midX + side * 2f
+                val colY = midY - 1f
+                for (gz2 in 0 until 3) {
+                    val bz2 = gz2.toFloat()
+                    val colWorld = Vec3f(colX, colY, bz2)
+                    val colDk = IsoProjector.depthKey(Vec3f(colX + 0.5f, colY + 1f, bz2))
+                    commands += DrawCommand(DrawLayer.BLOCK, colDk, 2, "col_${side}_top_$gz2",
+                        IsoProjector.toScreen(Vec3f(colX, colY, bz2 + 1f)) + offset,
+                        DrawPayload.ColorPath(floorDiamond(colX, colY, bz2 + 1f, ox, oy), Colors.WALL_TOP))
+                    commands += DrawCommand(DrawLayer.BLOCK, colDk, 1, "col_${side}_left_$gz2",
+                        IsoProjector.toScreen(Vec3f(colX, colY + 1f, bz2)) + offset,
+                        DrawPayload.DitheredPath(
+                            listOf(
+                                pt(colX,      colY + 1f, bz2,      ox, oy),
+                                pt(colX + 1f, colY + 1f, bz2,      ox, oy),
+                                pt(colX + 1f, colY + 1f, bz2 + 1f, ox, oy),
+                                pt(colX,      colY + 1f, bz2 + 1f, ox, oy),
+                            ), Colors.WALL_LEFT_D1, Colors.WALL_LEFT_D2, horizontal = true))
+                }
+            }
+            // Raised dais — center platform tiles at gz=1 (drawn as floor diamonds at height 1)
+            val daisMinX = (midX - 2f).toInt()
+            val daisMaxX = (midX + 2f).toInt()
+            val daisMinY = (midY - 1f).toInt()
+            val daisMaxY = (midY + 1f).toInt()
+            for (dx in daisMinX..daisMaxX) {
+                for (dy in daisMinY..daisMaxY) {
+                    if (dx < 0 || dy < 0 || dx >= room.width || dy >= room.depth) continue
+                    val daisWorld = Vec3f(dx.toFloat(), dy.toFloat(), 1f)
+                    val daisDk = IsoProjector.depthKey(daisWorld)
+                    commands += DrawCommand(DrawLayer.FLOOR, daisDk, 2, "dais_${dx}_${dy}",
+                        IsoProjector.toScreen(daisWorld) + offset,
+                        DrawPayload.DitheredPath(
+                            floorDiamond(dx.toFloat(), dy.toFloat(), 1f, ox, oy),
+                            0xFF_1E1E2E.toInt(), 0xFF_2A2A3E.toInt()))
+                }
+            }
+        }
 
         // 3. Items
         state.itemInstances
@@ -316,6 +527,9 @@ object RoomEntityFactory {
         room: RoomDefinition,
         offset: Vec2f,
         commands: MutableList<DrawCommand>,
+        tick: Long,
+        roomType: RoomType,
+        visitedRooms: Set<RoomId>,
     ) {
         val w = room.width
         val d = room.depth
@@ -366,12 +580,114 @@ object RoomEntityFactory {
                         DrawPayload.Line(h1.x, h1.y, h2.x, h2.y, Colors.WALL_HIGHLIGHT, 1f))
                 }
 
+                // CAVERN: stalactite hint — narrow triangles hanging from wall top
+                if (roomType == RoomType.CAVERN && (gx.toInt() * 7 + 3) % 5 == 0) {
+                    for (sz in 0 until 3) {
+                        val stalkX = gx + 0.2f + sz * 0.25f
+                        val stalkTop = pt(stalkX, gy, 3.0f, ox, oy)
+                        val stalkTip = pt(stalkX, gy, 2.2f - sz * 0.15f, ox, oy)
+                        commands += DrawCommand(DrawLayer.BLOCK, dk, 6, "${id}_stalk_$sz",
+                            Vec2f(stalkTop.x, stalkTop.y),
+                            DrawPayload.ColorPath(listOf(
+                                Vec2f(stalkTop.x - 2f, stalkTop.y),
+                                Vec2f(stalkTop.x + 2f, stalkTop.y),
+                                Vec2f(stalkTip.x, stalkTip.y),
+                            ), 0xFF_2A2A3A.toInt()))
+                    }
+                }
+
                 // Moss patch (~1 in 7 wall columns, only on lower block)
                 if (!isTop && (gx.toInt() * 5 + gy.toInt() * 9) % 7 == 0) {
                     val moss = pt(gx + 0.35f, gy + 1f, bz + 0.3f, ox, oy)
                     commands += DrawCommand(DrawLayer.BLOCK, dk, 3, "${id}_moss",
                         Vec2f(moss.x - 4f, moss.y - 3f),
                         DrawPayload.ColorOval(9f, 6f, Colors.WALL_MOSS))
+                }
+
+                // Chains — 1-in-8 wall columns
+                if ((gx.toInt() * 13 + gy.toInt() * 7) % 8 == 0 && isTop) {
+                    // Chain: two line segments hanging from gz=2.8 down ~20px on screen
+                    val chainTop = pt(gx + 0.5f, gy + 1f, 2.8f, ox, oy)
+                    val chainMid = pt(gx + 0.5f, gy + 1f, 2.0f, ox, oy)
+                    val chainBot = pt(gx + 0.5f, gy + 1f, 1.2f, ox, oy)
+                    commands += DrawCommand(DrawLayer.BLOCK, dk, 5, "${id}_chain1",
+                        Vec2f(chainTop.x, chainTop.y),
+                        DrawPayload.Line(chainTop.x, chainTop.y, chainMid.x, chainMid.y, 0xFF_3A3A4A.toInt(), 1f))
+                    commands += DrawCommand(DrawLayer.BLOCK, dk, 5, "${id}_chain2",
+                        Vec2f(chainMid.x, chainMid.y),
+                        DrawPayload.Line(chainMid.x, chainMid.y, chainBot.x, chainBot.y, 0xFF_3A3A4A.toInt(), 1f))
+                    val linkPt = pt(gx + 0.5f, gy + 1f, 1.2f, ox, oy)
+                    commands += DrawCommand(DrawLayer.BLOCK, dk, 5, "${id}_chain_link",
+                        Vec2f(linkPt.x - 3f, linkPt.y - 2f),
+                        DrawPayload.ColorOval(6f, 4f, 0xFF_3A3A4A.toInt()))
+                }
+
+                // Cracks — 1-in-6 wall columns: irregular polygon crack on south face
+                if ((gx.toInt() * 11 + gy.toInt() * 3) % 6 == 0 && gz == 1) {
+                    val crk = listOf(
+                        pt(gx + 0.35f, gy + 1f, bz + 0.2f, ox, oy),
+                        pt(gx + 0.42f, gy + 1f, bz + 0.5f, ox, oy),
+                        pt(gx + 0.38f, gy + 1f, bz + 0.8f, ox, oy),
+                        pt(gx + 0.40f, gy + 1f, bz + 0.9f, ox, oy),
+                        pt(gx + 0.37f, gy + 1f, bz + 0.5f, ox, oy),
+                        pt(gx + 0.33f, gy + 1f, bz + 0.2f, ox, oy),
+                    )
+                    commands += DrawCommand(DrawLayer.BLOCK, dk, 4, "${id}_crack",
+                        IsoProjector.toScreen(Vec3f(gx, gy + 1f, bz)) + offset,
+                        DrawPayload.ColorPath(crk, 0xFF_0A0808.toInt()))
+                }
+
+                // Water seep — 1-in-10 wall columns
+                if ((gx.toInt() * 7 + gy.toInt() * 19) % 10 == 0 && gz == 1) {
+                    val seepTop = pt(gx + 0.6f, gy + 1f, 1.5f, ox, oy)
+                    val seepBot = pt(gx + 0.6f, gy + 1f, 0f,   ox, oy)
+                    commands += DrawCommand(DrawLayer.BLOCK, dk, 4, "${id}_seep",
+                        Vec2f(seepTop.x, seepTop.y),
+                        DrawPayload.Line(seepTop.x, seepTop.y, seepBot.x, seepBot.y, 0xFF_1A2A2A.toInt(), 1f))
+                    val puddle = pt(gx + 0.6f, gy + 1f, 0.05f, ox, oy)
+                    commands += DrawCommand(DrawLayer.BLOCK, dk, 5, "${id}_puddle",
+                        Vec2f(puddle.x - 4f, puddle.y - 2f),
+                        DrawPayload.ColorOval(8f, 4f, 0xFF_1A3A2A.toInt()))
+                }
+
+                // Torch sconce — every 4th north wall column, only on gz=0 (ground level to gz=1.5)
+                if (gx.toInt() % 4 == 2 && gz == 0) {
+                    val sconceSeed = gx.toInt() * 7 + gy.toInt() * 13
+                    val flicker = (kotlin.math.sin(tick.toDouble() * 0.3 + sconceSeed).toFloat() * 1.5f)
+                    val glowAlpha = 0x11 + ((kotlin.math.sin(tick.toDouble() * 0.3 + sconceSeed + 1.0) * 0.5 + 0.5) * 0x11).toInt()
+
+                    // Bracket line
+                    val bracketFrom = pt(gx + 0.5f, gy + 1f, 1.5f, ox, oy)
+                    val bracketTo   = pt(gx + 0.5f, gy + 0.85f, 1.5f, ox, oy)
+                    commands += DrawCommand(DrawLayer.BLOCK, dk, 6, "${id}_bracket",
+                        Vec2f(bracketFrom.x, bracketFrom.y),
+                        DrawPayload.Line(bracketFrom.x, bracketFrom.y, bracketTo.x, bracketTo.y, 0xFF_5A4020.toInt(), 1.5f))
+
+                    // Flame oval — flicker on Y
+                    val flamePt = pt(gx + 0.5f, gy + 0.85f, 1.5f, ox, oy)
+                    commands += DrawCommand(DrawLayer.BLOCK, dk, 7, "${id}_flame",
+                        Vec2f(flamePt.x - 3f, flamePt.y - 8f + flicker),
+                        DrawPayload.ColorOval(6f, 8f, 0xCC_FF8800.toInt()))
+                    // Glow halo
+                    commands += DrawCommand(DrawLayer.BLOCK, dk, 6, "${id}_glow_halo",
+                        Vec2f(flamePt.x - 9f, flamePt.y - 7f + flicker),
+                        DrawPayload.ColorOval(18f, 14f, (glowAlpha shl 24) or 0xFF6600))
+
+                    // Torch light cast on floor — warm tint on nearby floor tiles
+                    val tileX0 = (gx - 1f).coerceAtLeast(0f)
+                    val tileX1 = (gx + 2f).coerceAtMost(room.width.toFloat())
+                    var lightGx = tileX0
+                    while (lightGx < tileX1) {
+                        val lightWorld = Vec3f(lightGx, gy + 0.5f, 0f)
+                        val lightDk = IsoProjector.depthKey(lightWorld)
+                        commands += DrawCommand(DrawLayer.FLOOR, lightDk, 8, "torch_light_${gx.toInt()}_${lightGx.toInt()}",
+                            IsoProjector.toScreen(lightWorld) + offset,
+                            DrawPayload.ColorPath(
+                                floorDiamond(lightGx, gy, 0f, ox, oy),
+                                0x08_FF6600.toInt()
+                            ))
+                        lightGx += 1f
+                    }
                 }
             }
         }
@@ -417,10 +733,95 @@ object RoomEntityFactory {
                         Vec2f(moss.x - 4f, moss.y - 3f),
                         DrawPayload.ColorOval(9f, 6f, Colors.WALL_MOSS))
                 }
+
+                // Chains — 1-in-8 wall columns
+                if ((gx.toInt() * 13 + gy.toInt() * 7) % 8 == 0 && isTop) {
+                    val chainTop = pt(gx + 0.5f, gy + 1f, 2.8f, ox, oy)
+                    val chainMid = pt(gx + 0.5f, gy + 1f, 2.0f, ox, oy)
+                    val chainBot = pt(gx + 0.5f, gy + 1f, 1.2f, ox, oy)
+                    commands += DrawCommand(DrawLayer.BLOCK, dk, 5, "${id}_chain1",
+                        Vec2f(chainTop.x, chainTop.y),
+                        DrawPayload.Line(chainTop.x, chainTop.y, chainMid.x, chainMid.y, 0xFF_3A3A4A.toInt(), 1f))
+                    commands += DrawCommand(DrawLayer.BLOCK, dk, 5, "${id}_chain2",
+                        Vec2f(chainMid.x, chainMid.y),
+                        DrawPayload.Line(chainMid.x, chainMid.y, chainBot.x, chainBot.y, 0xFF_3A3A4A.toInt(), 1f))
+                    val linkPt = pt(gx + 0.5f, gy + 1f, 1.2f, ox, oy)
+                    commands += DrawCommand(DrawLayer.BLOCK, dk, 5, "${id}_chain_link",
+                        Vec2f(linkPt.x - 3f, linkPt.y - 2f),
+                        DrawPayload.ColorOval(6f, 4f, 0xFF_3A3A4A.toInt()))
+                }
+
+                // Cracks — 1-in-6 wall columns: irregular polygon crack on east face
+                if ((gx.toInt() * 11 + gy.toInt() * 3) % 6 == 0 && gz == 1) {
+                    val crk = listOf(
+                        pt(gx + 1f, gy + 0.35f, bz + 0.2f, ox, oy),
+                        pt(gx + 1f, gy + 0.42f, bz + 0.5f, ox, oy),
+                        pt(gx + 1f, gy + 0.38f, bz + 0.8f, ox, oy),
+                        pt(gx + 1f, gy + 0.40f, bz + 0.9f, ox, oy),
+                        pt(gx + 1f, gy + 0.37f, bz + 0.5f, ox, oy),
+                        pt(gx + 1f, gy + 0.33f, bz + 0.2f, ox, oy),
+                    )
+                    commands += DrawCommand(DrawLayer.BLOCK, dk, 4, "${id}_crack",
+                        IsoProjector.toScreen(Vec3f(gx + 1f, gy, bz)) + offset,
+                        DrawPayload.ColorPath(crk, 0xFF_0A0808.toInt()))
+                }
+
+                // Water seep — 1-in-10 wall columns
+                if ((gx.toInt() * 7 + gy.toInt() * 19) % 10 == 0 && gz == 1) {
+                    val seepTop = pt(gx + 1f, gy + 0.6f, 1.5f, ox, oy)
+                    val seepBot = pt(gx + 1f, gy + 0.6f, 0f,   ox, oy)
+                    commands += DrawCommand(DrawLayer.BLOCK, dk, 4, "${id}_seep",
+                        Vec2f(seepTop.x, seepTop.y),
+                        DrawPayload.Line(seepTop.x, seepTop.y, seepBot.x, seepBot.y, 0xFF_1A2A2A.toInt(), 1f))
+                    val puddle = pt(gx + 1f, gy + 0.6f, 0.05f, ox, oy)
+                    commands += DrawCommand(DrawLayer.BLOCK, dk, 5, "${id}_puddle",
+                        Vec2f(puddle.x - 4f, puddle.y - 2f),
+                        DrawPayload.ColorOval(8f, 4f, 0xFF_1A3A2A.toInt()))
+                }
+
+                // Torch sconce — every 4th west wall column, only on gz=0
+                if (gy.toInt() % 4 == 2 && gz == 0) {
+                    val sconceSeed = gx.toInt() * 7 + gy.toInt() * 13
+                    val flicker = (kotlin.math.sin(tick.toDouble() * 0.3 + sconceSeed).toFloat() * 1.5f)
+                    val glowAlpha = 0x11 + ((kotlin.math.sin(tick.toDouble() * 0.3 + sconceSeed + 1.0) * 0.5 + 0.5) * 0x11).toInt()
+
+                    // Bracket line — west wall uses right face (x+1)
+                    val bracketFrom = pt(gx + 1f, gy + 0.5f, 1.5f, ox, oy)
+                    val bracketTo   = pt(gx + 0.85f, gy + 0.5f, 1.5f, ox, oy)
+                    commands += DrawCommand(DrawLayer.BLOCK, dk, 6, "${id}_bracket",
+                        Vec2f(bracketFrom.x, bracketFrom.y),
+                        DrawPayload.Line(bracketFrom.x, bracketFrom.y, bracketTo.x, bracketTo.y, 0xFF_5A4020.toInt(), 1.5f))
+
+                    // Flame oval — flicker on Y
+                    val flamePt = pt(gx + 0.85f, gy + 0.5f, 1.5f, ox, oy)
+                    commands += DrawCommand(DrawLayer.BLOCK, dk, 7, "${id}_flame",
+                        Vec2f(flamePt.x - 3f, flamePt.y - 8f + flicker),
+                        DrawPayload.ColorOval(6f, 8f, 0xCC_FF8800.toInt()))
+                    // Glow halo
+                    commands += DrawCommand(DrawLayer.BLOCK, dk, 6, "${id}_glow_halo",
+                        Vec2f(flamePt.x - 9f, flamePt.y - 7f + flicker),
+                        DrawPayload.ColorOval(18f, 14f, (glowAlpha shl 24) or 0xFF6600))
+
+                    // Torch light cast on floor — warm tint on nearby floor tiles
+                    val tileY0 = (gy - 1f).coerceAtLeast(0f)
+                    val tileY1 = (gy + 2f).coerceAtMost(room.depth.toFloat())
+                    var lightGy = tileY0
+                    while (lightGy < tileY1) {
+                        val lightWorld = Vec3f(gx + 0.5f, lightGy, 0f)
+                        val lightDk = IsoProjector.depthKey(lightWorld)
+                        commands += DrawCommand(DrawLayer.FLOOR, lightDk, 8, "torch_light_${gy.toInt()}_${lightGy.toInt()}",
+                            IsoProjector.toScreen(lightWorld) + offset,
+                            DrawPayload.ColorPath(
+                                floorDiamond(gx, lightGy, 0f, ox, oy),
+                                0x08_FF6600.toInt()
+                            ))
+                        lightGy += 1f
+                    }
+                }
             }
         }
 
-        fun doorArchway(gx: Float, gy: Float, isFirst: Boolean, isLast: Boolean) {
+        fun doorArchway(gx: Float, gy: Float, isFirst: Boolean, isLast: Boolean, targetRoomId: RoomId? = null) {
             val footWorld = Vec3f(gx + 0.5f, gy + 1f, 0f)
             val dk = IsoProjector.depthKey(footWorld)
             val id = "door_${gx.toInt()}_${gy.toInt()}"
@@ -528,27 +929,44 @@ object RoomEntityFactory {
                     Vec2f(g1.x, g1.y),
                     DrawPayload.Line(g1.x, g1.y, g2.x, g2.y, glowColor, 1f))
             }
+
+            // Unexplored marker for NORTH/WEST exits — pulsing 3-dot indicator
+            if (isLast && targetRoomId != null && targetRoomId !in visitedRooms) {
+                val markerAlpha = (0x44 + (kotlin.math.sin(tick.toDouble() * 0.1) * 0x44).toInt()).coerceIn(0x20, 0x88)
+                val markerPt = pt(gx + 0.5f, gy + 1f, 1.5f, ox, oy)
+                val markerColor = (markerAlpha shl 24) or 0x6A6A8A
+                for (di in 0..2) {
+                    commands += DrawCommand(DrawLayer.BLOCK, dk, 12 + di, "${id}_marker_$di",
+                        Vec2f(markerPt.x - 1f, markerPt.y - 6f + di * 4f),
+                        DrawPayload.ColorOval(3f, 3f, markerColor))
+                }
+            }
         }
+
+        val northExitTarget = room.exits.find { it.side == ExitSide.NORTH }?.targetRoomId
+        val westExitTarget  = room.exits.find { it.side == ExitSide.WEST }?.targetRoomId
 
         // North wall (gy=0): draw only south-facing inner face + top
         for (x in 0 until w) {
             if (x in northGaps) doorArchway(x.toFloat(), 0f,
                 northGaps.minOrNull() == x,
-                northGaps.maxOrNull() == x)
+                northGaps.maxOrNull() == x,
+                northExitTarget)
             else wallBlockNorth(x.toFloat(), 0f)
         }
         // West wall (gx=0): draw only east-facing inner face + top
         for (y in 1 until d - 1) {
             if (y in westGaps) doorArchway(0f, y.toFloat(),
                 westGaps.minOrNull() == y,
-                westGaps.maxOrNull() == y)
+                westGaps.maxOrNull() == y,
+                westExitTarget)
             else wallBlockWest(0f, y.toFloat())
         }
 
         // Exit markers for all four sides — independent of which walls are drawn.
         // NORTH/WEST exits already get full doorArchway treatment above.
         // SOUTH/EAST exits have no wall, so draw a simpler threshold marker.
-        fun drawExitMarker(gx: Float, gy: Float, side: ExitSide, withPillars: Boolean) {
+        fun drawExitMarker(gx: Float, gy: Float, side: ExitSide, withPillars: Boolean, targetRoomId: RoomId? = null) {
             val dk = IsoProjector.depthKey(Vec3f(gx + 0.5f, gy + 1f, 0f))
             val id = "exit_marker_${gx.toInt()}_${gy.toInt()}"
 
@@ -631,6 +1049,21 @@ object RoomEntityFactory {
                         ), Colors.WALL_LEFT_D1, Colors.WALL_LEFT_D2, horizontal = true))
                 }
             }
+
+            // Unexplored marker: pulsing 3-dot indicator near archway
+            if (targetRoomId != null && targetRoomId !in visitedRooms) {
+                val markerAlpha = (0x44 + (kotlin.math.sin(tick.toDouble() * 0.1) * 0x44).toInt()).coerceIn(0x20, 0x88)
+                val markerPt = when (side) {
+                    ExitSide.SOUTH, ExitSide.NORTH -> pt(gx + 0.5f, gy + 1f, 1.5f, ox, oy)
+                    ExitSide.EAST, ExitSide.WEST   -> pt(gx + 1f,   gy + 0.5f, 1.5f, ox, oy)
+                }
+                val markerColor = (markerAlpha shl 24) or 0x6A6A8A
+                for (di in 0..2) {
+                    commands += DrawCommand(DrawLayer.BLOCK, dk, 12 + di, "${id}_marker_$di",
+                        Vec2f(markerPt.x - 1f, markerPt.y - 6f + di * 4f),
+                        DrawPayload.ColorOval(3f, 3f, markerColor))
+                }
+            }
         }
 
         // Draw exit markers for SOUTH and EAST exits (no wall drawn, need explicit marker)
@@ -639,14 +1072,14 @@ object RoomEntityFactory {
                 ExitSide.SOUTH -> {
                     val gx = (w / 2 - 1).toFloat()
                     val gy = (d - 1).toFloat()
-                    drawExitMarker(gx, gy, ExitSide.SOUTH, withPillars = false)
-                    drawExitMarker(gx + 1f, gy, ExitSide.SOUTH, withPillars = false)
+                    drawExitMarker(gx, gy, ExitSide.SOUTH, withPillars = false, exit.targetRoomId)
+                    drawExitMarker(gx + 1f, gy, ExitSide.SOUTH, withPillars = false, exit.targetRoomId)
                 }
                 ExitSide.EAST -> {
                     val gx = (w - 1).toFloat()
                     val gy = (d / 2 - 1).toFloat()
-                    drawExitMarker(gx, gy, ExitSide.EAST, withPillars = false)
-                    drawExitMarker(gx, gy + 1f, ExitSide.EAST, withPillars = false)
+                    drawExitMarker(gx, gy, ExitSide.EAST, withPillars = false, exit.targetRoomId)
+                    drawExitMarker(gx, gy + 1f, ExitSide.EAST, withPillars = false, exit.targetRoomId)
                 }
                 ExitSide.NORTH, ExitSide.WEST -> { /* handled by doorArchway above */ }
             }
@@ -779,34 +1212,96 @@ object RoomEntityFactory {
 
         when (actor.type) {
             ActorType.GUARD -> {
-                // Tall dark-red rectangle
-                commands += DrawCommand(DrawLayer.ACTOR, dk, 0, "${id}_body",
-                    Vec2f(cx - 6f, cy - 28f),
-                    DrawPayload.ColorRect(12f, 28f, 0xFF_8B0000.toInt()))
-                // Shoulder left
-                commands += DrawCommand(DrawLayer.ACTOR, dk, 1, "${id}_sh_l",
-                    Vec2f(cx - 11f, cy - 28f),
-                    DrawPayload.ColorRect(5f, 5f, 0xFF_8B0000.toInt()))
-                // Shoulder right
-                commands += DrawCommand(DrawLayer.ACTOR, dk, 1, "${id}_sh_r",
-                    Vec2f(cx + 6f, cy - 28f),
-                    DrawPayload.ColorRect(5f, 5f, 0xFF_8B0000.toInt()))
-                // Visor slit
-                val v1x = cx - 5f; val v1y = cy - 24f
-                val v2x = cx + 5f; val v2y = cy - 24f
-                commands += DrawCommand(DrawLayer.ACTOR, dk, 2, "${id}_visor",
-                    Vec2f(v1x, v1y),
-                    DrawPayload.Line(v1x, v1y, v2x, v2y, 0xFF_FF4400.toInt(), 1.5f))
+                val ggx = actor.position.x - 0.35f
+                val ggy = actor.position.y - 0.35f
+                val ggz = 0f
+                val guardBob = (kotlin.math.sin(tick.toDouble() * 0.15) * 2.0).toFloat()
+                val ox2 = offset.x; val oy2 = offset.y
+                val gDk = IsoProjector.depthKey(Vec3f(ggx + 0.35f, ggy + 0.35f + 0.7f, ggz))
+
+                // Shadow at floor level
+                commands += DrawCommand(DrawLayer.FLOOR, gDk, -1, "${id}_shadow",
+                    Vec2f(cx - 25f, cy - 5f), DrawPayload.ColorOval(50f, 10f, 0x50_000000.toInt()))
+
+                // Top face
+                commands += DrawCommand(DrawLayer.ACTOR, gDk, 2, "${id}_top",
+                    IsoProjector.toScreen(Vec3f(ggx, ggy, ggz + 1.1f)) + offset,
+                    DrawPayload.ColorPath(listOf(
+                        pt(ggx,        ggy,        ggz + 1.1f, ox2, oy2),
+                        pt(ggx + 0.7f, ggy,        ggz + 1.1f, ox2, oy2),
+                        pt(ggx + 0.7f, ggy + 0.7f, ggz + 1.1f, ox2, oy2),
+                        pt(ggx,        ggy + 0.7f, ggz + 1.1f, ox2, oy2),
+                    ), 0xFF_6A0000.toInt()))
+
+                // Left face
+                commands += DrawCommand(DrawLayer.ACTOR, gDk, 1, "${id}_left",
+                    IsoProjector.toScreen(Vec3f(ggx, ggy + 0.7f, ggz)) + offset,
+                    DrawPayload.ColorPath(listOf(
+                        pt(ggx,        ggy + 0.7f, ggz,        ox2, oy2),
+                        pt(ggx + 0.7f, ggy + 0.7f, ggz,        ox2, oy2),
+                        pt(ggx + 0.7f, ggy + 0.7f, ggz + 1.1f, ox2, oy2),
+                        pt(ggx,        ggy + 0.7f, ggz + 1.1f, ox2, oy2),
+                    ), 0xFF_3A0000.toInt()))
+
+                // Right face
+                commands += DrawCommand(DrawLayer.ACTOR, gDk, 0, "${id}_right",
+                    IsoProjector.toScreen(Vec3f(ggx + 0.7f, ggy, ggz)) + offset,
+                    DrawPayload.ColorPath(listOf(
+                        pt(ggx + 0.7f, ggy,        ggz,        ox2, oy2),
+                        pt(ggx + 0.7f, ggy + 0.7f, ggz,        ox2, oy2),
+                        pt(ggx + 0.7f, ggy + 0.7f, ggz + 1.1f, ox2, oy2),
+                        pt(ggx + 0.7f, ggy,        ggz + 1.1f, ox2, oy2),
+                    ), 0xFF_4A0000.toInt()))
+
+                // Helmet dome
+                commands += DrawCommand(DrawLayer.ACTOR, gDk, 3, "${id}_helmet",
+                    Vec2f(cx - 7f, cy - 26f + guardBob), DrawPayload.ColorOval(14f, 9f, 0xFF_555566.toInt()))
+
+                // Visor slit (animated flicker)
+                val visorColor = if ((tick / 10) % 2 == 0L) 0xFF_FF4400.toInt() else 0xFF_FF8800.toInt()
+                commands += DrawCommand(DrawLayer.ACTOR, gDk, 4, "${id}_visor",
+                    Vec2f(cx - 5f, cy - 20f + guardBob),
+                    DrawPayload.Line(cx - 5f, cy - 20f + guardBob, cx + 5f, cy - 20f + guardBob, visorColor, 1.5f))
+
+                // Shoulder pauldrons
+                commands += DrawCommand(DrawLayer.ACTOR, gDk, 2, "${id}_sh_l",
+                    Vec2f(cx - 11f, cy - 22f + guardBob), DrawPayload.ColorRect(5f, 5f, 0xFF_8B0000.toInt()))
+                commands += DrawCommand(DrawLayer.ACTOR, gDk, 2, "${id}_sh_r",
+                    Vec2f(cx + 6f, cy - 22f + guardBob), DrawPayload.ColorRect(5f, 5f, 0xFF_8B0000.toInt()))
             }
             ActorType.GHOST -> {
-                // Tall oval at alpha 180
+                // Phase flicker: every 11 ticks swap alpha
+                val ghostAlpha = if ((tick / 11) % 2 == 0L) 0xB4 else 0x70
+                val ghostColor = (ghostAlpha shl 24) or 0xAAAAEE
+                val ghostTrailAlpha = if ((tick / 11) % 2 == 0L) 0x40 else 0x25
+
+                // Main body oval
                 commands += DrawCommand(DrawLayer.ACTOR, dk, 0, "${id}_body",
-                    Vec2f(cx - 8f, cy - 32f),
-                    DrawPayload.ColorOval(16f, 32f, 0xB4_AAAAEE.toInt()))
-                // Faint trail below
-                commands += DrawCommand(DrawLayer.ACTOR, dk, 1, "${id}_trail",
-                    Vec2f(cx - 6f, cy - 20f),
-                    DrawPayload.ColorOval(12f, 20f, 0x50_AAAAEE.toInt()))
+                    Vec2f(cx - 8f, cy - 32f), DrawPayload.ColorOval(16f, 32f, ghostColor))
+
+                // Tattered hem — 4 downward spike triangles
+                val spikeY = cy - 2f
+                val spikeAlpha = (ghostAlpha * 0.4f).toInt()
+                val spikeColor = (spikeAlpha shl 24) or 0x8888BB
+                for (si in 0..3) {
+                    val sx = cx - 7f + si * 5f
+                    commands += DrawCommand(DrawLayer.ACTOR, dk, 1, "${id}_spike_$si",
+                        Vec2f(sx, spikeY),
+                        DrawPayload.ColorPath(listOf(
+                            Vec2f(sx - 2f, spikeY),
+                            Vec2f(sx + 2f, spikeY),
+                            Vec2f(sx, spikeY + 8f + (si % 2) * 4f),
+                        ), spikeColor))
+                }
+
+                // Trail particles — 3 particles fading behind
+                for (ti in 0..2) {
+                    val trailAlpha = ((ghostAlpha * (1f - ti * 0.3f)) * 0.3f).toInt().coerceAtLeast(0)
+                    val trailColor = (trailAlpha shl 24) or 0xAAAAEE
+                    val ty = cy - 8f + ti * 4f
+                    commands += DrawCommand(DrawLayer.ACTOR, dk, -1, "${id}_trail_$ti",
+                        Vec2f(cx - 1f, ty - 1f), DrawPayload.ColorOval(2f, 2f, trailColor))
+                }
             }
             ActorType.ROBOT -> {
                 // 3-face isometric cube
@@ -825,10 +1320,28 @@ object RoomEntityFactory {
                 commands += DrawCommand(DrawLayer.ACTOR, rdk, 0, "${id}_right",
                     IsoProjector.toScreen(Vec3f(rgx + 1f, rgy, rgz)) + offset,
                     DrawPayload.ColorPath(blockFaceRight(rgx, rgy, rgz, ox2, oy2), 0xFF_444466.toInt()))
-                // Red eye
+
+                // Antenna: vertical line above cube top
+                val antX = cx + 2f
+                val antBaseY2 = cy - 20f
+                commands += DrawCommand(DrawLayer.ACTOR, rdk, 4, "${id}_antenna",
+                    Vec2f(antX, antBaseY2 - 8f),
+                    DrawPayload.Line(antX, antBaseY2, antX, antBaseY2 - 8f, 0xFF_888888.toInt(), 1f))
+                commands += DrawCommand(DrawLayer.ACTOR, rdk, 4, "${id}_ant_tip",
+                    Vec2f(antX - 1.5f, antBaseY2 - 10f),
+                    DrawPayload.ColorOval(3f, 3f, 0xFF_888888.toInt()))
+
+                // Scanning eye: sweep X based on tick (replaces old static eye)
+                val eyeSweep = (kotlin.math.sin(tick.toDouble() * 0.08) * 5.0).toFloat()
                 commands += DrawCommand(DrawLayer.ACTOR, rdk, 3, "${id}_eye",
-                    Vec2f(cx - 2f, cy - 10f),
-                    DrawPayload.ColorOval(4f, 3f, 0xFF_FF0000.toInt()))
+                    Vec2f(cx - 2f + eyeSweep, cy - 10f), DrawPayload.ColorOval(4f, 3f, 0xFF_FF0000.toInt()))
+
+                // Walk treads: two dark rects at base alternating per tick
+                val treadOffset = if ((tick / 6) % 2 == 0L) 2f else -2f
+                commands += DrawCommand(DrawLayer.ACTOR, rdk, 0, "${id}_tread_l",
+                    Vec2f(cx - 8f + treadOffset, cy - 4f), DrawPayload.ColorRect(10f, 4f, 0xFF_222233.toInt()))
+                commands += DrawCommand(DrawLayer.ACTOR, rdk, 0, "${id}_tread_r",
+                    Vec2f(cx + 2f - treadOffset, cy - 4f), DrawPayload.ColorRect(10f, 4f, 0xFF_222233.toInt()))
             }
             ActorType.DRUID -> {
                 // Smaller cloak polygon (scale 0.7 of player shape), brown color
@@ -852,18 +1365,60 @@ object RoomEntityFactory {
                     Vec2f(cx + 8f * ws, cy - 53f * ws), DrawPayload.ColorOval(3f, 2f, 0xFF_FFAA00.toInt()))
                 commands += DrawCommand(DrawLayer.ACTOR, dk, 1, "${id}_eye_r",
                     Vec2f(cx + 14f * ws, cy - 53f * ws), DrawPayload.ColorOval(3f, 2f, 0xFF_FFAA00.toInt()))
+
+                // Staff: line from shoulder height to above head
+                val staffX1 = cx + 30f * ws
+                val staffY1 = cy
+                val staffX2 = cx + 26f * ws
+                val staffY2 = cy - 80f * ws
+                commands += DrawCommand(DrawLayer.ACTOR, dk, 0, "${id}_staff",
+                    Vec2f(staffX1, staffY2),
+                    DrawPayload.Line(staffX1, staffY1, staffX2, staffY2, 0xFF_6A5020.toInt(), 1.5f))
+
+                // Crystal tip oval at top of staff
+                commands += DrawCommand(DrawLayer.ACTOR, dk, 1, "${id}_crystal",
+                    Vec2f(staffX2 - 2f, staffY2 - 4f),
+                    DrawPayload.ColorOval(4f, 4f, 0xFF_AAAAFF.toInt()))
+
+                // Ritual glow halo at feet — pulsing radius 36-44px over 90 ticks
+                val glowPhase = (tick % 90).toDouble() / 90.0
+                val glowRadius = 36f + kotlin.math.sin(glowPhase * 2.0 * kotlin.math.PI).toFloat() * 4f
+                val glowAlpha = 0x15
+                val glowColor = (glowAlpha shl 24) or 0x7744FF
+                commands += DrawCommand(DrawLayer.FLOOR, dk, 5, "${id}_glow",
+                    Vec2f(cx - glowRadius, cy - glowRadius / 2f),
+                    DrawPayload.ColorOval(glowRadius * 2f, glowRadius, glowColor))
             }
             ActorType.BALL -> {
-                // Orange circle
+                // Proper bounce height: abs(sin(tick * 0.12)) * 20f above floor
+                val bounceHeight = (kotlin.math.abs(kotlin.math.sin(tick.toDouble() * 0.12)) * 20.0).toFloat()
+                val isNearFloor = bounceHeight < 4f
+
+                // Squash at floor contact, normal at peak
+                val ballW = if (isNearFloor) 24f else 20f
+                val ballH = if (isNearFloor) 12f else 20f
+                val ballScreenY = cy - bounceHeight
+
+                // Shadow: scales inversely with height
+                val shadowScale = 1f - (bounceHeight / 20f) * 0.5f
+                val shadowW = 20f * shadowScale
+                val shadowH = 8f * shadowScale
+                val shadowAlpha = (0x60 * shadowScale).toInt()
+                commands += DrawCommand(DrawLayer.FLOOR, dk, -1, "${id}_shadow",
+                    Vec2f(cx - shadowW / 2f, cy - shadowH / 2f),
+                    DrawPayload.ColorOval(shadowW, shadowH, (shadowAlpha shl 24) or 0x000000))
+
+                // Ball body
                 commands += DrawCommand(DrawLayer.ACTOR, dk, 0, "${id}_body",
-                    Vec2f(cx - 10f, cy - 10f),
-                    DrawPayload.ColorOval(20f, 20f, 0xFF_CC4400.toInt()))
-                // Spin line that rotates based on tick
+                    Vec2f(cx - ballW / 2f, ballScreenY - ballH / 2f),
+                    DrawPayload.ColorOval(ballW, ballH, 0xFF_CC4400.toInt()))
+
+                // Spin line on ball
                 val angle = (tick % 60).toDouble() / 60.0 * 2.0 * kotlin.math.PI
-                val spinX1 = cx + (kotlin.math.cos(angle) * 8.0).toFloat()
-                val spinY1 = cy - (kotlin.math.sin(angle) * 8.0).toFloat()
-                val spinX2 = cx - (kotlin.math.cos(angle) * 8.0).toFloat()
-                val spinY2 = cy + (kotlin.math.sin(angle) * 8.0).toFloat()
+                val spinX1 = cx + (kotlin.math.cos(angle) * (ballW / 2.5f)).toFloat()
+                val spinY1 = ballScreenY - (kotlin.math.sin(angle) * (ballH / 2.5f)).toFloat()
+                val spinX2 = cx - (kotlin.math.cos(angle) * (ballW / 2.5f)).toFloat()
+                val spinY2 = ballScreenY + (kotlin.math.sin(angle) * (ballH / 2.5f)).toFloat()
                 commands += DrawCommand(DrawLayer.ACTOR, dk, 1, "${id}_spin",
                     Vec2f(spinX1, spinY1),
                     DrawPayload.Line(spinX1, spinY1, spinX2, spinY2, 0xFF_FF6600.toInt(), 1.5f))
@@ -898,95 +1453,339 @@ object RoomEntityFactory {
         val player = state.player
         val screen = IsoProjector.toScreen(state.player.position) + offset
         val dk = IsoProjector.depthKey(state.player.position)
-
         val blinking = player.damageCooldownTicks > 0 && (player.damageCooldownTicks % 10 < 5)
         val isWerewulf = player.form == Form.WEREWULF
-
+        val transforming = player.transformState.phase == TransformPhase.TRANSFORMING_TO_WEREWULF ||
+            player.transformState.phase == TransformPhase.TRANSFORMING_TO_HUMAN
+        val transformProgress = if (transforming) player.transformState.progressTicks / 60f else 0f
         val bob = (kotlin.math.sin(state.time.tick.toDouble() * 0.10472) * 2.0).toFloat()
-
-        // Origin at screen.x, screen.y (feet position)
         val ox = screen.x
         val oy = screen.y
-
-        val cloakColor = when {
-            blinking -> 0xFF_FF4444.toInt()
-            isWerewulf -> 0xFF_2A0A4A.toInt()
-            else -> 0xFF_1A0A2A.toInt()
-        }
-        val eyeColor = when {
-            blinking -> 0xFF_FF4444.toInt()
-            isWerewulf -> 0xFF_FF4400.toInt()
-            else -> 0xFF_7FFF00.toInt()
-        }
-        val skinColor = if (blinking) 0xFF_FF4444.toInt() else 0xFF_C8A882.toInt()
-
-        // Width scale: werewulf is 10% wider
         val ws = if (isWerewulf) 1.1f else 1.0f
 
-        // Main cloak silhouette — isometric trapezoid shape
-        val cloakPts = listOf(
-            Vec2f(ox + 12f * ws, oy - 68f + bob),   // top-center (hood peak)
-            Vec2f(ox + 2f * ws,  oy - 58f + bob),   // hood left
-            Vec2f(ox - 2f * ws,  oy - 44f + bob),   // shoulder left
-            Vec2f(ox - 8f * ws,  oy - 20f + bob),   // cloak flare left
-            Vec2f(ox - 4f * ws,  oy +  0f + bob),   // hem left
-            Vec2f(ox + 28f * ws, oy +  0f + bob),   // hem right
-            Vec2f(ox + 32f * ws, oy - 20f + bob),   // cloak flare right
-            Vec2f(ox + 26f * ws, oy - 44f + bob),   // shoulder right
-            Vec2f(ox + 22f * ws, oy - 58f + bob),   // hood right
-        )
-        commands += DrawCommand(DrawLayer.PLAYER, dk, 0, "player_cloak",
-            Vec2f(ox, oy), DrawPayload.ColorPath(cloakPts, cloakColor))
-
-        // Inner highlight (slightly inset cloak outline)
-        val innerColor = if (isWerewulf) 0xFF_3A1A5A.toInt() else 0xFF_2A1040.toInt()
-        val innerPts = cloakPts.map { Vec2f(it.x + 1.5f, it.y + 1f) }
-        commands += DrawCommand(DrawLayer.PLAYER, dk, 1, "player_cloak_inner",
-            Vec2f(ox, oy), DrawPayload.ColorPath(innerPts, innerColor))
-
-        // Werewulf ear triangles at hood peak
-        if (isWerewulf) {
-            val earL = listOf(
-                Vec2f(ox + 6f,  oy - 68f + bob),
-                Vec2f(ox + 10f, oy - 76f + bob),
-                Vec2f(ox + 14f, oy - 68f + bob),
-            )
-            val earR = listOf(
-                Vec2f(ox + 14f, oy - 68f + bob),
-                Vec2f(ox + 18f, oy - 76f + bob),
-                Vec2f(ox + 22f, oy - 68f + bob),
-            )
-            commands += DrawCommand(DrawLayer.PLAYER, dk, 4, "player_ear_l",
-                Vec2f(ox, oy), DrawPayload.ColorPath(earL, cloakColor))
-            commands += DrawCommand(DrawLayer.PLAYER, dk, 4, "player_ear_r",
-                Vec2f(ox, oy), DrawPayload.ColorPath(earR, cloakColor))
+        // ── Transformation energy burst ─────────────────────────────────────────────
+        // During transformation: expanding purple energy rings + violent flicker
+        if (transforming) {
+            val tick = state.time.tick
+            // 3 expanding diamond rings
+            for (ri in 0..2) {
+                val ringPhase = ((tick + ri * 20L) % 60).toFloat() / 60f
+                val ringSize = (16f + ringPhase * 48f)
+                val ringAlpha = ((1f - ringPhase) * 0xCC).toInt()
+                val ringColor = (ringAlpha shl 24) or 0x8844CC
+                commands += DrawCommand(DrawLayer.EFFECT, dk, 10 + ri, "transform_ring_$ri",
+                    Vec2f(ox + 12f * ws - ringSize, oy - 30f - ringSize / 2f),
+                    DrawPayload.ColorPath(listOf(
+                        Vec2f(ox + 12f * ws,              oy - 30f - ringSize),
+                        Vec2f(ox + 12f * ws + ringSize,   oy - 30f),
+                        Vec2f(ox + 12f * ws,              oy - 30f + ringSize / 2f),
+                        Vec2f(ox + 12f * ws - ringSize,   oy - 30f),
+                    ), ringColor))
+            }
+            // Flash at transformation start (first 15 ticks) and end (last 15 ticks)
+            val flashAlpha = when {
+                player.transformState.progressTicks < 15 -> ((15 - player.transformState.progressTicks) * 0x0A)
+                player.transformState.progressTicks > 45 -> ((player.transformState.progressTicks - 45) * 0x0A)
+                else -> 0
+            }.coerceIn(0, 0x60)
+            if (flashAlpha > 0) {
+                commands += DrawCommand(DrawLayer.HUD, 0, 5, "transform_flash",
+                    Vec2f(0f, 0f), DrawPayload.ScreenFill((flashAlpha shl 24) or 0x8844CC))
+            }
         }
 
-        // Face oval
-        commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_face",
-            Vec2f(ox + 6f * ws, oy - 58f + bob), DrawPayload.ColorOval(14f * ws, 10f, skinColor))
+        // Character center X (isometric offset — body is to the right of the foot point)
+        val cx = ox + 12f * ws
 
-        // Eyes (shift left/right by 3px based on facing)
-        val facingShift = when (player.facing.name) {
-            "WEST", "NORTHWEST", "SOUTHWEST" -> -3f
-            "EAST", "NORTHEAST", "SOUTHEAST" -> 3f
+        // ── Colors ──────────────────────────────────────────────────────────────────
+        val capeColor = when {
+            blinking    -> 0xFF_FF4444.toInt()
+            isWerewulf  -> 0xFF_200830.toInt()
+            else        -> 0xFF_140820.toInt()  // very dark purple-black
+        }
+        val armorColor = when {
+            blinking   -> 0xFF_FF4444.toInt()
+            isWerewulf -> 0xFF_3A1050.toInt()  // dark purple armor
+            else       -> 0xFF_1E1E30.toInt()  // dark steel-blue armor
+        }
+        val armorHighlight = when {
+            isWerewulf -> 0xFF_5A2A8A.toInt()
+            else       -> 0xFF_3A3A5A.toInt()
+        }
+        val skinColor = if (blinking) 0xFF_FF4444.toInt() else 0xFF_C8A882.toInt()
+        val eyeColor = when {
+            blinking   -> 0xFF_FF4444.toInt()
+            isWerewulf -> 0xFF_FF4400.toInt()
+            else       -> 0xFF_7FFF00.toInt()
+        }
+
+        // ── Walk/Idle animation state ────────────────────────────────────────────────
+        val isMoving = player.movementState == MovementState.WALKING
+        val leftLegOffset  = if (isMoving) (kotlin.math.sin(state.time.tick.toDouble() * 0.2) * 5.0).toFloat() else 0f
+        val rightLegOffset = if (isMoving) (kotlin.math.sin(state.time.tick.toDouble() * 0.2 + kotlin.math.PI) * 5.0).toFloat() else 0f
+        val cloakSway = if (isMoving) (kotlin.math.sin(state.time.tick.toDouble() * 0.15) * 3.0).toFloat() else 0f
+        val breathe = if (!isMoving) (kotlin.math.sin(state.time.tick.toDouble() * 0.05) * 1.0).toFloat() else 0f
+
+        // ── Facing shoulder compression ──────────────────────────────────────────────
+        val shoulderCompress = when (player.facing.name) {
+            "NORTHEAST", "SOUTHEAST" -> -2f
+            "NORTHWEST", "SOUTHWEST" -> 2f
             else -> 0f
         }
-        commands += DrawCommand(DrawLayer.PLAYER, dk, 3, "player_eye_l",
-            Vec2f(ox + 8f * ws + facingShift, oy - 53f + bob), DrawPayload.ColorOval(3f, 2f, eyeColor))
-        commands += DrawCommand(DrawLayer.PLAYER, dk, 3, "player_eye_r",
-            Vec2f(ox + 14f * ws + facingShift, oy - 53f + bob), DrawPayload.ColorOval(3f, 2f, eyeColor))
 
-        // Left edge highlight
-        val edgePts = listOf(
-            Vec2f(ox + 2f * ws,  oy - 58f + bob),
-            Vec2f(ox - 2f * ws,  oy - 44f + bob),
-            Vec2f(ox - 8f * ws,  oy - 20f + bob),
-            Vec2f(ox - 4f * ws,  oy +  0f + bob),
+        // ── Shadow ───────────────────────────────────────────────────────────────────
+        val shadowW = if (player.airborne) 52f else 64f
+        val shadowH = if (player.airborne) 9f else 12f
+        commands += DrawCommand(DrawLayer.FLOOR, dk, -1, "player_shadow",
+            Vec2f(cx - shadowW / 2f, oy - shadowH / 2f),
+            DrawPayload.ColorOval(shadowW, shadowH, 0x50_000000.toInt()))
+
+        // ── Footstep marks ────────────────────────────────────────────────────────────
+        // Draw a small fading oval behind player when walking (alternates left/right by tick parity)
+        if (player.movementState == MovementState.WALKING) {
+            val footTick = state.time.tick
+            val isLeftFoot = (footTick / 8) % 2 == 0L
+            // Offset footprint slightly behind player based on facing direction
+            val footOffsetX = when (player.facing.name) {
+                "EAST", "NORTHEAST" -> -4f
+                "WEST", "SOUTHWEST" -> 4f
+                else -> 0f
+            }
+            val footOffsetY = when (player.facing.name) {
+                "SOUTH", "SOUTHEAST" -> -3f
+                "NORTH", "NORTHWEST" -> 3f
+                else -> 0f
+            }
+            val footX = if (isLeftFoot) cx - 7f * ws + footOffsetX else cx + 2f * ws + footOffsetX
+            val footFade = ((footTick % 8).toFloat() / 8f)
+            val footAlpha = ((1f - footFade) * 60).toInt()
+            if (footAlpha > 5) {
+                commands += DrawCommand(DrawLayer.FLOOR, dk, -2, "player_footstep_${footTick % 2}",
+                    Vec2f(footX - 2f, oy + footOffsetY - 1f),
+                    DrawPayload.ColorOval(4f, 2f, (footAlpha shl 24) or 0x1A1A2A))
+            }
+        }
+
+        // ── Legs (behind cape and body) ───────────────────────────────────────────────
+        // Left leg
+        val legColor = if (isWerewulf) 0xFF_2A0840.toInt() else 0xFF_1A1030.toInt()
+        val ll = listOf(
+            Vec2f(cx - 8f * ws,  oy - 12f + leftLegOffset  + bob),
+            Vec2f(cx - 4f * ws,  oy - 12f + leftLegOffset  + bob),
+            Vec2f(cx - 4f * ws,  oy +  0f + leftLegOffset  + bob),
+            Vec2f(cx - 8f * ws,  oy +  0f + leftLegOffset  + bob),
         )
-        val edgeColor = if (isWerewulf) 0xFF_5A2A8A.toInt() else 0xFF_3A1A5A.toInt()
-        commands += DrawCommand(DrawLayer.PLAYER, dk, 4, "player_edge",
-            Vec2f(ox, oy), DrawPayload.ColorPath(edgePts, edgeColor))
+        val rl = listOf(
+            Vec2f(cx + 2f * ws,  oy - 12f + rightLegOffset + bob),
+            Vec2f(cx + 6f * ws,  oy - 12f + rightLegOffset + bob),
+            Vec2f(cx + 6f * ws,  oy +  0f + rightLegOffset + bob),
+            Vec2f(cx + 2f * ws,  oy +  0f + rightLegOffset + bob),
+        )
+        commands += DrawCommand(DrawLayer.PLAYER, dk, -2, "player_leg_l",
+            Vec2f(ox, oy), DrawPayload.ColorPath(ll, legColor))
+        commands += DrawCommand(DrawLayer.PLAYER, dk, -2, "player_leg_r",
+            Vec2f(ox, oy), DrawPayload.ColorPath(rl, legColor))
+        // Boots
+        commands += DrawCommand(DrawLayer.PLAYER, dk, -2, "player_boot_l",
+            Vec2f(cx - 9f * ws, oy - 2f + leftLegOffset + bob),
+            DrawPayload.ColorOval(6f * ws, 4f, 0xFF_0A0818.toInt()))
+        commands += DrawCommand(DrawLayer.PLAYER, dk, -2, "player_boot_r",
+            Vec2f(cx + 1f * ws, oy - 2f + rightLegOffset + bob),
+            DrawPayload.ColorOval(6f * ws, 4f, 0xFF_0A0818.toInt()))
+
+        // ── Cape (behind body — dramatic sweep, NOT the whole character) ──────────────
+        // Cape is a narrow triangular back-element, NOT a full-body robe
+        val capeSwayL = -cloakSway
+        val capeSwayR =  cloakSway
+        val capePts = listOf(
+            Vec2f(cx - 2f * ws,              oy - 56f + bob),          // cape top-left (behind shoulder)
+            Vec2f(cx + 14f * ws,             oy - 56f + bob),          // cape top-right
+            Vec2f(cx + 18f * ws + capeSwayR, oy - 20f + bob),          // cape right flare
+            Vec2f(cx + 14f * ws + capeSwayR, oy +  2f + bob),          // cape hem right
+            Vec2f(cx - 4f * ws  + capeSwayL, oy +  2f + bob),          // cape hem left
+            Vec2f(cx - 8f * ws  + capeSwayL, oy - 20f + bob),          // cape left flare
+        )
+        commands += DrawCommand(DrawLayer.PLAYER, dk, -1, "player_cape",
+            Vec2f(ox, oy), DrawPayload.ColorPath(capePts, capeColor))
+        // Cape inner highlight
+        commands += DrawCommand(DrawLayer.PLAYER, dk, -1, "player_cape_inner",
+            Vec2f(ox, oy), DrawPayload.ColorPath(capePts.map { Vec2f(it.x + 1f, it.y + 0.5f) },
+                if (isWerewulf) 0xFF_3A1050.toInt() else 0xFF_221030.toInt()))
+
+        // ── Lower tunic/skirt (separate from cape — more structured) ──────────────────
+        // Tunic — from waist to mid-thigh ONLY, not floor-length
+        val tunicPts = listOf(
+            Vec2f(cx - 5f * ws, oy - 30f + bob),   // waist left
+            Vec2f(cx + 7f * ws, oy - 30f + bob),   // waist right
+            Vec2f(cx + 9f * ws, oy - 14f + bob),   // hip right
+            Vec2f(cx + 6f * ws, oy -  8f + bob),   // thigh right
+            Vec2f(cx - 4f * ws, oy -  8f + bob),   // thigh left
+            Vec2f(cx - 7f * ws, oy - 14f + bob),   // hip left
+        )
+        commands += DrawCommand(DrawLayer.PLAYER, dk, 0, "player_tunic",
+            Vec2f(ox, oy), DrawPayload.ColorPath(tunicPts, armorColor))
+
+        // ── Chest / Torso armor ────────────────────────────────────────────────────────
+        // The torso is a rectangular-ish armor plate — wider at shoulders, narrower at waist
+        val chestLeft  = cx - (7f + shoulderCompress) * ws
+        val chestRight = cx + (7f - shoulderCompress) * ws
+        val chestPts = listOf(
+            Vec2f(chestLeft  - 2f, oy - 52f + breathe * 0.5f + bob),  // top-left shoulder
+            Vec2f(chestRight + 2f, oy - 52f + breathe * 0.5f + bob),  // top-right shoulder
+            Vec2f(chestRight,      oy - 30f + bob),                     // waist right
+            Vec2f(chestLeft,       oy - 30f + bob),                     // waist left
+        )
+        commands += DrawCommand(DrawLayer.PLAYER, dk, 1, "player_chest",
+            Vec2f(ox, oy), DrawPayload.ColorPath(chestPts, armorColor, 0xFF_0A0A14.toInt()))
+
+        // Chest center line (armor plate division)
+        val chestCx = (chestLeft + chestRight) / 2f
+        commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_chest_line",
+            Vec2f(chestCx, oy - 50f + bob),
+            DrawPayload.Line(chestCx, oy - 50f + bob, chestCx, oy - 32f + bob, armorHighlight, 1f))
+
+        // Belt buckle
+        commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_belt",
+            Vec2f(chestLeft, oy - 30f + bob),
+            DrawPayload.Line(chestLeft, oy - 30f + bob, chestRight, oy - 30f + bob,
+                if (isWerewulf) 0xFF_AA4400.toInt() else 0xFF_6A6A8A.toInt(), 1.5f))
+        commands += DrawCommand(DrawLayer.PLAYER, dk, 3, "player_buckle",
+            Vec2f(chestCx - 2f, oy - 31f + bob),
+            DrawPayload.ColorOval(4f, 3f, if (isWerewulf) 0xFF_CC6600.toInt() else 0xFF_888899.toInt()))
+
+        // ── Pauldrons (shoulder armor plates) ─────────────────────────────────────────
+        val pLeftPts = listOf(
+            Vec2f(chestLeft - 2f, oy - 52f + breathe * 0.5f + bob),
+            Vec2f(chestLeft - 8f, oy - 50f + bob),
+            Vec2f(chestLeft - 7f, oy - 42f + bob),
+            Vec2f(chestLeft,      oy - 40f + bob),
+        )
+        val pRightPts = listOf(
+            Vec2f(chestRight + 2f, oy - 52f + breathe * 0.5f + bob),
+            Vec2f(chestRight + 8f, oy - 50f + bob),
+            Vec2f(chestRight + 7f, oy - 42f + bob),
+            Vec2f(chestRight,      oy - 40f + bob),
+        )
+        commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_paul_l",
+            Vec2f(ox, oy), DrawPayload.ColorPath(pLeftPts, armorColor, 0xFF_0A0A14.toInt()))
+        commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_paul_r",
+            Vec2f(ox, oy), DrawPayload.ColorPath(pRightPts, armorColor, 0xFF_0A0A14.toInt()))
+        // Pauldron highlight edge
+        commands += DrawCommand(DrawLayer.PLAYER, dk, 3, "player_paul_l_hl",
+            Vec2f(chestLeft - 8f, oy - 50f + bob),
+            DrawPayload.Line(chestLeft - 8f, oy - 50f + bob, chestLeft - 7f, oy - 42f + bob,
+                armorHighlight, 1f))
+
+        // ── Arms ──────────────────────────────────────────────────────────────────────
+        // Left arm (forearm visible below pauldron)
+        commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_arm_l",
+            Vec2f(chestLeft - 8f, oy - 42f + bob),
+            DrawPayload.Line(chestLeft - 8f, oy - 42f + bob, chestLeft - 6f, oy - 34f + bob,
+                armorColor, 3f))
+        // Left gauntlet
+        commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_gaunt_l",
+            Vec2f(chestLeft - 9f, oy - 36f + bob),
+            DrawPayload.ColorOval(5f, 4f, skinColor))
+
+        // Right arm
+        commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_arm_r",
+            Vec2f(chestRight + 7f, oy - 42f + bob),
+            DrawPayload.Line(chestRight + 7f, oy - 42f + bob, chestRight + 5f, oy - 34f + bob,
+                armorColor, 3f))
+        // Right gauntlet
+        commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_gaunt_r",
+            Vec2f(chestRight + 3f, oy - 36f + bob),
+            DrawPayload.ColorOval(5f, 4f, skinColor))
+
+        // ── Neck ──────────────────────────────────────────────────────────────────────
+        commands += DrawCommand(DrawLayer.PLAYER, dk, 3, "player_neck",
+            Vec2f(chestCx - 3f, oy - 58f + breathe * 0.5f + bob),
+            DrawPayload.ColorRect(6f * ws, 7f, 0xFF_0A0818.toInt()))
+
+        // ── Hood (angular, NOT a smooth nun's wimple) ──────────────────────────────────
+        if (!isWerewulf) {
+            val hoodPts = listOf(
+                Vec2f(chestCx,       oy - 72f + bob),  // peak — pointed, not rounded
+                Vec2f(chestCx - 6f,  oy - 64f + bob),  // peak left slope
+                Vec2f(chestCx - 8f,  oy - 56f + bob),  // hood shadow left
+                Vec2f(chestCx + 2f,  oy - 54f + bob),  // hood front bottom-left
+                Vec2f(chestCx + 10f, oy - 54f + bob),  // hood front bottom-right
+                Vec2f(chestCx + 10f, oy - 62f + bob),  // hood right
+                Vec2f(chestCx + 6f,  oy - 70f + bob),  // peak right slope
+            )
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 3, "player_hood",
+                Vec2f(ox, oy), DrawPayload.ColorPath(hoodPts, capeColor))
+
+            // Face visible inside hood opening
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 4, "player_face",
+                Vec2f(chestCx - 2f, oy - 63f + breathe * 0.3f + bob),
+                DrawPayload.ColorOval(12f * ws, 9f, skinColor))
+
+            // Eyes — shift based on facing
+            val facingShift = when (player.facing.name) {
+                "WEST", "NORTHWEST", "SOUTHWEST" -> -3f
+                "EAST", "NORTHEAST", "SOUTHEAST" -> 3f
+                else -> 0f
+            }
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 5, "player_eye_l",
+                Vec2f(chestCx - 4f * ws + facingShift, oy - 59f + breathe * 0.3f + bob),
+                DrawPayload.ColorOval(3f, 2f, eyeColor))
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 5, "player_eye_r",
+                Vec2f(chestCx + 2f * ws + facingShift, oy - 59f + breathe * 0.3f + bob),
+                DrawPayload.ColorOval(3f, 2f, eyeColor))
+
+        } else {
+            // Werewulf: wider snarling head with ears
+            val wolfHeadPts = listOf(
+                Vec2f(chestCx - 2f,  oy - 74f + bob),  // left ear tip
+                Vec2f(chestCx - 4f,  oy - 64f + bob),  // left ear base
+                Vec2f(chestCx - 8f,  oy - 58f + bob),  // jaw left
+                Vec2f(chestCx - 4f,  oy - 52f + bob),  // muzzle left
+                Vec2f(chestCx + 6f,  oy - 52f + bob),  // muzzle right
+                Vec2f(chestCx + 14f, oy - 58f + bob),  // jaw right
+                Vec2f(chestCx + 16f, oy - 64f + bob),  // right ear base
+                Vec2f(chestCx + 14f, oy - 74f + bob),  // right ear tip
+                Vec2f(chestCx + 8f,  oy - 70f + bob),  // between ears
+            )
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 3, "player_wolf_head",
+                Vec2f(ox, oy), DrawPayload.ColorPath(wolfHeadPts, capeColor))
+            // Snout
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 4, "player_snout",
+                Vec2f(chestCx - 4f, oy - 57f + bob),
+                DrawPayload.ColorOval(10f * ws, 7f, 0xFF_1A0830.toInt()))
+            // Wolf eyes — glowing
+            val facingShift = when (player.facing.name) {
+                "WEST", "NORTHWEST", "SOUTHWEST" -> -3f
+                "EAST", "NORTHEAST", "SOUTHEAST" -> 3f
+                else -> 0f
+            }
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 5, "player_eye_l",
+                Vec2f(chestCx - 3f * ws + facingShift, oy - 63f + bob),
+                DrawPayload.ColorOval(3f, 2f, eyeColor))
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 5, "player_eye_r",
+                Vec2f(chestCx + 4f * ws + facingShift, oy - 63f + bob),
+                DrawPayload.ColorOval(3f, 2f, eyeColor))
+            // Werewulf chest fur texture — two diagonal lines
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 4, "player_fur1",
+                Vec2f(chestCx - 2f, oy - 48f + bob),
+                DrawPayload.Line(chestCx - 2f, oy - 48f + bob, chestCx + 4f, oy - 40f + bob,
+                    0xFF_2A0840.toInt(), 1f))
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 4, "player_fur2",
+                Vec2f(chestCx + 2f, oy - 48f + bob),
+                DrawPayload.Line(chestCx + 2f, oy - 48f + bob, chestCx - 2f, oy - 40f + bob,
+                    0xFF_2A0840.toInt(), 1f))
+        }
+
+        // ── Armor chest detail ─────────────────────────────────────────────────────────
+        // Chest plate horizontal banding lines (3 lines = armor segmentation)
+        if (!isWerewulf) {
+            for (i in 1..2) {
+                val lineY = oy - 52f + i * 7f + bob
+                commands += DrawCommand(DrawLayer.PLAYER, dk, 3, "player_armor_band_$i",
+                    Vec2f(chestLeft, lineY),
+                    DrawPayload.Line(chestLeft, lineY, chestRight, lineY, armorHighlight, 0.8f))
+            }
+        }
     }
 
     // ── Ambient dust particles ───────────────────────────────────────────────

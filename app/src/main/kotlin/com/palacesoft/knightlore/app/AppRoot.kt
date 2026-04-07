@@ -5,6 +5,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -163,6 +165,59 @@ fun GameScreen(
                     Box(modifier = Modifier.fillMaxSize().background(Color(0xFF8844CC).copy(alpha = alpha)))
                 }
 
+                // Damage screen crack — 4 thin diagonal lines radiating across viewport
+                if (uiState.damageScreenCrackTicks > 0) {
+                    val crackAlpha = (uiState.damageScreenCrackTicks / 30f * 0.12f)
+                    Canvas(modifier = Modifier.fillMaxSize()) {
+                        val w = size.width; val h = size.height
+                        val crackColor = androidx.compose.ui.graphics.Color(0xFFFF0000).copy(alpha = crackAlpha)
+                        drawLine(crackColor, Offset(w * 0.2f, 0f),       Offset(w * 0.4f, h),       strokeWidth = 1.5f)
+                        drawLine(crackColor, Offset(w * 0.5f, 0f),       Offset(w * 0.3f, h),       strokeWidth = 1.5f)
+                        drawLine(crackColor, Offset(w * 0.65f, 0f),      Offset(w * 0.8f, h),       strokeWidth = 1.5f)
+                        drawLine(crackColor, Offset(w * 0.85f, h * 0.3f), Offset(w * 0.6f, h * 0.9f), strokeWidth = 1.5f)
+                    }
+                }
+
+                // Door flash: white for 3 ticks, black for 8 ticks
+                if (uiState.doorTransitionTicks > 0) {
+                    val isWhite = uiState.doorTransitionTicks > 8
+                    val alpha = if (isWhite) {
+                        ((uiState.doorTransitionTicks - 8) / 3f).coerceIn(0f, 1f)
+                    } else {
+                        (uiState.doorTransitionTicks / 8f) * 0.85f
+                    }
+                    Box(modifier = Modifier.fillMaxSize().background(
+                        if (isWhite) Color.White.copy(alpha = alpha) else Color.Black.copy(alpha = alpha)
+                    ))
+                }
+
+                // Room name fade-in
+                if (uiState.roomNameTicks > 0 && uiState.currentRoomName.isNotBlank()) {
+                    val alpha = when {
+                        uiState.roomNameTicks > 180 -> (uiState.roomNameTicks - 180) / 60f   // fade in
+                        uiState.roomNameTicks > 60  -> 1f                                      // hold
+                        else                        -> uiState.roomNameTicks / 60f             // fade out
+                    }.coerceIn(0f, 1f)
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.TopCenter,
+                    ) {
+                        Text(
+                            text = uiState.currentRoomName.uppercase(),
+                            color = Color(0xFF6A6A8A).copy(alpha = alpha),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Normal,
+                            modifier = Modifier.padding(top = 56.dp),
+                        )
+                    }
+                }
+
+                // Item pickup golden shimmer
+                if (uiState.itemPickupFlashTicks > 0) {
+                    val alpha = (uiState.itemPickupFlashTicks / 20f) * 0.15f
+                    Box(modifier = Modifier.fillMaxSize().background(Color(0xFFFFDD44).copy(alpha = alpha)))
+                }
+
                 // Game Over overlay
                 if (uiState.showGameOver) {
                     Box(
@@ -274,6 +329,18 @@ private fun GameHudOverlay(gameState: GameState) {
                 .align(Alignment.TopEnd)
                 .background(shadowColor)
                 .padding(horizontal = 8.dp, vertical = 4.dp),
+        )
+
+        // Explored count
+        Text(
+            text = "EXP: ${gameState.visitedRooms.size}",
+            color = Color(0xFF6A6A8A),
+            fontSize = cornerTextSize,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 24.dp)
+                .background(shadowColor)
+                .padding(horizontal = 8.dp, vertical = 2.dp),
         )
 
         // Centre: transformation warning (flashing, brief)

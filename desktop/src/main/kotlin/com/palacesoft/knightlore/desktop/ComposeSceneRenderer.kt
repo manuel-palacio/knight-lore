@@ -149,12 +149,12 @@ object ComposeSceneRenderer {
             scanY += 4f
         }
 
-        // Vignette — radial gradient dark at edges, transparent at center
+        // Vignette — subtle radial gradient at edges only
         val center = playerScreenPos ?: Offset(scope.size.width / 2f, scope.size.height / 2f)
-        val radius = minOf(scope.size.width, scope.size.height) * 0.7f
+        val radius = minOf(scope.size.width, scope.size.height) * 0.9f
         scope.drawRect(
             brush = Brush.radialGradient(
-                colors = listOf(Color.Transparent, Color(0f, 0f, 0f, 0.7f)),
+                colors = listOf(Color.Transparent, Color(0f, 0f, 0f, 0.35f)),
                 center = center,
                 radius = radius,
             ),

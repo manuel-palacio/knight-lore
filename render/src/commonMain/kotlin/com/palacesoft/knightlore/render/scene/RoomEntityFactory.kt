@@ -16,6 +16,7 @@ import com.palacesoft.knightlore.domain.model.MovementState
 import com.palacesoft.knightlore.domain.model.PlayerState
 import com.palacesoft.knightlore.domain.model.RoomDefinition
 import com.palacesoft.knightlore.domain.model.RoomSpecial
+import com.palacesoft.knightlore.domain.model.RoomTheme
 import com.palacesoft.knightlore.domain.model.RoomType
 import com.palacesoft.knightlore.domain.model.TransformPhase
 import com.palacesoft.knightlore.domain.model.BlockState
@@ -67,6 +68,63 @@ object RoomEntityFactory {
         const val ACTOR          = DANGER_RED
     }
 
+    /** Per-theme color palette — floor, wall, and block tints vary by room theme. */
+    private data class ThemePalette(
+        val floor1: Int,        // base floor tile color
+        val floor2: Int,        // dither alternate floor color
+        val wallTop: Int,       // wall top face
+        val wallFaceD1: Int,    // wall south face dither 1
+        val wallFaceD2: Int,    // wall south face dither 2
+        val wallFaceR1: Int,    // wall east face dither 1
+        val wallFaceR2: Int,    // wall east face dither 2
+        val blockTop: Int,
+        val blockLeft: Int,
+        val blockRight: Int,
+        val fogColor: Int,      // edge vignette color (replaces fixed black)
+    )
+
+    private fun paletteFor(theme: RoomTheme): ThemePalette = when (theme) {
+        RoomTheme.CASTLE -> ThemePalette(
+            floor1     = 0xFF_222236.toInt(),
+            floor2     = 0xFF_2E2E46.toInt(),
+            wallTop    = 0xFF_4A4A6E.toInt(),
+            wallFaceD1 = 0xFF_2E2E46.toInt(),
+            wallFaceD2 = 0xFF_1E1E32.toInt(),
+            wallFaceR1 = 0xFF_1E1E32.toInt(),
+            wallFaceR2 = 0xFF_161626.toInt(),
+            blockTop   = 0xFF_4A4A6E.toInt(),
+            blockLeft  = 0xFF_2E2E46.toInt(),
+            blockRight = 0xFF_1E1E32.toInt(),
+            fogColor   = 0x30_000010.toInt(),
+        )
+        RoomTheme.DUNGEON -> ThemePalette(
+            floor1     = 0xFF_251A0E.toInt(),
+            floor2     = 0xFF_362514.toInt(),
+            wallTop    = 0xFF_5A3E20.toInt(),
+            wallFaceD1 = 0xFF_3A2818.toInt(),
+            wallFaceD2 = 0xFF_28180C.toInt(),
+            wallFaceR1 = 0xFF_28180C.toInt(),
+            wallFaceR2 = 0xFF_1C1008.toInt(),
+            blockTop   = 0xFF_5A3E20.toInt(),
+            blockLeft  = 0xFF_3A2818.toInt(),
+            blockRight = 0xFF_28180C.toInt(),
+            fogColor   = 0x30_100800.toInt(),
+        )
+        RoomTheme.TOWER -> ThemePalette(
+            floor1     = 0xFF_1A1E28.toInt(),
+            floor2     = 0xFF_262C3A.toInt(),
+            wallTop    = 0xFF_3A4460.toInt(),
+            wallFaceD1 = 0xFF_262C3A.toInt(),
+            wallFaceD2 = 0xFF_1A1E28.toInt(),
+            wallFaceR1 = 0xFF_181E30.toInt(),
+            wallFaceR2 = 0xFF_101422.toInt(),
+            blockTop   = 0xFF_3A4460.toInt(),
+            blockLeft  = 0xFF_262C3A.toInt(),
+            blockRight = 0xFF_181E30.toInt(),
+            fogColor   = 0x30_000820.toInt(),
+        )
+    }
+
     // Project world → screen, adding room offset
     private fun pt(x: Float, y: Float, z: Float, ox: Float, oy: Float): Vec2f {
         val s = IsoProjector.toScreen(Vec3f(x, y, z))
@@ -115,6 +173,7 @@ object RoomEntityFactory {
         val ox = offset.x; val oy = offset.y
         val tick = state.time.tick
         val roomType = room.roomType
+        val palette = paletteFor(room.theme)
 
         // 1. Floor and block tiles
         room.tiles.forEach { tile ->
@@ -134,9 +193,9 @@ object RoomEntityFactory {
                         Vec2f(p.x + jitter(p.x, seed, i * 2), p.y + jitter(p.y, seed, i * 2 + 1))
                     }
 
-                    // CRYPT floor: darker base tiles
-                    val floorColor1 = if (roomType == RoomType.CRYPT) 0xFF_101018.toInt() else 0xFF_16161E.toInt()
-                    val floorColor2 = if (roomType == RoomType.CRYPT) 0xFF_1A1A28.toInt() else 0xFF_252535.toInt()
+                    // Theme-driven floor colors
+                    val floorColor1 = if (roomType == RoomType.CRYPT) 0xFF_1A1018.toInt() else palette.floor1
+                    val floorColor2 = if (roomType == RoomType.CRYPT) 0xFF_241824.toInt() else palette.floor2
 
                     // Base stone tile — dithered checkerboard
                     commands += DrawCommand(DrawLayer.FLOOR, dk, 0, id,
@@ -281,15 +340,15 @@ object RoomEntityFactory {
                     // Top face
                     commands += DrawCommand(blockLayer, dk, 2, "${id}_top",
                         IsoProjector.toScreen(Vec3f(gx, gy, gz + 1f)) + offset,
-                        DrawPayload.ColorPath(floorDiamond(gx, gy, gz + 1f, ox, oy), Colors.BLOCK_TOP, 0xFF_0A0A14.toInt()))
+                        DrawPayload.ColorPath(floorDiamond(gx, gy, gz + 1f, ox, oy), palette.blockTop, 0xFF_0A0A14.toInt()))
                     // Left face
                     commands += DrawCommand(blockLayer, dk, 1, "${id}_left",
                         IsoProjector.toScreen(Vec3f(gx, gy + 1f, gz)) + offset,
-                        DrawPayload.ColorPath(blockFaceLeft(gx, gy, gz, ox, oy), Colors.BLOCK_LEFT, 0xFF_0A0A14.toInt()))
+                        DrawPayload.ColorPath(blockFaceLeft(gx, gy, gz, ox, oy), palette.blockLeft, 0xFF_0A0A14.toInt()))
                     // Right face
                     commands += DrawCommand(blockLayer, dk, 0, "${id}_right",
                         IsoProjector.toScreen(Vec3f(gx + 1f, gy, gz)) + offset,
-                        DrawPayload.ColorPath(blockFaceRight(gx, gy, gz, ox, oy), Colors.BLOCK_RIGHT, 0xFF_0A0A14.toInt()))
+                        DrawPayload.ColorPath(blockFaceRight(gx, gy, gz, ox, oy), palette.blockRight, 0xFF_0A0A14.toInt()))
 
                     // Carved cross on top face (4-point cross along iso axes)
                     val crossColor = Colors.BLOCK_CROSS
@@ -387,7 +446,7 @@ object RoomEntityFactory {
         }
 
         // 2. Perimeter walls
-        buildWalls(room, offset, commands, tick, roomType, state.visitedRooms)
+        buildWalls(room, offset, commands, tick, roomType, state.visitedRooms, palette)
 
         // FLOODED room: water plane over floor tiles
         if (roomType == RoomType.FLOODED) {
@@ -428,7 +487,7 @@ object RoomEntityFactory {
                     val colDk = IsoProjector.depthKey(Vec3f(colX + 0.5f, colY + 1f, bz2))
                     commands += DrawCommand(DrawLayer.BLOCK, colDk, 2, "col_${side}_top_$gz2",
                         IsoProjector.toScreen(Vec3f(colX, colY, bz2 + 1f)) + offset,
-                        DrawPayload.ColorPath(floorDiamond(colX, colY, bz2 + 1f, ox, oy), Colors.WALL_TOP))
+                        DrawPayload.ColorPath(floorDiamond(colX, colY, bz2 + 1f, ox, oy), palette.wallTop))
                     commands += DrawCommand(DrawLayer.BLOCK, colDk, 1, "col_${side}_left_$gz2",
                         IsoProjector.toScreen(Vec3f(colX, colY + 1f, bz2)) + offset,
                         DrawPayload.DitheredPath(
@@ -437,7 +496,7 @@ object RoomEntityFactory {
                                 pt(colX + 1f, colY + 1f, bz2,      ox, oy),
                                 pt(colX + 1f, colY + 1f, bz2 + 1f, ox, oy),
                                 pt(colX,      colY + 1f, bz2 + 1f, ox, oy),
-                            ), Colors.WALL_LEFT_D1, Colors.WALL_LEFT_D2, horizontal = true))
+                            ), palette.wallFaceD1, palette.wallFaceD2, horizontal = true))
                 }
             }
             // Raised dais — center platform tiles at gz=1 (drawn as floor diamonds at height 1)
@@ -509,19 +568,16 @@ object RoomEntityFactory {
         // 7. Ambient dust particles at inner wall corners
         buildDustParticles(room, offset, tick, commands)
 
-        // 8. Dark dungeon atmosphere overlay (drawn in HUD group = over scene, under HUD text)
-        commands += DrawCommand(DrawLayer.HUD, 0, -999, "dungeon_overlay",
-            Vec2f(0f, 0f), DrawPayload.ScreenFill(0x33_000000.toInt()))
-
-        // 9. Vignette: 4 dark edge rects to give torchlight feel
+        // 8. Thin edge vignette — only a narrow border, not a ceiling-inducing dark cap
+        val fogC = palette.fogColor
         commands += DrawCommand(DrawLayer.HUD, 0, -998, "vignette_top",
-            Vec2f(0f, 0f), DrawPayload.ColorRect(viewportW, viewportH * 0.28f, 0x60_000000.toInt()))
+            Vec2f(0f, 0f), DrawPayload.ColorRect(viewportW, viewportH * 0.08f, fogC))
         commands += DrawCommand(DrawLayer.HUD, 0, -997, "vignette_bot",
-            Vec2f(0f, viewportH * 0.72f), DrawPayload.ColorRect(viewportW, viewportH * 0.28f, 0x60_000000.toInt()))
+            Vec2f(0f, viewportH * 0.92f), DrawPayload.ColorRect(viewportW, viewportH * 0.08f, fogC))
         commands += DrawCommand(DrawLayer.HUD, 0, -996, "vignette_lft",
-            Vec2f(0f, 0f), DrawPayload.ColorRect(viewportW * 0.22f, viewportH, 0x50_000000.toInt()))
+            Vec2f(0f, 0f), DrawPayload.ColorRect(viewportW * 0.06f, viewportH, fogC))
         commands += DrawCommand(DrawLayer.HUD, 0, -995, "vignette_rgt",
-            Vec2f(viewportW * 0.78f, 0f), DrawPayload.ColorRect(viewportW * 0.22f, viewportH, 0x50_000000.toInt()))
+            Vec2f(viewportW * 0.94f, 0f), DrawPayload.ColorRect(viewportW * 0.06f, viewportH, fogC))
 
         return DrawCommandBuilder.sort(commands)
     }
@@ -612,10 +668,14 @@ object RoomEntityFactory {
         tick: Long,
         roomType: RoomType,
         visitedRooms: Set<RoomId>,
+        palette: ThemePalette,
     ) {
         val w = room.width
         val d = room.depth
         val ox = offset.x; val oy = offset.y
+        val wTop = palette.wallTop
+        val wFD1 = palette.wallFaceD1; val wFD2 = palette.wallFaceD2
+        val wFR1 = palette.wallFaceR1; val wFR2 = palette.wallFaceR2
 
         val northGaps = mutableSetOf<Int>()
         val westGaps  = mutableSetOf<Int>()
@@ -640,11 +700,11 @@ object RoomEntityFactory {
                 // Top face
                 commands += DrawCommand(DrawLayer.BLOCK, dk, 2, "${id}_top",
                     IsoProjector.toScreen(Vec3f(gx, gy, bz + 1f)) + offset,
-                    DrawPayload.ColorPath(floorDiamond(gx, gy, bz + 1f, ox, oy), Colors.WALL_TOP))
+                    DrawPayload.ColorPath(floorDiamond(gx, gy, bz + 1f, ox, oy), wTop))
                 // South-facing inner face (blockFaceLeft = y+1 face) — horizontal dither rows
                 commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "${id}_left",
                     IsoProjector.toScreen(Vec3f(gx, gy + 1f, bz)) + offset,
-                    DrawPayload.DitheredPath(blockFaceLeft(gx, gy, bz, ox, oy), Colors.WALL_LEFT_D1, Colors.WALL_LEFT_D2, horizontal = true))
+                    DrawPayload.DitheredPath(blockFaceLeft(gx, gy, bz, ox, oy), wFD1, wFD2, horizontal = true))
 
                 // Mortar line on the visible (left/south) face
                 val ml1 = pt(gx, gy + 1f, bz + 0.5f, ox, oy)
@@ -786,11 +846,11 @@ object RoomEntityFactory {
                 // Top face
                 commands += DrawCommand(DrawLayer.BLOCK, dk, 2, "${id}_top",
                     IsoProjector.toScreen(Vec3f(gx, gy, bz + 1f)) + offset,
-                    DrawPayload.ColorPath(floorDiamond(gx, gy, bz + 1f, ox, oy), Colors.WALL_TOP))
+                    DrawPayload.ColorPath(floorDiamond(gx, gy, bz + 1f, ox, oy), wTop))
                 // East-facing inner face (blockFaceRight = x+1 face) — horizontal dither rows
                 commands += DrawCommand(DrawLayer.BLOCK, dk, 0, "${id}_right",
                     IsoProjector.toScreen(Vec3f(gx + 1f, gy, bz)) + offset,
-                    DrawPayload.DitheredPath(blockFaceRight(gx, gy, bz, ox, oy), Colors.WALL_RIGHT_D1, Colors.WALL_RIGHT_D2, horizontal = true))
+                    DrawPayload.DitheredPath(blockFaceRight(gx, gy, bz, ox, oy), wFR1, wFR2, horizontal = true))
 
                 // Mortar line on the visible (right/east) face
                 val mr1 = pt(gx + 1f, gy, bz + 0.5f, ox, oy)
@@ -951,7 +1011,7 @@ object RoomEntityFactory {
                             pt(gx + 0.3f, gy,      bz + 1f, ox, oy),
                             pt(gx + 0.3f, gy + 1f, bz + 1f, ox, oy),
                             pt(gx,        gy + 1f, bz + 1f, ox, oy),
-                        ), Colors.WALL_TOP))
+                        ), wTop))
                     commands += DrawCommand(DrawLayer.BLOCK, pdk, 1, "${pid}_left",
                         IsoProjector.toScreen(Vec3f(gx, gy + 1f, bz)) + offset,
                         DrawPayload.DitheredPath(listOf(
@@ -959,7 +1019,7 @@ object RoomEntityFactory {
                             pt(gx + 0.3f, gy + 1f, bz,      ox, oy),
                             pt(gx + 0.3f, gy + 1f, bz + 1f, ox, oy),
                             pt(gx,        gy + 1f, bz + 1f, ox, oy),
-                        ), Colors.WALL_LEFT_D1, Colors.WALL_LEFT_D2, horizontal = true))
+                        ), wFD1, wFD2, horizontal = true))
                     commands += DrawCommand(DrawLayer.BLOCK, pdk, 0, "${pid}_right",
                         IsoProjector.toScreen(Vec3f(gx + 0.3f, gy, bz)) + offset,
                         DrawPayload.DitheredPath(listOf(
@@ -967,7 +1027,7 @@ object RoomEntityFactory {
                             pt(gx + 0.3f, gy + 1f, bz,      ox, oy),
                             pt(gx + 0.3f, gy + 1f, bz + 1f, ox, oy),
                             pt(gx + 0.3f, gy,      bz + 1f, ox, oy),
-                        ), Colors.WALL_RIGHT_D1, Colors.WALL_RIGHT_D2, horizontal = true))
+                        ), wFR1, wFR2, horizontal = true))
                 }
             }
 
@@ -984,7 +1044,7 @@ object RoomEntityFactory {
                             pt(gx + 1f,   gy,      bz + 1f, ox, oy),
                             pt(gx + 1f,   gy + 1f, bz + 1f, ox, oy),
                             pt(gx + 0.7f, gy + 1f, bz + 1f, ox, oy),
-                        ), Colors.WALL_TOP))
+                        ), wTop))
                     commands += DrawCommand(DrawLayer.BLOCK, pdk, 1, "${pid}_left",
                         IsoProjector.toScreen(Vec3f(gx + 0.7f, gy + 1f, bz)) + offset,
                         DrawPayload.DitheredPath(listOf(
@@ -992,7 +1052,7 @@ object RoomEntityFactory {
                             pt(gx + 1f,   gy + 1f, bz,      ox, oy),
                             pt(gx + 1f,   gy + 1f, bz + 1f, ox, oy),
                             pt(gx + 0.7f, gy + 1f, bz + 1f, ox, oy),
-                        ), Colors.WALL_LEFT_D1, Colors.WALL_LEFT_D2, horizontal = true))
+                        ), wFD1, wFD2, horizontal = true))
                     commands += DrawCommand(DrawLayer.BLOCK, pdk, 0, "${pid}_right",
                         IsoProjector.toScreen(Vec3f(gx + 1f, gy, bz)) + offset,
                         DrawPayload.DitheredPath(listOf(
@@ -1000,7 +1060,7 @@ object RoomEntityFactory {
                             pt(gx + 1f, gy + 1f, bz,      ox, oy),
                             pt(gx + 1f, gy + 1f, bz + 1f, ox, oy),
                             pt(gx + 1f, gy,      bz + 1f, ox, oy),
-                        ), Colors.WALL_RIGHT_D1, Colors.WALL_RIGHT_D2, horizontal = true))
+                        ), wFR1, wFR2, horizontal = true))
                 }
 
                 // 6. If isLast: threshold glow line at z=0 across gap width
@@ -1052,12 +1112,22 @@ object RoomEntityFactory {
             val dk = IsoProjector.depthKey(Vec3f(gx + 0.5f, gy + 1f, 0f))
             val id = "exit_marker_${gx.toInt()}_${gy.toInt()}"
 
-            // Threshold floor tile in lighter stone
+            // Threshold floor tile — distinctly lighter to draw the eye toward exit
             commands += DrawCommand(DrawLayer.FLOOR, dk, 10, "${id}_floor",
                 IsoProjector.toScreen(Vec3f(gx, gy, 0f)) + offset,
-                DrawPayload.ColorPath(floorDiamond(gx, gy, 0f, ox, oy), 0xFF_252535.toInt()))
+                DrawPayload.ColorPath(floorDiamond(gx, gy, 0f, ox, oy), 0xFF_4A4A6A.toInt()))
+            // Second floor highlight (inset diamond)
+            val inFloor = listOf(
+                pt(gx + 0.1f, gy + 0.1f, 0f, ox, oy),
+                pt(gx + 0.9f, gy + 0.1f, 0f, ox, oy),
+                pt(gx + 0.9f, gy + 0.9f, 0f, ox, oy),
+                pt(gx + 0.1f, gy + 0.9f, 0f, ox, oy),
+            )
+            commands += DrawCommand(DrawLayer.FLOOR, dk, 11, "${id}_floor_hi",
+                IsoProjector.toScreen(Vec3f(gx, gy, 0f)) + offset,
+                DrawPayload.ColorPath(inFloor, 0xFF_5A5A7E.toInt()))
 
-            // Dark void face above threshold — which face depends on camera-visible side
+            // Void face above threshold (slightly visible dark, not pure black)
             val voidPts = when (side) {
                 ExitSide.SOUTH, ExitSide.NORTH -> listOf(
                     pt(gx,      gy + 1f, 0f, ox, oy),
@@ -1074,9 +1144,9 @@ object RoomEntityFactory {
             }
             commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "${id}_void",
                 IsoProjector.toScreen(Vec3f(gx, gy + 1f, 0f)) + offset,
-                DrawPayload.ColorPath(voidPts, 0xFF_050508.toInt()))
+                DrawPayload.ColorPath(voidPts, 0xFF_0C0C18.toInt()))
 
-            // Faint blue-purple glow line at floor level
+            // Visible glow line at floor level — blue/purple portal shimmer
             val (gp1, gp2) = when (side) {
                 ExitSide.SOUTH, ExitSide.NORTH -> Pair(
                     pt(gx,      gy + 1f, 0f, ox, oy),
@@ -1087,9 +1157,9 @@ object RoomEntityFactory {
                     pt(gx + 1f, gy + 1f, 0f, ox, oy),
                 )
             }
-            commands += DrawCommand(DrawLayer.FLOOR, dk, 11, "${id}_glow",
+            commands += DrawCommand(DrawLayer.FLOOR, dk, 12, "${id}_glow",
                 Vec2f(gp1.x, gp1.y),
-                DrawPayload.Line(gp1.x, gp1.y, gp2.x, gp2.y, 0x33_4444AA.toInt(), 2f))
+                DrawPayload.Line(gp1.x, gp1.y, gp2.x, gp2.y, 0xBB_6666CC.toInt(), 3f))
 
             // Thin stone pillars for walled exits (North/West) — not needed for South/East
             if (withPillars) {
@@ -1103,7 +1173,7 @@ object RoomEntityFactory {
                             pt(gx + 0.2f, gy,      bz + 1f, ox, oy),
                             pt(gx + 0.2f, gy + 1f, bz + 1f, ox, oy),
                             pt(gx,        gy + 1f, bz + 1f, ox, oy),
-                        ), Colors.WALL_TOP))
+                        ), wTop))
                     commands += DrawCommand(DrawLayer.BLOCK, pdk, 1, "${id}_pillar_l_face_$gz",
                         IsoProjector.toScreen(Vec3f(gx, gy + 1f, bz)) + offset,
                         DrawPayload.DitheredPath(listOf(
@@ -1111,7 +1181,7 @@ object RoomEntityFactory {
                             pt(gx + 0.2f, gy + 1f, bz,      ox, oy),
                             pt(gx + 0.2f, gy + 1f, bz + 1f, ox, oy),
                             pt(gx,        gy + 1f, bz + 1f, ox, oy),
-                        ), Colors.WALL_LEFT_D1, Colors.WALL_LEFT_D2, horizontal = true))
+                        ), wFD1, wFD2, horizontal = true))
                     val pdk2 = IsoProjector.depthKey(Vec3f(gx + 0.9f, gy + 1f, bz))
                     commands += DrawCommand(DrawLayer.BLOCK, pdk2, 2, "${id}_pillar_r_top_$gz",
                         IsoProjector.toScreen(Vec3f(gx + 0.8f, gy, bz + 1f)) + offset,
@@ -1120,7 +1190,7 @@ object RoomEntityFactory {
                             pt(gx + 1f,   gy,      bz + 1f, ox, oy),
                             pt(gx + 1f,   gy + 1f, bz + 1f, ox, oy),
                             pt(gx + 0.8f, gy + 1f, bz + 1f, ox, oy),
-                        ), Colors.WALL_TOP))
+                        ), wTop))
                     commands += DrawCommand(DrawLayer.BLOCK, pdk2, 1, "${id}_pillar_r_face_$gz",
                         IsoProjector.toScreen(Vec3f(gx + 0.8f, gy + 1f, bz)) + offset,
                         DrawPayload.DitheredPath(listOf(
@@ -1128,7 +1198,7 @@ object RoomEntityFactory {
                             pt(gx + 1f,   gy + 1f, bz,      ox, oy),
                             pt(gx + 1f,   gy + 1f, bz + 1f, ox, oy),
                             pt(gx + 0.8f, gy + 1f, bz + 1f, ox, oy),
-                        ), Colors.WALL_LEFT_D1, Colors.WALL_LEFT_D2, horizontal = true))
+                        ), wFD1, wFD2, horizontal = true))
                 }
             }
 
@@ -1148,20 +1218,20 @@ object RoomEntityFactory {
             }
         }
 
-        // Draw exit markers for SOUTH and EAST exits (no wall drawn, need explicit marker)
+        // Draw exit markers for SOUTH and EAST exits — arch pillars on both sides
         for (exit in room.exits) {
             when (exit.side) {
                 ExitSide.SOUTH -> {
                     val gx = (w / 2 - 1).toFloat()
                     val gy = (d - 1).toFloat()
-                    drawExitMarker(gx, gy, ExitSide.SOUTH, withPillars = false, exit.targetRoomId)
-                    drawExitMarker(gx + 1f, gy, ExitSide.SOUTH, withPillars = false, exit.targetRoomId)
+                    drawExitMarker(gx, gy, ExitSide.SOUTH, withPillars = true, exit.targetRoomId)
+                    drawExitMarker(gx + 1f, gy, ExitSide.SOUTH, withPillars = true, exit.targetRoomId)
                 }
                 ExitSide.EAST -> {
                     val gx = (w - 1).toFloat()
                     val gy = (d / 2 - 1).toFloat()
-                    drawExitMarker(gx, gy, ExitSide.EAST, withPillars = false, exit.targetRoomId)
-                    drawExitMarker(gx, gy + 1f, ExitSide.EAST, withPillars = false, exit.targetRoomId)
+                    drawExitMarker(gx, gy, ExitSide.EAST, withPillars = true, exit.targetRoomId)
+                    drawExitMarker(gx, gy + 1f, ExitSide.EAST, withPillars = true, exit.targetRoomId)
                 }
                 ExitSide.NORTH, ExitSide.WEST -> { /* handled by doorArchway above */ }
             }

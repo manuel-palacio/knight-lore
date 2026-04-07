@@ -28,6 +28,7 @@ import com.palacesoft.knightlore.data.ContentRoomProvider
 import com.palacesoft.knightlore.data.asset.AssetContentRepository
 import com.palacesoft.knightlore.data.asset.DesktopAssetLoader
 import com.palacesoft.knightlore.domain.DefaultGameEngine
+import com.palacesoft.knightlore.domain.GameLoop
 import com.palacesoft.knightlore.domain.event.GameEvent
 import com.palacesoft.knightlore.domain.input.FrameInput
 import com.palacesoft.knightlore.domain.model.GameContent
@@ -72,42 +73,45 @@ fun GameView() {
                 val roomProvider = ContentRoomProvider(loadedContent)
                 val engine = DefaultGameEngine.create(roomProvider, loadedContent)
                 var state = engine.initialize(System.currentTimeMillis(), loadedContent)
-                gameState = state
+                withContext(Dispatchers.Main) { gameState = state }
 
-                // Fixed-step accumulator — mirrors GameLoopCoordinator on Android
-                val fixedStep = 1f / 60f
-                val maxDelta = 0.5f
-                var accumulator = 0f
-                var lastFrameMs = System.currentTimeMillis()
+                // Pending events collected in onUpdate and flushed in onRender on Main
+                val pendingEvents = mutableListOf<GameEvent>()
+
+                val gameLoop = GameLoop(
+                    fixedHz = 60,
+                    onUpdate = { deltaSeconds ->
+                        val input = keyboardMapper.buildFrameInput()
+                        val result = engine.update(state, input, deltaSeconds)
+                        state = result.state
+                        pendingEvents += result.events
+                    },
+                    onRender = { _ ->
+                        // onRender runs on the IO coroutine; dispatch to Main for Compose state
+                    },
+                )
+
+                gameLoop.start(this)
 
                 while (isActive) {
-                    delay(4L)   // yield to OS; actual tick rate governed by accumulator
-                    val nowMs = System.currentTimeMillis()
-                    val delta = ((nowMs - lastFrameMs) / 1000f).coerceAtMost(maxDelta)
-                    lastFrameMs = nowMs
-
-                    accumulator += delta
-                    val input = keyboardMapper.buildFrameInput()
-
-                    while (accumulator >= fixedStep) {
-                        val result = engine.update(state, input.copy(pausePressed = false), fixedStep)
-                        state = result.state
-                        accumulator -= fixedStep
-
-                        // Handle events
-                        for (event in result.events) {
-                            withContext(Dispatchers.Main) {
-                                uiState = when (event) {
-                                    is GameEvent.GameOver       -> uiState.copy(showGameOver = true)
-                                    is GameEvent.QuestCompleted -> uiState.copy(showQuestComplete = true)
-                                    else -> uiState
-                                }
+                    delay(8L)   // poll at ~120 Hz to publish state to Compose
+                    val snapshot = state
+                    val events = synchronized(pendingEvents) {
+                        pendingEvents.toList().also { pendingEvents.clear() }
+                    }
+                    withContext(Dispatchers.Main) {
+                        gameState = snapshot
+                        for (event in events) {
+                            uiState = when (event) {
+                                is GameEvent.GameOver       -> uiState.copy(showGameOver = true)
+                                is GameEvent.QuestCompleted -> uiState.copy(showQuestComplete = true)
+                                else -> uiState
                             }
                         }
                     }
-
-                    withContext(Dispatchers.Main) { gameState = state }
                 }
+
+                gameLoop.stop()
             } catch (e: CancellationException) {
                 throw e   // let coroutine cancel normally
             } catch (e: Exception) {

@@ -24,8 +24,8 @@
 - [ ] **BALL** — Proper bounce `abs(sin(tick*0.12))*-20f`, squash on landing `24×12`, bounce shadow
 
 ### Perspective (Ceiling Effect)
-- [ ] **Wall height** — Change `for (gz in 0 until 3)` → `for (gz in 0 until 2)` in both `wallBlockNorth()` and `wallBlockWest()`
-- [ ] **Block depth layer** — Only absolute top block (`gz == 2`) above player gets `DrawLayer.PLAYER+1`; `gz <= 1` → `DrawLayer.PLAYER`
+- [x] **Wall height** — Change `for (gz in 0 until 3)` → `for (gz in 0 until 2)` in both `wallBlockNorth()` and `wallBlockWest()`
+- [x] **Block depth layer** — Implemented via depth key comparison: `if (dk > playerDk) FOREGROUND else BLOCK` (applied to both static and dynamic blocks)
 - [ ] **Room Y-offset** — `IsoProjector.roomOffset()`: change `viewportH * 0.08f` → `viewportH * 0.12f`
 
 ---
@@ -41,20 +41,20 @@
 - [ ] **Add `DesktopHud` composable** — Day counter + transformation warning + lives + cure progress + form label
 
 ### Door / Exit
-- [ ] **South/East exits missing** — Add exit marker pass independent of wall loops; threshold glow + void rectangle for all 4 sides
+- [x] **South/East exits missing** — All 4 sides have exit markers: arch pillars, bright threshold floor tile, glow line (75% opacity), void rectangle
 
 ---
 
 ## 🧩 Priority 3: Puzzles (60min)
 
 ### Block Physics
-- [ ] **`BlockState`** — Add to `GameState`: `gridX/Y/Z`, `velocity: Vec2f`, `fallingTicks: Int`, `pushable: Boolean`
-- [ ] **Push** — Player walks into adjacent pushable block → block moves 1 grid in direction if destination empty
-- [ ] **Fall** — Block with player on top: `fallingTicks++`; at 120 ticks → `velocity.z -= 0.15f` per tick until `gridZ == 0`
+- [x] **`BlockState`** — Added to `GameState`: `gridX/Y/Z`, `velocityZ`, `fallingTicks`, `pushable`; dynamic blocks rendered via `buildDynamicBlockCommands()` with pushable arrow glyph and falling crack/glow
+- [x] **Push** — Player walks into adjacent pushable block → block moves 1 grid in direction if destination empty (`BlockPhysicsSystem`)
+- [x] **Fall** — Block with player on top: `fallingTicks++`; at 120 ticks → `velocityZ` grows until `gridZ == 0` (`BlockPhysicsSystem`)
 - [ ] **Werewolf jump** — `jumpHeight = if (werewulf) 1.4f else 1.0f`
 
 ### Start Room Puzzle
-- [ ] **Layout** — 4 pushable blocks around center, 1 spike pit center, 1 herb item elevated on block above pit
+- [ ] **Layout** — 4 pushable blocks around center ✓ (room_001.json), spike pit center ✗, herb elevated on block above pit ✗
 - [ ] **Teaches** — Push block → stand → it falls → use fallen block as stair → grab herb
 - [ ] **No hazards in start room** — Ensure spawn position never within 2 grid units of any hazard
 
@@ -69,5 +69,5 @@
 [ ] No X-tile placeholders anywhere
 [ ] Push block → climb → grab herb loop works
 [ ] HUD visible on desktop (day, lives, cure)
-[ ] Walls no longer clip player head
+[x] Walls no longer clip player head (depth key fix)
 ```

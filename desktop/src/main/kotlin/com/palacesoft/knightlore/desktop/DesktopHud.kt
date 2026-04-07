@@ -129,18 +129,33 @@ fun DesktopHud(state: GameState, modifier: Modifier = Modifier) {
                 )
             }
 
-            // Bottom-center: inventory slots
+            // Bottom-center: inventory items
             Row(
                 modifier = Modifier.align(Alignment.Center),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                val invSize = state.player.inventory.size
-                for (i in 0 until 7) {
+                val inventory = state.player.inventory
+                if (inventory.isEmpty()) {
                     Text(
-                        text = if (i < invSize) "●" else "○",
-                        color = if (i < invSize) white else gray,
-                        fontSize = 16.sp,
+                        text = "INVENTORY EMPTY",
+                        color = gray,
+                        fontSize = 11.sp,
                     )
+                } else {
+                    inventory.forEachIndexed { i, itemId ->
+                        Box(
+                            modifier = Modifier
+                                .background(Color(0xFF222233))
+                                .padding(horizontal = 4.dp, vertical = 2.dp),
+                        ) {
+                            Text(
+                                text = itemId.value.substringBefore("_").uppercase(),
+                                color = white,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
+                    }
                 }
             }
 

@@ -4,6 +4,8 @@ import com.palacesoft.knightlore.core.ids.ItemId
 import com.palacesoft.knightlore.core.ids.RoomId
 import com.palacesoft.knightlore.core.math.Vec3f
 
+enum class RoomType { DUNGEON, CRYPT, CAVERN, FLOODED, THRONE_ANTECHAMBER }
+
 data class RoomDefinition(
     val id: RoomId,
     val width: Int,       // in tiles
@@ -17,6 +19,7 @@ data class RoomDefinition(
     val theme: RoomTheme,
     val special: RoomSpecial? = null,
     val patrolSpawns: List<PatrolSpawn> = emptyList(),
+    val roomType: RoomType = RoomType.DUNGEON,
 )
 
 data class TileStack(val gridX: Int, val gridY: Int, val gridZ: Int, val type: TileType)

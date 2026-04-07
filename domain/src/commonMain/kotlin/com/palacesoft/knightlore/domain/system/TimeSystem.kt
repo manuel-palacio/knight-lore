@@ -44,8 +44,8 @@ class TimeSystem : GameSystem {
 
         val events = mutableListOf<GameEvent>()
         if (newPhase != time.phase) {
-            // Emit TransformationStarted at phase boundaries that trigger form change
-            if (newPhase == DayPhase.DUSK || newPhase == DayPhase.DAWN) {
+            // TransformationStarted fires when the form actually changes (NIGHT = human→wolf, DAY = wolf→human)
+            if (newPhase == DayPhase.NIGHT || newPhase == DayPhase.DAY) {
                 events += GameEvent.TransformationStarted
             }
         }

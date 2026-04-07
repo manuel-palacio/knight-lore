@@ -5,6 +5,9 @@ import com.palacesoft.knightlore.core.math.Direction8
 import com.palacesoft.knightlore.core.math.Vec3f
 import com.palacesoft.knightlore.domain.event.GameEvent
 import com.palacesoft.knightlore.domain.input.FrameInput
+import com.palacesoft.knightlore.core.ids.ActorId
+import com.palacesoft.knightlore.domain.model.ActorBehavior
+import com.palacesoft.knightlore.domain.model.ActorKind
 import com.palacesoft.knightlore.domain.model.ActorState
 import com.palacesoft.knightlore.domain.model.BlockState
 import com.palacesoft.knightlore.domain.model.CauldronState
@@ -140,11 +143,32 @@ class DefaultGameEngine(private val systems: List<GameSystem>) : GameEngine {
             }
         }
 
-        // 6. Build initial ActorState list — empty for now (Phase 3/5)
-        val actorStates: List<ActorState> = emptyList()
-
-        // 7. Seed patrol enemies from start room
+        // 6. Look up start room
         val startRoom = content.rooms[startRoomId]
+
+        // 7. Seed actors from start room
+        val actorStates: List<ActorState> = startRoom?.actors?.mapIndexed { index, spawn ->
+            val typeDef = content.actorTypes[spawn.actorType.name.lowercase()]
+            val behavior = when (typeDef?.kind) {
+                ActorKind.GUARD_PATROL -> ActorBehavior.PATROL
+                ActorKind.GHOST -> ActorBehavior.PATROL
+                ActorKind.SPIKE_BEAST -> ActorBehavior.STATIC_HAZARD
+                ActorKind.FORM_REACTIVE -> ActorBehavior.REACTIVE
+                null -> ActorBehavior.PATROL
+            }
+            ActorState(
+                id = ActorId("${spawn.actorType.name.lowercase()}_${index + 1}"),
+                type = spawn.actorType,
+                position = spawn.position,
+                velocity = Vec3f.ZERO,
+                behaviorState = "PATROL_RIGHT",
+                behavior = behavior,
+                form = null,
+                spawnPosition = spawn.position,
+            )
+        } ?: emptyList()
+
+        // 8. Seed patrol enemies from start room
         val patrolEnemies = startRoom?.patrolSpawns?.map { spawn ->
             PatrolEnemy(
                 id = spawn.id,

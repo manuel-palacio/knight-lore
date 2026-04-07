@@ -74,7 +74,7 @@ class RoomTransitionSystemTest {
             fromRoomId = ROOM_A,
             toRoomId = ROOM_B,
             targetSpawnId = "spawn_s",
-            phase = TransitionPhase.FADING_IN,
+            phase = TransitionPhase.SLIDING_IN,
             ticksRemaining = 1,
         )
 
@@ -102,7 +102,7 @@ class RoomTransitionSystemTest {
             fromRoomId = ROOM_A,
             toRoomId = ROOM_B,
             targetSpawnId = "spawn_s",
-            phase = TransitionPhase.FADING_OUT,
+            phase = TransitionPhase.SLIDING_OUT,
             ticksRemaining = 8,  // mid-transition
         )
 
@@ -133,7 +133,7 @@ class RoomTransitionSystemTest {
             fromRoomId = ROOM_A,
             toRoomId = ROOM_B,
             targetSpawnId = "spawn_s",
-            phase = TransitionPhase.FADING_IN,
+            phase = TransitionPhase.SLIDING_IN,
             ticksRemaining = 1,
         )
 

@@ -12,8 +12,10 @@ object TransitionRenderer {
     fun render(canvas: Canvas, transition: RoomTransitionState?) {
         if (transition == null) return
         val alpha = when (transition.phase) {
-            TransitionPhase.FADING_OUT -> 1f - (transition.ticksRemaining / 6f).coerceIn(0f, 1f)
-            TransitionPhase.FADING_IN  -> (transition.ticksRemaining / 6f).coerceIn(0f, 1f)
+            TransitionPhase.FADING_OUT, TransitionPhase.SLIDING_OUT ->
+                1f - (transition.ticksRemaining / 6f).coerceIn(0f, 1f)
+            TransitionPhase.FADING_IN, TransitionPhase.SLIDING_IN ->
+                (transition.ticksRemaining / 6f).coerceIn(0f, 1f)
         }
         if (alpha <= 0f) return
         paint.color = Color.argb((alpha * 255).toInt(), 0, 0, 0)

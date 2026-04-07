@@ -21,6 +21,7 @@ import com.palacesoft.knightlore.domain.model.RoomTheme
 import com.palacesoft.knightlore.domain.model.RoomType
 import com.palacesoft.knightlore.domain.model.TransformPhase
 import com.palacesoft.knightlore.domain.model.BlockState
+import com.palacesoft.knightlore.domain.model.DayPhase
 import com.palacesoft.knightlore.domain.model.TileType
 import com.palacesoft.knightlore.core.geometry.ZXPalette
 import com.palacesoft.knightlore.render.iso.IsoProjector
@@ -467,6 +468,18 @@ object RoomEntityFactory {
             Vec2f(0f, 0f), DrawPayload.ColorRect(viewportW * 0.06f, viewportH, fogC))
         commands += DrawCommand(DrawLayer.HUD, 0, -995, "vignette_rgt",
             Vec2f(viewportW * 0.94f, 0f), DrawPayload.ColorRect(viewportW * 0.06f, viewportH, fogC))
+
+        // 9. Day/Night sky tint — subtle full-screen colour wash
+        val dayTint = when (state.time.phase) {
+            DayPhase.DAY -> null
+            DayPhase.DUSK -> 0x08_FF6600.toInt()   // warm orange
+            DayPhase.NIGHT -> 0x0C_000066.toInt()   // cold blue
+            DayPhase.DAWN -> 0x06_FFAAAA.toInt()    // pink
+        }
+        if (dayTint != null) {
+            commands += DrawCommand(DrawLayer.HUD, 0, -999, "day_tint",
+                Vec2f(0f, 0f), DrawPayload.ScreenFill(dayTint))
+        }
 
         return DrawCommandBuilder.sort(commands)
     }
@@ -1462,9 +1475,21 @@ object RoomEntityFactory {
         val isMoving = player.movementState == MovementState.WALKING
         val walkFrame = if (isMoving) ((state.time.tick * 0.25f).toInt() % 4) else 0
         val isAirborne = player.airborne
-        val leftLegFwd  = if (walkFrame == 1) -4f else if (walkFrame == 3)  4f else 0f
-        val rightLegFwd = if (walkFrame == 1)  4f else if (walkFrame == 3) -4f else 0f
-        val legHeightMul = if (isAirborne) 0.7f else 1.0f
+        val leftLegFwd  = if (isAirborne) 0f else if (walkFrame == 1) -4f else if (walkFrame == 3) 4f else 0f
+        val rightLegFwd = if (isAirborne) 0f else if (walkFrame == 1) 4f else if (walkFrame == 3) -4f else 0f
+        val legHeightMul = if (isAirborne) 0.6f else 1.0f
+
+        // ── Body facing lean — whole character shifts based on facing direction ────
+        val bodyLean = when (player.facing.name) {
+            "WEST", "NORTHWEST", "SOUTHWEST" -> -5f
+            "EAST", "NORTHEAST", "SOUTHEAST" -> 5f
+            else -> 0f
+        }
+
+        // ── Jump pose adjustments ─────────────────────────────────────────────────
+        val jumpArmRaise = if (isAirborne) -8f else 0f
+        val jumpHatFloat = if (isAirborne) -3f else 0f
+        val jumpLegSpread = if (isAirborne) 3f else 0f
 
         // ── Shadow ───────────────────────────────────────────────────────────────────
         val shadowW = if (isAirborne) 20f else 28f
@@ -1479,19 +1504,19 @@ object RoomEntityFactory {
             // ════════════════════════════════════════════════════════════════════════
             val legH = 12f * legHeightMul
 
-            // Boots (left / right) — chunky
+            // Boots (left / right) — chunky, spread on jump
             commands += DrawCommand(DrawLayer.PLAYER, dk, 0, "player_boot_l",
-                Vec2f(cx - 9f, oy - legH + leftLegFwd + bob),
+                Vec2f(cx - 9f + bodyLean - jumpLegSpread, oy - legH + leftLegFwd + bob),
                 DrawPayload.ColorRect(8f, legH, bootColor))
             commands += DrawCommand(DrawLayer.PLAYER, dk, 0, "player_boot_r",
-                Vec2f(cx + 1f, oy - legH + rightLegFwd + bob),
+                Vec2f(cx + 1f + bodyLean + jumpLegSpread, oy - legH + rightLegFwd + bob),
                 DrawPayload.ColorRect(8f, legH, bootColor))
 
-            // Tunic body — wide, stocky
+            // Tunic body — wide, stocky, leans with facing
             val bodyTop = oy - 42f + bob
             val bodyBot = oy - 12f + bob
             commands += DrawCommand(DrawLayer.PLAYER, dk, 1, "player_body",
-                Vec2f(cx - 12f, bodyTop),
+                Vec2f(cx - 12f + bodyLean, bodyTop),
                 DrawPayload.ColorRect(24f, bodyBot - bodyTop, tunicColor))
             // Darker side shadow on tunic
             commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_body_shade",
@@ -1511,31 +1536,31 @@ object RoomEntityFactory {
                 Vec2f(cx - 10f, oy - 17f + bob),
                 DrawPayload.ColorRect(20f, 6f, 0xFF_3A5A8A.toInt()))
 
-            // Arms — thick, with swing
-            val armTop = oy - 38f + bob
-            val armBot = oy - 22f + bob
+            // Arms — thick, swing with walk, raise on jump
+            val armTop = oy - 38f + bob + jumpArmRaise
+            val armBot = oy - 22f + bob + jumpArmRaise
             commands += DrawCommand(DrawLayer.PLAYER, dk, 1, "player_arm_l",
-                Vec2f(cx - 18f, armTop + leftLegFwd * 0.5f),
+                Vec2f(cx - 18f + bodyLean, armTop + leftLegFwd * 0.5f),
                 DrawPayload.ColorRect(6f, armBot - armTop, tunicColor))
             commands += DrawCommand(DrawLayer.PLAYER, dk, 1, "player_arm_r",
-                Vec2f(cx + 12f, armTop + rightLegFwd * 0.5f),
+                Vec2f(cx + 12f + bodyLean, armTop + rightLegFwd * 0.5f),
                 DrawPayload.ColorRect(6f, armBot - armTop, tunicColor))
-            // Hands — visible skin
+            // Hands
             commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_hand_l",
-                Vec2f(cx - 18f, armBot + leftLegFwd * 0.5f - 1f),
+                Vec2f(cx - 18f + bodyLean, armBot + leftLegFwd * 0.5f - 1f),
                 DrawPayload.ColorOval(6f, 5f, skinColor))
             commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_hand_r",
-                Vec2f(cx + 12f, armBot + rightLegFwd * 0.5f - 1f),
+                Vec2f(cx + 12f + bodyLean, armBot + rightLegFwd * 0.5f - 1f),
                 DrawPayload.ColorOval(6f, 5f, skinColor))
 
             // Neck
             commands += DrawCommand(DrawLayer.PLAYER, dk, 3, "player_neck",
-                Vec2f(cx - 4f, oy - 48f + bob),
+                Vec2f(cx - 4f + bodyLean, oy - 48f + bob),
                 DrawPayload.ColorRect(8f, 7f, skinColor))
 
             // Face — round, expressive
             commands += DrawCommand(DrawLayer.PLAYER, dk, 4, "player_face",
-                Vec2f(cx - 8f, oy - 58f + bob),
+                Vec2f(cx - 8f + bodyLean, oy - 58f + bob),
                 DrawPayload.ColorOval(16f, 12f, skinColor))
 
             // Eyes — visible dark dots
@@ -1545,28 +1570,24 @@ object RoomEntityFactory {
                 else -> 0f
             }
             commands += DrawCommand(DrawLayer.PLAYER, dk, 5, "player_eye_l",
-                Vec2f(cx - 4f + facingShift, oy - 54f + bob),
+                Vec2f(cx - 4f + facingShift + bodyLean, oy - 54f + bob),
                 DrawPayload.ColorOval(3f, 3f, ZXPalette.BLACK))
             commands += DrawCommand(DrawLayer.PLAYER, dk, 5, "player_eye_r",
-                Vec2f(cx + 2f + facingShift, oy - 54f + bob),
+                Vec2f(cx + 2f + facingShift + bodyLean, oy - 54f + bob),
                 DrawPayload.ColorOval(3f, 3f, ZXPalette.BLACK))
 
-            // Pith helmet — large, iconic
-            // Dome
+            // Pith helmet — large, iconic, floats on jump
             commands += DrawCommand(DrawLayer.PLAYER, dk, 6, "player_hat_dome",
-                Vec2f(cx - 10f, oy - 68f + bob),
+                Vec2f(cx - 10f + bodyLean, oy - 68f + bob + jumpHatFloat),
                 DrawPayload.ColorOval(20f, 14f, hatColor))
-            // Brim — wide
             commands += DrawCommand(DrawLayer.PLAYER, dk, 5, "player_hat_brim",
-                Vec2f(cx - 13f, oy - 58f + bob),
+                Vec2f(cx - 13f + bodyLean, oy - 58f + bob + jumpHatFloat),
                 DrawPayload.ColorOval(26f, 6f, hatColor))
-            // Hat band — dark stripe
             commands += DrawCommand(DrawLayer.PLAYER, dk, 7, "player_hat_band",
-                Vec2f(cx - 10f, oy - 60f + bob),
+                Vec2f(cx - 10f + bodyLean, oy - 60f + bob + jumpHatFloat),
                 DrawPayload.ColorRect(20f, 2f, hatBand))
-            // Hat highlight
             commands += DrawCommand(DrawLayer.PLAYER, dk, 7, "player_hat_hl",
-                Vec2f(cx - 4f, oy - 66f + bob),
+                Vec2f(cx - 4f + bodyLean, oy - 66f + bob + jumpHatFloat),
                 DrawPayload.ColorOval(8f, 3f, 0xFF_EEEEEE.toInt()))
         } else {
             // ════════════════════════════════════════════════════════════════════════

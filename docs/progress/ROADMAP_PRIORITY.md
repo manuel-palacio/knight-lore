@@ -95,7 +95,7 @@ All items retain the pulsing glow halo (`sin(tick * 0.07)`) but in their own col
 
 ---
 
-## PHASE 3 — Enemy Spawning in All Rooms 🟠 HIGH PRIORITY
+## PHASE 3 — Enemy Spawning in All Rooms ✅ DONE
 
 **Why:** `actorStates` is hard-coded to `emptyList()` in `GameEngine.initialize()`.
 Guards, Ghosts, Robots, Druids all exist as beautiful render code but are never spawned.
@@ -154,7 +154,7 @@ Each room definition should declare at least 1-2 actors appropriate to its `Room
 
 ---
 
-## PHASE 4 — Block Puzzles in Rooms 🟠 MEDIUM PRIORITY
+## PHASE 4 — Block Puzzles in Rooms ✅ DONE
 
 **Why:** `BlockPhysicsSystem` is fully implemented (push, fall, crack warning, destroy).
 `BlockSpawn` data model exists. But `blockSpawns` is only populated for the start room.
@@ -199,7 +199,7 @@ them. Add a `SwitchSystem` that:
 
 ---
 
-## PHASE 5 — Character Polish 🟡 LOWER PRIORITY
+## PHASE 5 — Character Polish ✅ DONE
 
 ### 5A — Jump animation
 When `player.airborne == true`, change character pose:
@@ -219,7 +219,7 @@ Add distinct arm-swing: front legs should use `bodyPts` offset variation, not th
 
 ---
 
-## PHASE 6 — HUD Polish 🟢 LOW PRIORITY
+## PHASE 6 — HUD Polish ✅ DONE (6C day/night tint)
 
 ### 6A — Item icon in HUD matches in-world item type
 The inventory shows `itemId.value.substringBefore("_").uppercase()` as a text label.

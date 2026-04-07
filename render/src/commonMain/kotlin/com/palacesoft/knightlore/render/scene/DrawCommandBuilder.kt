@@ -23,10 +23,15 @@ object DrawCommandBuilder {
             )
         )
 
-    /** Maps layers to render buckets: 0 = floor, 1 = scene, 2 = HUD. */
+    /** Maps layers to render buckets. Higher = drawn later (in front). */
     private fun sceneGroup(layer: DrawLayer): Int = when (layer) {
-        DrawLayer.FLOOR -> 0
-        DrawLayer.HUD   -> 2
-        else            -> 1  // BLOCK, ITEM, ACTOR, PLAYER, EFFECT all depth-sorted together
+        DrawLayer.FLOOR       -> 0
+        DrawLayer.BLOCK       -> 1  // depth-sorted world geometry
+        DrawLayer.ITEM        -> 2
+        DrawLayer.ACTOR       -> 3
+        DrawLayer.PLAYER      -> 4  // player renders after actors
+        DrawLayer.FOREGROUND  -> 5  // blocks above player (render in front of player)
+        DrawLayer.EFFECT      -> 6
+        DrawLayer.HUD         -> 7
     }
 }

@@ -399,5 +399,7 @@
     }
   ],
   "itemAnchors": [],
-  "actorSpawns": []
+  "actorSpawns": [
+    { "actorType": "GUARD", "x": 2.5, "y": 5.5, "z": 0.0 }
+  ]
 }

@@ -453,5 +453,17 @@
     }
   ],
   "itemAnchors": [],
-  "actorSpawns": []
+  "actorSpawns": [
+    { "actorType": "GUARD", "x": 1.5, "y": 6.5, "z": 0.0 }
+  ],
+  "dynamic_objects": [
+    {
+      "id": "goblin_r001_01",
+      "type": "PATROL_ENEMY",
+      "start_x": 2,
+      "start_y": 2,
+      "path": [[2, 2], [5, 2], [5, 5], [2, 5]],
+      "speed": 1.5
+    }
+  ]
 }

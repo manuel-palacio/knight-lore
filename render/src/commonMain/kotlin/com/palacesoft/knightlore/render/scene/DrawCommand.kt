@@ -4,13 +4,14 @@ import com.palacesoft.knightlore.core.math.Vec2f
 
 /** Layer order for draw sorting. Lower = drawn first (behind). */
 enum class DrawLayer {
-    FLOOR,      // floor tiles
-    BLOCK,      // solid blocks and walls
-    ITEM,       // items on the floor
-    ACTOR,      // enemies and interactive objects
-    PLAYER,     // player character
-    EFFECT,     // particles, hazard indicators
-    HUD,        // HUD overlays (not sorted with scene)
+    FLOOR,       // floor tiles
+    BLOCK,       // solid blocks and walls
+    ITEM,        // items on the floor
+    ACTOR,       // enemies and interactive objects
+    PLAYER,      // player character
+    FOREGROUND,  // blocks/objects that should render in front of the player
+    EFFECT,      // particles, hazard indicators
+    HUD,         // HUD overlays (not sorted with scene)
 }
 
 /**

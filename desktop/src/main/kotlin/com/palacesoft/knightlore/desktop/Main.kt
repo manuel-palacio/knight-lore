@@ -84,11 +84,9 @@ fun GameView() {
                         val input = keyboardMapper.buildFrameInput()
                         val result = engine.update(state, input, deltaSeconds)
                         state = result.state
-                        pendingEvents += result.events
+                        synchronized(pendingEvents) { pendingEvents += result.events }
                     },
-                    onRender = { _ ->
-                        // onRender runs on the IO coroutine; dispatch to Main for Compose state
-                    },
+                    onRender = { },
                 )
 
                 gameLoop.start(this)
@@ -111,7 +109,6 @@ fun GameView() {
                     }
                 }
 
-                gameLoop.stop()
             } catch (e: CancellationException) {
                 throw e   // let coroutine cancel normally
             } catch (e: Exception) {

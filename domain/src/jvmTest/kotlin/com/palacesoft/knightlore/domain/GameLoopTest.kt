@@ -164,7 +164,7 @@ class GameLoopTest {
     }
 
     private class CountingCallback {
-        var count: Int = 0
+        @Volatile var count: Int = 0
         fun invoke() { count++ }
     }
 }

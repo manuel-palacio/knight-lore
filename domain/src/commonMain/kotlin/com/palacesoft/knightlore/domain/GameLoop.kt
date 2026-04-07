@@ -4,6 +4,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.TimeSource
 
 /**
@@ -34,24 +35,24 @@ class GameLoop(
 
     val fixedStepSeconds: Float = 1f / fixedHz
 
-    @Volatile
-    var state: State = State.IDLE
-        private set
+    private val _state = AtomicReference(State.IDLE)
+
+    val state: State
+        get() = _state.get()
 
     /**
      * Starts the game loop as a coroutine on the given [scope].
      * Calling [start] while already running has no effect.
      */
     fun start(scope: CoroutineScope) {
-        if (state != State.IDLE) return
-        state = State.RUNNING
+        if (!_state.compareAndSet(State.IDLE, State.RUNNING)) return
 
         scope.launch {
             val timeSource = TimeSource.Monotonic
             var lastMark = timeSource.markNow()
             var accumulator = 0f
 
-            while (isActive && state != State.STOPPED) {
+            while (isActive && _state.get() != State.STOPPED) {
                 // Compute delta: use injected provider (for tests) or real wall time
                 val rawDelta: Float = if (deltaProvider != null) {
                     deltaProvider.invoke()
@@ -62,7 +63,7 @@ class GameLoop(
                     elapsed
                 }
 
-                if (state == State.RUNNING) {
+                if (_state.get() == State.RUNNING) {
                     // Cap delta to prevent spiral of death (max fixedStep * maxStepsPerFrame)
                     val delta = rawDelta.coerceAtMost(fixedStepSeconds * maxStepsPerFrame)
                     accumulator += delta
@@ -86,20 +87,16 @@ class GameLoop(
 
     /** Pauses physics updates. [onRender] is also suppressed while paused. */
     fun pause() {
-        if (state == State.RUNNING) {
-            state = State.PAUSED
-        }
+        _state.compareAndSet(State.RUNNING, State.PAUSED)
     }
 
     /** Resumes a paused loop. */
     fun resume() {
-        if (state == State.PAUSED) {
-            state = State.RUNNING
-        }
+        _state.compareAndSet(State.PAUSED, State.RUNNING)
     }
 
     /** Stops the loop permanently. Cannot be restarted after calling [stop]. */
     fun stop() {
-        state = State.STOPPED
+        _state.set(State.STOPPED)
     }
 }

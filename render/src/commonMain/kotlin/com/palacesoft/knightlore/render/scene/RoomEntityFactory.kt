@@ -1532,84 +1532,92 @@ object RoomEntityFactory {
             // ════════════════════════════════════════════════════════════════════════
             // HUMAN FORM — Sabreman: pith helmet explorer
             // ════════════════════════════════════════════════════════════════════════
-            val legH = 10f * legHeightMul
+            val legH = 12f * legHeightMul
 
-            // Boots (left / right)
+            // Boots (left / right) — chunky
             commands += DrawCommand(DrawLayer.PLAYER, dk, 0, "player_boot_l",
-                Vec2f(cx - 6f, oy - legH + leftLegFwd + bob),
-                DrawPayload.ColorRect(5f, legH, bootColor))
+                Vec2f(cx - 9f, oy - legH + leftLegFwd + bob),
+                DrawPayload.ColorRect(8f, legH, bootColor))
             commands += DrawCommand(DrawLayer.PLAYER, dk, 0, "player_boot_r",
                 Vec2f(cx + 1f, oy - legH + rightLegFwd + bob),
-                DrawPayload.ColorRect(5f, legH, bootColor))
+                DrawPayload.ColorRect(8f, legH, bootColor))
 
-            // Tunic body
-            val bodyTop = oy - 38f + bob
-            val bodyBot = oy - 10f + bob
+            // Tunic body — wide, stocky
+            val bodyTop = oy - 42f + bob
+            val bodyBot = oy - 12f + bob
             commands += DrawCommand(DrawLayer.PLAYER, dk, 1, "player_body",
-                Vec2f(cx - 8f, bodyTop),
-                DrawPayload.ColorRect(16f, bodyBot - bodyTop, tunicColor))
+                Vec2f(cx - 12f, bodyTop),
+                DrawPayload.ColorRect(24f, bodyBot - bodyTop, tunicColor))
             // Darker side shadow on tunic
             commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_body_shade",
-                Vec2f(cx + 4f, bodyTop),
-                DrawPayload.ColorRect(4f, bodyBot - bodyTop, tunicDark))
+                Vec2f(cx + 6f, bodyTop),
+                DrawPayload.ColorRect(6f, bodyBot - bodyTop, tunicDark))
             // Belt
             commands += DrawCommand(DrawLayer.PLAYER, dk, 3, "player_belt",
-                Vec2f(cx - 8f, oy - 18f + bob),
-                DrawPayload.ColorRect(16f, 2f, ZXPalette.YELLOW))
+                Vec2f(cx - 12f, oy - 20f + bob),
+                DrawPayload.ColorRect(24f, 3f, 0xFF_6A4A20.toInt()))
+            // Belt buckle
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 4, "player_buckle",
+                Vec2f(cx - 2f, oy - 21f + bob),
+                DrawPayload.ColorOval(5f, 4f, 0xFF_CCAA44.toInt()))
 
-            // Arms (simple rectangles)
-            val armTop = oy - 34f + bob
-            val armBot = oy - 20f + bob
+            // Arms — thick, with swing
+            val armTop = oy - 38f + bob
+            val armBot = oy - 22f + bob
             commands += DrawCommand(DrawLayer.PLAYER, dk, 1, "player_arm_l",
-                Vec2f(cx - 12f, armTop + leftLegFwd * 0.5f),
-                DrawPayload.ColorRect(4f, armBot - armTop, tunicColor))
+                Vec2f(cx - 18f, armTop + leftLegFwd * 0.5f),
+                DrawPayload.ColorRect(6f, armBot - armTop, tunicColor))
             commands += DrawCommand(DrawLayer.PLAYER, dk, 1, "player_arm_r",
-                Vec2f(cx + 8f, armTop + rightLegFwd * 0.5f),
-                DrawPayload.ColorRect(4f, armBot - armTop, tunicColor))
-            // Hands
+                Vec2f(cx + 12f, armTop + rightLegFwd * 0.5f),
+                DrawPayload.ColorRect(6f, armBot - armTop, tunicColor))
+            // Hands — visible skin
             commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_hand_l",
-                Vec2f(cx - 12f, armBot + leftLegFwd * 0.5f - 1f),
-                DrawPayload.ColorOval(4f, 3f, skinColor))
+                Vec2f(cx - 18f, armBot + leftLegFwd * 0.5f - 1f),
+                DrawPayload.ColorOval(6f, 5f, skinColor))
             commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_hand_r",
-                Vec2f(cx + 8f, armBot + rightLegFwd * 0.5f - 1f),
-                DrawPayload.ColorOval(4f, 3f, skinColor))
+                Vec2f(cx + 12f, armBot + rightLegFwd * 0.5f - 1f),
+                DrawPayload.ColorOval(6f, 5f, skinColor))
 
             // Neck
             commands += DrawCommand(DrawLayer.PLAYER, dk, 3, "player_neck",
-                Vec2f(cx - 3f, oy - 42f + bob),
-                DrawPayload.ColorRect(6f, 5f, skinColor))
+                Vec2f(cx - 4f, oy - 48f + bob),
+                DrawPayload.ColorRect(8f, 7f, skinColor))
 
-            // Face
+            // Face — round, expressive
             commands += DrawCommand(DrawLayer.PLAYER, dk, 4, "player_face",
-                Vec2f(cx - 5f, oy - 50f + bob),
-                DrawPayload.ColorOval(10f, 9f, skinColor))
+                Vec2f(cx - 8f, oy - 58f + bob),
+                DrawPayload.ColorOval(16f, 12f, skinColor))
 
-            // Eyes — small dark dots, not glowing
+            // Eyes — visible dark dots
             val facingShift = when (player.facing.name) {
-                "WEST", "NORTHWEST", "SOUTHWEST" -> -2f
-                "EAST", "NORTHEAST", "SOUTHEAST" -> 2f
+                "WEST", "NORTHWEST", "SOUTHWEST" -> -3f
+                "EAST", "NORTHEAST", "SOUTHEAST" -> 3f
                 else -> 0f
             }
             commands += DrawCommand(DrawLayer.PLAYER, dk, 5, "player_eye_l",
-                Vec2f(cx - 3f + facingShift, oy - 46f + bob),
-                DrawPayload.ColorOval(2f, 2f, ZXPalette.BLACK))
+                Vec2f(cx - 4f + facingShift, oy - 54f + bob),
+                DrawPayload.ColorOval(3f, 3f, ZXPalette.BLACK))
             commands += DrawCommand(DrawLayer.PLAYER, dk, 5, "player_eye_r",
-                Vec2f(cx + 1f + facingShift, oy - 46f + bob),
-                DrawPayload.ColorOval(2f, 2f, ZXPalette.BLACK))
+                Vec2f(cx + 2f + facingShift, oy - 54f + bob),
+                DrawPayload.ColorOval(3f, 3f, ZXPalette.BLACK))
 
-            // Pith helmet — the iconic Sabreman hat
+            // Pith helmet — large, iconic
             // Dome
             commands += DrawCommand(DrawLayer.PLAYER, dk, 6, "player_hat_dome",
-                Vec2f(cx - 6f, oy - 58f + bob),
-                DrawPayload.ColorOval(12f, 10f, hatColor))
-            // Brim — wider oval below the dome
+                Vec2f(cx - 10f, oy - 68f + bob),
+                DrawPayload.ColorOval(20f, 14f, hatColor))
+            // Brim — wide
             commands += DrawCommand(DrawLayer.PLAYER, dk, 5, "player_hat_brim",
-                Vec2f(cx - 9f, oy - 50f + bob),
-                DrawPayload.ColorOval(18f, 5f, hatColor))
-            // Hat band
+                Vec2f(cx - 13f, oy - 58f + bob),
+                DrawPayload.ColorOval(26f, 6f, hatColor))
+            // Hat band — dark stripe
             commands += DrawCommand(DrawLayer.PLAYER, dk, 7, "player_hat_band",
-                Vec2f(cx - 6f, oy - 52f + bob),
-                DrawPayload.ColorRect(12f, 2f, hatBand))
+                Vec2f(cx - 10f, oy - 60f + bob),
+                DrawPayload.ColorRect(20f, 2f, hatBand))
+            // Hat highlight
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 7, "player_hat_hl",
+                Vec2f(cx - 4f, oy - 66f + bob),
+                DrawPayload.ColorOval(8f, 3f, 0xFF_EEEEEE.toInt()))
         } else {
             // ════════════════════════════════════════════════════════════════════════
             // WEREWOLF FORM — large hunched grey beast (matching reference)

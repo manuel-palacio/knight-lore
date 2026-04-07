@@ -430,5 +430,21 @@
       "z": 3.0
     }
   ],
-  "actorSpawns": []
+  "actorSpawns": [
+    { "actorType": "DRUID", "x": 5.0, "y": 5.0, "z": 1.0 }
+  ],
+  "dynamic_objects": [
+    {
+      "id": "patrol_r009_a",
+      "type": "PATROL_ENEMY",
+      "start_x": 1,
+      "start_y": 1,
+      "path": [[1,1],[1,5],[6,5],[6,1]],
+      "speed": 0.7,
+      "facing": "SOUTH"
+    }
+  ],
+  "blocks": [
+    { "id": "block_r009_a", "x": 6, "y": 2, "z": 0, "pushable": true }
+  ]
 }

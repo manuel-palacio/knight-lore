@@ -406,7 +406,9 @@
       "targetSpawnId": "spawn_e"
     }
   ],
-  "itemAnchors": [],
+  "itemAnchors": [
+    { "itemId": "skull_r010", "x": 1.0, "y": 6.0, "z": 1.0 }
+  ],
   "actorSpawns": [
     {
       "actorType": "GUARD",
@@ -414,5 +416,19 @@
       "y": 4.0,
       "z": 1.0
     }
+  ],
+  "dynamic_objects": [
+    {
+      "id": "patrol_r010_a",
+      "type": "PATROL_ENEMY",
+      "start_x": 2,
+      "start_y": 1,
+      "path": [[2,1],[5,1],[5,5],[2,5]],
+      "speed": 0.9,
+      "facing": "SOUTH"
+    }
+  ],
+  "blocks": [
+    { "id": "block_r010_a", "x": 5, "y": 3, "z": 0, "pushable": true }
   ]
 }

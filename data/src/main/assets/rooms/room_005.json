@@ -414,6 +414,13 @@
       "targetSpawnId": "spawn_n"
     }
   ],
-  "itemAnchors": [],
-  "actorSpawns": []
+  "itemAnchors": [
+    { "itemId": "wine_bottle_r005", "x": 5.0, "y": 6.0, "z": 1.0 }
+  ],
+  "actorSpawns": [
+    { "actorType": "GHOST", "x": 2.0, "y": 2.0, "z": 1.0 }
+  ],
+  "blocks": [
+    { "id": "block_r005_a", "x": 3, "y": 2, "z": 1, "pushable": true }
+  ]
 }

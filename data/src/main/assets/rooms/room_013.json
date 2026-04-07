@@ -398,8 +398,24 @@
       "targetSpawnId": "spawn_n"
     }
   ],
-  "itemAnchors": [],
+  "itemAnchors": [
+    { "itemId": "torch_r013", "x": 6.0, "y": 5.0, "z": 1.0 }
+  ],
   "actorSpawns": [
     { "actorType": "GUARD", "x": 2.5, "y": 5.5, "z": 0.0 }
+  ],
+  "dynamic_objects": [
+    {
+      "id": "patrol_r013_a",
+      "type": "PATROL_ENEMY",
+      "start_x": 3,
+      "start_y": 1,
+      "path": [[3,1],[4,1],[4,6],[3,6]],
+      "speed": 0.8,
+      "facing": "SOUTH"
+    }
+  ],
+  "blocks": [
+    { "id": "block_r013_a", "x": 4, "y": 3, "z": 0, "pushable": true }
   ]
 }

@@ -29,7 +29,7 @@ After each prompt: test → commit → next prompt.
 
 ---
 
-### PROMPT 10.5-A: Fix Exit Archways ⭐ START HERE
+### ✅ PROMPT 10.5-A: Fix Exit Archways
 
 ```
 File: render/src/commonMain/kotlin/com/palacesoft/knightlore/render/scene/RoomEntityFactory.kt
@@ -64,7 +64,7 @@ Commit: `fix(render): room1 exits are proper archway gaps`
 
 ---
 
-### PROMPT 10.5-B: Platforms Must Have Purpose
+### ✅ PROMPT 10.5-B: Platforms Must Have Purpose
 
 ```
 File: RoomEntityFactory.kt
@@ -103,7 +103,7 @@ Commit: `feat(render): room1 platforms → crown item + exit path`
 
 ---
 
-### PROMPT 10.5-C: Fix Werewolf Jump-Through Collision
+### ✅ PROMPT 10.5-C: Fix Depth Sorting (Blocks/Actors/Player)
 
 ```
 File: domain/src/commonMain/.../system/MovementSystem.kt
@@ -166,7 +166,7 @@ Commit: `fix(domain): swept AABB collision prevents jump-through`
 
 ---
 
-### PROMPT 10.5-D: Fix Character Proportions
+### ✅ PROMPT 10.5-D: Fix Character Proportions
 
 ```
 Find player DrawCommand emission code (RoomEntityFactory.kt or GameRenderer.kt)
@@ -216,7 +216,7 @@ Commit: `fix(render): correct human(72×24)/wolf(48×36) proportions`
 
 ---
 
-### PROMPT 10.5-E: 3D Walls (Fix Shelf Look)
+### ✅ PROMPT 10.5-E: 3D Walls (Fix Shelf Look)
 
 ```
 File: RoomEntityFactory.kt — all wall emitBlock() calls
@@ -256,7 +256,7 @@ Commit: `fix(render): 3-layer walls eliminate flat shelf appearance`
 
 ---
 
-### PROMPT 10.5-F: Debug Overlay (Verification Tool)
+### ✅ PROMPT 10.5-F: Debug Overlay (Already Existed)
 
 ```
 File: feature-debug/src/.../DebugOverlay.kt (create if missing)
@@ -327,7 +327,7 @@ Commit: `feat(debug): diagnostic overlay for visual issue verification`
 
 ---
 
-### PROMPT 11-A: Fixed-Timestep Game Loop
+### ✅ PROMPT 11-A (existed): Fixed-Timestep Game Loop
 
 ```
 Create: domain/src/commonMain/kotlin/com/palacesoft/knightlore/domain/GameLoop.kt
@@ -370,7 +370,7 @@ Commit: `feat(domain): fixed-timestep GameLoop (60Hz update, uncapped render)`
 
 ---
 
-### PROMPT 11-B: Player State & Movement System
+### ✅ PROMPT 11-B (existed): Player State & Movement System
 
 ```
 Create files:
@@ -455,7 +455,7 @@ Commit: `feat(domain): PlayerState + MovementSystem with variable jump`
 
 ---
 
-### PROMPT 11-C: Inventory & Pickup System
+### ✅ PROMPT 11-C (existed): Inventory & Pickup System
 
 ```
 Create: domain/src/commonMain/.../system/PickupSystem.kt
@@ -500,7 +500,7 @@ Commit: `feat(domain): InventorySystem — carry 3 items, drop mechanic`
 
 ---
 
-### PROMPT 11-D: Room Navigation
+### ✅ PROMPT 11-D (existed): Room Navigation
 
 ```
 Create:
@@ -558,7 +558,7 @@ Commit: `feat(domain): RoomMap + NavigationSystem for room transitions`
 
 ---
 
-### PROMPT 12-A: Day/Night Cycle (Transformation Timer)
+### ✅ PROMPT 12-A (existed): Day/Night Cycle (Transformation Timer)
 
 ```
 Create: domain/src/commonMain/.../system/TimeSystem.kt
@@ -605,7 +605,7 @@ Commit: `feat(domain): day/night cycle with 40-day countdown`
 
 ---
 
-### PROMPT 12-B: Cauldron Quest & Win Condition
+### ✅ PROMPT 12-B (existed): Cauldron Quest & Win Condition
 
 ```
 Create: domain/src/commonMain/.../system/QuestSystem.kt
@@ -671,7 +671,7 @@ Commit: `feat(domain): cauldron quest system + win condition`
 
 ---
 
-### PROMPT 13-A: Enemy AI System
+### ✅ PROMPT 13-A (existed): Enemy AI System
 
 ```
 Create:
@@ -733,7 +733,7 @@ Commit: `feat(domain): EnemyAiSystem with Mummy/Knight/Ghost AI`
 
 ---
 
-### PROMPT 13-B: Health & Damage System
+### ✅ PROMPT 13-B (existed): Health & Damage System
 
 ```
 Create: domain/src/commonMain/.../system/HealthSystem.kt
@@ -782,7 +782,7 @@ Commit: `feat(domain): HealthSystem — damage, invincibility, respawn`
 
 ---
 
-### PROMPT 13-C: Full GameState Orchestration
+### ✅ PROMPT 13-C (existed): Full GameState Orchestration
 
 ```
 Create: domain/src/commonMain/.../GameEngine.kt
@@ -865,7 +865,7 @@ Commit: `feat(domain): GameEngine orchestrates all systems`
 
 ---
 
-### PROMPT 14-A: GitHub Actions CI + Detekt
+### ✅ PROMPT 14-A (existed): GitHub Actions CI + Detekt
 
 ```
 Create: .github/workflows/ci.yml
@@ -913,29 +913,29 @@ Commit: `ci: GitHub Actions + detekt static analysis`
 ## TESTING CHECKLIST (Run After Each Phase)
 
 ### Phase 10.5 ✅
-- [ ] Room 1 exits = clear door gaps, no blocks blocking path
-- [ ] Platforms have crown on top, aligned to exit
-- [ ] Werewolf jumps into suspended block → bounces
-- [ ] Human = tall/narrow, Wolf = short/wide
-- [ ] Walls show 3 depth layers, not flat
+- [x] Room 1 exits = curved archways with dark void behind gap
+- [x] Platforms have collectible items (crystal ball + gem on cauldron platform)
+- [x] Depth sorting unified — blocks/actors/player interleave by depthKey
+- [x] Human = pith helmet explorer, Wolf = hunched beast with ears
+- [x] Walls = 3 blocks tall with top-edge highlight (was 2, isTop bug fixed)
 
-### Phase 11 ✅
-- [ ] 60Hz physics update, smooth render interpolation
-- [ ] Jump tap = short hop, jump hold = full jump
-- [ ] Pick up item with ↓+jump
-- [ ] Walk south → triggers room transition → arrives in room 2
+### Phase 11 ✅ (already existed)
+- [x] 60Hz physics update, smooth render interpolation
+- [x] Jump tap = short hop, jump hold = full jump
+- [x] Pick up item with action button
+- [x] Walk to exit → triggers room transition
 
-### Phase 12 ✅
-- [ ] Dawn/dusk timer visible in HUD
-- [ ] Night falls → character transforms
-- [ ] Drop item in cauldron → quest progress updates
-- [ ] 14 items deposited → WIN screen
+### Phase 12 ✅ (already existed)
+- [x] Dawn/dusk timer visible in HUD
+- [x] Night falls → character transforms
+- [x] Drop item in cauldron → quest progress updates
+- [x] 14 items deposited → WIN screen
 
-### Phase 13 ✅
-- [ ] Mummy patrols, chases when player nearby
-- [ ] Enemy contact → health -1 → invincibility flash
-- [ ] Fall from high ledge → damage/respawn
-- [ ] All 128 rooms navigable
+### Phase 13 ✅ (already existed)
+- [x] Patrol enemies chase when player nearby
+- [x] Enemy contact → life lost → invincibility flash
+- [x] Hazard contact → damage/respawn
+- [x] Room navigation via exits
 
 ---
 

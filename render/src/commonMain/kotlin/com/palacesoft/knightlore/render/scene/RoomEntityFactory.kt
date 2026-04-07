@@ -1478,32 +1478,27 @@ object RoomEntityFactory {
         val isWerewulf = player.form == Form.WEREWULF
         val transforming = player.transformState.phase == TransformPhase.TRANSFORMING_TO_WEREWULF ||
             player.transformState.phase == TransformPhase.TRANSFORMING_TO_HUMAN
-        val transformProgress = if (transforming) player.transformState.progressTicks / 60f else 0f
-        val bob = (kotlin.math.sin(state.time.tick.toDouble() * 0.10472) * 2.0).toFloat()
+        val bob = (kotlin.math.sin(state.time.tick.toDouble() * 0.10472) * 1.5).toFloat()
         val ox = screen.x
         val oy = screen.y
-        val ws = if (isWerewulf) 1.1f else 1.0f
 
         // ── Transformation energy burst ─────────────────────────────────────────────
-        // During transformation: expanding purple energy rings + violent flicker
         if (transforming) {
             val tick = state.time.tick
-            // 3 expanding diamond rings
             for (ri in 0..2) {
                 val ringPhase = ((tick + ri * 20L) % 60).toFloat() / 60f
                 val ringSize = (16f + ringPhase * 48f)
                 val ringAlpha = ((1f - ringPhase) * 0xCC).toInt()
                 val ringColor = (ringAlpha shl 24) or 0x8844CC
                 commands += DrawCommand(DrawLayer.EFFECT, dk, 10 + ri, "transform_ring_$ri",
-                    Vec2f(ox + 12f * ws - ringSize, oy - 30f - ringSize / 2f),
+                    Vec2f(ox - ringSize, oy - 30f - ringSize / 2f),
                     DrawPayload.ColorPath(listOf(
-                        Vec2f(ox + 12f * ws,              oy - 30f - ringSize),
-                        Vec2f(ox + 12f * ws + ringSize,   oy - 30f),
-                        Vec2f(ox + 12f * ws,              oy - 30f + ringSize / 2f),
-                        Vec2f(ox + 12f * ws - ringSize,   oy - 30f),
+                        Vec2f(ox,              oy - 30f - ringSize),
+                        Vec2f(ox + ringSize,   oy - 30f),
+                        Vec2f(ox,              oy - 30f + ringSize / 2f),
+                        Vec2f(ox - ringSize,   oy - 30f),
                     ), ringColor))
             }
-            // Flash at transformation start (first 15 ticks) and end (last 15 ticks)
             val flashAlpha = when {
                 player.transformState.progressTicks < 15 -> ((15 - player.transformState.progressTicks) * 0x0A)
                 player.transformState.progressTicks > 45 -> ((player.transformState.progressTicks - 45) * 0x0A)
@@ -1515,353 +1510,215 @@ object RoomEntityFactory {
             }
         }
 
-        // Character center X
-        val cx = ox + 12f * ws
+        // Character center X (anchor at feet)
+        val cx = ox
 
         // ── Colors ──────────────────────────────────────────────────────────────────
-        val cloakColor = when {
-            blinking   -> 0xFF_FF4444.toInt()
-            isWerewulf -> 0xFF_3A1848.toInt()   // visible dark purple
-            else       -> 0xFF_2A1838.toInt()   // visible dark indigo
-        }
-        val armorColor = when {
-            blinking   -> 0xFF_FF4444.toInt()
-            isWerewulf -> 0xFF_4A2860.toInt()   // muted purple armor
-            else       -> 0xFF_3A3A58.toInt()   // steel-blue armor
-        }
-        val armorHighlight = if (isWerewulf) 0xFF_7A4AAA.toInt() else 0xFF_5A5A7A.toInt()
-        val legColor   = if (isWerewulf) 0xFF_2A1238.toInt() else 0xFF_2A2240.toInt()
-        val beltColor  = if (isWerewulf) 0xFF_CC5500.toInt() else 0xFF_5A5A7A.toInt()
-        val skinColor  = if (blinking) 0xFF_FF4444.toInt() else 0xFF_D4B896.toInt()
-        val eyeColor   = when {
-            blinking   -> 0xFF_FF4444.toInt()
-            isWerewulf -> 0xFF_FF6600.toInt()   // brighter orange-red
-            else       -> 0xFF_88FF22.toInt()   // brighter lime green
-        }
-        val furColor   = 0xFF_5A2A7A.toInt()
+        val blinkColor = 0xFF_FF4444.toInt()
+        val skinColor = if (blinking) blinkColor else 0xFF_E0C8A0.toInt()
+        val tunicColor = if (blinking) blinkColor else
+            if (isWerewulf) 0xFF_5A3A28.toInt() else 0xFF_B08040.toInt()  // khaki explorer tunic
+        val tunicDark = if (isWerewulf) 0xFF_3A2018.toInt() else 0xFF_8A6030.toInt()
+        val bootColor = if (isWerewulf) 0xFF_3A2A1A.toInt() else 0xFF_5A3A20.toInt()
+        val hatColor = if (blinking) blinkColor else 0xFF_C8A868.toInt()   // pith helmet tan
+        val hatBand = 0xFF_8A6030.toInt()
 
         // ── Walk cycle ──────────────────────────────────────────────────────────────
         val isMoving = player.movementState == MovementState.WALKING
         val walkFrame = if (isMoving) ((state.time.tick * 0.25f).toInt() % 4) else 0
         val isAirborne = player.airborne
-        val breathe = if (!isMoving && !isAirborne) (kotlin.math.sin(state.time.tick.toDouble() * 0.05) * 1.0).toFloat() else 0f
-        val cloakSway = if (isMoving) (kotlin.math.sin(state.time.tick.toDouble() * 0.15) * 3.0).toFloat() else 0f
-
-        // Per-frame offsets: legs/arms swing on frames 1 and 3
-        val leftLegFwd  = if (walkFrame == 1) -6f else if (walkFrame == 3)  6f else 0f
-        val rightLegFwd = if (walkFrame == 1)  6f else if (walkFrame == 3) -6f else 0f
-        val leftArmFwd  = if (walkFrame == 1)  4f else if (walkFrame == 3) -4f else 0f
-        val rightArmFwd = if (walkFrame == 1) -4f else if (walkFrame == 3)  4f else 0f
-
-        // Jump pose compresses legs and raises arms
+        val leftLegFwd  = if (walkFrame == 1) -4f else if (walkFrame == 3)  4f else 0f
+        val rightLegFwd = if (walkFrame == 1)  4f else if (walkFrame == 3) -4f else 0f
         val legHeightMul = if (isAirborne) 0.7f else 1.0f
-        val armRaiseY    = if (isAirborne) -10f else 0f
-
-        val shoulderCompress = when (player.facing.name) {
-            "NORTHEAST", "SOUTHEAST" -> -2f
-            "NORTHWEST", "SOUTHWEST" -> 2f
-            else -> 0f
-        }
 
         // ── Shadow ───────────────────────────────────────────────────────────────────
-        val shadowW = if (isAirborne) 52f else 64f * ws
-        val shadowH = if (isAirborne) 9f  else 12f
+        val shadowW = if (isAirborne) 20f else 28f
+        val shadowH = if (isAirborne) 6f else 8f
         commands += DrawCommand(DrawLayer.FLOOR, dk, -1, "player_shadow",
             Vec2f(cx - shadowW / 2f, oy - shadowH / 2f),
             DrawPayload.ColorOval(shadowW, shadowH, 0x50_000000.toInt()))
 
-        // ── Footstep marks ────────────────────────────────────────────────────────────
-        if (isMoving) {
-            val footTick = state.time.tick
-            val isLeftFoot = (footTick / 8) % 2 == 0L
-            val footOffsetX = when (player.facing.name) {
-                "EAST", "NORTHEAST"  -> -4f
-                "WEST", "SOUTHWEST"  -> 4f
-                else -> 0f
-            }
-            val footOffsetY = when (player.facing.name) {
-                "SOUTH", "SOUTHEAST" -> -3f
-                "NORTH", "NORTHWEST" -> 3f
-                else -> 0f
-            }
-            val footX = if (isLeftFoot) cx - 6f * ws + footOffsetX else cx + 2f * ws + footOffsetX
-            val footAlpha = (((8L - footTick % 8).toFloat() / 8f) * 60).toInt()
-            if (footAlpha > 5) {
-                commands += DrawCommand(DrawLayer.FLOOR, dk, -2, "player_footstep_${footTick % 2}",
-                    Vec2f(footX - 2f, oy + footOffsetY - 1f),
-                    DrawPayload.ColorOval(4f, 2f, (footAlpha shl 24) or 0x1A1A2A))
-            }
-        }
-
-        // ── Legs ─────────────────────────────────────────────────────────────────────
-        val legH = 14f * legHeightMul
-        val ll = listOf(
-            Vec2f(cx - 10f * ws, oy - legH + leftLegFwd  + bob),
-            Vec2f(cx -  4f * ws, oy - legH + leftLegFwd  + bob),
-            Vec2f(cx -  4f * ws, oy         + leftLegFwd + bob),
-            Vec2f(cx - 10f * ws, oy         + leftLegFwd + bob),
-        )
-        val rl = listOf(
-            Vec2f(cx +  2f * ws, oy - legH + rightLegFwd + bob),
-            Vec2f(cx +  8f * ws, oy - legH + rightLegFwd + bob),
-            Vec2f(cx +  8f * ws, oy        + rightLegFwd + bob),
-            Vec2f(cx +  2f * ws, oy        + rightLegFwd + bob),
-        )
-        commands += DrawCommand(DrawLayer.PLAYER, dk, -2, "player_leg_l",
-            Vec2f(cx - 10f * ws, oy - legH), DrawPayload.ColorPath(ll, legColor))
-        commands += DrawCommand(DrawLayer.PLAYER, dk, -2, "player_leg_r",
-            Vec2f(cx + 2f * ws, oy - legH), DrawPayload.ColorPath(rl, legColor))
-        // Feet
-        commands += DrawCommand(DrawLayer.PLAYER, dk, -2, "player_foot_l",
-            Vec2f(cx - 11f * ws, oy - 2f + leftLegFwd + bob),
-            DrawPayload.ColorOval(5f * ws, 3f, 0xFF_0A0818.toInt()))
-        commands += DrawCommand(DrawLayer.PLAYER, dk, -2, "player_foot_r",
-            Vec2f(cx + 2f * ws, oy - 2f + rightLegFwd + bob),
-            DrawPayload.ColorOval(5f * ws, 3f, 0xFF_0A0818.toInt()))
-
-        // ── Cape / cloak back (behind body) ──────────────────────────────────────────
-        val capeSwayL = -cloakSway
-        val capeSwayR =  cloakSway
         if (!isWerewulf) {
-            val capePts = listOf(
-                Vec2f(cx -  2f * ws,             oy - 56f + bob),
-                Vec2f(cx + 14f * ws,             oy - 56f + bob),
-                Vec2f(cx + 18f * ws + capeSwayR, oy - 18f + bob),
-                Vec2f(cx + 14f * ws + capeSwayR, oy +  2f + bob),
-                Vec2f(cx -  4f * ws + capeSwayL, oy +  2f + bob),
-                Vec2f(cx -  8f * ws + capeSwayL, oy - 18f + bob),
-            )
-            commands += DrawCommand(DrawLayer.PLAYER, dk, -1, "player_cape",
-                Vec2f(cx - 8f * ws, oy - 56f), DrawPayload.ColorPath(capePts, cloakColor))
-        } else {
-            // Werewolf: hunched, wider beast cloak with claws at hem
-            val wolfCapePts = listOf(
-                Vec2f(cx -  8f * ws,  oy - 60f + bob),   // hunch left
-                Vec2f(cx +  2f * ws,  oy - 72f + bob),   // peak (hunched forward)
-                Vec2f(cx + 10f * ws,  oy - 72f + bob),   // peak right
-                Vec2f(cx + 20f * ws,  oy - 60f + bob),   // hunch right
-                Vec2f(cx + 26f * ws + capeSwayR, oy - 20f + bob),  // right flare
-                Vec2f(cx + 24f * ws + capeSwayR, oy +  2f + bob),  // hem right
-                Vec2f(cx -  8f * ws + capeSwayL, oy +  2f + bob),  // hem left
-                Vec2f(cx - 12f * ws + capeSwayL, oy - 20f + bob),  // left flare
-            )
-            commands += DrawCommand(DrawLayer.PLAYER, dk, -1, "player_wolf_cape",
-                Vec2f(cx - 12f * ws, oy - 72f), DrawPayload.ColorPath(wolfCapePts, cloakColor))
-            // Claw tips at hem (two small triangles)
-            commands += DrawCommand(DrawLayer.PLAYER, dk, 0, "player_claw_l",
-                Vec2f(cx - 12f * ws, oy), DrawPayload.ColorPath(listOf(
-                    Vec2f(cx - 12f * ws + capeSwayL, oy + 2f + bob),
-                    Vec2f(cx - 10f * ws + capeSwayL, oy + 2f + bob),
-                    Vec2f(cx - 11f * ws + capeSwayL, oy + 8f + bob),
-                ), 0xFF_6A3A8A.toInt()))
-            commands += DrawCommand(DrawLayer.PLAYER, dk, 0, "player_claw_r",
-                Vec2f(cx + 24f * ws, oy), DrawPayload.ColorPath(listOf(
-                    Vec2f(cx + 24f * ws + capeSwayR, oy + 2f + bob),
-                    Vec2f(cx + 26f * ws + capeSwayR, oy + 2f + bob),
-                    Vec2f(cx + 25f * ws + capeSwayR, oy + 8f + bob),
-                ), 0xFF_6A3A8A.toInt()))
-            // Tail stub
-            commands += DrawCommand(DrawLayer.PLAYER, dk, 0, "player_tail",
-                Vec2f(cx + 18f * ws, oy), DrawPayload.ColorPath(listOf(
-                    Vec2f(cx + 20f * ws, oy + 4f + bob),
-                    Vec2f(cx + 24f * ws, oy - 2f + bob),
-                    Vec2f(cx + 22f * ws, oy + 0f + bob),
-                ), cloakColor))
-        }
+            // ════════════════════════════════════════════════════════════════════════
+            // HUMAN FORM — Sabreman: pith helmet explorer
+            // ════════════════════════════════════════════════════════════════════════
+            val legH = 10f * legHeightMul
 
-        // ── Tunic / body armor ────────────────────────────────────────────────────────
-        val chestLeft  = cx - (7f + shoulderCompress) * ws
-        val chestRight = cx + (7f - shoulderCompress) * ws
-        val chestCx = (chestLeft + chestRight) / 2f
+            // Boots (left / right)
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 0, "player_boot_l",
+                Vec2f(cx - 6f, oy - legH + leftLegFwd + bob),
+                DrawPayload.ColorRect(5f, legH, bootColor))
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 0, "player_boot_r",
+                Vec2f(cx + 1f, oy - legH + rightLegFwd + bob),
+                DrawPayload.ColorRect(5f, legH, bootColor))
 
-        val tunicPts = listOf(
-            Vec2f(chestLeft  - 2f, oy - 52f + breathe * 0.5f + bob),
-            Vec2f(chestRight + 2f, oy - 52f + breathe * 0.5f + bob),
-            Vec2f(chestRight,      oy - 30f + bob),
-            Vec2f(chestLeft,       oy - 30f + bob),
-        )
-        commands += DrawCommand(DrawLayer.PLAYER, dk, 1, "player_chest",
-            Vec2f(chestLeft, oy - 52f), DrawPayload.ColorPath(tunicPts, armorColor, 0xFF_0A0A14.toInt()))
+            // Tunic body
+            val bodyTop = oy - 38f + bob
+            val bodyBot = oy - 10f + bob
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 1, "player_body",
+                Vec2f(cx - 8f, bodyTop),
+                DrawPayload.ColorRect(16f, bodyBot - bodyTop, tunicColor))
+            // Darker side shadow on tunic
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_body_shade",
+                Vec2f(cx + 4f, bodyTop),
+                DrawPayload.ColorRect(4f, bodyBot - bodyTop, tunicDark))
+            // Belt
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 3, "player_belt",
+                Vec2f(cx - 8f, oy - 18f + bob),
+                DrawPayload.ColorRect(16f, 2f, 0xFF_5A3A20.toInt()))
 
-        // Belt
-        commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_belt",
-            Vec2f(chestLeft, oy - 30f + bob),
-            DrawPayload.Line(chestLeft, oy - 30f + bob, chestRight, oy - 30f + bob, beltColor, 1.5f))
-        commands += DrawCommand(DrawLayer.PLAYER, dk, 3, "player_buckle",
-            Vec2f(chestCx - 2f, oy - 31f + bob),
-            DrawPayload.ColorOval(4f, 3f, if (isWerewulf) 0xFF_CC6600.toInt() else 0xFF_888899.toInt()))
+            // Arms (simple rectangles)
+            val armTop = oy - 34f + bob
+            val armBot = oy - 20f + bob
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 1, "player_arm_l",
+                Vec2f(cx - 12f, armTop + leftLegFwd * 0.5f),
+                DrawPayload.ColorRect(4f, armBot - armTop, tunicColor))
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 1, "player_arm_r",
+                Vec2f(cx + 8f, armTop + rightLegFwd * 0.5f),
+                DrawPayload.ColorRect(4f, armBot - armTop, tunicColor))
+            // Hands
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_hand_l",
+                Vec2f(cx - 12f, armBot + leftLegFwd * 0.5f - 1f),
+                DrawPayload.ColorOval(4f, 3f, skinColor))
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_hand_r",
+                Vec2f(cx + 8f, armBot + rightLegFwd * 0.5f - 1f),
+                DrawPayload.ColorOval(4f, 3f, skinColor))
 
-        // Armor banding (human only)
-        if (!isWerewulf) {
-            for (i in 1..2) {
-                val lineY = oy - 52f + i * 7f + bob
-                commands += DrawCommand(DrawLayer.PLAYER, dk, 3, "player_armor_band_$i",
-                    Vec2f(chestLeft, lineY),
-                    DrawPayload.Line(chestLeft, lineY, chestRight, lineY, armorHighlight, 0.8f))
-            }
-        }
+            // Neck
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 3, "player_neck",
+                Vec2f(cx - 3f, oy - 42f + bob),
+                DrawPayload.ColorRect(6f, 5f, skinColor))
 
-        // Chest center line / fur stripe
-        if (isWerewulf) {
-            // Fur strokes radiating from chest
-            val furOffsets = listOf(
-                Pair(-4f to -48f, -8f to -40f),
-                Pair( 0f to -48f,  0f to -38f),
-                Pair( 4f to -48f,  8f to -40f),
-                Pair(-6f to -44f, -12f to -36f),
-                Pair( 6f to -44f,  12f to -36f),
-                Pair(-2f to -42f, -4f to -32f),
-                Pair( 2f to -42f,  4f to -32f),
-            )
-            furOffsets.forEachIndexed { fi, (from, to) ->
-                commands += DrawCommand(DrawLayer.PLAYER, dk, 3, "player_fur_$fi",
-                    Vec2f(chestCx + from.first, oy + from.second + bob),
-                    DrawPayload.Line(
-                        chestCx + from.first,  oy + from.second + bob,
-                        chestCx + to.first,    oy + to.second   + bob,
-                        furColor, 1f))
-            }
-        } else {
-            commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_chest_line",
-                Vec2f(chestCx, oy - 50f + bob),
-                DrawPayload.Line(chestCx, oy - 50f + bob, chestCx, oy - 32f + bob, armorHighlight, 1f))
-        }
-
-        // ── Pauldrons ─────────────────────────────────────────────────────────────────
-        val pLeftPts = listOf(
-            Vec2f(chestLeft - 2f, oy - 52f + breathe * 0.5f + bob),
-            Vec2f(chestLeft - 8f, oy - 50f + bob),
-            Vec2f(chestLeft - 7f, oy - 42f + bob),
-            Vec2f(chestLeft,      oy - 40f + bob),
-        )
-        val pRightPts = listOf(
-            Vec2f(chestRight + 2f, oy - 52f + breathe * 0.5f + bob),
-            Vec2f(chestRight + 8f, oy - 50f + bob),
-            Vec2f(chestRight + 7f, oy - 42f + bob),
-            Vec2f(chestRight,      oy - 40f + bob),
-        )
-        commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_paul_l",
-            Vec2f(chestLeft - 8f, oy - 52f), DrawPayload.ColorPath(pLeftPts, armorColor, 0xFF_0A0A14.toInt()))
-        commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_paul_r",
-            Vec2f(chestRight, oy - 52f), DrawPayload.ColorPath(pRightPts, armorColor, 0xFF_0A0A14.toInt()))
-        commands += DrawCommand(DrawLayer.PLAYER, dk, 3, "player_paul_l_hl",
-            Vec2f(chestLeft - 8f, oy - 50f + bob),
-            DrawPayload.Line(chestLeft - 8f, oy - 50f + bob, chestLeft - 7f, oy - 42f + bob,
-                armorHighlight, 1f))
-
-        // ── Arms — ColorPath quads for visible limbs ───────────────────────────────────
-        val armRaise = armRaiseY
-        // Left arm
-        val laTop = oy - 42f + armRaise + bob + leftArmFwd
-        val laBot = oy - 32f + armRaise + bob + leftArmFwd
-        val leftArmPts = listOf(
-            Vec2f(chestLeft - 8f,  laTop),
-            Vec2f(chestLeft - 4f,  laTop),
-            Vec2f(chestLeft - 6f,  laBot),
-            Vec2f(chestLeft - 10f, laBot),
-        )
-        commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_arm_l",
-            Vec2f(chestLeft - 10f, laTop), DrawPayload.ColorPath(leftArmPts, armorColor))
-        commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_gaunt_l",
-            Vec2f(chestLeft - 11f, laBot - 2f),
-            DrawPayload.ColorOval(5f, 4f, skinColor))
-
-        // Right arm
-        val raTop = oy - 42f + armRaise + bob + rightArmFwd
-        val raBot = oy - 32f + armRaise + bob + rightArmFwd
-        val rightArmPts = listOf(
-            Vec2f(chestRight + 4f, raTop),
-            Vec2f(chestRight + 8f, raTop),
-            Vec2f(chestRight + 10f, raBot),
-            Vec2f(chestRight + 6f,  raBot),
-        )
-        commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_arm_r",
-            Vec2f(chestRight + 4f, raTop), DrawPayload.ColorPath(rightArmPts, armorColor))
-        commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_gaunt_r",
-            Vec2f(chestRight + 5f, raBot - 2f),
-            DrawPayload.ColorOval(5f, 4f, skinColor))
-
-        // ── Neck ──────────────────────────────────────────────────────────────────────
-        commands += DrawCommand(DrawLayer.PLAYER, dk, 3, "player_neck",
-            Vec2f(chestCx - 3f, oy - 58f + breathe * 0.5f + bob),
-            DrawPayload.ColorRect(6f * ws, 7f, 0xFF_0A0818.toInt()))
-
-        // ── Head ──────────────────────────────────────────────────────────────────────
-        val facingShift = when (player.facing.name) {
-            "WEST", "NORTHWEST", "SOUTHWEST" -> -3f
-            "EAST", "NORTHEAST", "SOUTHEAST" -> 3f
-            else -> 0f
-        }
-
-        if (!isWerewulf) {
-            // Human: angular pointed hood
-            val hoodPts = listOf(
-                Vec2f(chestCx,       oy - 72f + bob),
-                Vec2f(chestCx - 6f,  oy - 64f + bob),
-                Vec2f(chestCx - 8f,  oy - 56f + bob),
-                Vec2f(chestCx + 2f,  oy - 54f + bob),
-                Vec2f(chestCx + 10f, oy - 54f + bob),
-                Vec2f(chestCx + 10f, oy - 62f + bob),
-                Vec2f(chestCx + 6f,  oy - 70f + bob),
-            )
-            commands += DrawCommand(DrawLayer.PLAYER, dk, 3, "player_hood",
-                Vec2f(chestCx - 8f, oy - 72f), DrawPayload.ColorPath(hoodPts, cloakColor))
+            // Face
             commands += DrawCommand(DrawLayer.PLAYER, dk, 4, "player_face",
-                Vec2f(chestCx - 2f, oy - 63f + breathe * 0.3f + bob),
-                DrawPayload.ColorOval(12f * ws, 9f, skinColor))
+                Vec2f(cx - 5f, oy - 50f + bob),
+                DrawPayload.ColorOval(10f, 9f, skinColor))
+
+            // Eyes — small dark dots, not glowing
+            val facingShift = when (player.facing.name) {
+                "WEST", "NORTHWEST", "SOUTHWEST" -> -2f
+                "EAST", "NORTHEAST", "SOUTHEAST" -> 2f
+                else -> 0f
+            }
             commands += DrawCommand(DrawLayer.PLAYER, dk, 5, "player_eye_l",
-                Vec2f(chestCx - 4f * ws + facingShift, oy - 59f + breathe * 0.3f + bob),
-                DrawPayload.ColorOval(3f, 2f, eyeColor))
+                Vec2f(cx - 3f + facingShift, oy - 46f + bob),
+                DrawPayload.ColorOval(2f, 2f, 0xFF_2A1A10.toInt()))
             commands += DrawCommand(DrawLayer.PLAYER, dk, 5, "player_eye_r",
-                Vec2f(chestCx + 2f * ws + facingShift, oy - 59f + breathe * 0.3f + bob),
-                DrawPayload.ColorOval(3f, 2f, eyeColor))
+                Vec2f(cx + 1f + facingShift, oy - 46f + bob),
+                DrawPayload.ColorOval(2f, 2f, 0xFF_2A1A10.toInt()))
+
+            // Pith helmet — the iconic Sabreman hat
+            // Dome
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 6, "player_hat_dome",
+                Vec2f(cx - 6f, oy - 58f + bob),
+                DrawPayload.ColorOval(12f, 10f, hatColor))
+            // Brim — wider oval below the dome
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 5, "player_hat_brim",
+                Vec2f(cx - 9f, oy - 50f + bob),
+                DrawPayload.ColorOval(18f, 5f, hatColor))
+            // Hat band
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 7, "player_hat_band",
+                Vec2f(cx - 6f, oy - 52f + bob),
+                DrawPayload.ColorRect(12f, 2f, hatBand))
         } else {
-            // Werewolf: hulking beast head with wedge snout and fangs
-            val wolfHeadPts = listOf(
-                Vec2f(chestCx +  4f,  oy - 74f + bob),   // left ear tip
-                Vec2f(chestCx +  2f,  oy - 64f + bob),   // left ear base
-                Vec2f(chestCx -  8f,  oy - 60f + bob),   // jaw left
-                Vec2f(chestCx -  4f,  oy - 54f + bob),   // muzzle left
-                Vec2f(chestCx + 14f,  oy - 54f + bob),   // muzzle right
-                Vec2f(chestCx + 18f,  oy - 60f + bob),   // jaw right
-                Vec2f(chestCx + 16f,  oy - 64f + bob),   // right ear base
-                Vec2f(chestCx + 20f,  oy - 74f + bob),   // right ear tip
-                Vec2f(chestCx + 12f,  oy - 70f + bob),   // between ears
-            )
-            commands += DrawCommand(DrawLayer.PLAYER, dk, 3, "player_wolf_head",
-                Vec2f(chestCx - 8f, oy - 74f), DrawPayload.ColorPath(wolfHeadPts, cloakColor))
+            // ════════════════════════════════════════════════════════════════════════
+            // WEREWOLF FORM — hunched, wider, feral
+            // ════════════════════════════════════════════════════════════════════════
+            val ws = 1.2f
+            val legH = 8f * legHeightMul
+            val furColor = if (blinking) blinkColor else 0xFF_5A3828.toInt()
+            val furDark = 0xFF_3A2018.toInt()
 
-            // Snout — wedge shape
-            val snoutPts = listOf(
-                Vec2f(chestCx + 1f,  oy - 62f + bob),   // snout top left
-                Vec2f(chestCx + 9f,  oy - 62f + bob),   // snout top right
-                Vec2f(chestCx + 14f, oy - 57f + bob),   // snout tip right
-                Vec2f(chestCx +  1f, oy - 57f + bob),   // snout base left
+            // Hind legs
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 0, "player_boot_l",
+                Vec2f(cx - 8f, oy - legH + leftLegFwd + bob),
+                DrawPayload.ColorRect(5f, legH, furDark))
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 0, "player_boot_r",
+                Vec2f(cx + 3f, oy - legH + rightLegFwd + bob),
+                DrawPayload.ColorRect(5f, legH, furDark))
+
+            // Hunched body — wider and lower
+            val bodyTop = oy - 30f + bob
+            val bodyBot = oy - 8f + bob
+            val bodyPts = listOf(
+                Vec2f(cx - 12f * ws, bodyTop),
+                Vec2f(cx + 12f * ws, bodyTop),
+                Vec2f(cx + 10f * ws, bodyBot),
+                Vec2f(cx - 10f * ws, bodyBot),
             )
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 1, "player_body",
+                Vec2f(cx - 12f * ws, bodyTop),
+                DrawPayload.ColorPath(bodyPts, furColor, furDark))
+
+            // Fur texture lines
+            for (i in 0..4) {
+                val fy = bodyTop + (bodyBot - bodyTop) * i / 5f
+                commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_fur_$i",
+                    Vec2f(cx - 8f, fy),
+                    DrawPayload.Line(cx - 8f, fy, cx + 8f, fy, furDark, 0.8f))
+            }
+
+            // Front legs / arms
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 1, "player_arm_l",
+                Vec2f(cx - 14f * ws, bodyTop + 4f + leftLegFwd * 0.5f),
+                DrawPayload.ColorRect(4f, 12f, furColor))
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 1, "player_arm_r",
+                Vec2f(cx + 10f * ws, bodyTop + 4f + rightLegFwd * 0.5f),
+                DrawPayload.ColorRect(4f, 12f, furColor))
+
+            // Claws
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_claw_l",
+                Vec2f(cx - 15f * ws, bodyTop + 16f + leftLegFwd * 0.5f),
+                DrawPayload.ColorOval(5f, 3f, 0xFF_CCAA88.toInt()))
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_claw_r",
+                Vec2f(cx + 10f * ws, bodyTop + 16f + rightLegFwd * 0.5f),
+                DrawPayload.ColorOval(5f, 3f, 0xFF_CCAA88.toInt()))
+
+            // Wolf head — forward-pointing
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 3, "player_head",
+                Vec2f(cx - 7f, oy - 40f + bob),
+                DrawPayload.ColorOval(14f, 12f, furColor))
+
+            // Snout
+            val facingShift = when (player.facing.name) {
+                "WEST", "NORTHWEST", "SOUTHWEST" -> -3f
+                "EAST", "NORTHEAST", "SOUTHEAST" -> 3f
+                else -> 0f
+            }
             commands += DrawCommand(DrawLayer.PLAYER, dk, 4, "player_snout",
-                Vec2f(chestCx + 1f, oy - 62f), DrawPayload.ColorPath(snoutPts, 0xFF_1A0830.toInt()))
+                Vec2f(cx - 4f + facingShift, oy - 36f + bob),
+                DrawPayload.ColorOval(8f, 5f, 0xFF_4A2A18.toInt()))
 
-            // Fangs — two small white downward triangles
-            commands += DrawCommand(DrawLayer.PLAYER, dk, 5, "player_fang_l",
-                Vec2f(chestCx + 3f, oy - 58f + bob), DrawPayload.ColorPath(listOf(
-                    Vec2f(chestCx + 3f, oy - 58f + bob),
-                    Vec2f(chestCx + 5f, oy - 58f + bob),
-                    Vec2f(chestCx + 4f, oy - 54f + bob),
-                ), 0xFF_EEEECC.toInt()))
-            commands += DrawCommand(DrawLayer.PLAYER, dk, 5, "player_fang_r",
-                Vec2f(chestCx + 7f, oy - 58f + bob), DrawPayload.ColorPath(listOf(
-                    Vec2f(chestCx + 7f, oy - 58f + bob),
-                    Vec2f(chestCx + 9f, oy - 58f + bob),
-                    Vec2f(chestCx + 8f, oy - 54f + bob),
-                ), 0xFF_EEEECC.toInt()))
-
-            // Wolf eyes — glowing, above snout
+            // Eyes — glowing amber
+            val eyeColor = if (blinking) blinkColor else 0xFF_FF8800.toInt()
             commands += DrawCommand(DrawLayer.PLAYER, dk, 5, "player_eye_l",
-                Vec2f(chestCx + facingShift,      oy - 66f + bob),
-                DrawPayload.ColorOval(4f, 3f, eyeColor))
+                Vec2f(cx - 4f + facingShift, oy - 39f + bob),
+                DrawPayload.ColorOval(3f, 2f, eyeColor))
             commands += DrawCommand(DrawLayer.PLAYER, dk, 5, "player_eye_r",
-                Vec2f(chestCx + 8f + facingShift, oy - 66f + bob),
-                DrawPayload.ColorOval(4f, 3f, eyeColor))
+                Vec2f(cx + 2f + facingShift, oy - 39f + bob),
+                DrawPayload.ColorOval(3f, 2f, eyeColor))
+
+            // Pointed ears
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 4, "player_ear_l",
+                Vec2f(cx - 7f, oy - 44f + bob), DrawPayload.ColorPath(listOf(
+                    Vec2f(cx - 7f, oy - 40f + bob),
+                    Vec2f(cx - 4f, oy - 40f + bob),
+                    Vec2f(cx - 5f, oy - 48f + bob),
+                ), furColor))
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 4, "player_ear_r",
+                Vec2f(cx + 4f, oy - 44f + bob), DrawPayload.ColorPath(listOf(
+                    Vec2f(cx + 4f, oy - 40f + bob),
+                    Vec2f(cx + 7f, oy - 40f + bob),
+                    Vec2f(cx + 6f, oy - 48f + bob),
+                ), furColor))
+
+            // Tail
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 0, "player_tail",
+                Vec2f(cx + 8f, oy - 10f + bob), DrawPayload.ColorPath(listOf(
+                    Vec2f(cx + 8f * ws, oy - 12f + bob),
+                    Vec2f(cx + 16f * ws, oy - 18f + bob),
+                    Vec2f(cx + 14f * ws, oy - 14f + bob),
+                ), furColor))
         }
     }
 

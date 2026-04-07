@@ -148,9 +148,9 @@ class RoomTransitionSystemTest {
 
         assertNull(result.state.roomTransition)
         assertEquals(
-            Vec3f(4f, 7.5f, 1f),
+            Vec3f(4f, 6.5f, 0f),
             result.state.player.position,
-            "Player should spawn at y=7.5 for spawn_s"
+            "Player should spawn at y=6.5 for spawn_s (1.5 tiles inside south wall)"
         )
     }
 }

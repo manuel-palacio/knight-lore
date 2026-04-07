@@ -21,23 +21,23 @@ class IsoProjectorTest {
 
     @Test
     fun isoProjector_xOne_movesDownRight() {
-        // toScreen(1,0,0): x=(1-0)*32=32, y=(1+0)*16-0*32=16
+        // toScreen(1,0,0): x=(1-0)*48=48, y=(1+0)*24-0*40=24
         val result = IsoProjector.toScreen(1f, 0f, 0f)
-        assertVec2fEquals(Vec2f(32f, 16f), result)
+        assertVec2fEquals(Vec2f(48f, 24f), result)
     }
 
     @Test
     fun isoProjector_yOne_movesDownLeft() {
-        // toScreen(0,1,0): x=(0-1)*32=-32, y=(0+1)*16-0*32=16
+        // toScreen(0,1,0): x=(0-1)*48=-48, y=(0+1)*24-0*40=24
         val result = IsoProjector.toScreen(0f, 1f, 0f)
-        assertVec2fEquals(Vec2f(-32f, 16f), result)
+        assertVec2fEquals(Vec2f(-48f, 24f), result)
     }
 
     @Test
     fun isoProjector_zOne_movesUp() {
-        // toScreen(0,0,1): x=(0-0)*32=0, y=(0+0)*16-1*32=-32
+        // toScreen(0,0,1): x=(0-0)*48=0, y=(0+0)*24-1*40=-40
         val result = IsoProjector.toScreen(0f, 0f, 1f)
-        assertVec2fEquals(Vec2f(0f, -32f), result)
+        assertVec2fEquals(Vec2f(0f, -40f), result)
     }
 
     @Test

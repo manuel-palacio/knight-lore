@@ -400,7 +400,9 @@
       "y": 5,
       "z": 1,
       "type": "SOLID_BLOCK"
-    }
+    },
+    { "x": 3, "y": 6, "z": 0, "type": "HAZARD" },
+    { "x": 6, "y": 2, "z": 0, "type": "HAZARD" }
   ],
   "interactives": [],
   "exits": [

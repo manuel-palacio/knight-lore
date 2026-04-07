@@ -94,6 +94,16 @@ class MovementSystem(
 
         val wallSolids = room?.let { buildBoundaryWalls(it) } ?: emptyList()
 
+        // Dynamic blocks — can be stood on and pushed
+        val blockSolids = state.dynamicBlocks.map { block ->
+            SolidVolume(
+                bounds = Aabb.of(
+                    Vec3f(block.gridX.toFloat(), block.gridY.toFloat(), block.gridZ.toFloat()),
+                    Vec3f(block.gridX + 1f, block.gridY + 1f, block.gridZ + 1f),
+                )
+            )
+        }
+
         // Implicit ground plane — entire room floor at z=0, always standable
         val groundPlane = room?.let {
             SolidVolume(
@@ -101,7 +111,7 @@ class MovementSystem(
                 isTopStandable = true,
             )
         }
-        val solids = tileSolids + wallSolids + listOfNotNull(groundPlane)
+        val solids = tileSolids + wallSolids + blockSolids + listOfNotNull(groundPlane)
 
         val entityAabb = Aabb.of(
             Vec3f(-ENTITY_HALF_FOOTPRINT, -ENTITY_HALF_FOOTPRINT, 0f),

@@ -6,6 +6,7 @@ import com.palacesoft.knightlore.core.math.Vec3f
 import com.palacesoft.knightlore.data.dto.RoomDto
 import com.palacesoft.knightlore.domain.model.ActorSpawn
 import com.palacesoft.knightlore.domain.model.ActorType
+import com.palacesoft.knightlore.domain.model.BlockSpawn
 import com.palacesoft.knightlore.domain.model.ExitSide
 import com.palacesoft.knightlore.domain.model.InteractiveDef
 import com.palacesoft.knightlore.domain.model.InteractiveKind
@@ -81,6 +82,10 @@ object RoomMapper {
                 )
             }
 
+        val blockSpawns = dto.blocks.map { b ->
+            BlockSpawn(id = b.id, gridX = b.x, gridY = b.y, gridZ = b.z, pushable = b.pushable)
+        }
+
         return RoomDefinition(
             id = roomId,
             width = dto.width,
@@ -94,6 +99,7 @@ object RoomMapper {
             theme = theme,
             special = special,
             patrolSpawns = patrolSpawns,
+            blockSpawns = blockSpawns,
         )
     }
 

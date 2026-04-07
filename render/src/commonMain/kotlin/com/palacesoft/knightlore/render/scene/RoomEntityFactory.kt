@@ -18,6 +18,7 @@ import com.palacesoft.knightlore.domain.model.RoomDefinition
 import com.palacesoft.knightlore.domain.model.RoomSpecial
 import com.palacesoft.knightlore.domain.model.RoomType
 import com.palacesoft.knightlore.domain.model.TransformPhase
+import com.palacesoft.knightlore.domain.model.BlockState
 import com.palacesoft.knightlore.domain.model.TileType
 import com.palacesoft.knightlore.render.iso.IsoProjector
 
@@ -267,19 +268,14 @@ object RoomEntityFactory {
                         DrawPayload.Line(pts[0].x, pts[0].y, pts[1].x, pts[1].y, Colors.HIGHLIGHT, 1f))
                 }
                 TileType.SOLID_BLOCK -> {
-                    // Use top-face Z for depth key so blocks sort behind player standing at same XY
-                    val footWorld = Vec3f(gx + 0.5f, gy + 1f, gz + 1f)
+                    // Depth key based on front-bottom corner (gy+1 is the camera-facing edge)
+                    val footWorld = Vec3f(gx + 0.5f, gy + 1f, gz)
                     val dk = IsoProjector.depthKey(footWorld)
-                    // Blocks directly above the player's XY footprint must render in front of player
+                    // Use depth comparison to decide layer: blocks "in front of" player go to FOREGROUND,
+                    // blocks "behind" player stay in BLOCK. This implements the painter's algorithm correctly.
                     val playerPos = state.player.position
-                    val isAbovePlayerFootprint =
-                        gx <= playerPos.x && playerPos.x < gx + 1f &&
-                        gy <= playerPos.y && playerPos.y < gy + 1f
-                    val blockLayer = when {
-                        isAbovePlayerFootprint && gz <= 1f -> DrawLayer.PLAYER
-                        isAbovePlayerFootprint && gz > 1f  -> DrawLayer.FOREGROUND
-                        else -> DrawLayer.BLOCK
-                    }
+                    val playerDk = IsoProjector.depthKey(Vec3f(playerPos.x + 0.5f, playerPos.y + 0.5f, 0f))
+                    val blockLayer = if (dk > playerDk) DrawLayer.FOREGROUND else DrawLayer.BLOCK
                     val id = "tile_${tile.gridX}_${tile.gridY}_${tile.gridZ}"
 
                     // Top face
@@ -463,6 +459,11 @@ object RoomEntityFactory {
             }
         }
 
+        // 2b. Dynamic (pushable/falling) blocks
+        state.dynamicBlocks.forEach { block ->
+            buildDynamicBlockCommands(block, state, offset, commands, tick)
+        }
+
         // 3. Items
         state.itemInstances
             .filterIsInstance<ItemInstance>()
@@ -523,6 +524,83 @@ object RoomEntityFactory {
             Vec2f(viewportW * 0.78f, 0f), DrawPayload.ColorRect(viewportW * 0.22f, viewportH, 0x50_000000.toInt()))
 
         return DrawCommandBuilder.sort(commands)
+    }
+
+    // ── Dynamic block rendering ──────────────────────────────────────────────
+
+    private fun buildDynamicBlockCommands(
+        block: BlockState,
+        state: GameState,
+        offset: Vec2f,
+        commands: MutableList<DrawCommand>,
+        tick: Long,
+    ) {
+        val gx = block.gridX.toFloat()
+        val gy = block.gridY.toFloat()
+        val gz = block.gridZ.toFloat()
+        val ox = offset.x; val oy = offset.y
+
+        val footWorld = Vec3f(gx + 0.5f, gy + 1f, gz)
+        val dk = IsoProjector.depthKey(footWorld)
+
+        val playerPos = state.player.position
+        val playerDk = IsoProjector.depthKey(Vec3f(playerPos.x + 0.5f, playerPos.y + 0.5f, 0f))
+        val blockLayer = if (dk > playerDk) DrawLayer.FOREGROUND else DrawLayer.BLOCK
+        val id = "dblock_${block.id}"
+
+        // Top face — slightly lighter than static blocks to distinguish
+        commands += DrawCommand(blockLayer, dk, 2, "${id}_top",
+            IsoProjector.toScreen(Vec3f(gx, gy, gz + 1f)) + offset,
+            DrawPayload.ColorPath(floorDiamond(gx, gy, gz + 1f, ox, oy), 0xFF_4A4A6E.toInt(), 0xFF_0A0A14.toInt()))
+        // Left face
+        commands += DrawCommand(blockLayer, dk, 1, "${id}_left",
+            IsoProjector.toScreen(Vec3f(gx, gy + 1f, gz)) + offset,
+            DrawPayload.ColorPath(blockFaceLeft(gx, gy, gz, ox, oy), 0xFF_2A2A4A.toInt(), 0xFF_0A0A14.toInt()))
+        // Right face
+        commands += DrawCommand(blockLayer, dk, 0, "${id}_right",
+            IsoProjector.toScreen(Vec3f(gx + 1f, gy, gz)) + offset,
+            DrawPayload.ColorPath(blockFaceRight(gx, gy, gz, ox, oy), 0xFF_1E1E3A.toInt(), 0xFF_0A0A14.toInt()))
+
+        // Pushable: arrow glyph on left (south) face pointing in push direction
+        if (block.pushable && block.velocityZ == 0f) {
+            val arrowMid = pt(gx + 0.5f, gy + 1f, gz + 0.5f, ox, oy)
+            val arrowTip = pt(gx + 0.5f, gy + 1f, gz + 0.65f, ox, oy)
+            val arrowL   = pt(gx + 0.3f, gy + 1f, gz + 0.45f, ox, oy)
+            val arrowR   = pt(gx + 0.7f, gy + 1f, gz + 0.45f, ox, oy)
+            commands += DrawCommand(blockLayer, dk, 3, "${id}_arrow_shaft",
+                Vec2f(arrowMid.x, arrowMid.y),
+                DrawPayload.Line(arrowMid.x, arrowMid.y + 4f, arrowTip.x, arrowTip.y, 0xFF_4A4A6A.toInt(), 1f))
+            commands += DrawCommand(blockLayer, dk, 3, "${id}_arrow_l",
+                Vec2f(arrowL.x, arrowL.y),
+                DrawPayload.Line(arrowL.x, arrowL.y, arrowTip.x, arrowTip.y, 0xFF_4A4A6A.toInt(), 1f))
+            commands += DrawCommand(blockLayer, dk, 3, "${id}_arrow_r",
+                Vec2f(arrowR.x, arrowR.y),
+                DrawPayload.Line(arrowR.x, arrowR.y, arrowTip.x, arrowTip.y, 0xFF_4A4A6A.toInt(), 1f))
+        }
+
+        // Falling warning: crack lines + orange pulse when fallingTicks > 60
+        if (block.fallingTicks > 60 || block.velocityZ < 0f) {
+            val pulseFactor = kotlin.math.sin(tick.toDouble() * 0.3).toFloat()
+            val pulseAlpha = ((0.4f + pulseFactor * 0.3f) * 255).toInt().coerceIn(0, 255)
+            val pulseColor = (pulseAlpha shl 24) or 0x00_FF6600
+
+            // Orange glow on top face
+            commands += DrawCommand(blockLayer, dk, 4, "${id}_fall_glow",
+                IsoProjector.toScreen(Vec3f(gx, gy, gz + 1f)) + offset,
+                DrawPayload.ColorPath(floorDiamond(gx, gy, gz + 1f, ox, oy), pulseColor))
+
+            // 2 crack lines on top face
+            val c1a = pt(gx + 0.3f, gy + 0.2f, gz + 1f, ox, oy)
+            val c1b = pt(gx + 0.6f, gy + 0.8f, gz + 1f, ox, oy)
+            val c2a = pt(gx + 0.7f, gy + 0.3f, gz + 1f, ox, oy)
+            val c2b = pt(gx + 0.4f, gy + 0.7f, gz + 1f, ox, oy)
+            commands += DrawCommand(blockLayer, dk, 5, "${id}_crack1",
+                Vec2f(c1a.x, c1a.y),
+                DrawPayload.Line(c1a.x, c1a.y, c1b.x, c1b.y, 0xFF_FF6600.toInt(), 1f))
+            commands += DrawCommand(blockLayer, dk, 5, "${id}_crack2",
+                Vec2f(c2a.x, c2a.y),
+                DrawPayload.Line(c2a.x, c2a.y, c2b.x, c2b.y, 0xFF_FF8800.toInt(), 1f))
+        }
     }
 
     // ── Wall building ────────────────────────────────────────────────────────

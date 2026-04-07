@@ -57,7 +57,7 @@ private val HAZARD_POSITION = Vec3f(4.5f, 4.5f, 0.5f)
 /** Position that does not overlap any hazard. */
 private val SAFE_POSITION = Vec3f(1f, 1f, 1f)
 
-private val RESPAWN = Vec3f(4f, 4f, 1f)
+private val RESPAWN = Vec3f(1f, 1f, 0f)  // safe corner, far from hazard at (4,4)
 
 class LifeSystemTest {
 

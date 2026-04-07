@@ -395,7 +395,9 @@
       "y": 3,
       "z": 1,
       "type": "SOLID_BLOCK"
-    }
+    },
+    { "x": 5, "y": 5, "z": 0, "type": "HAZARD" },
+    { "x": 2, "y": 6, "z": 0, "type": "HAZARD" }
   ],
   "interactives": [],
   "exits": [
@@ -430,5 +432,9 @@
       "speed": 1.5,
       "facing": "SOUTH"
     }
+  ],
+  "blocks": [
+    { "id": "block_r002_a", "x": 2, "y": 3, "z": 1, "pushable": true },
+    { "id": "block_r002_b", "x": 4, "y": 5, "z": 1, "pushable": true }
   ]
 }

@@ -14,4 +14,5 @@ data class GameState(
     val roomTransition: RoomTransitionState?,
     val patrolEnemies: List<PatrolEnemy> = emptyList(),
     val visitedRooms: Set<RoomId> = emptySet(),
+    val dynamicBlocks: List<BlockState> = emptyList(),
 )

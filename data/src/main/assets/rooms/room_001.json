@@ -452,7 +452,10 @@
       "targetSpawnId": "spawn_w"
     }
   ],
-  "itemAnchors": [],
+  "itemAnchors": [
+    { "itemId": "crystal_ball_r001", "x": 3.5, "y": 3.5, "z": 1.0 },
+    { "itemId": "gem_r001", "x": 4.5, "y": 4.5, "z": 1.0 }
+  ],
   "actorSpawns": [
     { "actorType": "GUARD", "x": 1.5, "y": 6.5, "z": 0.0 }
   ],

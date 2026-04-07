@@ -226,95 +226,13 @@ object RoomEntityFactory {
                             DrawPayload.Line(cv1.x, cv1.y, cv2.x, cv2.y, 0xFF_2A2A38.toInt(), 1f))
                     }
 
-                    // Crack lines (~1 in 4 tiles, deterministic)
-                    if ((tile.gridX * 7 + tile.gridY * 13) % 4 == 0) {
+                    // Crack line — 1 in 8 tiles (sparse, clean)
+                    if ((tile.gridX * 7 + tile.gridY * 13) % 8 == 0) {
                         val c1 = pt(gx + 0.2f, gy + 0.1f, gz, ox, oy)
                         val c2 = pt(gx + 0.8f, gy + 0.9f, gz, ox, oy)
                         commands += DrawCommand(DrawLayer.FLOOR, dk, 1, "${id}_crack",
                             Vec2f(c1.x, c1.y),
                             DrawPayload.Line(c1.x, c1.y, c2.x, c2.y, Colors.FLOOR_CRACK, 1f))
-                    }
-                    // Secondary crack on some cracked tiles
-                    if ((tile.gridX * 11 + tile.gridY * 3) % 7 == 0) {
-                        val c1 = pt(gx + 0.7f, gy + 0.1f, gz, ox, oy)
-                        val c2 = pt(gx + 0.3f, gy + 0.7f, gz, ox, oy)
-                        commands += DrawCommand(DrawLayer.FLOOR, dk, 1, "${id}_crack2",
-                            Vec2f(c1.x, c1.y),
-                            DrawPayload.Line(c1.x, c1.y, c2.x, c2.y, Colors.FLOOR_CRACK, 1f))
-                    }
-
-                    // Glow puddle (~5% of tiles)
-                    if ((tile.gridX * 11 + tile.gridY * 17 + tile.gridX * tile.gridY) % 20 == 0) {
-                        commands += DrawCommand(DrawLayer.FLOOR, dk, 2, "${id}_glow_base",
-                            IsoProjector.toScreen(world) + offset,
-                            DrawPayload.ColorPath(pts, Colors.FLOOR_GLOW_BASE))
-                        commands += DrawCommand(DrawLayer.FLOOR, dk, 3, "${id}_glow_over",
-                            IsoProjector.toScreen(world) + offset,
-                            DrawPayload.ColorPath(pts, Colors.FLOOR_GLOW_OVER))
-                    }
-
-                    // Stone slab variation — every 3rd tile: lighter dither overlay to break up uniformity
-                    if ((tile.gridX + tile.gridY) % 3 == 0) {
-                        commands += DrawCommand(DrawLayer.FLOOR, dk, 4, "${id}_slab",
-                            IsoProjector.toScreen(world) + offset,
-                            DrawPayload.DitheredPath(jitteredPts, 0xFF_1E1E2E.toInt(), 0xFF_2A2A3E.toInt()))
-                    }
-
-                    // Blood smear — 1-in-30 tiles: asymmetric blob + splatter dots
-                    if ((tile.gridX * 13 + tile.gridY * 7 + tile.gridX * tile.gridY * 3) % 30 == 0) {
-                        // Blob — not aligned to tile grid, slightly offset
-                        val blobPts = listOf(
-                            pt(gx + 0.15f, gy + 0.3f, gz, ox, oy),
-                            pt(gx + 0.55f, gy + 0.2f, gz, ox, oy),
-                            pt(gx + 0.7f,  gy + 0.5f, gz, ox, oy),
-                            pt(gx + 0.45f, gy + 0.75f, gz, ox, oy),
-                            pt(gx + 0.2f,  gy + 0.65f, gz, ox, oy),
-                        )
-                        commands += DrawCommand(DrawLayer.FLOOR, dk, 6, "${id}_blood",
-                            IsoProjector.toScreen(world) + offset,
-                            DrawPayload.ColorPath(blobPts, 0xFF_3A0000.toInt()))
-                        // Splatter dots
-                        for (di in 0..2) {
-                            val dotSeed = tile.gridX * 17 + tile.gridY * 11 + di * 7
-                            val dotX = gx + 0.1f + ((dotSeed * 23 and 0xFF) / 255f) * 0.8f
-                            val dotY = gy + 0.1f + ((dotSeed * 31 and 0xFF) / 255f) * 0.8f
-                            val dotPt = pt(dotX, dotY, gz, ox, oy)
-                            commands += DrawCommand(DrawLayer.FLOOR, dk, 7, "${id}_splat_$di",
-                                Vec2f(dotPt.x - 1f, dotPt.y - 1f),
-                                DrawPayload.ColorOval(2f, 1.5f, 0xFF_2A0000.toInt()))
-                        }
-                    }
-
-                    // Scattered bones — 1-in-40 tiles: two thin crossed line segments
-                    if ((tile.gridX * 19 + tile.gridY * 11) % 40 == 0) {
-                        val b1 = pt(gx + 0.2f, gy + 0.4f, gz, ox, oy)
-                        val b2 = pt(gx + 0.8f, gy + 0.6f, gz, ox, oy)
-                        val b3 = pt(gx + 0.3f, gy + 0.7f, gz, ox, oy)
-                        val b4 = pt(gx + 0.7f, gy + 0.3f, gz, ox, oy)
-                        commands += DrawCommand(DrawLayer.FLOOR, dk, 6, "${id}_bone1",
-                            Vec2f(b1.x, b1.y),
-                            DrawPayload.Line(b1.x, b1.y, b2.x, b2.y, 0xFF_5A5A4A.toInt(), 1f))
-                        commands += DrawCommand(DrawLayer.FLOOR, dk, 6, "${id}_bone2",
-                            Vec2f(b3.x, b3.y),
-                            DrawPayload.Line(b3.x, b3.y, b4.x, b4.y, 0xFF_5A5A4A.toInt(), 1f))
-                    }
-
-                    // Rubble near walls — 1-in-15 tiles near perimeter
-                    val nearWall = tile.gridX <= 1 || tile.gridY <= 1 || tile.gridX >= room.width - 2 || tile.gridY >= room.depth - 2
-                    if (nearWall && (tile.gridX * 7 + tile.gridY * 23) % 15 == 0) {
-                        // 2–3 tiny triangle chips
-                        val numChips = 2 + (tile.gridX * tile.gridY) % 2
-                        for (ci in 0 until numChips) {
-                            val chipSeed = tile.gridX * 41 + tile.gridY * 37 + ci * 13
-                            val cx2 = gx + 0.1f + ((chipSeed * 29 and 0xFF) / 255f) * 0.8f
-                            val cy2 = gy + 0.1f + ((chipSeed * 43 and 0xFF) / 255f) * 0.8f
-                            val cp1 = pt(cx2, cy2, gz, ox, oy)
-                            val cp2 = pt(cx2 + 0.07f, cy2 + 0.04f, gz, ox, oy)
-                            val cp3 = pt(cx2 + 0.04f, cy2 + 0.09f, gz, ox, oy)
-                            commands += DrawCommand(DrawLayer.FLOOR, dk, 6, "${id}_chip_$ci",
-                                Vec2f(cp1.x, cp1.y),
-                                DrawPayload.ColorPath(listOf(cp1, cp2, cp3), 0xFF_2A2A3A.toInt()))
-                        }
                     }
 
                     // Floor edge highlights — top-left and top-right edges catch light
@@ -363,50 +281,6 @@ object RoomEntityFactory {
                         Vec2f(cV1.x, cV1.y),
                         DrawPayload.Line(cV1.x, cV1.y, cV2.x, cV2.y, crossColor, 1.5f))
 
-                    // Worn stone edge — 1-in-4 blocks: inset top face outline for worn look
-                    if ((tile.gridX * 5 + tile.gridY * 11 + tile.gridZ * 3) % 4 == 0) {
-                        val inset = 0.06f
-                        val wornPts = listOf(
-                            pt(gx + inset,        gy + inset,        gz + 1f, ox, oy),
-                            pt(gx + 1f - inset,   gy + inset,        gz + 1f, ox, oy),
-                            pt(gx + 1f - inset,   gy + 1f - inset,   gz + 1f, ox, oy),
-                            pt(gx + inset,        gy + 1f - inset,   gz + 1f, ox, oy),
-                        )
-                        commands += DrawCommand(blockLayer, dk, 5, "${id}_worn",
-                            IsoProjector.toScreen(Vec3f(gx, gy, gz + 1f)) + offset,
-                            DrawPayload.ColorPath(wornPts, 0xFF_2E2E4A.toInt()))
-                    }
-
-                    // Carved rune — 1-in-6 blocks: 3 line segments on left (south) face
-                    if ((tile.gridX * 7 + tile.gridY * 13 + tile.gridZ * 17) % 6 == 0) {
-                        // 3 rune lines: horizontal + two diagonals
-                        val r1 = pt(gx + 0.3f, gy + 1f, gz + 0.65f, ox, oy)
-                        val r2 = pt(gx + 0.7f, gy + 1f, gz + 0.65f, ox, oy)
-                        val r3 = pt(gx + 0.3f, gy + 1f, gz + 0.35f, ox, oy)
-                        val r4 = pt(gx + 0.5f, gy + 1f, gz + 0.75f, ox, oy)
-                        val r5 = pt(gx + 0.7f, gy + 1f, gz + 0.35f, ox, oy)
-                        val r6 = pt(gx + 0.5f, gy + 1f, gz + 0.55f, ox, oy)
-                        commands += DrawCommand(blockLayer, dk, 4, "${id}_rune1",
-                            Vec2f(r1.x, r1.y), DrawPayload.Line(r1.x, r1.y, r2.x, r2.y, 0xFF_4A4A6A.toInt(), 1f))
-                        commands += DrawCommand(blockLayer, dk, 4, "${id}_rune2",
-                            Vec2f(r3.x, r3.y), DrawPayload.Line(r3.x, r3.y, r4.x, r4.y, 0xFF_4A4A6A.toInt(), 1f))
-                        commands += DrawCommand(blockLayer, dk, 4, "${id}_rune3",
-                            Vec2f(r5.x, r5.y), DrawPayload.Line(r5.x, r5.y, r6.x, r6.y, 0xFF_4A4A6A.toInt(), 1f))
-                    }
-
-                    // Lichen — 1-in-8 blocks: 2-3 blobs on top face
-                    if ((tile.gridX * 11 + tile.gridY * 7 + tile.gridZ * 5) % 8 == 0) {
-                        val numLichen = 2 + (tile.gridX + tile.gridY) % 2
-                        for (li in 0 until numLichen) {
-                            val lSeed = tile.gridX * 53 + tile.gridY * 47 + li * 31
-                            val lx = gx + 0.15f + ((lSeed * 37 and 0xFF) / 255f) * 0.7f
-                            val ly = gy + 0.15f + ((lSeed * 41 and 0xFF) / 255f) * 0.7f
-                            val lPt = pt(lx, ly, gz + 1f, ox, oy)
-                            commands += DrawCommand(blockLayer, dk, 6, "${id}_lichen_$li",
-                                Vec2f(lPt.x - 2f, lPt.y - 1.5f),
-                                DrawPayload.ColorOval(4f, 3f, 0xFF_2A4A2A.toInt()))
-                        }
-                    }
                 }
                 TileType.HAZARD -> {
                     val dk = IsoProjector.depthKey(world)

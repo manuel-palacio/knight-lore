@@ -30,8 +30,8 @@ object TileMetrics {
     /** Footprint for small pickups and items (0.45 = 45% of a tile). */
     const val PICKUP_FOOTPRINT = 0.45f
 
-    /** Vertical bias correction for room centering. Shifts the room up by 6% of viewport height to correct for isometric rooms appearing too low in the viewport. */
-    const val ROOM_VERTICAL_BIAS = 0.06f
+    /** Vertical bias for room centering. Positive = shift room up, negative = down. */
+    const val ROOM_VERTICAL_BIAS = -0.02f
 }
 
 /**

@@ -613,36 +613,260 @@ object RoomEntityFactory {
                 val pulseFactor = kotlin.math.sin(tick.toDouble() * 0.07).toFloat()
                 val id = "item_${item.id.value}"
 
-                // Per-type color and size
-                val (itemColor, itemW, itemH, glowColor) = when (item.type) {
-                    ItemType.CRYSTAL_BALL   -> listOf(0xFF_AACCFF.toInt(), 20f, 20f, 0x20_8888FF.toInt())
-                    ItemType.GOBLET         -> listOf(0xFF_FFD700.toInt(), 16f, 20f, 0x20_FFAA00.toInt())
-                    ItemType.WINE_BOTTLE    -> listOf(0xFF_8B0000.toInt(), 12f, 24f, 0x20_FF2222.toInt())
-                    ItemType.GEM            -> listOf(0xFF_FF2266.toInt(), 16f, 14f, 0x20_FF4488.toInt())
-                    ItemType.POISON_VIAL    -> listOf(0xFF_44CC44.toInt(), 12f, 22f, 0x20_22FF22.toInt())
-                    ItemType.BOOT           -> listOf(0xFF_8B6914.toInt(), 20f, 16f, 0x20_AA8822.toInt())
-                    ItemType.TEACUP         -> listOf(0xFF_6688CC.toInt(), 18f, 14f, 0x20_4466AA.toInt())
-                    ItemType.KEY            -> listOf(0xFF_CCAA44.toInt(), 18f, 10f, 0x20_FFDD44.toInt())
-                    ItemType.TORCH          -> listOf(0xFF_FF8800.toInt(), 10f, 24f, 0x20_FF6600.toInt())
-                    ItemType.SKULL          -> listOf(0xFF_DDDDCC.toInt(), 16f, 16f, 0x20_AAAAAA.toInt())
-                    else                    -> listOf(0xFF_FFDD44.toInt(), 20f, 16f, 0x1A_FFDD44.toInt())
+                // Per-type color palette
+                data class ItemPalette(val color: Int, val glow: Int, val w: Float, val h: Float)
+                val pal = when (item.type) {
+                    ItemType.CRYSTAL_BALL   -> ItemPalette(0xFF_AACCFF.toInt(), 0x20_8888FF.toInt(), 20f, 20f)
+                    ItemType.GOBLET         -> ItemPalette(0xFF_FFD700.toInt(), 0x20_FFAA00.toInt(), 16f, 20f)
+                    ItemType.WINE_BOTTLE    -> ItemPalette(0xFF_8B0000.toInt(), 0x20_FF2222.toInt(), 12f, 24f)
+                    ItemType.GEM            -> ItemPalette(0xFF_FF2266.toInt(), 0x20_FF4488.toInt(), 16f, 14f)
+                    ItemType.POISON_VIAL    -> ItemPalette(0xFF_44CC44.toInt(), 0x20_22FF22.toInt(), 12f, 22f)
+                    ItemType.BOOT           -> ItemPalette(0xFF_8B6914.toInt(), 0x20_AA8822.toInt(), 20f, 16f)
+                    ItemType.TEACUP         -> ItemPalette(0xFF_6688CC.toInt(), 0x20_4466AA.toInt(), 18f, 14f)
+                    ItemType.KEY            -> ItemPalette(0xFF_CCAA44.toInt(), 0x20_FFDD44.toInt(), 18f, 10f)
+                    ItemType.TORCH          -> ItemPalette(0xFF_FF8800.toInt(), 0x20_FF6600.toInt(), 10f, 24f)
+                    ItemType.SKULL          -> ItemPalette(0xFF_DDDDCC.toInt(), 0x20_AAAAAA.toInt(), 16f, 16f)
+                    else                    -> ItemPalette(0xFF_FFDD44.toInt(), 0x1A_FFDD44.toInt(), 20f, 16f)
                 }
-                val color = itemColor as Int
-                val w = (itemW as Float) + pulseFactor * 2f
-                val h = (itemH as Float) + pulseFactor * 2f
-                val glow = glowColor as Int
+                val color = pal.color
+                val w = pal.w + pulseFactor * 2f
+                val h = pal.h + pulseFactor * 2f
+                val glow = pal.glow
+                val sx = screen.x   // centre X
+                val sy = screen.y   // centre Y
 
-                // Glow
+                // Pulsing glow halo (shared by all item types)
                 commands += DrawCommand(DrawLayer.ITEM, dk, 0, "${id}_glow",
-                    Vec2f(screen.x - w / 2f - 2f, screen.y - h / 2f - 2f),
+                    Vec2f(sx - w / 2f - 2f, sy - h / 2f - 2f),
                     DrawPayload.ColorOval(w + 8f, h + 8f, glow))
-                // Item shape
-                commands += DrawCommand(DrawLayer.ITEM, dk, 1, id, screen,
-                    DrawPayload.ColorOval(w, h, color))
-                // Specular highlight
-                commands += DrawCommand(DrawLayer.ITEM, dk, 2, "${id}_hl",
-                    Vec2f(screen.x + 2f, screen.y - 2f),
-                    DrawPayload.ColorOval(w * 0.4f, h * 0.3f, 0x66_FFFFFF.toInt()))
+
+                // ---------- Distinct silhouettes per item type ----------
+                when (item.type) {
+                    ItemType.GOBLET -> {
+                        // Cup: trapezoid widening upward
+                        val cupTop = sy - h * 0.5f
+                        val cupBot = sy - h * 0.05f
+                        val topHalf = w * 0.45f
+                        val botHalf = w * 0.2f
+                        commands += DrawCommand(DrawLayer.ITEM, dk, 1, "${id}_cup",
+                            Vec2f(sx - topHalf, cupTop),
+                            DrawPayload.ColorPath(listOf(
+                                Vec2f(sx - topHalf, cupTop),
+                                Vec2f(sx + topHalf, cupTop),
+                                Vec2f(sx + botHalf, cupBot),
+                                Vec2f(sx - botHalf, cupBot),
+                            ), color))
+                        // Thin stem line
+                        val stemTop = cupBot
+                        val stemBot = sy + h * 0.3f
+                        commands += DrawCommand(DrawLayer.ITEM, dk, 2, "${id}_stem",
+                            Vec2f(sx, stemTop),
+                            DrawPayload.Line(sx, stemTop, sx, stemBot, color, 1.5f))
+                        // Base oval
+                        commands += DrawCommand(DrawLayer.ITEM, dk, 3, "${id}_base",
+                            Vec2f(sx - w * 0.3f, stemBot - 1f),
+                            DrawPayload.ColorOval(w * 0.6f, h * 0.18f, color))
+                        // Specular highlight on cup
+                        commands += DrawCommand(DrawLayer.ITEM, dk, 4, "${id}_hl",
+                            Vec2f(sx + 2f, cupTop + 2f),
+                            DrawPayload.ColorOval(w * 0.25f, h * 0.18f, 0x66_FFFFFF.toInt()))
+                    }
+                    ItemType.KEY -> {
+                        // Bow (ring) at top
+                        val bowCx = sx - w * 0.25f
+                        val bowCy = sy
+                        val bowR = h * 0.45f
+                        commands += DrawCommand(DrawLayer.ITEM, dk, 1, "${id}_bow",
+                            Vec2f(bowCx - bowR, bowCy - bowR),
+                            DrawPayload.ColorOval(bowR * 2f, bowR * 2f, color))
+                        // Horizontal shaft
+                        val shaftStart = bowCx + bowR
+                        val shaftEnd = sx + w * 0.5f
+                        commands += DrawCommand(DrawLayer.ITEM, dk, 2, "${id}_shaft",
+                            Vec2f(shaftStart, bowCy),
+                            DrawPayload.Line(shaftStart, bowCy, shaftEnd, bowCy, color, 2f))
+                        // Two small vertical teeth
+                        val tooth1X = shaftEnd - 3f
+                        val tooth2X = shaftEnd
+                        val toothLen = h * 0.35f
+                        commands += DrawCommand(DrawLayer.ITEM, dk, 3, "${id}_t1",
+                            Vec2f(tooth1X, bowCy),
+                            DrawPayload.Line(tooth1X, bowCy, tooth1X, bowCy + toothLen, color, 1.5f))
+                        commands += DrawCommand(DrawLayer.ITEM, dk, 4, "${id}_t2",
+                            Vec2f(tooth2X, bowCy),
+                            DrawPayload.Line(tooth2X, bowCy, tooth2X, bowCy + toothLen, color, 1.5f))
+                        // Specular highlight on bow
+                        commands += DrawCommand(DrawLayer.ITEM, dk, 5, "${id}_hl",
+                            Vec2f(bowCx - bowR * 0.3f, bowCy - bowR * 0.4f),
+                            DrawPayload.ColorOval(bowR * 0.5f, bowR * 0.4f, 0x66_FFFFFF.toInt()))
+                    }
+                    ItemType.CRYSTAL_BALL -> {
+                        // Large ball
+                        commands += DrawCommand(DrawLayer.ITEM, dk, 1, "${id}_ball",
+                            Vec2f(sx - w * 0.45f, sy - h * 0.45f),
+                            DrawPayload.ColorOval(w * 0.9f, h * 0.9f, color))
+                        // Small rectangular base below the ball
+                        val baseTop = sy + h * 0.3f
+                        val baseW = w * 0.35f
+                        val baseH = h * 0.2f
+                        commands += DrawCommand(DrawLayer.ITEM, dk, 2, "${id}_base",
+                            Vec2f(sx - baseW / 2f, baseTop),
+                            DrawPayload.ColorRect(baseW, baseH, color))
+                        // Specular highlight
+                        commands += DrawCommand(DrawLayer.ITEM, dk, 3, "${id}_hl",
+                            Vec2f(sx - w * 0.12f, sy - h * 0.2f),
+                            DrawPayload.ColorOval(w * 0.25f, h * 0.2f, 0x66_FFFFFF.toInt()))
+                    }
+                    ItemType.POISON_VIAL -> {
+                        // Bulb at bottom
+                        val bulbCy = sy + h * 0.15f
+                        commands += DrawCommand(DrawLayer.ITEM, dk, 1, "${id}_bulb",
+                            Vec2f(sx - w * 0.4f, bulbCy - h * 0.25f),
+                            DrawPayload.ColorOval(w * 0.8f, h * 0.5f, color))
+                        // Thin neck extending upward
+                        val neckW = w * 0.22f
+                        val neckBot = bulbCy - h * 0.25f
+                        val neckTop = sy - h * 0.35f
+                        commands += DrawCommand(DrawLayer.ITEM, dk, 2, "${id}_neck",
+                            Vec2f(sx - neckW / 2f, neckTop),
+                            DrawPayload.ColorRect(neckW, neckBot - neckTop, color))
+                        // Tiny stopper oval at top
+                        commands += DrawCommand(DrawLayer.ITEM, dk, 3, "${id}_stop",
+                            Vec2f(sx - w * 0.18f, neckTop - h * 0.1f),
+                            DrawPayload.ColorOval(w * 0.36f, h * 0.12f, color))
+                        // Specular highlight
+                        commands += DrawCommand(DrawLayer.ITEM, dk, 4, "${id}_hl",
+                            Vec2f(sx + 1f, bulbCy - h * 0.1f),
+                            DrawPayload.ColorOval(w * 0.2f, h * 0.15f, 0x66_FFFFFF.toInt()))
+                    }
+                    ItemType.SKULL -> {
+                        // Wide cranium oval
+                        commands += DrawCommand(DrawLayer.ITEM, dk, 1, "${id}_cran",
+                            Vec2f(sx - w * 0.5f, sy - h * 0.45f),
+                            DrawPayload.ColorOval(w, h * 0.85f, color))
+                        // Left eye socket (dark)
+                        commands += DrawCommand(DrawLayer.ITEM, dk, 2, "${id}_eyeL",
+                            Vec2f(sx - w * 0.25f, sy - h * 0.18f),
+                            DrawPayload.ColorOval(w * 0.2f, h * 0.2f, 0xFF_222222.toInt()))
+                        // Right eye socket (dark)
+                        commands += DrawCommand(DrawLayer.ITEM, dk, 3, "${id}_eyeR",
+                            Vec2f(sx + w * 0.08f, sy - h * 0.18f),
+                            DrawPayload.ColorOval(w * 0.2f, h * 0.2f, 0xFF_222222.toInt()))
+                        // Specular highlight
+                        commands += DrawCommand(DrawLayer.ITEM, dk, 4, "${id}_hl",
+                            Vec2f(sx + 2f, sy - h * 0.3f),
+                            DrawPayload.ColorOval(w * 0.3f, h * 0.2f, 0x66_FFFFFF.toInt()))
+                    }
+                    ItemType.GEM -> {
+                        // 4-point diamond polygon (rotated square)
+                        commands += DrawCommand(DrawLayer.ITEM, dk, 1, "${id}_gem",
+                            Vec2f(sx - w * 0.5f, sy - h * 0.5f),
+                            DrawPayload.ColorPath(listOf(
+                                Vec2f(sx, sy - h * 0.5f),        // top
+                                Vec2f(sx + w * 0.5f, sy),        // right
+                                Vec2f(sx, sy + h * 0.5f),        // bottom
+                                Vec2f(sx - w * 0.5f, sy),        // left
+                            ), color))
+                        // Specular highlight
+                        commands += DrawCommand(DrawLayer.ITEM, dk, 2, "${id}_hl",
+                            Vec2f(sx - w * 0.05f, sy - h * 0.2f),
+                            DrawPayload.ColorOval(w * 0.25f, h * 0.2f, 0x66_FFFFFF.toInt()))
+                    }
+                    ItemType.WINE_BOTTLE -> {
+                        // Tall narrow rect body
+                        val bodyW = w * 0.55f
+                        val bodyH = h * 0.7f
+                        val bodyTop = sy - h * 0.15f
+                        commands += DrawCommand(DrawLayer.ITEM, dk, 1, "${id}_body",
+                            Vec2f(sx - bodyW / 2f, bodyTop),
+                            DrawPayload.ColorRect(bodyW, bodyH, color))
+                        // Small oval neck at top
+                        val neckW = w * 0.25f
+                        val neckH = h * 0.3f
+                        commands += DrawCommand(DrawLayer.ITEM, dk, 2, "${id}_neck",
+                            Vec2f(sx - neckW / 2f, bodyTop - neckH + 2f),
+                            DrawPayload.ColorRect(neckW, neckH, color))
+                        // Top oval cap
+                        commands += DrawCommand(DrawLayer.ITEM, dk, 3, "${id}_cap",
+                            Vec2f(sx - w * 0.2f, bodyTop - neckH - 1f),
+                            DrawPayload.ColorOval(w * 0.4f, h * 0.1f, color))
+                        // Specular highlight
+                        commands += DrawCommand(DrawLayer.ITEM, dk, 4, "${id}_hl",
+                            Vec2f(sx + 1f, bodyTop + 2f),
+                            DrawPayload.ColorOval(w * 0.15f, h * 0.25f, 0x66_FFFFFF.toInt()))
+                    }
+                    ItemType.BOOT -> {
+                        // L-shaped polygon (vertical leg + horizontal sole)
+                        val legTop = sy - h * 0.5f
+                        val soleBot = sy + h * 0.5f
+                        val legLeft = sx - w * 0.15f
+                        val legRight = sx + w * 0.15f
+                        val toeRight = sx + w * 0.5f
+                        commands += DrawCommand(DrawLayer.ITEM, dk, 1, "${id}_boot",
+                            Vec2f(legLeft, legTop),
+                            DrawPayload.ColorPath(listOf(
+                                Vec2f(legLeft, legTop),           // top-left of leg
+                                Vec2f(legRight, legTop),          // top-right of leg
+                                Vec2f(legRight, soleBot - h * 0.25f), // inner ankle
+                                Vec2f(toeRight, soleBot - h * 0.25f), // toe top
+                                Vec2f(toeRight, soleBot),         // toe bottom
+                                Vec2f(legLeft, soleBot),          // heel bottom
+                            ), color))
+                        // Specular highlight
+                        commands += DrawCommand(DrawLayer.ITEM, dk, 2, "${id}_hl",
+                            Vec2f(sx + 1f, legTop + 2f),
+                            DrawPayload.ColorOval(w * 0.15f, h * 0.2f, 0x66_FFFFFF.toInt()))
+                    }
+                    ItemType.TEACUP -> {
+                        // Wide oval body
+                        commands += DrawCommand(DrawLayer.ITEM, dk, 1, "${id}_cup",
+                            Vec2f(sx - w * 0.4f, sy - h * 0.35f),
+                            DrawPayload.ColorOval(w * 0.8f, h * 0.7f, color))
+                        // Small curved handle on right side (arc approximated by a line)
+                        val handleX = sx + w * 0.38f
+                        val handleTop = sy - h * 0.15f
+                        val handleBot = sy + h * 0.15f
+                        val handleBulge = sx + w * 0.55f
+                        commands += DrawCommand(DrawLayer.ITEM, dk, 2, "${id}_h1",
+                            Vec2f(handleX, handleTop),
+                            DrawPayload.Line(handleX, handleTop, handleBulge, sy, color, 1.5f))
+                        commands += DrawCommand(DrawLayer.ITEM, dk, 3, "${id}_h2",
+                            Vec2f(handleBulge, sy),
+                            DrawPayload.Line(handleBulge, sy, handleX, handleBot, color, 1.5f))
+                        // Specular highlight
+                        commands += DrawCommand(DrawLayer.ITEM, dk, 4, "${id}_hl",
+                            Vec2f(sx - w * 0.1f, sy - h * 0.15f),
+                            DrawPayload.ColorOval(w * 0.25f, h * 0.18f, 0x66_FFFFFF.toInt()))
+                    }
+                    ItemType.TORCH -> {
+                        // Narrow rect shaft
+                        val shaftW = w * 0.35f
+                        val shaftH = h * 0.65f
+                        val shaftTop = sy - h * 0.1f
+                        commands += DrawCommand(DrawLayer.ITEM, dk, 1, "${id}_shaft",
+                            Vec2f(sx - shaftW / 2f, shaftTop),
+                            DrawPayload.ColorRect(shaftW, shaftH, color))
+                        // Flame oval at top (brighter)
+                        val flameW = w * 0.6f
+                        val flameH = h * 0.35f
+                        val flameColor = 0xFF_FFCC00.toInt()
+                        commands += DrawCommand(DrawLayer.ITEM, dk, 2, "${id}_flame",
+                            Vec2f(sx - flameW / 2f, shaftTop - flameH + 2f),
+                            DrawPayload.ColorOval(flameW, flameH, flameColor))
+                        // Specular highlight on flame
+                        commands += DrawCommand(DrawLayer.ITEM, dk, 3, "${id}_hl",
+                            Vec2f(sx + 1f, shaftTop - flameH + 4f),
+                            DrawPayload.ColorOval(w * 0.2f, h * 0.12f, 0x66_FFFFFF.toInt()))
+                    }
+                    else -> {
+                        // Fallback: simple oval
+                        commands += DrawCommand(DrawLayer.ITEM, dk, 1, id, screen,
+                            DrawPayload.ColorOval(w, h, color))
+                        commands += DrawCommand(DrawLayer.ITEM, dk, 2, "${id}_hl",
+                            Vec2f(sx + 2f, sy - 2f),
+                            DrawPayload.ColorOval(w * 0.4f, h * 0.3f, 0x66_FFFFFF.toInt()))
+                    }
+                }
             }
 
         // 4. Patrol enemies — dark green isometric block

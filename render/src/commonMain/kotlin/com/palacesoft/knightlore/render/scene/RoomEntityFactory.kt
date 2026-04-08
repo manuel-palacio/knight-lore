@@ -282,7 +282,7 @@ object RoomEntityFactory {
     // ── Flicker helpers ────────────────────────────────────────────────────
 
     /**
-     * Returns a flicker multiplier in [minAlpha..maxAlpha] driven by time.tick.
+     * Returns a flicker multiplier driven by time.tick.
      * Each torch gets a unique phase from its tile position so they never sync.
      */
     private fun flickerAlpha(

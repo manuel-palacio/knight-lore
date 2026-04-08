@@ -667,6 +667,44 @@ object RoomEntityFactory {
         // 7. Ambient dust particles at inner wall corners
         buildDustParticles(room, offset, tick, commands)
 
+        // 7b. Cobwebs at wall corners — ancient castle atmosphere
+        val webColor = 0x44_A0A0A0.toInt()  // semi-transparent grey
+        val rw = room.width.toFloat()
+        val rd = room.depth.toFloat()
+        val webCorners = listOf(
+            Vec3f(0.5f, 0.5f, 2.5f),                           // NW corner
+            Vec3f(rw - 0.5f, 0.5f, 2.5f),                      // NE corner
+            Vec3f(0.5f, rd - 0.5f, 2.5f),                      // SW corner
+            Vec3f(rw - 0.5f, rd - 0.5f, 2.5f),                 // SE corner
+        )
+        webCorners.forEachIndexed { wi, corner ->
+            val ws = IsoProjector.toScreen(corner) + offset
+            val wdk = IsoProjector.depthKey(corner)
+            val webId = "cobweb_$wi"
+            // 5 radiating strands from corner
+            for (si in 0..4) {
+                val angle = si * kotlin.math.PI / 4.0 + wi * kotlin.math.PI / 2.0
+                val endX = ws.x + (kotlin.math.cos(angle) * 18f).toFloat()
+                val endY = ws.y + (kotlin.math.sin(angle) * 12f).toFloat()
+                commands += DrawCommand(DrawLayer.EFFECT, wdk, 0, "${webId}_s$si",
+                    Vec2f(ws.x, ws.y),
+                    DrawPayload.Line(ws.x, ws.y, endX, endY, webColor, 0.7f))
+            }
+            // Cross threads connecting strands
+            for (si in 0..3) {
+                val a1 = si * kotlin.math.PI / 4.0 + wi * kotlin.math.PI / 2.0
+                val a2 = (si + 1) * kotlin.math.PI / 4.0 + wi * kotlin.math.PI / 2.0
+                val r = 10f
+                val x1 = ws.x + (kotlin.math.cos(a1) * r).toFloat()
+                val y1 = ws.y + (kotlin.math.sin(a1) * r).toFloat()
+                val x2 = ws.x + (kotlin.math.cos(a2) * r).toFloat()
+                val y2 = ws.y + (kotlin.math.sin(a2) * r).toFloat()
+                commands += DrawCommand(DrawLayer.EFFECT, wdk, 0, "${webId}_c$si",
+                    Vec2f(x1, y1),
+                    DrawPayload.Line(x1, y1, x2, y2, webColor, 0.5f))
+            }
+        }
+
         // 8. Thin edge vignette — only a narrow border, not a ceiling-inducing dark cap
         val fogC = palette.fogColor
         commands += DrawCommand(DrawLayer.HUD, 0, -998, "vignette_top",

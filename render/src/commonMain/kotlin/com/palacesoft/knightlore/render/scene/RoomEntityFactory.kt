@@ -1868,17 +1868,17 @@ object RoomEntityFactory {
         val cy = screen.y - bob  // shift entire character up/down with breath/walk bob
 
         // ── Colour palette ──────────────────────────────────────────────────────────
-        // Human form — dark plague traveller
-        val HUMAN_CLOAK_BASE    = 0xFF_2A2820.toInt()
-        val HUMAN_CLOAK_SHADOW  = 0xFF_161410.toInt()
-        val HUMAN_CLOAK_EDGE    = 0xFF_3E3A30.toInt()
-        val HUMAN_LEATHER       = 0xFF_3A2E1A.toInt()
-        val HUMAN_LEATHER_WORN  = 0xFF_5A4828.toInt()
-        val HUMAN_SKIN          = 0xFF_C8A870.toInt()
-        val HUMAN_METAL         = 0xFF_707880.toInt()
-        val HUMAN_METAL_SHINE   = 0xFF_A8B0B8.toInt()
-        val HUMAN_SWORD_BLADE   = 0xFF_8A9298.toInt()
-        val HUMAN_BLINK         = 0xFF_CC2200.toInt()
+        // Human form — bright adventurer (must POP against dark castle walls)
+        val HUMAN_CLOAK_BASE    = 0xFF_B8A040.toInt()  // warm golden-yellow tunic
+        val HUMAN_CLOAK_SHADOW  = 0xFF_8A7830.toInt()  // tunic shadow
+        val HUMAN_CLOAK_EDGE    = 0xFF_D0B850.toInt()  // tunic highlight edge
+        val HUMAN_LEATHER       = 0xFF_6A4A20.toInt()  // brown leather belt
+        val HUMAN_LEATHER_WORN  = 0xFF_8A6830.toInt()  // worn leather highlight
+        val HUMAN_SKIN          = 0xFF_E8C880.toInt()  // warm bright skin
+        val HUMAN_METAL         = 0xFF_C0C8D0.toInt()  // bright silver helmet
+        val HUMAN_METAL_SHINE   = 0xFF_E8F0F8.toInt()  // helmet shine — nearly white
+        val HUMAN_SWORD_BLADE   = 0xFF_A0AAB0.toInt()  // sword blade
+        val HUMAN_BLINK         = 0xFF_FF2200.toInt()
         // Werewolf form
         val WOLF_FUR_MID        = 0xFF_5A5A68.toInt()
         val WOLF_FUR_DARK       = 0xFF_383844.toInt()

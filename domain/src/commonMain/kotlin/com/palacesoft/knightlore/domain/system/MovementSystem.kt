@@ -150,6 +150,11 @@ class MovementSystem(
             else -> MovementState.IDLE
         }
 
+        // 13. Footstep sound events
+        if (newMovementState == MovementState.WALKING && state.time.tick % 18 == 0L) {
+            events += GameEvent.FootstepStone
+        }
+
         val newPlayer = player.copy(
             position = resolved.resolvedPos,
             velocity = finalVelocity,

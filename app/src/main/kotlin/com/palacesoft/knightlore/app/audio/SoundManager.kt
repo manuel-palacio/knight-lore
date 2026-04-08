@@ -33,6 +33,8 @@ class SoundManager(context: Context) : AudioManager {
     private val sfxSuccess   = soundPool.load(context, R.raw.success, 1)
     private val sfxVictory   = soundPool.load(context, R.raw.victory, 1)
     private val sfxGameOver  = soundPool.load(context, R.raw.gameover, 1)
+    private val sfxFootstep  = soundPool.load(context, R.raw.land, 1)   // reuse land as footstep placeholder
+    private val sfxBlockPush = soundPool.load(context, R.raw.hurt, 1)   // reuse hurt as block-push placeholder
 
     // MediaPlayer.create() returns null if the resource is empty/invalid (placeholder file).
     private val music: MediaPlayer? = MediaPlayer.create(context, R.raw.ambient_dungeon)?.apply {
@@ -54,7 +56,7 @@ class SoundManager(context: Context) : AudioManager {
     override fun onEvent(event: GameEvent) {
         when (event) {
             is GameEvent.JumpStarted             -> play(sfxJump)
-            is GameEvent.Landed                  -> play(sfxLand)
+            is GameEvent.Landed                  -> play(sfxLand, volume = 0.7f)
             is GameEvent.PlayerDamaged           -> play(sfxHurt)
             is GameEvent.LifeLost                -> { play(sfxDeath); pauseMusic() }
             is GameEvent.TransformationStarted   -> play(sfxTransform)
@@ -62,6 +64,10 @@ class SoundManager(context: Context) : AudioManager {
             is GameEvent.CauldronRequestAdvanced -> play(sfxSuccess)
             is GameEvent.QuestCompleted          -> { play(sfxVictory); pauseMusic() }
             is GameEvent.GameOver                -> { play(sfxGameOver); pauseMusic() }
+            is GameEvent.FootstepStone           -> play(sfxFootstep, volume = 0.3f, rate = 1.1f)
+            is GameEvent.FootstepWater           -> play(sfxFootstep, volume = 0.4f, rate = 0.8f)
+            is GameEvent.BlockPushStart          -> play(sfxBlockPush, volume = 0.6f, rate = 0.7f)
+            is GameEvent.BlockScrape             -> play(sfxBlockPush, volume = 0.4f, rate = 0.5f)
             else                                 -> Unit
         }
     }
@@ -72,9 +78,9 @@ class SoundManager(context: Context) : AudioManager {
         music?.release()
     }
 
-    private fun play(soundId: Int) {
+    private fun play(soundId: Int, volume: Float = 1f, rate: Float = 1f) {
         if (soundId > 0) {
-            soundPool.play(soundId, 1f, 1f, 1, 0, 1f)
+            soundPool.play(soundId, volume, volume, 1, 0, rate)
         }
     }
 }

@@ -18,6 +18,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -33,11 +34,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.palacesoft.knightlore.app.audio.SoundManager
 import com.palacesoft.knightlore.app.input.TouchInputOverlay
 import com.palacesoft.knightlore.app.input.TouchInputState
 import com.palacesoft.knightlore.app.session.GameSessionCoordinator
@@ -105,7 +108,12 @@ fun GameScreen(
 ) {
     var loadState by remember { mutableStateOf<LoadState>(LoadState.Loading) }
     val touchInput = remember { TouchInputState() }
+    val context = LocalContext.current
+    val audioManager = remember { SoundManager(context) }
     val scope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) { audioManager.startMusic() }
+    DisposableEffect(Unit) { onDispose { audioManager.release() } }
 
     LaunchedEffect(Unit) {
         // Poll until the coordinator's game state becomes available (set by the ViewModel).
@@ -140,7 +148,8 @@ fun GameScreen(
                                 touchInput.clearOneShotFlags()
                                 if (!sessionCoordinator.eventHandler.uiState.value.isPaused) {
                                     sessionCoordinator.submitInput(input)
-                                    sessionCoordinator.advance(deltaSeconds)
+                                    val events = sessionCoordinator.advance(deltaSeconds)
+                                    events.forEach { audioManager.onEvent(it) }
                                 }
                             },
                         ).also { view ->

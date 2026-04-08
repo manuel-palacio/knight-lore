@@ -10,12 +10,14 @@ data class SolidVolume(
 
 data class ResolvedMove(
     val resolvedPos: Vec3f,
-    val hitWall: Boolean,
     val hitWallX: Boolean,
     val hitWallY: Boolean,
     val landedOnSurface: Boolean,
     val surfaceZ: Float?,
-)
+) {
+    /** True if either horizontal axis was blocked. */
+    val hitWall: Boolean get() = hitWallX || hitWallY
+}
 
 class CollisionResolver {
 
@@ -115,7 +117,6 @@ class CollisionResolver {
 
         return ResolvedMove(
             resolvedPos = resolvedPos,
-            hitWall = hitWallX || hitWallY,
             hitWallX = hitWallX,
             hitWallY = hitWallY,
             landedOnSurface = landedOnSurface,

@@ -873,32 +873,12 @@ object RoomEntityFactory {
         }
 
         // North wall block: visible faces = top + south-facing inner face (blockFaceLeft)
+        // wallBlockNorth: ONLY decorations — the continuous face is drawn by the segment loop above
         fun wallBlockNorth(gx: Float, gy: Float) {
             val dk = IsoProjector.depthKey(Vec3f(gx + 0.5f, gy + 1f, 0f))
             val id = "wall_${gx.toInt()}_${gy.toInt()}"
 
-            // ONE continuous south-facing inner face from z=0 to z=3 (no per-block seams)
-            val tallFacePts = listOf(
-                pt(gx,      gy + 1f, 0f, ox, oy),
-                pt(gx + 1f, gy + 1f, 0f, ox, oy),
-                pt(gx + 1f, gy + 1f, 3f, ox, oy),
-                pt(gx,      gy + 1f, 3f, ox, oy),
-            )
-            commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "${id}_face",
-                tallFacePts[0],
-                DrawPayload.DitheredPath(tallFacePts, palette.wallSouthLo, palette.wallSouthHi, horizontal = true))
-
-            // Top cap at z=3
-            commands += DrawCommand(DrawLayer.BLOCK, dk, 2, "${id}_top",
-                IsoProjector.toScreen(Vec3f(gx, gy, 3f)) + offset,
-                DrawPayload.ColorPath(floorDiamond(gx, gy, 3f, ox, oy), palette.wallTop))
-            val h1 = pt(gx, gy, 3f, ox, oy)
-            val h2 = pt(gx, gy + 1f, 3f, ox, oy)
-            commands += DrawCommand(DrawLayer.BLOCK, dk, 4, "${id}_cap_hl",
-                Vec2f(h1.x, h1.y),
-                DrawPayload.Line(h1.x, h1.y, h2.x, h2.y, palette.wallTopHighlight, 1.2f))
-
-            // Decorations use gz loop but don't draw separate face quads
+            // Decorations only (face + top cap drawn by the continuous segment)
             for (gz in 0 until 3) {
                 val bz = gz.toFloat()
                 val isTop = gz == 2
@@ -1021,58 +1001,25 @@ object RoomEntityFactory {
                         lightGx += 1f
                     }
 
-                    // Wall cast — on the south wall face; slightly delayed phase
-                    val wallAlpha = flickerAlpha(tick, tPhase + 0.4, rate = 0.10, minAlpha = 0x08, maxAlpha = 0x18)
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 8, "${id}_torch_wall_s",
-                        Vec2f(torchScreenX - 9f, torchScreenY - 7f),
-                        DrawPayload.ColorOval(18f, 14f, (wallAlpha shl 24) or baseWallColor))
-
-                    // Ambient halo — broad soft oval around torch bracket
-                    val haloAlpha = flickerAlpha(tick, tPhase + 0.9, rate = 0.08, minAlpha = 0x14, maxAlpha = 0x30)
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 9, "${id}_torch_halo",
-                        Vec2f(torchScreenX - 18f, torchScreenY - 18f),
-                        DrawPayload.ColorOval(36f, 28f, (haloAlpha shl 24) or CastleColors.TORCH_HALO))
-
-                    // Flame — small bright oval at top of bracket; flickers size too
-                    val flameSize = 5f + flickerAlpha(tick, tPhase + 1.2, rate = 0.20, minAlpha = 0, maxAlpha = 3).toFloat()
+                    // Small flame — just a flickering oval, no giant halos
+                    val flicker = (kotlin.math.sin(tick.toDouble() * 0.3 + tPhase) * 1.5f).toFloat()
                     commands += DrawCommand(DrawLayer.BLOCK, dk, 11, "${id}_torch_flame",
-                        Vec2f(torchScreenX - flameSize / 2f, torchScreenY - flameSize - 2f),
-                        DrawPayload.ColorOval(flameSize, flameSize * 1.4f, 0xFF_FFA020.toInt()))
-                    // Flame core — brighter white-yellow centre
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 12, "${id}_torch_flame_core",
-                        Vec2f(torchScreenX - 2f, torchScreenY - flameSize - 1f),
-                        DrawPayload.ColorOval(4f, 5f, 0xFF_FFEE80.toInt()))
+                        Vec2f(torchScreenX - 3f, torchScreenY - 10f + flicker),
+                        DrawPayload.ColorOval(6f, 8f, 0xCC_FF8800.toInt()))
+                    // Tiny bright core
+                    commands += DrawCommand(DrawLayer.BLOCK, dk, 12, "${id}_torch_core",
+                        Vec2f(torchScreenX - 1.5f, torchScreenY - 8f + flicker),
+                        DrawPayload.ColorOval(3f, 4f, 0xFF_FFDD44.toInt()))
                 }
             }
         }
 
-        // West wall block: visible faces = top + east-facing inner face (blockFaceRight)
+        // wallBlockWest: ONLY decorations — the continuous face is drawn by the segment loop above
         fun wallBlockWest(gx: Float, gy: Float) {
             val dk = IsoProjector.depthKey(Vec3f(gx + 0.5f, gy + 1f, 0f))
             val id = "wall_${gx.toInt()}_${gy.toInt()}"
 
-            // ONE continuous east-facing inner face from z=0 to z=3
-            val tallFacePts = listOf(
-                pt(gx + 1f, gy,      0f, ox, oy),
-                pt(gx + 1f, gy + 1f, 0f, ox, oy),
-                pt(gx + 1f, gy + 1f, 3f, ox, oy),
-                pt(gx + 1f, gy,      3f, ox, oy),
-            )
-            commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "${id}_face",
-                tallFacePts[0],
-                DrawPayload.DitheredPath(tallFacePts, palette.wallEastLo, palette.wallEastHi, horizontal = true))
-
-            // Top cap at z=3
-            commands += DrawCommand(DrawLayer.BLOCK, dk, 2, "${id}_top",
-                IsoProjector.toScreen(Vec3f(gx, gy, 3f)) + offset,
-                DrawPayload.ColorPath(floorDiamond(gx, gy, 3f, ox, oy), palette.wallTop))
-            val h1 = pt(gx, gy, 3f, ox, oy)
-            val h2 = pt(gx + 1f, gy, 3f, ox, oy)
-            commands += DrawCommand(DrawLayer.BLOCK, dk, 4, "${id}_cap_hl",
-                Vec2f(h1.x, h1.y),
-                DrawPayload.Line(h1.x, h1.y, h2.x, h2.y, palette.wallTopHighlight, 1.2f))
-
-            // Decorations loop (no separate face quads)
+            // Decorations only (face + top cap drawn by the continuous segment)
             for (gz in 0 until 3) {
                 val bz = gz.toFloat()
                 val isTop = gz == 2
@@ -1178,26 +1125,14 @@ object RoomEntityFactory {
                         lightGy += 1f
                     }
 
-                    // Wall cast — on the east wall face; slightly delayed phase
-                    val wallAlpha = flickerAlpha(tick, tPhase + 0.4, rate = 0.10, minAlpha = 0x08, maxAlpha = 0x18)
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 8, "${id}_torch_wall_e",
-                        Vec2f(torchScreenX - 9f, torchScreenY - 7f),
-                        DrawPayload.ColorOval(18f, 14f, (wallAlpha shl 24) or baseWallColor))
-
-                    // Ambient halo
-                    val haloAlpha = flickerAlpha(tick, tPhase + 0.9, rate = 0.08, minAlpha = 0x14, maxAlpha = 0x30)
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 9, "${id}_torch_halo",
-                        Vec2f(torchScreenX - 18f, torchScreenY - 18f),
-                        DrawPayload.ColorOval(36f, 28f, (haloAlpha shl 24) or CastleColors.TORCH_HALO))
-
-                    // Flame
-                    val flameSize = 5f + flickerAlpha(tick, tPhase + 1.2, rate = 0.20, minAlpha = 0, maxAlpha = 3).toFloat()
+                    // Small flame — just a flickering oval, no giant halos
+                    val flicker = (kotlin.math.sin(tick.toDouble() * 0.3 + tPhase) * 1.5f).toFloat()
                     commands += DrawCommand(DrawLayer.BLOCK, dk, 11, "${id}_torch_flame",
-                        Vec2f(torchScreenX - flameSize / 2f, torchScreenY - flameSize - 2f),
-                        DrawPayload.ColorOval(flameSize, flameSize * 1.4f, 0xFF_FFA020.toInt()))
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 12, "${id}_torch_flame_core",
-                        Vec2f(torchScreenX - 2f, torchScreenY - flameSize - 1f),
-                        DrawPayload.ColorOval(4f, 5f, 0xFF_FFEE80.toInt()))
+                        Vec2f(torchScreenX - 3f, torchScreenY - 10f + flicker),
+                        DrawPayload.ColorOval(6f, 8f, 0xCC_FF8800.toInt()))
+                    commands += DrawCommand(DrawLayer.BLOCK, dk, 12, "${id}_torch_core",
+                        Vec2f(torchScreenX - 1.5f, torchScreenY - 8f + flicker),
+                        DrawPayload.ColorOval(3f, 4f, 0xFF_FFDD44.toInt()))
                 }
             }
         }
@@ -1355,23 +1290,82 @@ object RoomEntityFactory {
         val northExitTarget = room.exits.find { it.side == ExitSide.NORTH }?.targetRoomId
         val westExitTarget  = room.exits.find { it.side == ExitSide.WEST }?.targetRoomId
 
-        // North wall (gy=0): draw only south-facing inner face + top
+        // North wall (gy=0): draw continuous wide face segments (no per-tile seams)
+        // First draw door archways, then draw continuous wall faces for non-gap runs
         for (x in 0 until w) {
             if (x in northGaps) doorArchway(x.toFloat(), 0f,
                 northGaps.minOrNull() == x,
                 northGaps.maxOrNull() == x,
                 ExitSide.NORTH,
                 northExitTarget)
-            else wallBlockNorth(x.toFloat(), 0f)
         }
-        // West wall (gx=0): draw only east-facing inner face + top
+        // Find contiguous non-gap runs and draw ONE wide face per run
+        var segStart = -1
+        for (x in 0..w) {
+            val isGap = x in northGaps || x == w
+            if (!isGap && segStart < 0) segStart = x
+            if (isGap && segStart >= 0) {
+                // Draw one wide face from segStart to x
+                val sx = segStart.toFloat()
+                val ex = x.toFloat()
+                val dk = IsoProjector.depthKey(Vec3f((sx + ex) / 2f, 1f, 0f))
+                val segId = "nwall_${segStart}_${x}"
+                // Continuous south-facing face z=0..3
+                commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "${segId}_face",
+                    pt(sx, 1f, 0f, ox, oy),
+                    DrawPayload.DitheredPath(listOf(
+                        pt(sx, 1f, 0f, ox, oy), pt(ex, 1f, 0f, ox, oy),
+                        pt(ex, 1f, 3f, ox, oy), pt(sx, 1f, 3f, ox, oy),
+                    ), palette.wallSouthLo, palette.wallSouthHi, horizontal = true))
+                // Top caps
+                for (tx in segStart until x) {
+                    val tdk = IsoProjector.depthKey(Vec3f(tx + 0.5f, 1f, 2f))
+                    commands += DrawCommand(DrawLayer.BLOCK, tdk, 2, "nwall_top_$tx",
+                        IsoProjector.toScreen(Vec3f(tx.toFloat(), 0f, 3f)) + offset,
+                        DrawPayload.ColorPath(floorDiamond(tx.toFloat(), 0f, 3f, ox, oy), palette.wallTop))
+                }
+                // Decorations per tile column (torches, moss, chains, etc.)
+                for (tx in segStart until x) {
+                    wallBlockNorth(tx.toFloat(), 0f)
+                }
+                segStart = -1
+            }
+        }
+
+        // West wall (gx=0): same approach — continuous wide face segments
         for (y in 1 until d - 1) {
             if (y in westGaps) doorArchway(0f, y.toFloat(),
                 westGaps.minOrNull() == y,
                 westGaps.maxOrNull() == y,
                 ExitSide.WEST,
                 westExitTarget)
-            else wallBlockWest(0f, y.toFloat())
+        }
+        var wSegStart = -1
+        for (y in 1..d - 1) {
+            val isGap = y in westGaps || y == d - 1
+            if (!isGap && wSegStart < 0) wSegStart = y
+            if (isGap && wSegStart >= 0) {
+                val sy = wSegStart.toFloat()
+                val ey = y.toFloat()
+                val dk = IsoProjector.depthKey(Vec3f(1f, (sy + ey) / 2f, 0f))
+                val segId = "wwall_${wSegStart}_${y}"
+                commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "${segId}_face",
+                    pt(1f, sy, 0f, ox, oy),
+                    DrawPayload.DitheredPath(listOf(
+                        pt(1f, sy, 0f, ox, oy), pt(1f, ey, 0f, ox, oy),
+                        pt(1f, ey, 3f, ox, oy), pt(1f, sy, 3f, ox, oy),
+                    ), palette.wallEastLo, palette.wallEastHi, horizontal = true))
+                for (ty in wSegStart until y) {
+                    val tdk = IsoProjector.depthKey(Vec3f(0.5f, ty + 1f, 2f))
+                    commands += DrawCommand(DrawLayer.BLOCK, tdk, 2, "wwall_top_$ty",
+                        IsoProjector.toScreen(Vec3f(0f, ty.toFloat(), 3f)) + offset,
+                        DrawPayload.ColorPath(floorDiamond(0f, ty.toFloat(), 3f, ox, oy), palette.wallTop))
+                }
+                for (ty in wSegStart until y) {
+                    wallBlockWest(0f, ty.toFloat())
+                }
+                wSegStart = -1
+            }
         }
 
         // South/East exits: plain dark opening with two solid half-wall pillars (no glow).

@@ -17,4 +17,8 @@ sealed interface GameEvent {
     data class CauldronRequestAdvanced(val itemType: ItemType) : GameEvent
     data object GameOver : GameEvent
     data object QuestCompleted : GameEvent
+    data object FootstepStone : GameEvent
+    data object FootstepWater : GameEvent
+    data object BlockPushStart : GameEvent
+    data object BlockScrape : GameEvent
 }

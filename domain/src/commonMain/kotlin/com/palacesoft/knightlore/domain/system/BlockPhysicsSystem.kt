@@ -1,5 +1,6 @@
 package com.palacesoft.knightlore.domain.system
 
+import com.palacesoft.knightlore.domain.event.GameEvent
 import com.palacesoft.knightlore.domain.input.FrameInput
 import com.palacesoft.knightlore.domain.model.BlockState
 import com.palacesoft.knightlore.domain.model.GameState
@@ -29,6 +30,8 @@ class BlockPhysicsSystem(private val roomProvider: RoomProvider) : GameSystem {
             input.moveVector.y < -PUSH_THRESHOLD -> -1
             else -> 0
         }
+
+        val events = mutableListOf<GameEvent>()
 
         val afterPush = if (!player.airborne && (pushDx != 0 || pushDy != 0)) {
             val px = player.position.x
@@ -65,6 +68,8 @@ class BlockPhysicsSystem(private val roomProvider: RoomProvider) : GameSystem {
                     other !== block && other.gridX == targetX && other.gridY == targetY && other.gridZ == block.gridZ
                 }
                 if (otherBlockAt) return@map block
+
+                events += GameEvent.BlockPushStart
 
                 block.copy(
                     gridX = targetX,
@@ -128,6 +133,6 @@ class BlockPhysicsSystem(private val roomProvider: RoomProvider) : GameSystem {
             }
         }
 
-        return SystemResult(state.copy(dynamicBlocks = updatedBlocks))
+        return SystemResult(state.copy(dynamicBlocks = updatedBlocks), events)
     }
 }

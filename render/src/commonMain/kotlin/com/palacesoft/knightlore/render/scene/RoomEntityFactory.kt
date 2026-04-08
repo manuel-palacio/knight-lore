@@ -2057,88 +2057,47 @@ object RoomEntityFactory {
             val eyeCol   = if (blink) HUMAN_BLINK else WOLF_EYE
             val fangCol  = if (blink) HUMAN_BLINK else WOLF_FANG
 
+            // ── HIND LEGS — thick rounded limbs ─────────────────────────────────
             val legH = (10f * legHeightMul)
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 0, "player_leg_l",
+                Vec2f(cx - 10f, cy - legH + leftLegFwd),
+                DrawPayload.ColorOval(8f, legH, furDark))
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 0, "player_leg_r",
+                Vec2f(cx + 2f, cy - legH + rightLegFwd),
+                DrawPayload.ColorOval(8f, legH, furDark))
+            // Paws — round ovals, not straight-line claws
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 1, "player_paw_l",
+                Vec2f(cx - 11f, cy - 2f + leftLegFwd),
+                DrawPayload.ColorOval(10f, 5f, furDark))
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 1, "player_paw_r",
+                Vec2f(cx + 1f, cy - 2f + rightLegFwd),
+                DrawPayload.ColorOval(10f, 5f, furDark))
 
-            // ── HIND LEGS ─────────────────────────────────────────────────────────
-            commands += DrawCommand(DrawLayer.PLAYER, dk, 0, "player_boot_l",
-                Vec2f(cx - 9f, cy - legH + leftLegFwd),
-                DrawPayload.ColorRect(6f, legH, furDark))
-            commands += DrawCommand(DrawLayer.PLAYER, dk, 0, "player_boot_r",
-                Vec2f(cx + 3f, cy - legH + rightLegFwd),
-                DrawPayload.ColorRect(6f, legH, furDark))
-            // Foot claws — 3 small lines at base of each leg
-            for (ci in 0..2) {
-                val footX = cx - 10f + ci * 3f
-                commands += DrawCommand(DrawLayer.PLAYER, dk, 1, "player_claw_l_$ci",
-                    Vec2f(footX, cy),
-                    DrawPayload.Line(footX, cy, footX - 1f + ci * 0.5f, cy + 3f, clawCol, 0.8f))
-            }
-            for (ci in 0..2) {
-                val footX = cx + 3f + ci * 3f
-                commands += DrawCommand(DrawLayer.PLAYER, dk, 1, "player_claw_r_$ci",
-                    Vec2f(footX, cy),
-                    DrawPayload.Line(footX, cy, footX - 1f + ci * 0.5f, cy + 3f, clawCol, 0.8f))
-            }
-
-            // ── BODY — hunched trapezoid ──────────────────────────────────────────
-            // Wide at haunches (bottom), slightly narrower at upper back.
-            // Haunches sit higher than a human hip — the beast is crouched.
-            val haunchY = cy - 14f  // bottom of torso
-            val backY   = cy - 42f  // top of back (shoulder blades)
-            val bodyPts = listOf(
-                Vec2f(cx - 14f, haunchY),   // haunch left
-                Vec2f(cx + 14f, haunchY),   // haunch right
-                Vec2f(cx + 11f, backY),     // shoulder right
-                Vec2f(cx -  7f, backY),     // shoulder left (asymmetric — body faces right)
-            )
+            // ── BODY — large rounded mass (oval, not trapezoid) ─────────────────
+            val bodyY = cy - 28f
+            // Main body — big oval
             commands += DrawCommand(DrawLayer.PLAYER, dk, 1, "player_body",
-                Vec2f(cx - 14f, haunchY), DrawPayload.ColorPath(bodyPts, furMid))
+                Vec2f(cx - 16f, bodyY - 12f),
+                DrawPayload.ColorOval(32f, 28f, furMid))
+            // Belly — lighter underside
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_belly",
+                Vec2f(cx - 10f, bodyY - 4f),
+                DrawPayload.ColorOval(20f, 14f, furLight))
 
-            // Body shadow — darker panel on right flank
-            val shadowPts = listOf(
-                Vec2f(cx + 5f,  haunchY),
-                Vec2f(cx + 14f, haunchY),
-                Vec2f(cx + 11f, backY),
-                Vec2f(cx +  5f, backY),
-            )
-            commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_body_shadow",
-                Vec2f(cx + 5f, haunchY), DrawPayload.ColorPath(shadowPts, furDark))
-
-            // Back highlight — 3 short diagonal fur-stroke lines across top of body
-            // These replace the invisible horizontal hairlines. They follow the spine angle.
-            for (fi in 0..2) {
-                val fy  = backY + fi * 7f
-                val fx  = cx - 5f + fi * 1.5f
-                commands += DrawCommand(DrawLayer.PLAYER, dk, 3, "player_fur_$fi",
-                    Vec2f(fx, fy),
-                    DrawPayload.Line(fx - 3f, fy, fx + 6f, fy + 2f, furLight, 0.9f))
-            }
-
-            // ── FRONT LEGS / ARMS ─────────────────────────────────────────────────
-            // Arms reach forward slightly — the beast is mid-lunge
-            val armTopY = cy - 38f
-            val armBotY = cy - 24f
+            // ── FRONT LEGS — rounded, not rectangular ───────────────────────────
             commands += DrawCommand(DrawLayer.PLAYER, dk, 1, "player_arm_l",
-                Vec2f(cx - 16f, armTopY + leftLegFwd * 0.5f),
-                DrawPayload.ColorRect(5f, armBotY - armTopY, furMid))
+                Vec2f(cx - 16f, cy - 34f + leftLegFwd * 0.5f),
+                DrawPayload.ColorOval(7f, 16f, furMid))
             commands += DrawCommand(DrawLayer.PLAYER, dk, 1, "player_arm_r",
-                Vec2f(cx + 11f, armTopY + rightLegFwd * 0.5f),
-                DrawPayload.ColorRect(5f, armBotY - armTopY, furMid))
-            // Front claws — 3 lines each
-            for (ci in 0..2) {
-                val handX = cx - 18f + ci * 3f
-                commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_fclaw_l_$ci",
-                    Vec2f(handX, armBotY + leftLegFwd * 0.5f),
-                    DrawPayload.Line(handX, armBotY + leftLegFwd * 0.5f,
-                        handX - 2f + ci, armBotY + leftLegFwd * 0.5f + 4f, clawCol, 0.9f))
-            }
-            for (ci in 0..2) {
-                val handX = cx + 11f + ci * 3f
-                commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_fclaw_r_$ci",
-                    Vec2f(handX, armBotY + rightLegFwd * 0.5f),
-                    DrawPayload.Line(handX, armBotY + rightLegFwd * 0.5f,
-                        handX - 2f + ci, armBotY + rightLegFwd * 0.5f + 4f, clawCol, 0.9f))
-            }
+                Vec2f(cx + 9f, cy - 34f + rightLegFwd * 0.5f),
+                DrawPayload.ColorOval(7f, 16f, furMid))
+            // Front paws
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_fpaw_l",
+                Vec2f(cx - 17f, cy - 20f + leftLegFwd * 0.5f),
+                DrawPayload.ColorOval(9f, 5f, furDark))
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_fpaw_r",
+                Vec2f(cx + 9f, cy - 20f + rightLegFwd * 0.5f),
+                DrawPayload.ColorOval(9f, 5f, furDark))
 
             // ── HEAD — low and forward ────────────────────────────────────────────
             // The head sits LOW (not high and proud) — the beast crouches.

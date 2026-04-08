@@ -24,6 +24,8 @@ import com.palacesoft.knightlore.domain.model.BlockState
 import com.palacesoft.knightlore.domain.model.DayPhase
 import com.palacesoft.knightlore.domain.model.TileType
 import com.palacesoft.knightlore.core.geometry.ZXPalette
+import com.palacesoft.knightlore.render.art.DefaultRoomArtProfiles
+import com.palacesoft.knightlore.render.art.LightKind
 import com.palacesoft.knightlore.render.iso.IsoProjector
 
 /**
@@ -883,6 +885,67 @@ object RoomEntityFactory {
         val roomSpecial = content.rooms[state.currentRoomId]?.special
         if (roomSpecial is RoomSpecial.CauldronRoom) {
             buildCauldronCommands(state, room, offset, commands)
+        }
+
+        // 5c. Room art profile — light overlays, darkness zones, anchor glow
+        val artProfile = DefaultRoomArtProfiles.forRoom(state.currentRoomId.value)
+        if (artProfile != null) {
+            // A) Light overlays from lightSources
+            for (light in artProfile.lightSources) {
+                val lightWorld = Vec3f(light.gridX, light.gridY, light.gridZ)
+                val screen = IsoProjector.toScreen(lightWorld) + offset
+                val dk = IsoProjector.depthKey(lightWorld)
+                val alpha = (light.intensity.coerceIn(0f, 1f) * 255f).toInt()
+                val baseColor = when (light.kind) {
+                    LightKind.TORCH         -> 0xFF6800
+                    LightKind.CAULDRON_GLOW -> 0x44BB00
+                    LightKind.DANGER_RED    -> 0xCC2200
+                    LightKind.MOONBEAM      -> 0x8888CC
+                    LightKind.AMBIENT       -> 0x886644
+                }
+                val argb = (alpha shl 24) or baseColor
+                // Map radius to oval size: each grid unit ~ TILE_WIDTH pixels
+                val ovalW = light.radius * 2f * com.palacesoft.knightlore.core.geometry.TileMetrics.HALF_TILE_WIDTH
+                val ovalH = light.radius * com.palacesoft.knightlore.core.geometry.TileMetrics.HALF_TILE_HEIGHT * 2f
+                commands += DrawCommand(
+                    DrawLayer.FLOOR, dk, 8, "art_light_${light.gridX}_${light.gridY}",
+                    Vec2f(screen.x - ovalW / 2f, screen.y - ovalH / 2f),
+                    DrawPayload.ColorOval(ovalW, ovalH, argb),
+                )
+            }
+
+            // B) Darkness overlay for quiet zones
+            for (zone in artProfile.quietZones) {
+                for (zx in zone.x0..zone.x1) {
+                    for (zy in zone.y0..zone.y1) {
+                        val gx = zx.toFloat()
+                        val gy = zy.toFloat()
+                        val world = Vec3f(gx, gy, 0f)
+                        val dk = IsoProjector.depthKey(world)
+                        val tilePts = floorDiamond(gx, gy, 0f, ox, oy)
+                        commands += DrawCommand(
+                            DrawLayer.FLOOR, dk, 7, "art_quiet_${zx}_${zy}",
+                            IsoProjector.toScreen(world) + offset,
+                            DrawPayload.ColorPath(tilePts, 0x20_000000),
+                        )
+                    }
+                }
+            }
+
+            // C) Anchor indicator — subtle glow on the floor at the focal point
+            val anchor = artProfile.anchor
+            if (anchor != null) {
+                val anchorWorld = Vec3f(anchor.gridX + 0.5f, anchor.gridY + 0.5f, anchor.gridZ.toFloat())
+                val screen = IsoProjector.toScreen(anchorWorld) + offset
+                val dk = IsoProjector.depthKey(anchorWorld)
+                val glowW = 2.5f * com.palacesoft.knightlore.core.geometry.TileMetrics.HALF_TILE_WIDTH
+                val glowH = 2.5f * com.palacesoft.knightlore.core.geometry.TileMetrics.HALF_TILE_HEIGHT
+                commands += DrawCommand(
+                    DrawLayer.FLOOR, dk, 9, "art_anchor_${anchor.gridX}_${anchor.gridY}",
+                    Vec2f(screen.x - glowW / 2f, screen.y - glowH / 2f),
+                    DrawPayload.ColorOval(glowW, glowH, 0x30_FFAA44.toInt()),
+                )
+            }
         }
 
         // 6. Player — dark plague-walker

@@ -1879,13 +1879,13 @@ object RoomEntityFactory {
         val HUMAN_METAL_SHINE   = 0xFF_E8F0F8.toInt()  // helmet shine — nearly white
         val HUMAN_SWORD_BLADE   = 0xFF_A0AAB0.toInt()  // sword blade
         val HUMAN_BLINK         = 0xFF_FF2200.toInt()
-        // Werewolf form
-        val WOLF_FUR_MID        = 0xFF_5A5A68.toInt()
-        val WOLF_FUR_DARK       = 0xFF_383844.toInt()
-        val WOLF_FUR_LIGHT      = 0xFF_787888.toInt()
-        val WOLF_CLAW           = 0xFF_C8C8B8.toInt()
-        val WOLF_EYE            = 0xFF_FF4400.toInt()
-        val WOLF_FANG           = 0xFF_E8E8D8.toInt()
+        // Werewolf form — warm brown fur, not cold grey metal
+        val WOLF_FUR_MID        = 0xFF_6A5A40.toInt()  // tawny brown
+        val WOLF_FUR_DARK       = 0xFF_3A2E20.toInt()  // dark brown underbelly
+        val WOLF_FUR_LIGHT      = 0xFF_8A7858.toInt()  // light brown highlight
+        val WOLF_CLAW           = 0xFF_D8D0B8.toInt()  // bone-white claws
+        val WOLF_EYE            = 0xFF_FF6600.toInt()  // fiery amber
+        val WOLF_FANG           = 0xFF_F0E8D0.toInt()  // ivory
 
         // ── Walk cycle ──────────────────────────────────────────────────────────────
         val isMoving = player.movementState == MovementState.WALKING

@@ -877,146 +877,49 @@ object RoomEntityFactory {
             val dk = IsoProjector.depthKey(Vec3f(gx + 0.5f, gy + 1f, 0f))
             val id = "wall_${gx.toInt()}_${gy.toInt()}"
 
-            // Flat dithered face z=0..3 — no top cap, no block geometry (like the original)
+            // Flat dithered face z=0..3 — checkerboard creates rough stone texture
             commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "${id}_face",
                 pt(gx, gy + 1f, 0f, ox, oy),
                 DrawPayload.DitheredPath(listOf(
                     pt(gx, gy + 1f, 0f, ox, oy), pt(gx + 1f, gy + 1f, 0f, ox, oy),
                     pt(gx + 1f, gy + 1f, 3f, ox, oy), pt(gx, gy + 1f, 3f, ox, oy),
-                ), palette.wallSouthLo, palette.wallSouthHi, horizontal = true))
+                ), palette.wallSouthLo, palette.wallSouthHi, horizontal = false))
 
-            // Decorations
-            for (gz in 0 until 3) {
-                val bz = gz.toFloat()
-                val isTop = gz == 2
+            // Torch — every 4th column, rendered in EFFECT layer (in front of walls)
+            if (gx.toInt() % 4 == 2) {
+                val tPhase = torchPhase(gx.toInt(), gy.toInt())
+                val flicker = (kotlin.math.sin(tick.toDouble() * 0.3 + tPhase) * 1.5f).toFloat()
+                val flamePt = pt(gx + 0.5f, gy + 0.85f, 1.5f, ox, oy)
 
-                // CAVERN: stalactite hint — narrow triangles hanging from wall top
-                if (roomType == RoomType.CAVERN && (gx.toInt() * 7 + 3) % 5 == 0) {
-                    for (sz in 0 until 3) {
-                        val stalkX = gx + 0.2f + sz * 0.25f
-                        val stalkTop = pt(stalkX, gy, 3.0f, ox, oy)
-                        val stalkTip = pt(stalkX, gy, 2.2f - sz * 0.15f, ox, oy)
-                        commands += DrawCommand(DrawLayer.BLOCK, dk, 6, "${id}_stalk_$sz",
-                            Vec2f(stalkTop.x, stalkTop.y),
-                            DrawPayload.ColorPath(listOf(
-                                Vec2f(stalkTop.x - 2f, stalkTop.y),
-                                Vec2f(stalkTop.x + 2f, stalkTop.y),
-                                Vec2f(stalkTip.x, stalkTip.y),
-                            ), 0xFF_2A2A3A.toInt()))
-                    }
-                }
+                // Bracket
+                val bracketFrom = pt(gx + 0.5f, gy + 1f, 1.5f, ox, oy)
+                commands += DrawCommand(DrawLayer.EFFECT, dk, 0, "${id}_bracket",
+                    Vec2f(bracketFrom.x, bracketFrom.y),
+                    DrawPayload.Line(bracketFrom.x, bracketFrom.y, flamePt.x, flamePt.y, 0xFF_5A4020.toInt(), 1.5f))
 
-                // Moss patch (~1 in 7 wall columns, only on lower block)
-                if (!isTop && (gx.toInt() * 5 + gy.toInt() * 9) % 7 == 0) {
-                    val moss = pt(gx + 0.35f, gy + 1f, bz + 0.3f, ox, oy)
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 3, "${id}_moss",
-                        Vec2f(moss.x - 4f, moss.y - 3f),
-                        DrawPayload.ColorOval(9f, 6f, CastleColors.MOSS))
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 4, "${id}_moss_hi",
-                        Vec2f(moss.x - 3f, moss.y - 4f),
-                        DrawPayload.ColorOval(5f, 3f, 0xFF_3A6A3A.toInt()))
-                }
+                // Flame — in EFFECT layer so it's always in front of walls
+                commands += DrawCommand(DrawLayer.EFFECT, dk, 1, "${id}_flame",
+                    Vec2f(flamePt.x - 3f, flamePt.y - 10f + flicker),
+                    DrawPayload.ColorOval(6f, 8f, 0xCC_FF8800.toInt()))
+                commands += DrawCommand(DrawLayer.EFFECT, dk, 2, "${id}_core",
+                    Vec2f(flamePt.x - 1.5f, flamePt.y - 8f + flicker),
+                    DrawPayload.ColorOval(3f, 4f, 0xFF_FFDD44.toInt()))
 
-                // Chains — 1-in-8 wall columns
-                if ((gx.toInt() * 13 + gy.toInt() * 7) % 8 == 0 && isTop) {
-                    val chainColor = CastleColors.CHAIN
-                    // Chain: two line segments hanging from gz=2.8 down ~20px on screen
-                    val chainTop = pt(gx + 0.5f, gy + 1f, 2.8f, ox, oy)
-                    val chainMid = pt(gx + 0.5f, gy + 1f, 2.0f, ox, oy)
-                    val chainBot = pt(gx + 0.5f, gy + 1f, 1.2f, ox, oy)
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 5, "${id}_chain1",
-                        Vec2f(chainTop.x, chainTop.y),
-                        DrawPayload.Line(chainTop.x, chainTop.y, chainMid.x, chainMid.y, chainColor, 1f))
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 5, "${id}_chain2",
-                        Vec2f(chainMid.x, chainMid.y),
-                        DrawPayload.Line(chainMid.x, chainMid.y, chainBot.x, chainBot.y, chainColor, 1f))
-                    val linkPt = pt(gx + 0.5f, gy + 1f, 1.2f, ox, oy)
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 5, "${id}_chain_link",
-                        Vec2f(linkPt.x - 3f, linkPt.y - 2f),
-                        DrawPayload.ColorOval(6f, 4f, chainColor))
-                }
-
-                // Cracks — 1-in-6 wall columns: irregular polygon crack on south face
-                if ((gx.toInt() * 11 + gy.toInt() * 3) % 6 == 0 && gz == 1) {
-                    val crk = listOf(
-                        pt(gx + 0.35f, gy + 1f, bz + 0.2f, ox, oy),
-                        pt(gx + 0.42f, gy + 1f, bz + 0.5f, ox, oy),
-                        pt(gx + 0.38f, gy + 1f, bz + 0.8f, ox, oy),
-                        pt(gx + 0.40f, gy + 1f, bz + 0.9f, ox, oy),
-                        pt(gx + 0.37f, gy + 1f, bz + 0.5f, ox, oy),
-                        pt(gx + 0.33f, gy + 1f, bz + 0.2f, ox, oy),
-                    )
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 4, "${id}_crack",
-                        IsoProjector.toScreen(Vec3f(gx, gy + 1f, bz)) + offset,
-                        DrawPayload.ColorPath(crk, 0xFF_0A0808.toInt()))
-                }
-
-                // Water seep — 1-in-10 wall columns
-                if ((gx.toInt() * 7 + gy.toInt() * 19) % 10 == 0 && gz == 1) {
-                    val seepTop = pt(gx + 0.6f, gy + 1f, 1.5f, ox, oy)
-                    val seepBot = pt(gx + 0.6f, gy + 1f, 0f,   ox, oy)
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 4, "${id}_seep",
-                        Vec2f(seepTop.x, seepTop.y),
-                        DrawPayload.Line(seepTop.x, seepTop.y, seepBot.x, seepBot.y, 0xFF_1A2A2A.toInt(), 1f))
-                    val puddle = pt(gx + 0.6f, gy + 1f, 0.05f, ox, oy)
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 5, "${id}_puddle",
-                        Vec2f(puddle.x - 4f, puddle.y - 2f),
-                        DrawPayload.ColorOval(8f, 4f, 0xFF_1A3A2A.toInt()))
-                }
-
-                // Torch sconce — every 4th north wall column, only on gz=0 (ground level to gz=1.5)
-                if (gx.toInt() % 4 == 2 && gz == 0) {
-                    val tPhase = torchPhase(gx.toInt(), gy.toInt())
-                    val isFlooded = roomType == RoomType.FLOODED
-                    val isCauldron = room.special is RoomSpecial.CauldronRoom
-
-                    val baseFloorColor = when {
-                        isFlooded  -> CastleColors.WATER_SHIMMER
-                        isCauldron -> (CastleColors.TORCH_FLOOR_CAST and 0x00FFFF) or 0x448800
-                        else       -> CastleColors.TORCH_FLOOR_CAST
-                    }
-                    val baseWallColor = when {
-                        isFlooded  -> CastleColors.WATER_SHIMMER
-                        else       -> CastleColors.TORCH_WALL_CAST
-                    }
-
-                    // Bracket line
-                    val bracketFrom = pt(gx + 0.5f, gy + 1f, 1.5f, ox, oy)
-                    val bracketTo   = pt(gx + 0.5f, gy + 0.85f, 1.5f, ox, oy)
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 6, "${id}_bracket",
-                        Vec2f(bracketFrom.x, bracketFrom.y),
-                        DrawPayload.Line(bracketFrom.x, bracketFrom.y, bracketTo.x, bracketTo.y, 0xFF_5A4020.toInt(), 1.5f))
-
-                    val flamePt = pt(gx + 0.5f, gy + 0.85f, 1.5f, ox, oy)
-                    val torchScreenX = flamePt.x
-                    val torchScreenY = flamePt.y
-
-                    // Floor cast — strong warm light pool for dramatic atmosphere
-                    val floorAlpha = flickerAlpha(tick, tPhase, rate = 0.10, minAlpha = 0x20, maxAlpha = 0x50)
-                    val tileX0 = (gx - 1f).coerceAtLeast(0f)
-                    val tileX1 = (gx + 2f).coerceAtMost(room.width.toFloat())
-                    var lightGx = tileX0
-                    while (lightGx < tileX1) {
-                        val lightWorld = Vec3f(lightGx, gy + 0.5f, 0f)
-                        val lightDk = IsoProjector.depthKey(lightWorld)
-                        commands += DrawCommand(DrawLayer.FLOOR, lightDk, 8, "torch_light_${gx.toInt()}_${lightGx.toInt()}",
-                            IsoProjector.toScreen(lightWorld) + offset,
-                            DrawPayload.ColorPath(
-                                floorDiamond(lightGx, gy, 0f, ox, oy),
-                                (floorAlpha shl 24) or baseFloorColor
-                            ))
-                        lightGx += 1f
-                    }
-
-                    // Small flame — just a flickering oval, no giant halos
-                    val flicker = (kotlin.math.sin(tick.toDouble() * 0.3 + tPhase) * 1.5f).toFloat()
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 11, "${id}_torch_flame",
-                        Vec2f(torchScreenX - 3f, torchScreenY - 10f + flicker),
-                        DrawPayload.ColorOval(6f, 8f, 0xCC_FF8800.toInt()))
-                    // Tiny bright core
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 12, "${id}_torch_core",
-                        Vec2f(torchScreenX - 1.5f, torchScreenY - 8f + flicker),
-                        DrawPayload.ColorOval(3f, 4f, 0xFF_FFDD44.toInt()))
+                // Floor light cast
+                val floorAlpha = flickerAlpha(tick, tPhase, rate = 0.10, minAlpha = 0x20, maxAlpha = 0x50)
+                val tileX0 = (gx - 1f).coerceAtLeast(0f)
+                val tileX1 = (gx + 2f).coerceAtMost(room.width.toFloat())
+                var lightGx = tileX0
+                while (lightGx < tileX1) {
+                    val lightWorld = Vec3f(lightGx, gy + 1f, 0f)
+                    val lightDk = IsoProjector.depthKey(lightWorld)
+                    commands += DrawCommand(DrawLayer.FLOOR, lightDk, 8, "nlight_${gx.toInt()}_${lightGx.toInt()}",
+                        IsoProjector.toScreen(lightWorld) + offset,
+                        DrawPayload.ColorPath(
+                            floorDiamond(lightGx, gy + 1f, 0f, ox, oy),
+                            (floorAlpha shl 24) or CastleColors.TORCH_FLOOR_CAST
+                        ))
+                    lightGx += 1f
                 }
             }
         }
@@ -1025,128 +928,46 @@ object RoomEntityFactory {
             val dk = IsoProjector.depthKey(Vec3f(gx + 0.5f, gy + 1f, 0f))
             val id = "wall_${gx.toInt()}_${gy.toInt()}"
 
-            // Flat dithered face z=0..3 — no top cap (like the original)
+            // Flat dithered face z=0..3 — checkerboard stone texture, no decorations
             commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "${id}_face",
                 pt(gx + 1f, gy, 0f, ox, oy),
                 DrawPayload.DitheredPath(listOf(
                     pt(gx + 1f, gy, 0f, ox, oy), pt(gx + 1f, gy + 1f, 0f, ox, oy),
                     pt(gx + 1f, gy + 1f, 3f, ox, oy), pt(gx + 1f, gy, 3f, ox, oy),
-                ), palette.wallEastLo, palette.wallEastHi, horizontal = true))
+                ), palette.wallEastLo, palette.wallEastHi, horizontal = false))
 
-            // Decorations
-            for (gz in 0 until 3) {
-                val bz = gz.toFloat()
-                val isTop = gz == 2
+            // Torch only — every 4th column, in EFFECT layer
+            if (gy.toInt() % 4 == 2) {
+                val tPhase = torchPhase(gx.toInt(), gy.toInt())
+                val flicker = (kotlin.math.sin(tick.toDouble() * 0.3 + tPhase) * 1.5f).toFloat()
+                val bracketFrom = pt(gx + 1f, gy + 0.5f, 1.5f, ox, oy)
+                val flamePt = pt(gx + 0.85f, gy + 0.5f, 1.5f, ox, oy)
 
-                // Moss patch (~1 in 7 wall columns, only on lower block)
-                if (!isTop && (gx.toInt() * 5 + gy.toInt() * 9) % 7 == 0) {
-                    val moss = pt(gx + 0.35f, gy + 1f, bz + 0.3f, ox, oy)
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 3, "${id}_moss",
-                        Vec2f(moss.x - 4f, moss.y - 3f),
-                        DrawPayload.ColorOval(9f, 6f, CastleColors.MOSS))
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 4, "${id}_moss_hi",
-                        Vec2f(moss.x - 3f, moss.y - 4f),
-                        DrawPayload.ColorOval(5f, 3f, 0xFF_3A6A3A.toInt()))
-                }
+                commands += DrawCommand(DrawLayer.EFFECT, dk, 0, "${id}_bracket",
+                    Vec2f(bracketFrom.x, bracketFrom.y),
+                    DrawPayload.Line(bracketFrom.x, bracketFrom.y, flamePt.x, flamePt.y, 0xFF_5A4020.toInt(), 1.5f))
+                commands += DrawCommand(DrawLayer.EFFECT, dk, 1, "${id}_flame",
+                    Vec2f(flamePt.x - 3f, flamePt.y - 10f + flicker),
+                    DrawPayload.ColorOval(6f, 8f, 0xCC_FF8800.toInt()))
+                commands += DrawCommand(DrawLayer.EFFECT, dk, 2, "${id}_core",
+                    Vec2f(flamePt.x - 1.5f, flamePt.y - 8f + flicker),
+                    DrawPayload.ColorOval(3f, 4f, 0xFF_FFDD44.toInt()))
 
-                // Chains — 1-in-8 wall columns
-                if ((gx.toInt() * 13 + gy.toInt() * 7) % 8 == 0 && isTop) {
-                    val chainColor = CastleColors.CHAIN
-                    val chainTop = pt(gx + 0.5f, gy + 1f, 2.8f, ox, oy)
-                    val chainMid = pt(gx + 0.5f, gy + 1f, 2.0f, ox, oy)
-                    val chainBot = pt(gx + 0.5f, gy + 1f, 1.2f, ox, oy)
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 5, "${id}_chain1",
-                        Vec2f(chainTop.x, chainTop.y),
-                        DrawPayload.Line(chainTop.x, chainTop.y, chainMid.x, chainMid.y, chainColor, 1f))
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 5, "${id}_chain2",
-                        Vec2f(chainMid.x, chainMid.y),
-                        DrawPayload.Line(chainMid.x, chainMid.y, chainBot.x, chainBot.y, chainColor, 1f))
-                    val linkPt = pt(gx + 0.5f, gy + 1f, 1.2f, ox, oy)
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 5, "${id}_chain_link",
-                        Vec2f(linkPt.x - 3f, linkPt.y - 2f),
-                        DrawPayload.ColorOval(6f, 4f, chainColor))
-                }
-
-                // Cracks — 1-in-6 wall columns: irregular polygon crack on east face
-                if ((gx.toInt() * 11 + gy.toInt() * 3) % 6 == 0 && gz == 1) {
-                    val crk = listOf(
-                        pt(gx + 1f, gy + 0.35f, bz + 0.2f, ox, oy),
-                        pt(gx + 1f, gy + 0.42f, bz + 0.5f, ox, oy),
-                        pt(gx + 1f, gy + 0.38f, bz + 0.8f, ox, oy),
-                        pt(gx + 1f, gy + 0.40f, bz + 0.9f, ox, oy),
-                        pt(gx + 1f, gy + 0.37f, bz + 0.5f, ox, oy),
-                        pt(gx + 1f, gy + 0.33f, bz + 0.2f, ox, oy),
-                    )
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 4, "${id}_crack",
-                        IsoProjector.toScreen(Vec3f(gx + 1f, gy, bz)) + offset,
-                        DrawPayload.ColorPath(crk, 0xFF_0A0808.toInt()))
-                }
-
-                // Water seep — 1-in-10 wall columns
-                if ((gx.toInt() * 7 + gy.toInt() * 19) % 10 == 0 && gz == 1) {
-                    val seepTop = pt(gx + 1f, gy + 0.6f, 1.5f, ox, oy)
-                    val seepBot = pt(gx + 1f, gy + 0.6f, 0f,   ox, oy)
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 4, "${id}_seep",
-                        Vec2f(seepTop.x, seepTop.y),
-                        DrawPayload.Line(seepTop.x, seepTop.y, seepBot.x, seepBot.y, 0xFF_1A2A2A.toInt(), 1f))
-                    val puddle = pt(gx + 1f, gy + 0.6f, 0.05f, ox, oy)
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 5, "${id}_puddle",
-                        Vec2f(puddle.x - 4f, puddle.y - 2f),
-                        DrawPayload.ColorOval(8f, 4f, 0xFF_1A3A2A.toInt()))
-                }
-
-                // Torch sconce — every 4th west wall column, only on gz=0
-                if (gy.toInt() % 4 == 2 && gz == 0) {
-                    val tPhase = torchPhase(gx.toInt(), gy.toInt())
-                    val isFlooded = roomType == RoomType.FLOODED
-                    val isCauldron = room.special is RoomSpecial.CauldronRoom
-
-                    val baseFloorColor = when {
-                        isFlooded  -> CastleColors.WATER_SHIMMER
-                        isCauldron -> (CastleColors.TORCH_FLOOR_CAST and 0x00FFFF) or 0x448800
-                        else       -> CastleColors.TORCH_FLOOR_CAST
-                    }
-                    val baseWallColor = when {
-                        isFlooded  -> CastleColors.WATER_SHIMMER
-                        else       -> CastleColors.TORCH_WALL_CAST
-                    }
-
-                    // Bracket line — west wall uses right face (x+1)
-                    val bracketFrom = pt(gx + 1f, gy + 0.5f, 1.5f, ox, oy)
-                    val bracketTo   = pt(gx + 0.85f, gy + 0.5f, 1.5f, ox, oy)
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 6, "${id}_bracket",
-                        Vec2f(bracketFrom.x, bracketFrom.y),
-                        DrawPayload.Line(bracketFrom.x, bracketFrom.y, bracketTo.x, bracketTo.y, 0xFF_5A4020.toInt(), 1.5f))
-
-                    val flamePt = pt(gx + 0.85f, gy + 0.5f, 1.5f, ox, oy)
-                    val torchScreenX = flamePt.x
-                    val torchScreenY = flamePt.y
-
-                    // Floor cast — strong warm light pool
-                    val floorAlpha = flickerAlpha(tick, tPhase, rate = 0.10, minAlpha = 0x20, maxAlpha = 0x50)
-                    val tileY0 = (gy - 1f).coerceAtLeast(0f)
-                    val tileY1 = (gy + 2f).coerceAtMost(room.depth.toFloat())
-                    var lightGy = tileY0
-                    while (lightGy < tileY1) {
-                        val lightWorld = Vec3f(gx + 0.5f, lightGy, 0f)
-                        val lightDk = IsoProjector.depthKey(lightWorld)
-                        commands += DrawCommand(DrawLayer.FLOOR, lightDk, 8, "torch_light_${gy.toInt()}_${lightGy.toInt()}",
-                            IsoProjector.toScreen(lightWorld) + offset,
-                            DrawPayload.ColorPath(
-                                floorDiamond(gx, lightGy, 0f, ox, oy),
-                                (floorAlpha shl 24) or baseFloorColor
-                            ))
-                        lightGy += 1f
-                    }
-
-                    // Small flame — just a flickering oval, no giant halos
-                    val flicker = (kotlin.math.sin(tick.toDouble() * 0.3 + tPhase) * 1.5f).toFloat()
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 11, "${id}_torch_flame",
-                        Vec2f(torchScreenX - 3f, torchScreenY - 10f + flicker),
-                        DrawPayload.ColorOval(6f, 8f, 0xCC_FF8800.toInt()))
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 12, "${id}_torch_core",
-                        Vec2f(torchScreenX - 1.5f, torchScreenY - 8f + flicker),
-                        DrawPayload.ColorOval(3f, 4f, 0xFF_FFDD44.toInt()))
+                // Floor light
+                val floorAlpha = flickerAlpha(tick, tPhase, rate = 0.10, minAlpha = 0x20, maxAlpha = 0x50)
+                val tileY0 = (gy - 1f).coerceAtLeast(0f)
+                val tileY1 = (gy + 2f).coerceAtMost(room.depth.toFloat())
+                var lightGy = tileY0
+                while (lightGy < tileY1) {
+                    val lightWorld = Vec3f(gx + 1f, lightGy, 0f)
+                    val lightDk = IsoProjector.depthKey(lightWorld)
+                    commands += DrawCommand(DrawLayer.FLOOR, lightDk, 8, "wlight_${gy.toInt()}_${lightGy.toInt()}",
+                        IsoProjector.toScreen(lightWorld) + offset,
+                        DrawPayload.ColorPath(
+                            floorDiamond(gx + 1f, lightGy, 0f, ox, oy),
+                            (floorAlpha shl 24) or CastleColors.TORCH_FLOOR_CAST
+                        ))
+                    lightGy += 1f
                 }
             }
         }
@@ -1318,7 +1139,12 @@ object RoomEntityFactory {
             if (x !in northGaps) wallBlockNorth(x.toFloat(), 0f)
         }
         for (y in 1 until d - 1) {
-            if (y !in westGaps) wallBlockWest(0f, y.toFloat())
+            if (y in westGaps) doorArchway(0f, y.toFloat(),
+                westGaps.minOrNull() == y,
+                westGaps.maxOrNull() == y,
+                ExitSide.WEST,
+                westExitTarget)
+            else wallBlockWest(0f, y.toFloat())
         }
 
         // South/East exits: plain dark opening with two solid half-wall pillars (no glow).
@@ -1897,32 +1723,30 @@ object RoomEntityFactory {
             val metalColor  = if (blink) HUMAN_BLINK else HUMAN_METAL
 
             // ── LEGS (boots) ─────────────────────────────────────────────────────
-            // Two dark boot rects, with walk-cycle fore/aft offset on Y
-            // Boots are 7px wide, 11px tall — compact, not chunky office-block legs
+            // Short stubby boots — Sabreman has tiny legs under the big hat
             val bootColor = if (blink) HUMAN_BLINK else 0xFF_1E1A14.toInt()
-            val legH = (11f * legHeightMul)
+            val legH = (8f * legHeightMul)
             commands += DrawCommand(DrawLayer.PLAYER, dk, 0, "player_boot_l",
-                Vec2f(cx - 9f, cy - legH + leftLegFwd),
-                DrawPayload.ColorRect(7f, legH, bootColor))
+                Vec2f(cx - 7f, cy - legH + leftLegFwd),
+                DrawPayload.ColorRect(6f, legH, bootColor))
             commands += DrawCommand(DrawLayer.PLAYER, dk, 0, "player_boot_r",
-                Vec2f(cx + 2f, cy - legH + rightLegFwd),
-                DrawPayload.ColorRect(7f, legH, bootColor))
+                Vec2f(cx + 1f, cy - legH + rightLegFwd),
+                DrawPayload.ColorRect(6f, legH, bootColor))
             // Boot highlight — thin 1px lighter line on top edge of each boot
             commands += DrawCommand(DrawLayer.PLAYER, dk, 1, "player_boot_l_hl",
-                Vec2f(cx - 9f, cy - legH + leftLegFwd),
-                DrawPayload.Line(cx - 9f, cy - legH + leftLegFwd, cx - 2f, cy - legH + leftLegFwd, 0xFF_3A3228.toInt(), 1f))
+                Vec2f(cx - 7f, cy - legH + leftLegFwd),
+                DrawPayload.Line(cx - 7f, cy - legH + leftLegFwd, cx - 1f, cy - legH + leftLegFwd, 0xFF_3A3228.toInt(), 1f))
             commands += DrawCommand(DrawLayer.PLAYER, dk, 1, "player_boot_r_hl",
-                Vec2f(cx + 2f, cy - legH + rightLegFwd),
-                DrawPayload.Line(cx + 2f, cy - legH + rightLegFwd, cx + 9f, cy - legH + rightLegFwd, 0xFF_3A3228.toInt(), 1f))
+                Vec2f(cx + 1f, cy - legH + rightLegFwd),
+                DrawPayload.Line(cx + 1f, cy - legH + rightLegFwd, cx + 7f, cy - legH + rightLegFwd, 0xFF_3A3228.toInt(), 1f))
 
             // ── CLOAK BODY ────────────────────────────────────────────────────────
-            // The cloak is the dominant shape — a wide polygon that narrows at the shoulders.
-            // It hides the body geometry underneath, which is correct for a cloaked figure.
-            // Shape: trapezoidal — wider at hem (cy-12), narrower at shoulder (cy-44)
-            val cloakHemL  = cx - 13f;  val cloakHemR  = cx + 13f
-            val cloakShouL = cx - 9f;   val cloakShouR = cx + 9f
-            val hemY       = cy - 12f
-            val shouY      = cy - 44f
+            // Narrow body — Sabreman's oversized pith helmet is the dominant feature.
+            // Shape: trapezoidal — 18px wide at hem, narrower at shoulder
+            val cloakHemL  = cx - 9f;   val cloakHemR  = cx + 9f
+            val cloakShouL = cx - 7f;   val cloakShouR = cx + 7f
+            val hemY       = cy - 9f
+            val shouY      = cy - 38f
             val cloakPts = listOf(
                 Vec2f(cloakHemL, hemY),
                 Vec2f(cloakHemR, hemY),
@@ -1943,10 +1767,10 @@ object RoomEntityFactory {
                 DrawPayload.Line(cloakHemL, hemY, cloakShouL, shouY, cloakEdge, 0.8f))
 
             // ── BELT & SCABBARD ───────────────────────────────────────────────────
-            val beltY = cy - 20f
+            val beltY = cy - 18f
             commands += DrawCommand(DrawLayer.PLAYER, dk, 3, "player_belt",
-                Vec2f(cx - 10f, beltY),
-                DrawPayload.ColorRect(20f, 3f, if (blink) HUMAN_BLINK else HUMAN_LEATHER))
+                Vec2f(cx - 8f, beltY),
+                DrawPayload.ColorRect(16f, 3f, if (blink) HUMAN_BLINK else HUMAN_LEATHER))
             // Buckle — small rect, left of centre
             commands += DrawCommand(DrawLayer.PLAYER, dk, 4, "player_buckle",
                 Vec2f(cx - 4f, beltY - 1f),
@@ -1962,34 +1786,33 @@ object RoomEntityFactory {
                 DrawPayload.ColorOval(5f, 4f, if (blink) HUMAN_BLINK else HUMAN_METAL))
 
             // ── ARMS ──────────────────────────────────────────────────────────────
-            // Arms emerge from sides of cloak, cloak-coloured (same as body)
-            // Left arm hangs slightly forward; right arm is partly behind cloak
-            val armTopY = cy - 40f
-            val armBotY = cy - 24f
+            // Arms emerge from sides of narrow body
+            val armTopY = cy - 34f
+            val armBotY = cy - 20f
             commands += DrawCommand(DrawLayer.PLAYER, dk, 1, "player_arm_l",
-                Vec2f(cx - 15f, armTopY + leftLegFwd * 0.4f),
-                DrawPayload.ColorRect(5f, armBotY - armTopY, cloakBase))
+                Vec2f(cx - 12f, armTopY + leftLegFwd * 0.4f),
+                DrawPayload.ColorRect(4f, armBotY - armTopY, cloakBase))
             commands += DrawCommand(DrawLayer.PLAYER, dk, 1, "player_arm_r",
-                Vec2f(cx + 10f, armTopY + rightLegFwd * 0.4f),
-                DrawPayload.ColorRect(5f, armBotY - armTopY, cloakBase))
+                Vec2f(cx + 8f, armTopY + rightLegFwd * 0.4f),
+                DrawPayload.ColorRect(4f, armBotY - armTopY, cloakBase))
             // Gloved hand — dark leather oval at end of each arm
             commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_hand_l",
-                Vec2f(cx - 16f, armBotY + leftLegFwd * 0.4f),
-                DrawPayload.ColorOval(6f, 4f, if (blink) HUMAN_BLINK else HUMAN_LEATHER))
+                Vec2f(cx - 13f, armBotY + leftLegFwd * 0.4f),
+                DrawPayload.ColorOval(5f, 4f, if (blink) HUMAN_BLINK else HUMAN_LEATHER))
             commands += DrawCommand(DrawLayer.PLAYER, dk, 2, "player_hand_r",
-                Vec2f(cx + 10f, armBotY + rightLegFwd * 0.4f),
-                DrawPayload.ColorOval(6f, 4f, if (blink) HUMAN_BLINK else HUMAN_LEATHER))
+                Vec2f(cx + 8f, armBotY + rightLegFwd * 0.4f),
+                DrawPayload.ColorOval(5f, 4f, if (blink) HUMAN_BLINK else HUMAN_LEATHER))
 
             // ── NECK ──────────────────────────────────────────────────────────────
             commands += DrawCommand(DrawLayer.PLAYER, dk, 3, "player_neck",
-                Vec2f(cx - 3f, cy - 50f),
-                DrawPayload.ColorRect(6f, 6f, skinColor))
+                Vec2f(cx - 3f, cy - 42f),
+                DrawPayload.ColorRect(6f, 5f, skinColor))
 
             // ── FACE ──────────────────────────────────────────────────────────────
-            // Small oval — the face is partially shadowed by helmet brim
+            // Small face — mostly hidden under the huge pith helmet brim
             commands += DrawCommand(DrawLayer.PLAYER, dk, 4, "player_face",
-                Vec2f(cx - 6f, cy - 58f),
-                DrawPayload.ColorOval(12f, 10f, skinColor))
+                Vec2f(cx - 5f, cy - 50f),
+                DrawPayload.ColorOval(10f, 9f, skinColor))
 
             // Eyes — two small dark dots; facing direction shifts them L/R
             val facingShift = when (player.facing.name) {
@@ -1998,40 +1821,39 @@ object RoomEntityFactory {
                 else -> 0f
             }
             commands += DrawCommand(DrawLayer.PLAYER, dk, 5, "player_eye_l",
-                Vec2f(cx - 3f + facingShift, cy - 55f),
+                Vec2f(cx - 3f + facingShift, cy - 48f),
                 DrawPayload.ColorOval(2f, 2f, 0xFF_1A1410.toInt()))
             commands += DrawCommand(DrawLayer.PLAYER, dk, 5, "player_eye_r",
-                Vec2f(cx + 2f + facingShift, cy - 55f),
+                Vec2f(cx + 2f + facingShift, cy - 48f),
                 DrawPayload.ColorOval(2f, 2f, 0xFF_1A1410.toInt()))
 
-            // ── SALLET HELMET ─────────────────────────────────────────────────────
-            // Iron bowl helmet — no plume, short rear neck guard.
-            // Much smaller than the pith helmet. Reads as medieval, not colonial.
-            //
-            // Bowl: rounded rect/oval, 16px wide, 10px tall, sits at cy-66 to cy-56
-            commands += DrawCommand(DrawLayer.PLAYER, dk, 6, "player_helm_bowl",
-                Vec2f(cx - 8f, cy - 66f),
-                DrawPayload.ColorOval(16f, 11f, metalColor))
-            // Helmet shade — darker oval on lower half of bowl (cast shadow from brim)
-            commands += DrawCommand(DrawLayer.PLAYER, dk, 7, "player_helm_shade",
-                Vec2f(cx - 6f, cy - 60f),
-                DrawPayload.ColorOval(12f, 5f, if (blink) HUMAN_BLINK else 0xFF_404850.toInt()))
-            // Helmet highlight — specular line across top
+            // ── OVERSIZED PITH HELMET ─────────────────────────────────────────────
+            // The hat is the DOMINANT feature — wider than the body, like original Sabreman.
+            // Dome: 28x18px oval, golden-yellow to match cloak
+            // Brim: 34x8px oval, extends well beyond the body on both sides
+            val helmColor = if (blink) HUMAN_BLINK else cloakBase
+            val helmHighlight = if (blink) HUMAN_BLINK else cloakEdge
+            val helmShadow = if (blink) HUMAN_BLINK else cloakShadow
+
+            // Brim — wide oval that extends past the body, sits at face level
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 6, "player_helm_brim",
+                Vec2f(cx - 17f, cy - 55f),
+                DrawPayload.ColorOval(34f, 8f, helmShadow))
+
+            // Dome — tall rounded crown sitting on the brim
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 7, "player_helm_dome",
+                Vec2f(cx - 14f, cy - 72f),
+                DrawPayload.ColorOval(28f, 18f, helmColor))
+
+            // Dome highlight — lighter band across the top
             commands += DrawCommand(DrawLayer.PLAYER, dk, 8, "player_helm_hl",
-                Vec2f(cx - 5f, cy - 65f),
-                DrawPayload.Line(cx - 5f, cy - 65f, cx + 3f, cy - 65f, if (blink) HUMAN_BLINK else HUMAN_METAL_SHINE, 1.2f))
-            // Neck guard — small dark rect below bowl at back
-            commands += DrawCommand(DrawLayer.PLAYER, dk, 5, "player_helm_guard",
-                Vec2f(cx + 4f, cy - 59f),
-                DrawPayload.ColorRect(5f, 5f, if (blink) HUMAN_BLINK else 0xFF_383E44.toInt()))
-            // Visor slot — single pixel-wide horizontal slit; colour changes when damaged
-            val visorColor = when {
-                blink              -> 0xFF_FF4400.toInt()
-                else               -> 0xFF_1A1E22.toInt()
-            }
-            commands += DrawCommand(DrawLayer.PLAYER, dk, 8, "player_visor",
-                Vec2f(cx - 5f, cy - 59f),
-                DrawPayload.Line(cx - 5f, cy - 59f, cx + 2f, cy - 59f, visorColor, 1f))
+                Vec2f(cx - 10f, cy - 70f),
+                DrawPayload.ColorOval(20f, 8f, helmHighlight))
+
+            // Dome shadow — darker band at the base of the dome
+            commands += DrawCommand(DrawLayer.PLAYER, dk, 8, "player_helm_shade",
+                Vec2f(cx - 12f, cy - 58f),
+                DrawPayload.ColorOval(24f, 5f, helmShadow))
         } else {
             // WEREWOLF FORM
             val blink = blinking

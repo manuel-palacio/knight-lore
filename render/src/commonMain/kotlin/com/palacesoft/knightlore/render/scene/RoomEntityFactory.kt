@@ -33,25 +33,25 @@ import com.palacesoft.knightlore.render.iso.IsoProjector
 object RoomEntityFactory {
 
     private object CastleColors {
-        // ── Wall faces — warm olive/tan stone (Knight Lore GBC palette) ────────
-        val WALL_SOUTH_BASE      = 0xFF_7A7860.toInt()
-        val WALL_SOUTH_JOINT     = 0xFF_3A3828.toInt()
-        val WALL_SOUTH_STONE_LO  = 0xFF_5A5840.toInt()  // darker dither row
-        val WALL_SOUTH_STONE_HI  = 0xFF_8A8870.toInt()  // lighter dither row
+        // ── Wall faces — darker stone for mysterious castle atmosphere ─────────
+        val WALL_SOUTH_BASE      = 0xFF_4A4838.toInt()  // dark olive stone
+        val WALL_SOUTH_JOINT     = 0xFF_2A2818.toInt()
+        val WALL_SOUTH_STONE_LO  = 0xFF_3A3828.toInt()  // darker dither row
+        val WALL_SOUTH_STONE_HI  = 0xFF_5A5840.toInt()  // lighter dither row
 
-        val WALL_EAST_BASE       = 0xFF_5A5840.toInt()
-        val WALL_EAST_JOINT      = 0xFF_2A2818.toInt()
-        val WALL_EAST_STONE_LO   = 0xFF_3A3828.toInt()  // darker shadow face
-        val WALL_EAST_STONE_HI   = 0xFF_5A5840.toInt()
+        val WALL_EAST_BASE       = 0xFF_3A3828.toInt()  // deep shadow face
+        val WALL_EAST_JOINT      = 0xFF_1A1810.toInt()
+        val WALL_EAST_STONE_LO   = 0xFF_2A2818.toInt()
+        val WALL_EAST_STONE_HI   = 0xFF_3A3828.toInt()
 
-        val WALL_TOP             = 0xFF_9A9878.toInt()
-        val WALL_TOP_HIGHLIGHT   = 0xFF_B0AA88.toInt()
+        val WALL_TOP             = 0xFF_6A6850.toInt()  // dimmer cap
+        val WALL_TOP_HIGHLIGHT   = 0xFF_7A7860.toInt()
 
-        // ── Floor — very dark, warm black stone ──────────────────────────────
-        val FLOOR_SLAB           = 0xFF_1A1810.toInt()  // near-black warm
-        val FLOOR_WORN           = 0xFF_222018.toInt()
-        val FLOOR_GROUT          = 0xFF_0E0C08.toInt()
-        val FLOOR_CRACK          = 0xFF_080804.toInt()
+        // ── Floor — pitch black, barely visible ──────────────────────────────
+        val FLOOR_SLAB           = 0xFF_0E0C08.toInt()  // almost black
+        val FLOOR_WORN           = 0xFF_141210.toInt()
+        val FLOOR_GROUT          = 0xFF_060604.toInt()
+        val FLOOR_CRACK          = 0xFF_040402.toInt()
 
         // ── Blocks — warm stone matching walls ──────────────────────────────
         val BLOCK_TOP            = 0xFF_9A9878.toInt()
@@ -873,12 +873,19 @@ object RoomEntityFactory {
         }
 
         // North wall block: visible faces = top + south-facing inner face (blockFaceLeft)
-        // wallBlockNorth: ONLY decorations — the continuous face is drawn by the segment loop above
         fun wallBlockNorth(gx: Float, gy: Float) {
             val dk = IsoProjector.depthKey(Vec3f(gx + 0.5f, gy + 1f, 0f))
             val id = "wall_${gx.toInt()}_${gy.toInt()}"
 
-            // Decorations only (face + top cap drawn by the continuous segment)
+            // Flat dithered face z=0..3 — no top cap, no block geometry (like the original)
+            commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "${id}_face",
+                pt(gx, gy + 1f, 0f, ox, oy),
+                DrawPayload.DitheredPath(listOf(
+                    pt(gx, gy + 1f, 0f, ox, oy), pt(gx + 1f, gy + 1f, 0f, ox, oy),
+                    pt(gx + 1f, gy + 1f, 3f, ox, oy), pt(gx, gy + 1f, 3f, ox, oy),
+                ), palette.wallSouthLo, palette.wallSouthHi, horizontal = true))
+
+            // Decorations
             for (gz in 0 until 3) {
                 val bz = gz.toFloat()
                 val isTop = gz == 2
@@ -984,8 +991,8 @@ object RoomEntityFactory {
                     val torchScreenX = flamePt.x
                     val torchScreenY = flamePt.y
 
-                    // Floor cast — large soft diamond, pulsing
-                    val floorAlpha = flickerAlpha(tick, tPhase, rate = 0.10, minAlpha = 0x0C, maxAlpha = 0x22)
+                    // Floor cast — strong warm light pool for dramatic atmosphere
+                    val floorAlpha = flickerAlpha(tick, tPhase, rate = 0.10, minAlpha = 0x20, maxAlpha = 0x50)
                     val tileX0 = (gx - 1f).coerceAtLeast(0f)
                     val tileX1 = (gx + 2f).coerceAtMost(room.width.toFloat())
                     var lightGx = tileX0
@@ -1014,12 +1021,19 @@ object RoomEntityFactory {
             }
         }
 
-        // wallBlockWest: ONLY decorations — the continuous face is drawn by the segment loop above
         fun wallBlockWest(gx: Float, gy: Float) {
             val dk = IsoProjector.depthKey(Vec3f(gx + 0.5f, gy + 1f, 0f))
             val id = "wall_${gx.toInt()}_${gy.toInt()}"
 
-            // Decorations only (face + top cap drawn by the continuous segment)
+            // Flat dithered face z=0..3 — no top cap (like the original)
+            commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "${id}_face",
+                pt(gx + 1f, gy, 0f, ox, oy),
+                DrawPayload.DitheredPath(listOf(
+                    pt(gx + 1f, gy, 0f, ox, oy), pt(gx + 1f, gy + 1f, 0f, ox, oy),
+                    pt(gx + 1f, gy + 1f, 3f, ox, oy), pt(gx + 1f, gy, 3f, ox, oy),
+                ), palette.wallEastLo, palette.wallEastHi, horizontal = true))
+
+            // Decorations
             for (gz in 0 until 3) {
                 val bz = gz.toFloat()
                 val isTop = gz == 2
@@ -1108,8 +1122,8 @@ object RoomEntityFactory {
                     val torchScreenX = flamePt.x
                     val torchScreenY = flamePt.y
 
-                    // Floor cast — pulsing warm tint on nearby floor tiles
-                    val floorAlpha = flickerAlpha(tick, tPhase, rate = 0.10, minAlpha = 0x0C, maxAlpha = 0x22)
+                    // Floor cast — strong warm light pool
+                    val floorAlpha = flickerAlpha(tick, tPhase, rate = 0.10, minAlpha = 0x20, maxAlpha = 0x50)
                     val tileY0 = (gy - 1f).coerceAtLeast(0f)
                     val tileY1 = (gy + 2f).coerceAtMost(room.depth.toFloat())
                     var lightGy = tileY0
@@ -1299,73 +1313,12 @@ object RoomEntityFactory {
                 ExitSide.NORTH,
                 northExitTarget)
         }
-        // Find contiguous non-gap runs and draw ONE wide face per run
-        var segStart = -1
-        for (x in 0..w) {
-            val isGap = x in northGaps || x == w
-            if (!isGap && segStart < 0) segStart = x
-            if (isGap && segStart >= 0) {
-                // Draw one wide face from segStart to x
-                val sx = segStart.toFloat()
-                val ex = x.toFloat()
-                val dk = IsoProjector.depthKey(Vec3f((sx + ex) / 2f, 1f, 0f))
-                val segId = "nwall_${segStart}_${x}"
-                // Continuous south-facing face z=0..3
-                commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "${segId}_face",
-                    pt(sx, 1f, 0f, ox, oy),
-                    DrawPayload.DitheredPath(listOf(
-                        pt(sx, 1f, 0f, ox, oy), pt(ex, 1f, 0f, ox, oy),
-                        pt(ex, 1f, 3f, ox, oy), pt(sx, 1f, 3f, ox, oy),
-                    ), palette.wallSouthLo, palette.wallSouthHi, horizontal = true))
-                // Top caps
-                for (tx in segStart until x) {
-                    val tdk = IsoProjector.depthKey(Vec3f(tx + 0.5f, 1f, 2f))
-                    commands += DrawCommand(DrawLayer.BLOCK, tdk, 2, "nwall_top_$tx",
-                        IsoProjector.toScreen(Vec3f(tx.toFloat(), 0f, 3f)) + offset,
-                        DrawPayload.ColorPath(floorDiamond(tx.toFloat(), 0f, 3f, ox, oy), palette.wallTop))
-                }
-                // Decorations per tile column (torches, moss, chains, etc.)
-                for (tx in segStart until x) {
-                    wallBlockNorth(tx.toFloat(), 0f)
-                }
-                segStart = -1
-            }
+        // Per-tile wall faces + decorations (no continuous segments — avoids depth issues)
+        for (x in 0 until w) {
+            if (x !in northGaps) wallBlockNorth(x.toFloat(), 0f)
         }
-
-        // West wall (gx=0): same approach — continuous wide face segments
         for (y in 1 until d - 1) {
-            if (y in westGaps) doorArchway(0f, y.toFloat(),
-                westGaps.minOrNull() == y,
-                westGaps.maxOrNull() == y,
-                ExitSide.WEST,
-                westExitTarget)
-        }
-        var wSegStart = -1
-        for (y in 1..d - 1) {
-            val isGap = y in westGaps || y == d - 1
-            if (!isGap && wSegStart < 0) wSegStart = y
-            if (isGap && wSegStart >= 0) {
-                val sy = wSegStart.toFloat()
-                val ey = y.toFloat()
-                val dk = IsoProjector.depthKey(Vec3f(1f, (sy + ey) / 2f, 0f))
-                val segId = "wwall_${wSegStart}_${y}"
-                commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "${segId}_face",
-                    pt(1f, sy, 0f, ox, oy),
-                    DrawPayload.DitheredPath(listOf(
-                        pt(1f, sy, 0f, ox, oy), pt(1f, ey, 0f, ox, oy),
-                        pt(1f, ey, 3f, ox, oy), pt(1f, sy, 3f, ox, oy),
-                    ), palette.wallEastLo, palette.wallEastHi, horizontal = true))
-                for (ty in wSegStart until y) {
-                    val tdk = IsoProjector.depthKey(Vec3f(0.5f, ty + 1f, 2f))
-                    commands += DrawCommand(DrawLayer.BLOCK, tdk, 2, "wwall_top_$ty",
-                        IsoProjector.toScreen(Vec3f(0f, ty.toFloat(), 3f)) + offset,
-                        DrawPayload.ColorPath(floorDiamond(0f, ty.toFloat(), 3f, ox, oy), palette.wallTop))
-                }
-                for (ty in wSegStart until y) {
-                    wallBlockWest(0f, ty.toFloat())
-                }
-                wSegStart = -1
-            }
+            if (y !in westGaps) wallBlockWest(0f, y.toFloat())
         }
 
         // South/East exits: plain dark opening with two solid half-wall pillars (no glow).

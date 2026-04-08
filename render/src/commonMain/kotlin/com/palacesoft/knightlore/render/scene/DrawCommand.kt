@@ -1,6 +1,10 @@
 package com.palacesoft.knightlore.render.scene
 
 import com.palacesoft.knightlore.core.math.Vec2f
+import com.palacesoft.knightlore.render.art.AuthoredSprite as AuthoredSpriteModel
+
+/** Flip to true to force all authored sprites to pure black — silhouette readability test. */
+const val SILHOUETTE_TEST_MODE = false
 
 /** Layer order for draw sorting. Lower = drawn first (behind). */
 enum class DrawLayer {
@@ -74,4 +78,12 @@ sealed interface DrawPayload {
      * Used for dark dungeon overlay and fade effects.
      */
     data class ScreenFill(val colorArgb: Int) : DrawPayload
+
+    /**
+     * Renders an authored multi-layer sprite. Each layer is a polygon with fill color.
+     * When [SILHOUETTE_TEST_MODE] is true, all layers render as pure black for shape testing.
+     */
+    data class AuthoredSprite(
+        val sprite: AuthoredSpriteModel,
+    ) : DrawPayload
 }

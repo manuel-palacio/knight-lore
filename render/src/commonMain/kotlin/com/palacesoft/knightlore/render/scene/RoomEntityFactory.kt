@@ -26,6 +26,7 @@ import com.palacesoft.knightlore.domain.model.TileType
 import com.palacesoft.knightlore.core.geometry.ZXPalette
 import com.palacesoft.knightlore.render.art.DefaultRoomArtProfiles
 import com.palacesoft.knightlore.render.art.LightKind
+import com.palacesoft.knightlore.render.art.PropKind
 import com.palacesoft.knightlore.render.iso.IsoProjector
 
 /**
@@ -932,19 +933,136 @@ object RoomEntityFactory {
                 }
             }
 
-            // C) Anchor indicator — subtle glow on the floor at the focal point
+            // C) Anchor indicator — subtle pulsing glow on the floor at the focal point
             val anchor = artProfile.anchor
             if (anchor != null) {
                 val anchorWorld = Vec3f(anchor.gridX + 0.5f, anchor.gridY + 0.5f, anchor.gridZ.toFloat())
-                val screen = IsoProjector.toScreen(anchorWorld) + offset
-                val dk = IsoProjector.depthKey(anchorWorld)
+                val aScreen = IsoProjector.toScreen(anchorWorld) + offset
+                val aDk = IsoProjector.depthKey(anchorWorld)
+                // Pulsing glow — alpha oscillates with tick
+                val pulseNorm = (kotlin.math.sin(tick.toDouble() * 0.06) + 1.0) / 2.0
+                val pulseAlpha = (0x20 + (pulseNorm * 0x28).toInt()).coerceIn(0x20, 0x48)
                 val glowW = 2.5f * com.palacesoft.knightlore.core.geometry.TileMetrics.HALF_TILE_WIDTH
                 val glowH = 2.5f * com.palacesoft.knightlore.core.geometry.TileMetrics.HALF_TILE_HEIGHT
                 commands += DrawCommand(
-                    DrawLayer.FLOOR, dk, 9, "art_anchor_${anchor.gridX}_${anchor.gridY}",
-                    Vec2f(screen.x - glowW / 2f, screen.y - glowH / 2f),
-                    DrawPayload.ColorOval(glowW, glowH, 0x30_FFAA44.toInt()),
+                    DrawLayer.FLOOR, aDk, 9, "art_anchor_${anchor.gridX}_${anchor.gridY}",
+                    Vec2f(aScreen.x - glowW / 2f, aScreen.y - glowH / 2f),
+                    DrawPayload.ColorOval(glowW, glowH, (pulseAlpha shl 24) or 0xFFAA44),
                 )
+                // Inner bright core pulse
+                val coreW = glowW * 0.5f
+                val coreH = glowH * 0.5f
+                val coreAlpha = (0x10 + (pulseNorm * 0x30).toInt()).coerceIn(0x10, 0x40)
+                commands += DrawCommand(
+                    DrawLayer.FLOOR, aDk, 10, "art_anchor_core_${anchor.gridX}_${anchor.gridY}",
+                    Vec2f(aScreen.x - coreW / 2f, aScreen.y - coreH / 2f),
+                    DrawPayload.ColorOval(coreW, coreH, (coreAlpha shl 24) or 0xFFCC66),
+                )
+            }
+
+            // D) Decor placements — chains, banners, and other authored props
+            for (decor in artProfile.decor) {
+                val decorWorld = Vec3f(decor.gridX + 0.5f, decor.gridY + 0.5f, decor.gridZ.toFloat())
+                val dScreen = IsoProjector.toScreen(decorWorld) + offset
+                val dDk = IsoProjector.depthKey(decorWorld)
+                val dCx = dScreen.x
+                val dCy = dScreen.y
+                val dId = "decor_${decor.propKind.name}_${decor.gridX}_${decor.gridY}"
+
+                when (decor.propKind) {
+                    PropKind.CHAIN_CLUSTER -> {
+                        // 3 vertical chains hanging from z=2.5 with small oval links
+                        val chainTop = IsoProjector.toScreen(
+                            Vec3f(decor.gridX + 0.5f, decor.gridY + 0.5f, 2.5f)
+                        ) + offset
+                        val chainBot = dScreen  // bottom at placed z height
+                        val chainColor = CastleColors.CHAIN
+                        for (ci in 0..2) {
+                            val cOff = (ci - 1) * 6f  // spread: -6, 0, +6 pixels
+                            val topX = chainTop.x + cOff
+                            val topY = chainTop.y
+                            val botX = dCx + cOff
+                            val botY = chainBot.y
+                            // Vertical chain line
+                            commands += DrawCommand(
+                                DrawLayer.BLOCK, dDk, 5, "${dId}_chain_$ci",
+                                Vec2f(topX, topY),
+                                DrawPayload.Line(topX, topY, botX, botY, chainColor, 1.2f),
+                            )
+                            // Oval links along the chain — every 8 pixels
+                            val chainLen = botY - topY
+                            val linkCount = (chainLen / 8f).toInt().coerceIn(1, 8)
+                            for (li in 0 until linkCount) {
+                                val frac = (li + 0.5f) / linkCount
+                                val lx = topX + (botX - topX) * frac
+                                val ly = topY + chainLen * frac
+                                commands += DrawCommand(
+                                    DrawLayer.BLOCK, dDk, 6, "${dId}_link_${ci}_$li",
+                                    Vec2f(lx - 2f, ly - 2f),
+                                    DrawPayload.ColorOval(4f, 5f, chainColor),
+                                )
+                            }
+                        }
+                    }
+
+                    PropKind.BANNER -> {
+                        // Rectangular cloth with torn bottom edge, colored by variant
+                        val bannerColor = when (decor.variant) {
+                            "torn" -> 0xFF_6A2020.toInt()   // faded crimson
+                            "royal" -> 0xFF_1A1A6A.toInt()  // dark royal blue
+                            else -> 0xFF_4A3020.toInt()     // brown-ish default
+                        }
+                        val bannerEdge = when (decor.variant) {
+                            "torn" -> 0xFF_8A3030.toInt()
+                            "royal" -> 0xFF_3030AA.toInt()
+                            else -> 0xFF_6A5040.toInt()
+                        }
+                        val bannerTop = IsoProjector.toScreen(
+                            Vec3f(decor.gridX + 0.5f, decor.gridY + 0.5f, 2.5f)
+                        ) + offset
+                        val bannerW = 14f * decor.scale
+                        val bannerH = 28f * decor.scale
+                        // Hanging rod
+                        commands += DrawCommand(
+                            DrawLayer.BLOCK, dDk, 4, "${dId}_rod",
+                            Vec2f(bannerTop.x - bannerW / 2f - 2f, bannerTop.y),
+                            DrawPayload.Line(
+                                bannerTop.x - bannerW / 2f - 2f, bannerTop.y,
+                                bannerTop.x + bannerW / 2f + 2f, bannerTop.y,
+                                CastleColors.CHAIN, 1.5f,
+                            ),
+                        )
+                        // Cloth body — polygon with jagged torn bottom
+                        val bLeft = bannerTop.x - bannerW / 2f
+                        val bRight = bannerTop.x + bannerW / 2f
+                        val bTop = bannerTop.y + 1f
+                        val bBot = bannerTop.y + bannerH
+                        // Torn bottom: 4 jagged teeth
+                        val jagPts = listOf(
+                            Vec2f(bLeft, bTop),
+                            Vec2f(bRight, bTop),
+                            Vec2f(bRight, bBot - 4f),
+                            Vec2f(bRight - bannerW * 0.2f, bBot),
+                            Vec2f(bRight - bannerW * 0.45f, bBot - 6f),
+                            Vec2f(bLeft + bannerW * 0.3f, bBot - 2f),
+                            Vec2f(bLeft + bannerW * 0.1f, bBot - 7f),
+                            Vec2f(bLeft, bBot - 3f),
+                        )
+                        commands += DrawCommand(
+                            DrawLayer.BLOCK, dDk, 5, "${dId}_cloth",
+                            Vec2f(bLeft, bTop),
+                            DrawPayload.ColorPath(jagPts, bannerColor),
+                        )
+                        // Edge highlight line on left side
+                        commands += DrawCommand(
+                            DrawLayer.BLOCK, dDk, 6, "${dId}_edge",
+                            Vec2f(bLeft, bTop),
+                            DrawPayload.Line(bLeft, bTop, bLeft, bBot - 3f, bannerEdge, 0.8f),
+                        )
+                    }
+
+                    else -> { /* Other prop kinds not yet rendered as decor */ }
+                }
             }
         }
 
@@ -1712,156 +1830,251 @@ object RoomEntityFactory {
 
         when (actor.type) {
             ActorType.GUARD -> {
-                // Shadow
-                commands += actorShadow(cx, cy, 20f, 6f, dk)
-                // Boots — heavy iron sabatons
+                // Shadow — wide and solid, authority presence
+                commands += actorShadow(cx, cy, 26f, 8f, dk)
+                // Boots — heavy iron sabatons, wider stance
                 val lLegY = walkBob(tick, phase, 0.0)
                 val rLegY = walkBob(tick, phase, kotlin.math.PI)
                 commands += DrawCommand(DrawLayer.ACTOR, dk, 0, "${id}_boot_l",
-                    Vec2f(cx - 9f, cy - 12f + lLegY), DrawPayload.ColorRect(7f, 12f, CastleColors.GUARD_ARMOUR))
+                    Vec2f(cx - 11f, cy - 14f + lLegY), DrawPayload.ColorRect(8f, 14f, CastleColors.GUARD_ARMOUR))
                 commands += DrawCommand(DrawLayer.ACTOR, dk, 0, "${id}_boot_r",
-                    Vec2f(cx + 2f, cy - 12f + rLegY), DrawPayload.ColorRect(7f, 12f, CastleColors.GUARD_ARMOUR))
-                // Tabard body — wide rectangular torso with vertical seam
+                    Vec2f(cx + 3f, cy - 14f + rLegY), DrawPayload.ColorRect(8f, 14f, CastleColors.GUARD_ARMOUR))
+                // Tabard body — wider rectangular torso, upright pillar silhouette
                 commands += DrawCommand(DrawLayer.ACTOR, dk, 1, "${id}_body",
-                    Vec2f(cx - 11f, cy - 40f), DrawPayload.ColorRect(22f, 28f, CastleColors.GUARD_ARMOUR))
-                // Chest plate highlight
+                    Vec2f(cx - 14f, cy - 44f), DrawPayload.ColorRect(28f, 30f, CastleColors.GUARD_ARMOUR))
+                // Chest plate highlight — centered vertical
                 commands += DrawCommand(DrawLayer.ACTOR, dk, 2, "${id}_chest_hl",
-                    Vec2f(cx - 6f, cy - 38f), DrawPayload.ColorRect(8f, 14f, CastleColors.GUARD_ARMOUR_HL))
-                // Arms — plate rerebraces
+                    Vec2f(cx - 7f, cy - 42f), DrawPayload.ColorRect(10f, 16f, CastleColors.GUARD_ARMOUR_HL))
+                // Vertical seam — rigid centre line
+                commands += DrawCommand(DrawLayer.ACTOR, dk, 2, "${id}_seam",
+                    Vec2f(cx, cy - 44f),
+                    DrawPayload.Line(cx, cy - 14f, cx, cy - 44f, CastleColors.GUARD_ARMOUR_HL, 0.6f))
+                // Symmetrical pauldrons — wide shoulder plates
+                commands += DrawCommand(DrawLayer.ACTOR, dk, 3, "${id}_pauld_l",
+                    Vec2f(cx - 19f, cy - 46f), DrawPayload.ColorRect(8f, 6f, CastleColors.GUARD_ARMOUR_HL))
+                commands += DrawCommand(DrawLayer.ACTOR, dk, 3, "${id}_pauld_r",
+                    Vec2f(cx + 11f, cy - 46f), DrawPayload.ColorRect(8f, 6f, CastleColors.GUARD_ARMOUR_HL))
+                // Arms — plate rerebraces, wider
                 commands += DrawCommand(DrawLayer.ACTOR, dk, 1, "${id}_arm_l",
-                    Vec2f(cx - 16f, cy - 36f), DrawPayload.ColorRect(5f, 18f, CastleColors.GUARD_ARMOUR))
+                    Vec2f(cx - 19f, cy - 40f), DrawPayload.ColorRect(6f, 20f, CastleColors.GUARD_ARMOUR))
                 commands += DrawCommand(DrawLayer.ACTOR, dk, 1, "${id}_arm_r",
-                    Vec2f(cx + 11f, cy - 36f), DrawPayload.ColorRect(5f, 18f, CastleColors.GUARD_ARMOUR))
-                // Head — sallet helmet
+                    Vec2f(cx + 13f, cy - 40f), DrawPayload.ColorRect(6f, 20f, CastleColors.GUARD_ARMOUR))
+                // Head — sallet helmet, straight posture
                 commands += DrawCommand(DrawLayer.ACTOR, dk, 3, "${id}_helm",
-                    Vec2f(cx - 8f, cy - 56f), DrawPayload.ColorOval(16f, 12f, CastleColors.GUARD_ARMOUR))
-                // Red plume — instantly readable from far away
+                    Vec2f(cx - 9f, cy - 60f), DrawPayload.ColorOval(18f, 14f, CastleColors.GUARD_ARMOUR))
+                // Red plume — taller, instantly readable
                 commands += DrawCommand(DrawLayer.ACTOR, dk, 4, "${id}_plume",
-                    Vec2f(cx - 3f, cy - 66f),
+                    Vec2f(cx - 3f, cy - 72f),
                     DrawPayload.ColorPath(listOf(
-                        Vec2f(cx - 3f, cy - 58f),
-                        Vec2f(cx + 1f, cy - 58f),
-                        Vec2f(cx + 3f, cy - 68f),
-                        Vec2f(cx - 1f, cy - 66f),
+                        Vec2f(cx - 4f, cy - 62f),
+                        Vec2f(cx + 2f, cy - 62f),
+                        Vec2f(cx + 4f, cy - 74f),
+                        Vec2f(cx - 2f, cy - 72f),
                     ), CastleColors.GUARD_PLUME))
-                // Halberd — vertical line right side
+                // Halberd shaft — prominent, extending well above head
                 commands += DrawCommand(DrawLayer.ACTOR, dk, 1, "${id}_halberd",
-                    Vec2f(cx + 14f, cy - 68f),
-                    DrawPayload.Line(cx + 14f, cy - 2f, cx + 14f, cy - 68f, 0xFF_707880.toInt(), 1.5f))
-                // Halberd blade
+                    Vec2f(cx + 16f, cy - 88f),
+                    DrawPayload.Line(cx + 16f, cy - 2f, cx + 16f, cy - 88f, 0xFF_707880.toInt(), 2.0f))
+                // Halberd blade — larger, more visible
                 commands += DrawCommand(DrawLayer.ACTOR, dk, 2, "${id}_halberd_blade",
-                    Vec2f(cx + 11f, cy - 68f),
+                    Vec2f(cx + 12f, cy - 88f),
                     DrawPayload.ColorPath(listOf(
-                        Vec2f(cx + 11f, cy - 68f),
-                        Vec2f(cx + 17f, cy - 68f),
-                        Vec2f(cx + 14f, cy - 76f),
+                        Vec2f(cx + 12f, cy - 82f),
+                        Vec2f(cx + 22f, cy - 84f),
+                        Vec2f(cx + 16f, cy - 96f),
+                        Vec2f(cx + 10f, cy - 88f),
                     ), 0xFF_A8B0B8.toInt()))
+                // Halberd cross-guard
+                commands += DrawCommand(DrawLayer.ACTOR, dk, 2, "${id}_halberd_xguard",
+                    Vec2f(cx + 12f, cy - 82f),
+                    DrawPayload.Line(cx + 10f, cy - 82f, cx + 22f, cy - 82f, 0xFF_A8B0B8.toInt(), 1.2f))
             }
 
             ActorType.GHOST -> {
                 // Shadow — very faint, ghost barely touches ground
                 commands += DrawCommand(DrawLayer.FLOOR, dk, -1, "${id}_shadow",
-                    Vec2f(cx - 12f, cy - 4f), DrawPayload.ColorOval(24f, 8f, 0x20_000000.toInt()))
-                // Drift: ghost bobs up-down with a slow sine, no walk cycle
-                val driftY = (kotlin.math.sin(tick.toDouble() * 0.04 + phase) * 5.0).toFloat()
-                val gcy = cy + driftY
-                // Body — wide translucent teardrop (oval + lower triangle)
-                commands += DrawCommand(DrawLayer.ACTOR, dk, 0, "${id}_body",
-                    Vec2f(cx - 14f, gcy - 40f), DrawPayload.ColorOval(28f, 36f, CastleColors.GHOST_BODY))
-                // Brighter core
+                    Vec2f(cx - 10f, cy - 2f), DrawPayload.ColorOval(20f, 6f, 0x14_000000.toInt()))
+                // Drift: ghost floats higher with a slow sine bob
+                val driftY = (kotlin.math.sin(tick.toDouble() * 0.035 + phase) * 7.0).toFloat()
+                val gcy = cy + driftY - 10f  // floats higher off ground
+                // Body — tapered ethereal shape: wide at top, narrowing to wispy point
+                // Semi-transparent (alpha ~0x88)
+                val bodyAlpha = 0x88
+                val bodyArgb = (bodyAlpha shl 24) or 0xB8C8FF
+                val coreAlpha = 0xAA
+                val coreArgb = (coreAlpha shl 24) or 0xD8E8FF
+                // Upper body — wide oval
+                commands += DrawCommand(DrawLayer.ACTOR, dk, 0, "${id}_body_upper",
+                    Vec2f(cx - 16f, gcy - 46f), DrawPayload.ColorOval(32f, 28f, bodyArgb))
+                // Mid body — tapering polygon
+                val taperingBody = listOf(
+                    Vec2f(cx - 14f, gcy - 34f),
+                    Vec2f(cx + 14f, gcy - 34f),
+                    Vec2f(cx + 6f, gcy - 12f),
+                    Vec2f(cx - 6f, gcy - 12f),
+                )
+                commands += DrawCommand(DrawLayer.ACTOR, dk, 0, "${id}_body_mid",
+                    Vec2f(cx - 14f, gcy - 34f), DrawPayload.ColorPath(taperingBody, bodyArgb))
+                // Lower body — narrow wispy point
+                val wispPoint = listOf(
+                    Vec2f(cx - 6f, gcy - 12f),
+                    Vec2f(cx + 6f, gcy - 12f),
+                    Vec2f(cx + 1f, gcy + 6f),
+                    Vec2f(cx - 1f, gcy + 8f),
+                )
+                commands += DrawCommand(DrawLayer.ACTOR, dk, 0, "${id}_body_wisp",
+                    Vec2f(cx - 6f, gcy - 12f), DrawPayload.ColorPath(wispPoint, bodyArgb))
+                // Brighter core — inner glow
                 commands += DrawCommand(DrawLayer.ACTOR, dk, 1, "${id}_core",
-                    Vec2f(cx - 9f, gcy - 36f), DrawPayload.ColorOval(18f, 22f, CastleColors.GHOST_CORE))
-                // Trailing wisp tails — 3 thin ovals below body
+                    Vec2f(cx - 10f, gcy - 42f), DrawPayload.ColorOval(20f, 20f, coreArgb))
+                // Drifting tendrils — 3 wispy trailing lines below body
                 for (ti in 0..2) {
-                    val tx = cx - 8f + ti * 8f
-                    val tailWiggle = (kotlin.math.sin(tick.toDouble() * 0.07 + phase + ti * 1.2) * 3.0).toFloat()
-                    commands += DrawCommand(DrawLayer.ACTOR, dk, 0, "${id}_tail_$ti",
-                        Vec2f(tx - 3f, gcy - 12f + tailWiggle),
-                        DrawPayload.ColorOval(6f, 12f, CastleColors.GHOST_BODY))
+                    val tx = cx - 6f + ti * 6f
+                    val tendrilWiggle = (kotlin.math.sin(tick.toDouble() * 0.06 + phase + ti * 1.5) * 5.0).toFloat()
+                    val tendrilTop = gcy + 4f
+                    val tendrilBot = gcy + 18f + ti * 3f
+                    val tendrilMidX = tx + tendrilWiggle
+                    commands += DrawCommand(DrawLayer.ACTOR, dk, 0, "${id}_tendril_$ti",
+                        Vec2f(tx, tendrilTop),
+                        DrawPayload.Line(tx, tendrilTop, tendrilMidX, tendrilBot,
+                            (0x44 shl 24) or 0xB8C8FF, 1.2f))
+                    // Tendril tip — tiny fading oval
+                    commands += DrawCommand(DrawLayer.ACTOR, dk, 0, "${id}_tendril_tip_$ti",
+                        Vec2f(tendrilMidX - 2f, tendrilBot - 1f),
+                        DrawPayload.ColorOval(4f, 3f, (0x30 shl 24) or 0xB8C8FF))
                 }
                 // Eyes — two deep void ovals
                 commands += DrawCommand(DrawLayer.ACTOR, dk, 2, "${id}_eye_l",
-                    Vec2f(cx - 6f, gcy - 34f), DrawPayload.ColorOval(5f, 6f, CastleColors.GHOST_EYE))
+                    Vec2f(cx - 7f, gcy - 40f), DrawPayload.ColorOval(5f, 6f, CastleColors.GHOST_EYE))
                 commands += DrawCommand(DrawLayer.ACTOR, dk, 2, "${id}_eye_r",
-                    Vec2f(cx + 1f, gcy - 34f), DrawPayload.ColorOval(5f, 6f, CastleColors.GHOST_EYE))
+                    Vec2f(cx + 2f, gcy - 40f), DrawPayload.ColorOval(5f, 6f, CastleColors.GHOST_EYE))
             }
 
             ActorType.ROBOT -> {
-                commands += actorShadow(cx, cy, 20f, 6f, dk)
+                commands += actorShadow(cx, cy, 22f, 7f, dk)
                 val stepL = walkBob(tick, phase, 0.0)
                 val stepR = walkBob(tick, phase, kotlin.math.PI)
-                // Legs — rectangular pistons
+                // Legs — angular piston blocks with sharp corners
                 commands += DrawCommand(DrawLayer.ACTOR, dk, 0, "${id}_leg_l",
-                    Vec2f(cx - 9f, cy - 14f + stepL), DrawPayload.ColorRect(6f, 14f, CastleColors.ROBOT_FRAME))
+                    Vec2f(cx - 10f, cy - 16f + stepL), DrawPayload.ColorRect(7f, 16f, CastleColors.ROBOT_FRAME))
                 commands += DrawCommand(DrawLayer.ACTOR, dk, 0, "${id}_leg_r",
-                    Vec2f(cx + 3f, cy - 14f + stepR), DrawPayload.ColorRect(6f, 14f, CastleColors.ROBOT_FRAME))
-                // Knee joints
+                    Vec2f(cx + 3f, cy - 16f + stepR), DrawPayload.ColorRect(7f, 16f, CastleColors.ROBOT_FRAME))
+                // Knee joints — visible pivot bolts
                 commands += DrawCommand(DrawLayer.ACTOR, dk, 1, "${id}_knee_l",
-                    Vec2f(cx - 8f, cy - 14f + stepL), DrawPayload.ColorRect(5f, 3f, CastleColors.ROBOT_JOINT))
+                    Vec2f(cx - 9f, cy - 14f + stepL), DrawPayload.ColorRect(6f, 3f, CastleColors.ROBOT_JOINT))
                 commands += DrawCommand(DrawLayer.ACTOR, dk, 1, "${id}_knee_r",
-                    Vec2f(cx + 3f, cy - 14f + stepR), DrawPayload.ColorRect(5f, 3f, CastleColors.ROBOT_JOINT))
-                // Torso — square boxy hull
+                    Vec2f(cx + 4f, cy - 14f + stepR), DrawPayload.ColorRect(6f, 3f, CastleColors.ROBOT_JOINT))
+                // Torso — sharp-cornered geometric hull, slightly trapezoidal
+                val torsoPts = listOf(
+                    Vec2f(cx - 14f, cy - 14f),
+                    Vec2f(cx + 14f, cy - 14f),
+                    Vec2f(cx + 12f, cy - 44f),
+                    Vec2f(cx - 12f, cy - 44f),
+                )
                 commands += DrawCommand(DrawLayer.ACTOR, dk, 1, "${id}_body",
-                    Vec2f(cx - 12f, cy - 42f), DrawPayload.ColorRect(24f, 28f, CastleColors.ROBOT_FRAME))
-                // Panel seam lines on torso — horizontal
-                for (si in 0..1) {
-                    val sy = cy - 38f + si * 10f
-                    commands += DrawCommand(DrawLayer.ACTOR, dk, 2, "${id}_seam_$si",
-                        Vec2f(cx - 12f, sy),
-                        DrawPayload.Line(cx - 12f, sy, cx + 12f, sy, CastleColors.ROBOT_JOINT, 0.8f))
+                    Vec2f(cx - 14f, cy - 44f), DrawPayload.ColorPath(torsoPts, CastleColors.ROBOT_FRAME))
+                // Panel seam lines — horizontal and vertical grid
+                for (si in 0..2) {
+                    val sy = cy - 40f + si * 9f
+                    commands += DrawCommand(DrawLayer.ACTOR, dk, 2, "${id}_hseam_$si",
+                        Vec2f(cx - 13f, sy),
+                        DrawPayload.Line(cx - 13f, sy, cx + 13f, sy, CastleColors.ROBOT_JOINT, 0.8f))
                 }
-                // Arms — angular blocks
-                commands += DrawCommand(DrawLayer.ACTOR, dk, 1, "${id}_arm_l",
-                    Vec2f(cx - 18f, cy - 38f), DrawPayload.ColorRect(6f, 16f, CastleColors.ROBOT_FRAME))
-                commands += DrawCommand(DrawLayer.ACTOR, dk, 1, "${id}_arm_r",
-                    Vec2f(cx + 12f, cy - 38f), DrawPayload.ColorRect(6f, 16f, CastleColors.ROBOT_FRAME))
-                // Head — perfect square on a neck stub
+                // Vertical panel line — centre
+                commands += DrawCommand(DrawLayer.ACTOR, dk, 2, "${id}_vseam",
+                    Vec2f(cx, cy - 44f),
+                    DrawPayload.Line(cx, cy - 14f, cx, cy - 44f, CastleColors.ROBOT_JOINT, 0.6f))
+                // Arms — angular blocks with elbow joint
+                commands += DrawCommand(DrawLayer.ACTOR, dk, 1, "${id}_arm_l_upper",
+                    Vec2f(cx - 20f, cy - 42f), DrawPayload.ColorRect(7f, 12f, CastleColors.ROBOT_FRAME))
+                commands += DrawCommand(DrawLayer.ACTOR, dk, 1, "${id}_arm_l_lower",
+                    Vec2f(cx - 19f, cy - 30f), DrawPayload.ColorRect(5f, 10f, CastleColors.ROBOT_FRAME))
+                commands += DrawCommand(DrawLayer.ACTOR, dk, 1, "${id}_arm_r_upper",
+                    Vec2f(cx + 13f, cy - 42f), DrawPayload.ColorRect(7f, 12f, CastleColors.ROBOT_FRAME))
+                commands += DrawCommand(DrawLayer.ACTOR, dk, 1, "${id}_arm_r_lower",
+                    Vec2f(cx + 14f, cy - 30f), DrawPayload.ColorRect(5f, 10f, CastleColors.ROBOT_FRAME))
+                // Head — wider rectangular block, sharp edges
                 commands += DrawCommand(DrawLayer.ACTOR, dk, 2, "${id}_neck",
-                    Vec2f(cx - 4f, cy - 46f), DrawPayload.ColorRect(8f, 4f, CastleColors.ROBOT_JOINT))
+                    Vec2f(cx - 4f, cy - 48f), DrawPayload.ColorRect(8f, 4f, CastleColors.ROBOT_JOINT))
                 commands += DrawCommand(DrawLayer.ACTOR, dk, 2, "${id}_head",
-                    Vec2f(cx - 10f, cy - 58f), DrawPayload.ColorRect(20f, 12f, CastleColors.ROBOT_FRAME))
+                    Vec2f(cx - 11f, cy - 62f), DrawPayload.ColorRect(22f, 14f, CastleColors.ROBOT_FRAME))
+                // Head panel lines
+                commands += DrawCommand(DrawLayer.ACTOR, dk, 3, "${id}_head_seam",
+                    Vec2f(cx - 11f, cy - 55f),
+                    DrawPayload.Line(cx - 11f, cy - 55f, cx + 11f, cy - 55f, CastleColors.ROBOT_JOINT, 0.7f))
+                // Antenna — prominent, taller, with tip node
+                commands += DrawCommand(DrawLayer.ACTOR, dk, 4, "${id}_antenna_shaft",
+                    Vec2f(cx, cy - 62f),
+                    DrawPayload.Line(cx, cy - 62f, cx + 2f, cy - 78f, 0xFF_808888.toInt(), 1.5f))
+                commands += DrawCommand(DrawLayer.ACTOR, dk, 4, "${id}_antenna_tip",
+                    Vec2f(cx, cy - 80f), DrawPayload.ColorOval(5f, 5f, CastleColors.ROBOT_EYE))
                 // Scanline eye — pulsing green bar
-                @Suppress("UNUSED_VARIABLE")
                 val eyeAlpha = flickerAlpha(tick, phase, rate = 0.25, minAlpha = 0xAA, maxAlpha = 0xFF)
+                val eyeArgb = (eyeAlpha shl 24) or (CastleColors.ROBOT_EYE and 0x00FFFFFF)
                 commands += DrawCommand(DrawLayer.ACTOR, dk, 3, "${id}_eye",
-                    Vec2f(cx - 7f, cy - 53f), DrawPayload.ColorRect(14f, 3f, CastleColors.ROBOT_EYE))
+                    Vec2f(cx - 8f, cy - 57f), DrawPayload.ColorRect(16f, 3f, eyeArgb))
                 commands += DrawCommand(DrawLayer.ACTOR, dk, 3, "${id}_eye_glow",
-                    Vec2f(cx - 10f, cy - 56f), DrawPayload.ColorOval(20f, 10f, CastleColors.ROBOT_EYE_GLOW))
+                    Vec2f(cx - 12f, cy - 60f), DrawPayload.ColorOval(24f, 12f, CastleColors.ROBOT_EYE_GLOW))
             }
 
             ActorType.DRUID -> {
-                commands += actorShadow(cx, cy, 18f, 5f, dk)
-                // Robe — trapezoidal, wide at hem, narrow at shoulder. Hunched = top offset left.
+                commands += actorShadow(cx, cy, 20f, 5f, dk)
+                // Robe — asymmetric trapezoidal, hunched forward, wider on one side
                 val robePts = listOf(
-                    Vec2f(cx - 12f, cy - 8f),
-                    Vec2f(cx + 12f, cy - 8f),
-                    Vec2f(cx +  8f, cy - 44f),
-                    Vec2f(cx -  4f, cy - 44f),
+                    Vec2f(cx - 14f, cy - 6f),
+                    Vec2f(cx + 10f, cy - 8f),
+                    Vec2f(cx +  6f, cy - 42f),
+                    Vec2f(cx -  8f, cy - 46f),  // hunched: left shoulder higher
                 )
                 commands += DrawCommand(DrawLayer.ACTOR, dk, 0, "${id}_robe",
-                    Vec2f(cx - 12f, cy - 8f), DrawPayload.ColorPath(robePts, CastleColors.DRUID_ROBE))
-                // Robe edge highlight
-                commands += DrawCommand(DrawLayer.ACTOR, dk, 1, "${id}_robe_edge",
-                    Vec2f(cx - 12f, cy - 8f),
-                    DrawPayload.Line(cx - 12f, cy - 8f, cx - 4f, cy - 44f, CastleColors.DRUID_ROBE_EDGE, 0.8f))
-                // Skull face — jutting forward from under hood
+                    Vec2f(cx - 14f, cy - 6f), DrawPayload.ColorPath(robePts, CastleColors.DRUID_ROBE))
+                // Robe edge highlights — asymmetric, left side only (hunched silhouette)
+                commands += DrawCommand(DrawLayer.ACTOR, dk, 1, "${id}_robe_edge_l",
+                    Vec2f(cx - 14f, cy - 6f),
+                    DrawPayload.Line(cx - 14f, cy - 6f, cx - 8f, cy - 46f, CastleColors.DRUID_ROBE_EDGE, 1.0f))
+                commands += DrawCommand(DrawLayer.ACTOR, dk, 1, "${id}_robe_edge_r",
+                    Vec2f(cx + 10f, cy - 8f),
+                    DrawPayload.Line(cx + 10f, cy - 8f, cx + 6f, cy - 42f, CastleColors.DRUID_ROBE_EDGE, 0.5f))
+                // Oversized hood/cowl — large asymmetric oval, jutting forward
+                commands += DrawCommand(DrawLayer.ACTOR, dk, 3, "${id}_cowl",
+                    Vec2f(cx - 12f, cy - 62f), DrawPayload.ColorOval(22f, 18f, CastleColors.DRUID_ROBE))
+                // Cowl peak — pointed top
+                val cowlPeak = listOf(
+                    Vec2f(cx - 6f, cy - 62f),
+                    Vec2f(cx + 4f, cy - 62f),
+                    Vec2f(cx - 2f, cy - 72f),
+                )
+                commands += DrawCommand(DrawLayer.ACTOR, dk, 3, "${id}_cowl_peak",
+                    Vec2f(cx - 6f, cy - 72f), DrawPayload.ColorPath(cowlPeak, CastleColors.DRUID_ROBE))
+                // Skull face — jutting forward from under oversized hood
                 commands += DrawCommand(DrawLayer.ACTOR, dk, 2, "${id}_skull",
-                    Vec2f(cx - 5f, cy - 54f), DrawPayload.ColorOval(12f, 10f, CastleColors.DRUID_SKULL))
-                // Hood — dark oval over skull
-                commands += DrawCommand(DrawLayer.ACTOR, dk, 3, "${id}_hood",
-                    Vec2f(cx - 8f, cy - 58f), DrawPayload.ColorOval(16f, 12f, CastleColors.DRUID_ROBE))
+                    Vec2f(cx - 6f, cy - 56f), DrawPayload.ColorOval(13f, 10f, CastleColors.DRUID_SKULL))
                 // Eye sockets — two dark voids
                 commands += DrawCommand(DrawLayer.ACTOR, dk, 4, "${id}_eye_l",
-                    Vec2f(cx - 4f, cy - 51f), DrawPayload.ColorOval(3f, 3f, 0xFF_000000.toInt()))
+                    Vec2f(cx - 5f, cy - 53f), DrawPayload.ColorOval(3f, 4f, 0xFF_000000.toInt()))
                 commands += DrawCommand(DrawLayer.ACTOR, dk, 4, "${id}_eye_r",
-                    Vec2f(cx + 1f, cy - 51f), DrawPayload.ColorOval(3f, 3f, 0xFF_000000.toInt()))
+                    Vec2f(cx + 1f, cy - 53f), DrawPayload.ColorOval(3f, 4f, 0xFF_000000.toInt()))
+                // Crooked staff — curved/bent, not straight, held on left side
+                // Staff shaft — 3 segments forming a crook
+                commands += DrawCommand(DrawLayer.ACTOR, dk, 1, "${id}_staff_lower",
+                    Vec2f(cx - 16f, cy - 6f),
+                    DrawPayload.Line(cx - 16f, cy - 6f, cx - 14f, cy - 40f, 0xFF_5A4020.toInt(), 2.0f))
+                commands += DrawCommand(DrawLayer.ACTOR, dk, 1, "${id}_staff_mid",
+                    Vec2f(cx - 14f, cy - 40f),
+                    DrawPayload.Line(cx - 14f, cy - 40f, cx - 18f, cy - 60f, 0xFF_5A4020.toInt(), 1.8f))
+                commands += DrawCommand(DrawLayer.ACTOR, dk, 1, "${id}_staff_crook",
+                    Vec2f(cx - 18f, cy - 60f),
+                    DrawPayload.Line(cx - 18f, cy - 60f, cx - 12f, cy - 68f, 0xFF_5A4020.toInt(), 1.5f))
+                // Staff crook tip — small knob
+                commands += DrawCommand(DrawLayer.ACTOR, dk, 2, "${id}_staff_tip",
+                    Vec2f(cx - 14f, cy - 70f), DrawPayload.ColorOval(5f, 5f, 0xFF_6A5030.toInt()))
                 // Magic orb — held in right hand, pulsing purple
-                @Suppress("UNUSED_VARIABLE")
                 val orbPulse = flickerAlpha(tick, phase + 1.0, rate = 0.08, minAlpha = 0xDD, maxAlpha = 0xFF)
+                val orbArgb = (orbPulse shl 24) or (CastleColors.DRUID_ORB and 0x00FFFFFF)
                 commands += DrawCommand(DrawLayer.ACTOR, dk, 2, "${id}_orb",
-                    Vec2f(cx + 8f, cy - 28f), DrawPayload.ColorOval(10f, 10f, CastleColors.DRUID_ORB))
+                    Vec2f(cx + 8f, cy - 28f), DrawPayload.ColorOval(10f, 10f, orbArgb))
                 commands += DrawCommand(DrawLayer.ACTOR, dk, 1, "${id}_orb_glow",
-                    Vec2f(cx + 4f, cy - 32f), DrawPayload.ColorOval(18f, 18f, CastleColors.DRUID_ORB_GLOW))
+                    Vec2f(cx + 3f, cy - 33f), DrawPayload.ColorOval(20f, 20f, CastleColors.DRUID_ORB_GLOW))
             }
 
             ActorType.BALL -> {

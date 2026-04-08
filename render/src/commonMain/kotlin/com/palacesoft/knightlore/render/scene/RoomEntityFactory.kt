@@ -836,38 +836,34 @@ object RoomEntityFactory {
 
         // North wall block: visible faces = top + south-facing inner face (blockFaceLeft)
         fun wallBlockNorth(gx: Float, gy: Float) {
+            val dk = IsoProjector.depthKey(Vec3f(gx + 0.5f, gy + 1f, 0f))
+            val id = "wall_${gx.toInt()}_${gy.toInt()}"
+
+            // ONE continuous south-facing inner face from z=0 to z=3 (no per-block seams)
+            val tallFacePts = listOf(
+                pt(gx,      gy + 1f, 0f, ox, oy),
+                pt(gx + 1f, gy + 1f, 0f, ox, oy),
+                pt(gx + 1f, gy + 1f, 3f, ox, oy),
+                pt(gx,      gy + 1f, 3f, ox, oy),
+            )
+            commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "${id}_face",
+                tallFacePts[0],
+                DrawPayload.DitheredPath(tallFacePts, palette.wallSouthLo, palette.wallSouthHi, horizontal = true))
+
+            // Top cap at z=3
+            commands += DrawCommand(DrawLayer.BLOCK, dk, 2, "${id}_top",
+                IsoProjector.toScreen(Vec3f(gx, gy, 3f)) + offset,
+                DrawPayload.ColorPath(floorDiamond(gx, gy, 3f, ox, oy), palette.wallTop))
+            val h1 = pt(gx, gy, 3f, ox, oy)
+            val h2 = pt(gx, gy + 1f, 3f, ox, oy)
+            commands += DrawCommand(DrawLayer.BLOCK, dk, 4, "${id}_cap_hl",
+                Vec2f(h1.x, h1.y),
+                DrawPayload.Line(h1.x, h1.y, h2.x, h2.y, palette.wallTopHighlight, 1.2f))
+
+            // Decorations use gz loop but don't draw separate face quads
             for (gz in 0 until 3) {
                 val bz = gz.toFloat()
-                val footWorld = Vec3f(gx + 0.5f, gy + 1f, bz)
-                val dk = IsoProjector.depthKey(footWorld)
-                val id = "wall_${gx.toInt()}_${gy.toInt()}_$gz"
                 val isTop = gz == 2
-
-                // Top face — only on the topmost block to avoid shelf appearance
-                if (isTop) {
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 2, "${id}_top",
-                        IsoProjector.toScreen(Vec3f(gx, gy, bz + 1f)) + offset,
-                        DrawPayload.ColorPath(floorDiamond(gx, gy, bz + 1f, ox, oy), palette.wallTop))
-                    // Highlight edge — the nearest edge of the cap catches the most light
-                    val h1 = pt(gx, gy, bz + 1f, ox, oy)
-                    val h2 = pt(gx, gy + 1f, bz + 1f, ox, oy)
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 4, "${id}_cap_hl",
-                        Vec2f(h1.x, h1.y),
-                        DrawPayload.Line(h1.x, h1.y, h2.x, h2.y, palette.wallTopHighlight, 1.2f))
-                }
-                // South-facing inner face (blockFaceLeft = y+1 face) — stone courses
-                val southFacePts = blockFaceLeft(gx, gy, bz, ox, oy)
-                drawWallFace(
-                    commands, DrawLayer.BLOCK, dk, "${id}_left",
-                    southFacePts,
-                    baseColor  = palette.wallSouthBase,
-                    jointColor = palette.wallSouthJoint,
-                    loColor    = palette.wallSouthLo,
-                    hiColor    = palette.wallSouthHi,
-                    style      = palette.wallStyle,
-                    gxSeed     = gx.toInt(),
-                    gzOffset   = gz,
-                )
 
                 // CAVERN: stalactite hint — narrow triangles hanging from wall top
                 if (roomType == RoomType.CAVERN && (gx.toInt() * 7 + 3) % 5 == 0) {
@@ -1014,38 +1010,34 @@ object RoomEntityFactory {
 
         // West wall block: visible faces = top + east-facing inner face (blockFaceRight)
         fun wallBlockWest(gx: Float, gy: Float) {
+            val dk = IsoProjector.depthKey(Vec3f(gx + 0.5f, gy + 1f, 0f))
+            val id = "wall_${gx.toInt()}_${gy.toInt()}"
+
+            // ONE continuous east-facing inner face from z=0 to z=3
+            val tallFacePts = listOf(
+                pt(gx + 1f, gy,      0f, ox, oy),
+                pt(gx + 1f, gy + 1f, 0f, ox, oy),
+                pt(gx + 1f, gy + 1f, 3f, ox, oy),
+                pt(gx + 1f, gy,      3f, ox, oy),
+            )
+            commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "${id}_face",
+                tallFacePts[0],
+                DrawPayload.DitheredPath(tallFacePts, palette.wallEastLo, palette.wallEastHi, horizontal = true))
+
+            // Top cap at z=3
+            commands += DrawCommand(DrawLayer.BLOCK, dk, 2, "${id}_top",
+                IsoProjector.toScreen(Vec3f(gx, gy, 3f)) + offset,
+                DrawPayload.ColorPath(floorDiamond(gx, gy, 3f, ox, oy), palette.wallTop))
+            val h1 = pt(gx, gy, 3f, ox, oy)
+            val h2 = pt(gx + 1f, gy, 3f, ox, oy)
+            commands += DrawCommand(DrawLayer.BLOCK, dk, 4, "${id}_cap_hl",
+                Vec2f(h1.x, h1.y),
+                DrawPayload.Line(h1.x, h1.y, h2.x, h2.y, palette.wallTopHighlight, 1.2f))
+
+            // Decorations loop (no separate face quads)
             for (gz in 0 until 3) {
                 val bz = gz.toFloat()
-                val footWorld = Vec3f(gx + 0.5f, gy + 1f, bz)
-                val dk = IsoProjector.depthKey(footWorld)
-                val id = "wall_${gx.toInt()}_${gy.toInt()}_$gz"
                 val isTop = gz == 2
-
-                // Top face — only on the topmost block to avoid shelf appearance
-                if (isTop) {
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 2, "${id}_top",
-                        IsoProjector.toScreen(Vec3f(gx, gy, bz + 1f)) + offset,
-                        DrawPayload.ColorPath(floorDiamond(gx, gy, bz + 1f, ox, oy), palette.wallTop))
-                    // Highlight edge — the nearest edge of the cap catches the most light
-                    val h1 = pt(gx, gy, bz + 1f, ox, oy)
-                    val h2 = pt(gx + 1f, gy, bz + 1f, ox, oy)
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 4, "${id}_cap_hl",
-                        Vec2f(h1.x, h1.y),
-                        DrawPayload.Line(h1.x, h1.y, h2.x, h2.y, palette.wallTopHighlight, 1.2f))
-                }
-                // East-facing inner face (blockFaceRight = x+1 face) — stone courses
-                val eastFacePts = blockFaceRight(gx, gy, bz, ox, oy)
-                drawWallFace(
-                    commands, DrawLayer.BLOCK, dk, "${id}_right",
-                    eastFacePts,
-                    baseColor  = palette.wallEastBase,
-                    jointColor = palette.wallEastJoint,
-                    loColor    = palette.wallEastLo,
-                    hiColor    = palette.wallEastHi,
-                    style      = palette.wallStyle,
-                    gxSeed     = gy.toInt(),
-                    gzOffset   = gz,
-                )
 
                 // Moss patch (~1 in 7 wall columns, only on lower block)
                 if (!isTop && (gx.toInt() * 5 + gy.toInt() * 9) % 7 == 0) {

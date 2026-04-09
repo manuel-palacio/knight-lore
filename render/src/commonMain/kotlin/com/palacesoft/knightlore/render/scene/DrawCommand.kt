@@ -86,4 +86,20 @@ sealed interface DrawPayload {
     data class AuthoredSprite(
         val sprite: AuthoredSpriteModel,
     ) : DrawPayload
+
+    /**
+     * Renders a sprite from a sprite sheet (PNG pixel art).
+     * The renderer looks up the image by [sheetId] and draws the region
+     * defined by [srcX],[srcY],[srcW],[srcH] at the command's screenPos,
+     * scaled by [scale]. Flipped horizontally if [flipX] is true.
+     */
+    data class Sprite(
+        val sheetId: String,     // e.g. "player_human" — maps to a loaded PNG
+        val srcX: Int,           // source rect X in the sheet
+        val srcY: Int,           // source rect Y
+        val srcW: Int,           // source rect width
+        val srcH: Int,           // source rect height
+        val scale: Float = 1f,
+        val flipX: Boolean = false,
+    ) : DrawPayload
 }

@@ -2147,8 +2147,32 @@ object RoomEntityFactory {
             player.transformState.phase == TransformPhase.TRANSFORMING_TO_HUMAN
         val bob = (kotlin.math.sin(state.time.tick.toDouble() * 0.10472) * 1.5).toFloat()
 
-        // ── Authored sprite catalog check ──────────────────────────────────────────
+        // ── Try PNG sprite sheet first (best quality) ────────────────────────────
         val animPhase = ((state.time.tick * 0.25f).toInt() % 2)
+        val spriteRef = actorArtCatalog.resolvePlayerSprite(
+            form = player.form,
+            motion = player.movementState,
+            facing = player.facing,
+            framePhase = animPhase,
+        )
+        if (spriteRef != null) {
+            commands += DrawCommand(
+                layer = DrawLayer.PLAYER,
+                depthKey = dk,
+                entityId = "player",
+                screenPos = Vec2f(screen.x - spriteRef.srcW * spriteRef.scale / 2f, screen.y - spriteRef.srcH * spriteRef.scale),
+                payload = DrawPayload.Sprite(
+                    sheetId = spriteRef.sheetId,
+                    srcX = spriteRef.srcX, srcY = spriteRef.srcY,
+                    srcW = spriteRef.srcW, srcH = spriteRef.srcH,
+                    scale = spriteRef.scale,
+                    flipX = spriteRef.flipX,
+                ),
+            )
+            return // skip polygon rendering
+        }
+
+        // ── Fallback: polygon-based authored sprite ──────────────────────────────
         val authoredSprite = actorArtCatalog.resolvePlayer(
             form = player.form,
             motion = player.movementState,
@@ -2157,7 +2181,6 @@ object RoomEntityFactory {
             tick = state.time.tick,
         )
         if (authoredSprite != null) {
-            // Emit authored sprite — art data lives in catalog, not here
             commands += DrawCommand(
                 layer = DrawLayer.PLAYER,
                 depthKey = dk,
@@ -2165,7 +2188,7 @@ object RoomEntityFactory {
                 screenPos = screen,
                 payload = DrawPayload.AuthoredSprite(authoredSprite),
             )
-            return // skip legacy rendering
+            return
         }
 
         // ── Legacy rendering below (fallback for unimplemented forms/states) ──────

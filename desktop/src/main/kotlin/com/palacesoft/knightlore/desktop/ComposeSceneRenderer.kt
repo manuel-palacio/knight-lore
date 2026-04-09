@@ -11,7 +11,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import com.palacesoft.knightlore.render.art.PaletteRole
+// PaletteRole removed — authored sprites use fillColor: Int directly
 import com.palacesoft.knightlore.render.scene.DrawCommand
 import com.palacesoft.knightlore.render.scene.DrawPayload
 import com.palacesoft.knightlore.render.scene.SILHOUETTE_TEST_MODE
@@ -139,25 +139,12 @@ object ComposeSceneRenderer {
                 is DrawPayload.AuthoredSprite -> {
                     val sprite = payload.sprite
                     for (layer in sprite.layers) {
-                        val layerAlpha = layer.alpha
-                        val fillColor = if (SILHOUETTE_TEST_MODE) {
-                            Color(0f, 0f, 0f, layerAlpha)
+                        val color = if (SILHOUETTE_TEST_MODE) {
+                            argbToComposeColor(0xFF_000000.toInt())
                         } else {
-                            paletteRoleToColor(layer.fillRole, layerAlpha)
+                            argbToComposeColor(layer.fillColor)
                         }
-                        if (layer.isOval) {
-                            val ovalRect = Rect(
-                                left, top,
-                                left + layer.width, top + layer.height,
-                            )
-                            scope.drawIntoCanvas { canvas ->
-                                val paint = Paint().apply {
-                                    isAntiAlias = false
-                                    color = fillColor
-                                }
-                                canvas.drawOval(ovalRect, paint)
-                            }
-                        } else if (layer.points.isNotEmpty()) {
+                        if (layer.points.size >= 3) {
                             val path = Path()
                             layer.points.forEachIndexed { i, pt ->
                                 if (i == 0) path.moveTo(left + pt.x, top + pt.y)
@@ -167,13 +154,15 @@ object ComposeSceneRenderer {
                             scope.drawIntoCanvas { canvas ->
                                 val paint = Paint().apply {
                                     isAntiAlias = false
-                                    color = fillColor
+                                    this.color = color
                                 }
                                 canvas.drawPath(path, paint)
-                                paint.color = OUTLINE_COLOR
-                                paint.style = PaintingStyle.Stroke
-                                paint.strokeWidth = 2f
-                                canvas.drawPath(path, paint)
+                                if (!SILHOUETTE_TEST_MODE) {
+                                    paint.color = OUTLINE_COLOR
+                                    paint.style = PaintingStyle.Stroke
+                                    paint.strokeWidth = 1f
+                                    canvas.drawPath(path, paint)
+                                }
                             }
                         }
                     }
@@ -205,18 +194,6 @@ object ComposeSceneRenderer {
             topLeft = Offset.Zero,
             size = scope.size,
         )
-    }
-
-    private fun paletteRoleToColor(role: PaletteRole, alpha: Float): Color = when (role) {
-        PaletteRole.BODY_MAIN      -> Color(0.30f, 0.28f, 0.24f, alpha)
-        PaletteRole.BODY_SHADOW    -> Color(0.15f, 0.14f, 0.12f, alpha)
-        PaletteRole.BODY_HIGHLIGHT -> Color(0.50f, 0.48f, 0.42f, alpha)
-        PaletteRole.METAL          -> Color(0.55f, 0.58f, 0.60f, alpha)
-        PaletteRole.CLOTH          -> Color(0.40f, 0.25f, 0.15f, alpha)
-        PaletteRole.TRIM           -> Color(0.60f, 0.50f, 0.30f, alpha)
-        PaletteRole.EYE_ACCENT     -> Color(0.90f, 0.30f, 0.10f, alpha)
-        PaletteRole.CURSE_GLOW     -> Color(0.50f, 0.00f, 0.80f, alpha)
-        PaletteRole.OUTLINE_SOFT   -> Color(0.08f, 0.06f, 0.06f, alpha)
     }
 
     private fun argbToComposeColor(argb: Int): Color {

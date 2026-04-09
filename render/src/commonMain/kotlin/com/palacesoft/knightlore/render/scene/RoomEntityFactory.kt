@@ -35,6 +35,9 @@ import com.palacesoft.knightlore.render.iso.IsoProjector
  */
 object RoomEntityFactory {
 
+    private val actorArtCatalog: com.palacesoft.knightlore.render.art.ActorArtCatalog =
+        com.palacesoft.knightlore.render.art.DefaultActorArtCatalog()
+
     private object CastleColors {
         // ── Wall faces — darker stone for mysterious castle atmosphere ─────────
         val WALL_SOUTH_BASE      = 0xFF_4A4838.toInt()  // dark olive stone
@@ -2143,6 +2146,28 @@ object RoomEntityFactory {
         val transforming = player.transformState.phase == TransformPhase.TRANSFORMING_TO_WEREWULF ||
             player.transformState.phase == TransformPhase.TRANSFORMING_TO_HUMAN
         val bob = (kotlin.math.sin(state.time.tick.toDouble() * 0.10472) * 1.5).toFloat()
+
+        // ── Authored sprite catalog check ──────────────────────────────────────────
+        val animPhase = ((state.time.tick * 0.25f).toInt() % 2)
+        val authoredSprite = actorArtCatalog.resolvePlayer(
+            form = player.form,
+            motion = player.movementState,
+            facing = player.facing,
+            framePhase = animPhase,
+        )
+        if (authoredSprite != null) {
+            // Emit authored sprite — art data lives in catalog, not here
+            commands += DrawCommand(
+                layer = DrawLayer.PLAYER,
+                depthKey = dk,
+                entityId = "player",
+                screenPos = screen,
+                payload = DrawPayload.AuthoredSprite(authoredSprite),
+            )
+            return // skip legacy rendering
+        }
+
+        // ── Legacy rendering below (fallback for unimplemented forms/states) ──────
         val ox = screen.x
         val oy = screen.y
 

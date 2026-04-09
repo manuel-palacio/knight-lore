@@ -2,28 +2,17 @@ package com.palacesoft.knightlore.render.art
 
 import com.palacesoft.knightlore.core.math.Vec2f
 
-enum class PaletteRole {
-    BODY_MAIN, BODY_SHADOW, BODY_HIGHLIGHT,
-    METAL, CLOTH, TRIM,
-    EYE_ACCENT, CURSE_GLOW, OUTLINE_SOFT,
-}
-
-data class SpriteAnchor(val x: Float, val y: Float)
-
-data class AuthoredLayer(
-    val id: String,
-    val points: List<Vec2f> = emptyList(),
-    val fillRole: PaletteRole,
-    val alpha: Float = 1f,
-    val isOval: Boolean = false,
-    val width: Float = 0f,
-    val height: Float = 0f,
+/** A single polygon layer in an authored sprite. */
+data class SpriteLayer(
+    val points: List<Vec2f>,      // screen-space polygon points, relative to anchor
+    val fillColor: Int,           // ARGB packed int
+    val strokeColor: Int? = null,
+    val zOffset: Float = 0f,
 )
 
+/** A multi-layer authored sprite. Anchor is the feet position (bottom-center). */
 data class AuthoredSprite(
     val id: String,
-    val width: Float,
-    val height: Float,
-    val anchor: SpriteAnchor,
-    val layers: List<AuthoredLayer>,
+    val layers: List<SpriteLayer>,
+    val anchorOffsetY: Float = 0f, // positive = shift sprite up from anchor
 )

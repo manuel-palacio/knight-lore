@@ -1,20 +1,18 @@
 package com.palacesoft.knightlore.render.art
 
-enum class ActorKind { PLAYER, GUARD, GHOST, DRUID, ROBOT }
-enum class ActorForm { HUMAN, WEREWOLF }
-enum class ActorMotion { IDLE, WALK_A, WALK_B, JUMP_RISE, JUMP_APEX, LAND, DAMAGE, TRANSFORM_START, TRANSFORM_LOOP, TRANSFORM_END }
-enum class ActorMood { Default, Enraged, Weakened, Cursed }
-enum class Facing { NORTH, SOUTH, EAST, WEST, NORTHEAST, NORTHWEST, SOUTHEAST, SOUTHWEST }
+import com.palacesoft.knightlore.core.math.Direction8
+import com.palacesoft.knightlore.domain.model.Form
+import com.palacesoft.knightlore.domain.model.MovementState
 
-data class ActorArtSpec(
-    val actorKind: ActorKind,
-    val form: ActorForm? = null,
-    val facing: Facing,
-    val motion: ActorMotion,
-    val mood: ActorMood = ActorMood.Default,
-    val framePhase: Int = 0,
-)
-
+/**
+ * Returns authored sprite data for player characters.
+ * Returns null for any unimplemented combination → legacy rendering fallback.
+ */
 interface ActorArtCatalog {
-    fun resolve(spec: ActorArtSpec): AuthoredSprite?
+    fun resolvePlayer(
+        form: Form,
+        motion: MovementState,
+        facing: Direction8,
+        framePhase: Int,
+    ): AuthoredSprite?
 }

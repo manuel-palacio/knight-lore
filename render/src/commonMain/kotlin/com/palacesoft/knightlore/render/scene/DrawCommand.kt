@@ -4,7 +4,7 @@ import com.palacesoft.knightlore.core.math.Vec2f
 import com.palacesoft.knightlore.render.art.AuthoredSprite as AuthoredSpriteModel
 
 /** Flip to true to force all authored sprites to pure black — silhouette readability test. */
-const val SILHOUETTE_TEST_MODE = false
+const val SILHOUETTE_TEST_MODE = true // REVIEW MODE — flip back to false after shape approval
 
 /** Layer order for draw sorting. Lower = drawn first (behind). */
 enum class DrawLayer {

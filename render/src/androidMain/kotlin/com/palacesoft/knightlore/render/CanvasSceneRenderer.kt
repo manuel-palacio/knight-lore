@@ -123,6 +123,23 @@ object CanvasSceneRenderer {
                     paint.style = Paint.Style.FILL
                     canvas.drawRect(0f, 0f, canvas.width.toFloat(), canvas.height.toFloat(), paint)
                 }
+                is DrawPayload.AuthoredSprite -> {
+                    val sprite = payload.sprite
+                    for (layer in sprite.layers) {
+                        paint.color = if (com.palacesoft.knightlore.render.scene.SILHOUETTE_TEST_MODE)
+                            0xFF_000000.toInt() else layer.fillColor
+                        paint.style = Paint.Style.FILL
+                        if (layer.points.size >= 3) {
+                            path.reset()
+                            layer.points.forEachIndexed { i, pt ->
+                                if (i == 0) path.moveTo(left + pt.x, top + pt.y)
+                                else path.lineTo(left + pt.x, top + pt.y)
+                            }
+                            path.close()
+                            canvas.drawPath(path, paint)
+                        }
+                    }
+                }
             }
         }
 

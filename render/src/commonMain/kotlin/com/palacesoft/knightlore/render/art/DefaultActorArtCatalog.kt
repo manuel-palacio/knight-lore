@@ -59,23 +59,22 @@ class DefaultActorArtCatalog : ActorArtCatalog {
             Form.HUMAN -> {
                 val sheet = "player_human"
                 when (motion) {
-                    MovementState.IDLE -> PlayerSpriteRef(sheet, 0, 0, 32, 48, flipX = flipX)
                     MovementState.WALKING -> {
                         val fx = if (framePhase % 2 == 0) 64 else 96
                         PlayerSpriteRef(sheet, fx, 0, 32, 48, flipX = flipX)
                     }
-                    else -> null
+                    // All other states use idle frame (prevents teleport on state change)
+                    else -> PlayerSpriteRef(sheet, 0, 0, 32, 48, flipX = flipX)
                 }
             }
             Form.WEREWULF -> {
                 val sheet = "player_wolf"
                 when (motion) {
-                    MovementState.IDLE -> PlayerSpriteRef(sheet, 0, 0, 40, 56, flipX = flipX)
                     MovementState.WALKING -> {
                         val fx = if (framePhase % 2 == 0) 80 else 120
                         PlayerSpriteRef(sheet, fx, 0, 40, 56, flipX = flipX)
                     }
-                    else -> null
+                    else -> PlayerSpriteRef(sheet, 0, 0, 40, 56, flipX = flipX)
                 }
             }
         }

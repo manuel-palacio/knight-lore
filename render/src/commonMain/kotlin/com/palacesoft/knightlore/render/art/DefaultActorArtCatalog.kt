@@ -66,6 +66,7 @@ class DefaultActorArtCatalog : ActorArtCatalog {
         }
 
         val l = lean
+        val h = headShift
         return AuthoredSprite("human_idle", listOf(
             // Shadow
             SpriteLayer(listOf(Vec2f(-12f, 0f), Vec2f(12f, 0f), Vec2f(10f, 3f), Vec2f(-10f, 3f)), SHADOW),
@@ -85,7 +86,6 @@ class DefaultActorArtCatalog : ActorArtCatalog {
             SpriteLayer(listOf(Vec2f(-22f, -20f), Vec2f(-16f, -20f), Vec2f(-16f, -16f), Vec2f(-22f, -16f)), SKIN),
             SpriteLayer(listOf(Vec2f(16f, -20f), Vec2f(22f, -20f), Vec2f(22f, -16f), Vec2f(16f, -16f)), SKIN),
             // Face — shifts with headShift for idle look-around
-            val h = headShift
             SpriteLayer(listOf(
                 Vec2f(-9f + l + h, -55f), Vec2f(9f + l + h, -55f),
                 Vec2f(8f + l + h, -44f), Vec2f(-8f + l + h, -44f),

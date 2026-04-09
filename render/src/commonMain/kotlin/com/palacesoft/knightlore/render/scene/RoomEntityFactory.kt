@@ -2156,11 +2156,20 @@ object RoomEntityFactory {
             framePhase = animPhase,
         )
         if (spriteRef != null) {
+            val spriteW = spriteRef.srcW * spriteRef.scale
+            val spriteH = spriteRef.srcH * spriteRef.scale
+            // Shadow at feet (doesn't bob)
+            commands += DrawCommand(
+                layer = DrawLayer.FLOOR, depthKey = dk, priority = -1, entityId = "player_shadow",
+                screenPos = Vec2f(screen.x - spriteW * 0.4f, screen.y - 4f),
+                payload = DrawPayload.ColorOval(spriteW * 0.8f, 8f, 0x44_000000.toInt()),
+            )
+            // Sprite — centered on feet, with bob for walk bounce
             commands += DrawCommand(
                 layer = DrawLayer.PLAYER,
                 depthKey = dk,
                 entityId = "player",
-                screenPos = Vec2f(screen.x - spriteRef.srcW * spriteRef.scale / 2f, screen.y - spriteRef.srcH * spriteRef.scale),
+                screenPos = Vec2f(screen.x - spriteW / 2f, screen.y - spriteH + bob),
                 payload = DrawPayload.Sprite(
                     sheetId = spriteRef.sheetId,
                     srcX = spriteRef.srcX, srcY = spriteRef.srcY,
@@ -2169,7 +2178,7 @@ object RoomEntityFactory {
                     flipX = spriteRef.flipX,
                 ),
             )
-            return // skip polygon rendering
+            return
         }
 
         // ── Fallback: polygon-based authored sprite ──────────────────────────────

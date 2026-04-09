@@ -67,53 +67,75 @@ class DefaultActorArtCatalog : ActorArtCatalog {
             else -> 0f                     // look forward
         }
 
-        val l = lean
-        val h = headShift
+        val l = lean; val h = headShift
+        // ORGANIC Indiana Jones explorer — all shapes use 6-10 points for roundness
         return AuthoredSprite("human_idle", listOf(
-            // Shadow
-            SpriteLayer(listOf(Vec2f(-12f, 0f), Vec2f(12f, 0f), Vec2f(10f, 3f), Vec2f(-10f, 3f)), SHADOW),
-            // Boots — chunky, separated
-            SpriteLayer(listOf(Vec2f(-10f, -14f), Vec2f(-2f, -14f), Vec2f(-1f, 0f), Vec2f(-11f, 0f)), BOOTS),
-            SpriteLayer(listOf(Vec2f(2f, -14f), Vec2f(10f, -14f), Vec2f(11f, 0f), Vec2f(1f, 0f)), BOOTS),
-            // Body — one rounded shape
+            // Shadow — oval-ish
+            SpriteLayer(listOf(Vec2f(-15f, 1f), Vec2f(0f, -2f), Vec2f(15f, 1f), Vec2f(0f, 4f)), SHADOW),
+            // Left boot — rounded 6-point
             SpriteLayer(listOf(
-                Vec2f(-12f, -14f), Vec2f(12f, -14f),
-                Vec2f(14f, -24f), Vec2f(10f + l, -44f),
-                Vec2f(-10f + l, -44f), Vec2f(-14f, -24f),
+                Vec2f(-12f, -10f), Vec2f(-5f, -10f), Vec2f(-3f, -4f),
+                Vec2f(-5f, 1f), Vec2f(-12f, 1f), Vec2f(-14f, -4f),
+            ), BOOTS),
+            // Right boot
+            SpriteLayer(listOf(
+                Vec2f(5f, -10f), Vec2f(12f, -10f), Vec2f(14f, -4f),
+                Vec2f(12f, 1f), Vec2f(5f, 1f), Vec2f(3f, -4f),
+            ), BOOTS),
+            // Body — 10-point organic blob (wide hips, narrow shoulders, slight belly)
+            SpriteLayer(listOf(
+                Vec2f(-10f, -10f),           // hip left
+                Vec2f(10f, -10f),            // hip right
+                Vec2f(16f + l, -18f),        // right hip curve
+                Vec2f(17f + l, -28f),        // right belly (widest)
+                Vec2f(14f + l, -38f),        // right chest
+                Vec2f(10f + l, -48f),        // right shoulder
+                Vec2f(-10f + l, -48f),       // left shoulder
+                Vec2f(-14f + l, -38f),       // left chest
+                Vec2f(-17f + l, -28f),       // left belly (widest)
+                Vec2f(-16f + l, -18f),       // left hip curve
             ), CLOAK),
-            // Arms — pushed OUT from body with visible gap
-            SpriteLayer(listOf(Vec2f(-20f + l, -38f), Vec2f(-16f + l, -38f), Vec2f(-17f, -18f), Vec2f(-21f, -18f)), CLOAK_DARK),
-            SpriteLayer(listOf(Vec2f(16f + l, -38f), Vec2f(20f + l, -38f), Vec2f(21f, -18f), Vec2f(17f, -18f)), CLOAK_DARK),
-            // Hands — skin fists
-            SpriteLayer(listOf(Vec2f(-22f, -20f), Vec2f(-16f, -20f), Vec2f(-16f, -16f), Vec2f(-22f, -16f)), SKIN),
-            SpriteLayer(listOf(Vec2f(16f, -20f), Vec2f(22f, -20f), Vec2f(22f, -16f), Vec2f(16f, -16f)), SKIN),
-            // Face — shifts with headShift for idle look-around
+            // Left arm — 6-point organic, DETACHED from body
             SpriteLayer(listOf(
-                Vec2f(-9f + l + h, -55f), Vec2f(9f + l + h, -55f),
-                Vec2f(8f + l + h, -44f), Vec2f(-8f + l + h, -44f),
+                Vec2f(-22f + l, -44f), Vec2f(-18f + l, -44f), Vec2f(-17f + l, -36f),
+                Vec2f(-18f, -22f), Vec2f(-24f, -22f), Vec2f(-24f + l, -36f),
+            ), CLOAK_DARK),
+            // Right arm
+            SpriteLayer(listOf(
+                Vec2f(18f + l, -44f), Vec2f(22f + l, -44f), Vec2f(24f + l, -36f),
+                Vec2f(24f, -22f), Vec2f(18f, -22f), Vec2f(17f + l, -36f),
+            ), CLOAK_DARK),
+            // Hands — rounded
+            SpriteLayer(listOf(Vec2f(-26f, -24f), Vec2f(-17f, -24f), Vec2f(-17f, -19f), Vec2f(-26f, -19f)), SKIN),
+            SpriteLayer(listOf(Vec2f(17f, -24f), Vec2f(26f, -24f), Vec2f(26f, -19f), Vec2f(17f, -19f)), SKIN),
+            // Face — rounded 6-point under hat shadow
+            SpriteLayer(listOf(
+                Vec2f(-8f + l + h, -62f), Vec2f(8f + l + h, -62f),
+                Vec2f(10f + l + h, -56f), Vec2f(8f + l + h, -49f),
+                Vec2f(-8f + l + h, -49f), Vec2f(-10f + l + h, -56f),
             ), EDGE),
-            // Eyes — shift with head
-            SpriteLayer(listOf(Vec2f(-7f + l + h, -52f), Vec2f(-3f + l + h, -52f), Vec2f(-3f + l + h, -49f), Vec2f(-7f + l + h, -49f)), 0xFF_FFFFFF.toInt()),
-            SpriteLayer(listOf(Vec2f(3f + l + h, -52f), Vec2f(7f + l + h, -52f), Vec2f(7f + l + h, -49f), Vec2f(3f + l + h, -49f)), 0xFF_FFFFFF.toInt()),
+            // Big white eyes
+            SpriteLayer(listOf(Vec2f(-7f + l + h, -60f), Vec2f(-2f + l + h, -60f), Vec2f(-2f + l + h, -56f), Vec2f(-7f + l + h, -56f)), 0xFF_FFFFFF.toInt()),
+            SpriteLayer(listOf(Vec2f(2f + l + h, -60f), Vec2f(7f + l + h, -60f), Vec2f(7f + l + h, -56f), Vec2f(2f + l + h, -56f)), 0xFF_FFFFFF.toInt()),
             // Pupils
-            SpriteLayer(listOf(Vec2f(-6f + l + h, -51f), Vec2f(-4f + l + h, -51f), Vec2f(-4f + l + h, -50f), Vec2f(-6f + l + h, -50f)), 0xFF_000000.toInt()),
-            SpriteLayer(listOf(Vec2f(4f + l + h, -51f), Vec2f(6f + l + h, -51f), Vec2f(6f + l + h, -50f), Vec2f(4f + l + h, -50f)), 0xFF_000000.toInt()),
-            // Nose
-            SpriteLayer(listOf(Vec2f(-2f + l + h, -48f), Vec2f(2f + l + h, -48f), Vec2f(2f + l + h, -45f), Vec2f(-2f + l + h, -45f)), SKIN),
-            // EXPLORER HAT — moves with head
+            SpriteLayer(listOf(Vec2f(-5f + l + h, -59f), Vec2f(-3f + l + h, -59f), Vec2f(-3f + l + h, -57f), Vec2f(-5f + l + h, -57f)), 0xFF_000000.toInt()),
+            SpriteLayer(listOf(Vec2f(3f + l + h, -59f), Vec2f(5f + l + h, -59f), Vec2f(5f + l + h, -57f), Vec2f(3f + l + h, -57f)), 0xFF_000000.toInt()),
+            // Nose — small rounded
+            SpriteLayer(listOf(Vec2f(-2f + l + h, -55f), Vec2f(2f + l + h, -55f), Vec2f(1f + l + h, -52f), Vec2f(-1f + l + h, -52f)), SKIN),
+            // Explorer hat — 8-point dome
             SpriteLayer(listOf(
-                Vec2f(-4f + l + h, -70f), Vec2f(4f + l + h, -70f),
-                Vec2f(10f + l + h, -66f), Vec2f(12f + l + h, -60f),
-                Vec2f(11f + l + h, -55f), Vec2f(-11f + l + h, -55f),
-                Vec2f(-12f + l + h, -60f), Vec2f(-10f + l + h, -66f),
+                Vec2f(-5f + l + h, -78f), Vec2f(5f + l + h, -78f),
+                Vec2f(12f + l + h, -74f), Vec2f(14f + l + h, -68f),
+                Vec2f(13f + l + h, -62f), Vec2f(-13f + l + h, -62f),
+                Vec2f(-14f + l + h, -68f), Vec2f(-12f + l + h, -74f),
             ), HAT),
-            // Brim
+            // Wide brim
             SpriteLayer(listOf(
-                Vec2f(-17f + l + h, -57f), Vec2f(17f + l + h, -57f),
-                Vec2f(16f + l + h, -53f), Vec2f(-16f + l + h, -53f),
+                Vec2f(-20f + l + h, -64f), Vec2f(20f + l + h, -64f),
+                Vec2f(19f + l + h, -60f), Vec2f(-19f + l + h, -60f),
             ), HAT),
             // Band
-            SpriteLayer(listOf(Vec2f(-11f + l + h, -58f), Vec2f(11f + l + h, -58f), Vec2f(11f + l + h, -56f), Vec2f(-11f + l + h, -56f)), HAT_HL),
+            SpriteLayer(listOf(Vec2f(-13f + l + h, -66f), Vec2f(13f + l + h, -66f), Vec2f(13f + l + h, -64f), Vec2f(-13f + l + h, -64f)), HAT_HL),
         ))
     }
 

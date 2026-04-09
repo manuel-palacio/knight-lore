@@ -157,12 +157,7 @@ object ComposeSceneRenderer {
                                     this.color = color
                                 }
                                 canvas.drawPath(path, paint)
-                                if (!SILHOUETTE_TEST_MODE) {
-                                    paint.color = OUTLINE_COLOR
-                                    paint.style = PaintingStyle.Stroke
-                                    paint.strokeWidth = 1f
-                                    canvas.drawPath(path, paint)
-                                }
+                                // NO outlines on authored sprites — clean fills only
                             }
                         }
                     }

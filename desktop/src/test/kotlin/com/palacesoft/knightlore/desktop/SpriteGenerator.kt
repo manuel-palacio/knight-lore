@@ -150,27 +150,107 @@ class SpriteGenerator {
     }
 
     private fun drawWolfIdle(img: BufferedImage, ox: Int) {
-        val cx = ox + 20; val by = 55
-        img.rect(cx - 10, by - 14, 7, 14, FUR_D)
-        img.rect(cx + 3, by - 14, 7, 14, FUR_D)
-        img.rect(cx - 14, by - 38, 28, 24, FUR)
-        img.rect(cx - 10, by - 28, 20, 10, FUR_L)
-        img.rect(cx - 19, by - 36, 4, 18, FUR)
-        img.rect(cx + 15, by - 36, 4, 18, FUR)
-        img.rect(cx - 20, by - 20, 5, 3, CLAW)
-        img.rect(cx + 15, by - 20, 5, 3, CLAW)
-        img.rect(cx - 10, by - 50, 20, 12, FUR)
-        img.rect(cx - 4, by - 46, 12, 5, FUR_D)
-        img.rect(cx - 6, by - 49, 3, 2, WEYE)
-        img.rect(cx + 3, by - 49, 3, 2, WEYE)
-        img.rect(cx - 9, by - 55, 4, 5, FUR)
-        img.rect(cx + 5, by - 55, 4, 5, FUR)
-        img.rect(cx - 8, by - 57, 2, 2, FUR)
-        img.rect(cx + 6, by - 57, 2, 2, FUR)
-        img.rect(cx + 1, by - 42, 2, 3, FANG)
-        img.rect(cx + 5, by - 42, 2, 3, FANG)
-        img.rect(cx + 12, by - 24, 3, 8, FUR_D)
-        img.rect(cx + 14, by - 30, 3, 6, FUR)
+        val c = ox + 20; val b = 55
+
+        // ── LEGS — wide stance, digitigrade (weight on balls of feet) ──
+        img.rect(c-10, b-12, 5, 10, FUR_D)   // left leg
+        img.rect(c-12, b-3, 7, 3, FUR_D)     // left paw (wide)
+        img.rect(c+5, b-12, 5, 10, FUR_D)    // right leg
+        img.rect(c+5, b-3, 7, 3, FUR_D)      // right paw
+
+        // ── BODY — barrel-shaped, wide, hunched forward ──
+        // Lower body
+        img.rect(c-10, b-16, 20, 4, FUR)
+        // Barrel torso (wider in middle)
+        img.rect(c-12, b-24, 24, 8, FUR)
+        img.rect(c-14, b-32, 28, 8, FUR)     // widest at shoulders
+        img.rect(c-12, b-36, 24, 4, FUR)     // upper shoulders
+        // Chest highlight
+        img.rect(c-6, b-26, 12, 8, FUR_L)
+        // Shoulder humps (raised above head)
+        img.rect(c-14, b-38, 6, 4, FUR_L)    // left hump
+        img.rect(c+8, b-38, 6, 4, FUR_L)     // right hump
+
+        // ── ARMS — long, hanging forward, reaching low ──
+        img.rect(c-18, b-32, 4, 16, FUR)     // left arm
+        img.rect(c-19, b-18, 5, 4, CLAW)     // left claw
+        img.px(c-20, b-16, CLAW)             // claw tip
+        img.px(c-17, b-16, CLAW)
+        img.rect(c+14, b-32, 4, 16, FUR)     // right arm
+        img.rect(c+14, b-18, 5, 4, CLAW)     // right claw
+        img.px(c+14, b-16, CLAW)
+        img.px(c+17, b-16, CLAW)
+
+        // ── HEAD — big wedge shape, low between shoulders ──
+        // Head (wider than tall — wedge)
+        img.rect(c-8, b-46, 16, 4, FUR)      // top of head
+        img.rect(c-9, b-42, 18, 6, FUR)      // mid head (widest)
+        img.rect(c-7, b-36, 14, 2, FUR)      // jaw line
+        // Snout — protruding forward
+        img.rect(c-3, b-42, 10, 4, FUR_D)    // snout
+        img.rect(c+5, b-40, 4, 2, FUR_D)     // snout tip
+        // Eyes — fierce amber
+        img.rect(c-6, b-45, 3, 2, WEYE)      // left eye
+        img.rect(c+3, b-45, 3, 2, WEYE)      // right eye
+        // Ears — tall pointed (triangular)
+        img.rect(c-8, b-50, 3, 4, FUR)       // left ear base
+        img.px(c-7, b-51, FUR)               // left ear tip
+        img.rect(c+5, b-50, 3, 4, FUR)       // right ear base
+        img.px(c+6, b-51, FUR)               // right ear tip
+        // Inner ears
+        img.px(c-7, b-49, FUR_D)
+        img.px(c+6, b-49, FUR_D)
+        // Fangs — visible below snout
+        img.rect(c, b-38, 2, 3, FANG)        // left fang
+        img.rect(c+4, b-38, 2, 3, FANG)      // right fang
+
+        // ── TAIL — curved behind ──
+        img.rect(c+12, b-20, 3, 6, FUR_D)    // tail base
+        img.rect(c+14, b-24, 3, 4, FUR)      // tail mid
+        img.px(c+16, b-26, FUR)              // tail tip
+    }
+
+    private fun drawWolfWalk(img: BufferedImage, ox: Int, phase: Int) {
+        val c = ox + 20; val b = 55
+        val s = if (phase == 0) 3 else -3
+
+        // Legs with stride
+        img.rect(c-10-s, b-12, 5, 10, FUR_D)
+        img.rect(c-12-s, b-3, 7, 3, FUR_D)
+        img.rect(c+5+s, b-12, 5, 10, FUR_D)
+        img.rect(c+5+s, b-3, 7, 3, FUR_D)
+
+        // Body — same barrel shape
+        img.rect(c-10, b-16, 20, 4, FUR)
+        img.rect(c-12, b-24, 24, 8, FUR)
+        img.rect(c-14, b-32, 28, 8, FUR)
+        img.rect(c-12, b-36, 24, 4, FUR)
+        img.rect(c-6, b-26, 12, 8, FUR_L)
+        img.rect(c-14, b-38, 6, 4, FUR_L)
+        img.rect(c+8, b-38, 6, 4, FUR_L)
+
+        // Arms countersweep
+        img.rect(c-18+s, b-30, 4, 16, FUR)
+        img.rect(c-19+s, b-16, 5, 4, CLAW)
+        img.rect(c+14-s, b-34, 4, 16, FUR)
+        img.rect(c+14-s, b-20, 5, 4, CLAW)
+
+        // Head
+        img.rect(c-8, b-46, 16, 4, FUR)
+        img.rect(c-9, b-42, 18, 6, FUR)
+        img.rect(c-7, b-36, 14, 2, FUR)
+        img.rect(c-3, b-42, 10, 4, FUR_D)
+        img.rect(c+5, b-40, 4, 2, FUR_D)
+        img.rect(c-6, b-45, 3, 2, WEYE)
+        img.rect(c+3, b-45, 3, 2, WEYE)
+        img.rect(c-8, b-50, 3, 4, FUR)
+        img.px(c-7, b-51, FUR)
+        img.rect(c+5, b-50, 3, 4, FUR)
+        img.px(c+6, b-51, FUR)
+        img.rect(c, b-38, 2, 3, FANG)
+        img.rect(c+4, b-38, 2, 3, FANG)
+        img.rect(c+12, b-20, 3, 6, FUR_D)
+        img.rect(c+14, b-24, 3, 4, FUR)
     }
 
     @Test
@@ -190,12 +270,12 @@ class SpriteGenerator {
         println("Generated player_human.png")
 
         val wolf = BufferedImage(240, 56, BufferedImage.TYPE_INT_ARGB)
-        drawWolfIdle(wolf, 0)
-        drawWolfIdle(wolf, 40)
-        drawWolfIdle(wolf, 80)
-        drawWolfIdle(wolf, 120)
-        drawWolfIdle(wolf, 160)
-        drawWolfIdle(wolf, 200)
+        drawWolfIdle(wolf, 0)          // idle_se
+        drawWolfIdle(wolf, 40)         // idle_sw
+        drawWolfWalk(wolf, 80, 0)      // walk_se_0
+        drawWolfWalk(wolf, 120, 1)     // walk_se_1
+        drawWolfWalk(wolf, 160, 0)     // walk_sw_0
+        drawWolfWalk(wolf, 200, 1)     // walk_sw_1
         ImageIO.write(wolf, "png", File(outDir, "player_wolf.png"))
         println("Generated player_wolf.png")
     }

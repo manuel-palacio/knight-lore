@@ -156,15 +156,16 @@ class DefaultActorArtCatalog : ActorArtCatalog {
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // WEREWOLF — hunched beast, visible head/ears/legs/claws
+    // WEREWOLF — upright muscular humanoid wolf (like the GBC reference)
+    // Same height as human, wider, BIG head with ears and fangs
     // ═══════════════════════════════════════════════════════════════════════
 
-    private val WFUR       = 0xFF_5A4A38.toInt()  // brown fur body
-    private val WFUR_DARK  = 0xFF_2A2018.toInt()  // dark underbelly
-    private val WFUR_LIGHT = 0xFF_7A6850.toInt()  // highlight
-    private val WCLAW      = 0xFF_C8B898.toInt()  // bone claws
-    private val WEYE       = 0xFF_FF6600.toInt()  // amber eyes
-    private val WFANG      = 0xFF_E0D8C0.toInt()  // ivory fangs
+    private val WFUR       = 0xFF_6A5A48.toInt()  // grey-brown fur
+    private val WFUR_DARK  = 0xFF_3A2E24.toInt()
+    private val WFUR_LIGHT = 0xFF_8A7860.toInt()
+    private val WCLAW      = 0xFF_C8B898.toInt()
+    private val WEYE       = 0xFF_FF4400.toInt()  // red-orange eyes
+    private val WFANG      = 0xFF_E0D8C0.toInt()
 
     private fun wolfIdle(facing: Direction8): AuthoredSprite {
         val m = when (facing) {
@@ -172,54 +173,54 @@ class DefaultActorArtCatalog : ActorArtCatalog {
             else -> 1f
         }
         return AuthoredSprite("wolf_idle", listOf(
-            // Shadow
-            SpriteLayer(listOf(Vec2f(-14f, -1f), Vec2f(14f, -1f), Vec2f(12f, 3f), Vec2f(-12f, 3f)), SHADOW),
-            // Hind legs — visible below body
-            SpriteLayer(listOf(Vec2f(-10f, -16f), Vec2f(-5f, -16f), Vec2f(-4f, 0f), Vec2f(-11f, 0f)), WFUR_DARK),
-            SpriteLayer(listOf(Vec2f(5f, -16f), Vec2f(10f, -16f), Vec2f(11f, 0f), Vec2f(4f, 0f)), WFUR_DARK),
-            // Hind paws
-            SpriteLayer(listOf(Vec2f(-12f, -2f), Vec2f(-3f, -2f), Vec2f(-3f, 1f), Vec2f(-12f, 1f)), WFUR_DARK),
-            SpriteLayer(listOf(Vec2f(3f, -2f), Vec2f(12f, -2f), Vec2f(12f, 1f), Vec2f(3f, 1f)), WFUR_DARK),
-            // Body — hunched, wide shoulders narrowing to haunches
+            SpriteLayer(listOf(Vec2f(-14f, 0f), Vec2f(14f, 0f), Vec2f(12f, 3f), Vec2f(-12f, 3f)), SHADOW),
+            // Legs — thick, upright
+            SpriteLayer(listOf(Vec2f(-10f, -16f), Vec2f(-3f, -16f), Vec2f(-2f, 0f), Vec2f(-11f, 0f)), WFUR_DARK),
+            SpriteLayer(listOf(Vec2f(3f, -16f), Vec2f(10f, -16f), Vec2f(11f, 0f), Vec2f(2f, 0f)), WFUR_DARK),
+            // Big paws with claws
+            SpriteLayer(listOf(Vec2f(-13f, -3f), Vec2f(-1f, -3f), Vec2f(-1f, 1f), Vec2f(-13f, 1f)), WFUR_DARK),
+            SpriteLayer(listOf(Vec2f(1f, -3f), Vec2f(13f, -3f), Vec2f(13f, 1f), Vec2f(1f, 1f)), WFUR_DARK),
+            // Body — muscular, upright, wider than human
             SpriteLayer(listOf(
-                Vec2f(-12f, -16f), Vec2f(12f, -16f),  // haunches
-                Vec2f(15f, -42f), Vec2f(-8f, -42f),   // shoulders (asymmetric)
+                Vec2f(-14f, -16f), Vec2f(14f, -16f),
+                Vec2f(16f, -28f), Vec2f(12f, -42f),
+                Vec2f(-12f, -42f), Vec2f(-16f, -28f),
             ), WFUR),
-            // Shoulder hump — highest point
+            // Chest highlight
+            SpriteLayer(listOf(Vec2f(-8f, -36f), Vec2f(8f, -36f), Vec2f(6f, -20f), Vec2f(-6f, -20f)), WFUR_LIGHT),
+            // Arms — thick, muscular, hanging
+            SpriteLayer(listOf(Vec2f(-20f, -40f), Vec2f(-14f, -40f), Vec2f(-16f, -18f), Vec2f(-22f, -18f)), WFUR),
+            SpriteLayer(listOf(Vec2f(14f, -40f), Vec2f(20f, -40f), Vec2f(22f, -18f), Vec2f(16f, -18f)), WFUR),
+            // Claws at arm ends
+            SpriteLayer(listOf(Vec2f(-23f, -20f), Vec2f(-15f, -20f), Vec2f(-15f, -16f), Vec2f(-23f, -16f)), WCLAW),
+            SpriteLayer(listOf(Vec2f(15f, -20f), Vec2f(23f, -20f), Vec2f(23f, -16f), Vec2f(15f, -16f)), WCLAW),
+            // BIG HEAD — rounded, same approach as human (8-point)
             SpriteLayer(listOf(
-                Vec2f(-4f, -48f), Vec2f(10f, -48f),
-                Vec2f(14f, -42f), Vec2f(-6f, -42f),
-            ), WFUR_LIGHT),
-            // Belly — lighter
-            SpriteLayer(listOf(Vec2f(-8f, -22f), Vec2f(8f, -22f), Vec2f(6f, -16f), Vec2f(-6f, -16f)), WFUR_LIGHT),
-            // Front legs — longer, reaching forward
-            SpriteLayer(listOf(Vec2f(-14f, -38f), Vec2f(-10f, -38f), Vec2f(-12f, -18f), Vec2f(-16f, -18f)), WFUR),
-            SpriteLayer(listOf(Vec2f(12f, -38f), Vec2f(16f, -38f), Vec2f(18f, -18f), Vec2f(14f, -18f)), WFUR),
-            // Front claws
-            SpriteLayer(listOf(Vec2f(-17f, -20f), Vec2f(-11f, -20f), Vec2f(-11f, -18f), Vec2f(-17f, -18f)), WCLAW),
-            SpriteLayer(listOf(Vec2f(13f, -20f), Vec2f(19f, -20f), Vec2f(19f, -18f), Vec2f(13f, -18f)), WCLAW),
-            // Head — low, forward, wedge-shaped
-            SpriteLayer(listOf(
-                Vec2f(-6f + 3f * m, -52f), Vec2f(8f + 3f * m, -52f),
-                Vec2f(10f + 3f * m, -42f), Vec2f(-4f + 3f * m, -42f),
+                Vec2f(-6f, -68f), Vec2f(6f, -68f),
+                Vec2f(12f, -62f), Vec2f(13f, -52f),
+                Vec2f(10f, -42f), Vec2f(-10f, -42f),
+                Vec2f(-13f, -52f), Vec2f(-12f, -62f),
             ), WFUR),
-            // Snout — protruding forward
+            // Snout — forward protruding
             SpriteLayer(listOf(
-                Vec2f(2f + 5f * m, -50f), Vec2f(10f + 5f * m, -50f),
-                Vec2f(12f + 5f * m, -46f), Vec2f(2f + 5f * m, -46f),
+                Vec2f(-4f + 4f * m, -58f), Vec2f(6f + 4f * m, -58f),
+                Vec2f(8f + 4f * m, -52f), Vec2f(-2f + 4f * m, -52f),
             ), WFUR_DARK),
-            // Eyes — bright amber
-            SpriteLayer(listOf(Vec2f(-2f + 3f * m, -51f), Vec2f(1f + 3f * m, -51f), Vec2f(1f + 3f * m, -49f), Vec2f(-2f + 3f * m, -49f)), WEYE),
-            SpriteLayer(listOf(Vec2f(3f + 3f * m, -51f), Vec2f(6f + 3f * m, -51f), Vec2f(6f + 3f * m, -49f), Vec2f(3f + 3f * m, -49f)), WEYE),
-            // Ears — pointed triangles
-            SpriteLayer(listOf(Vec2f(-5f + 3f * m, -52f), Vec2f(-1f + 3f * m, -52f), Vec2f(-3f + 3f * m, -58f)), WFUR),
-            SpriteLayer(listOf(Vec2f(5f + 3f * m, -52f), Vec2f(9f + 3f * m, -52f), Vec2f(7f + 3f * m, -58f)), WFUR),
-            // Fangs
-            SpriteLayer(listOf(Vec2f(4f + 5f * m, -47f), Vec2f(6f + 5f * m, -47f), Vec2f(5f + 5f * m, -44f)), WFANG),
-            SpriteLayer(listOf(Vec2f(8f + 5f * m, -47f), Vec2f(10f + 5f * m, -47f), Vec2f(9f + 5f * m, -44f)), WFANG),
-            // Tail — curved behind
-            SpriteLayer(listOf(Vec2f(10f, -22f), Vec2f(13f, -22f), Vec2f(20f, -34f), Vec2f(17f, -34f)), WFUR_DARK),
-            SpriteLayer(listOf(Vec2f(18f, -34f), Vec2f(21f, -34f), Vec2f(22f, -40f), Vec2f(19f, -40f)), WFUR),
+            // Teeth/fangs — visible below snout
+            SpriteLayer(listOf(Vec2f(0f + 4f * m, -53f), Vec2f(3f + 4f * m, -53f), Vec2f(2f + 4f * m, -50f)), WFANG),
+            SpriteLayer(listOf(Vec2f(4f + 4f * m, -53f), Vec2f(7f + 4f * m, -53f), Vec2f(6f + 4f * m, -50f)), WFANG),
+            // Eyes — bright, fierce
+            SpriteLayer(listOf(Vec2f(-6f, -63f), Vec2f(-2f, -63f), Vec2f(-2f, -60f), Vec2f(-6f, -60f)), WEYE),
+            SpriteLayer(listOf(Vec2f(2f, -63f), Vec2f(6f, -63f), Vec2f(6f, -60f), Vec2f(2f, -60f)), WEYE),
+            // Ears — BIG pointed, sticking up high
+            SpriteLayer(listOf(Vec2f(-10f, -68f), Vec2f(-5f, -68f), Vec2f(-8f, -78f)), WFUR),
+            SpriteLayer(listOf(Vec2f(5f, -68f), Vec2f(10f, -68f), Vec2f(8f, -78f)), WFUR),
+            // Inner ears
+            SpriteLayer(listOf(Vec2f(-9f, -68f), Vec2f(-6f, -68f), Vec2f(-8f, -74f)), WFUR_DARK),
+            SpriteLayer(listOf(Vec2f(6f, -68f), Vec2f(9f, -68f), Vec2f(8f, -74f)), WFUR_DARK),
+            // Tail
+            SpriteLayer(listOf(Vec2f(12f, -20f), Vec2f(15f, -20f), Vec2f(22f, -30f), Vec2f(19f, -30f)), WFUR_DARK),
+            SpriteLayer(listOf(Vec2f(20f, -30f), Vec2f(23f, -30f), Vec2f(24f, -36f), Vec2f(21f, -36f)), WFUR),
         ))
     }
 
@@ -228,45 +229,43 @@ class DefaultActorArtCatalog : ActorArtCatalog {
             Direction8.WEST, Direction8.NORTHWEST, Direction8.SOUTHWEST -> -1f
             else -> 1f
         }
-        val ls = if (framePhase % 2 == 0) 5f else -5f
-
+        val ls = if (framePhase % 2 == 0) 6f else -6f
         return AuthoredSprite("wolf_walk_$framePhase", listOf(
-            // Shadow
-            SpriteLayer(listOf(Vec2f(-14f, -1f), Vec2f(14f, -1f), Vec2f(12f, 3f), Vec2f(-12f, 3f)), SHADOW),
-            // Hind legs with swing
-            SpriteLayer(listOf(Vec2f(-10f, -16f), Vec2f(-5f, -16f), Vec2f(-4f - ls, 0f), Vec2f(-11f - ls, 0f)), WFUR_DARK),
-            SpriteLayer(listOf(Vec2f(5f, -16f), Vec2f(10f, -16f), Vec2f(11f + ls, 0f), Vec2f(4f + ls, 0f)), WFUR_DARK),
-            // Hind paws
-            SpriteLayer(listOf(Vec2f(-12f - ls, -2f), Vec2f(-3f - ls, -2f), Vec2f(-3f - ls, 1f), Vec2f(-12f - ls, 1f)), WFUR_DARK),
-            SpriteLayer(listOf(Vec2f(3f + ls, -2f), Vec2f(12f + ls, -2f), Vec2f(12f + ls, 1f), Vec2f(3f + ls, 1f)), WFUR_DARK),
+            SpriteLayer(listOf(Vec2f(-14f, 0f), Vec2f(14f, 0f), Vec2f(12f, 3f), Vec2f(-12f, 3f)), SHADOW),
+            // Legs with swing
+            SpriteLayer(listOf(Vec2f(-10f, -16f), Vec2f(-3f, -16f), Vec2f(-2f - ls, 0f), Vec2f(-11f - ls, 0f)), WFUR_DARK),
+            SpriteLayer(listOf(Vec2f(3f, -16f), Vec2f(10f, -16f), Vec2f(11f + ls, 0f), Vec2f(2f + ls, 0f)), WFUR_DARK),
+            // Paws
+            SpriteLayer(listOf(Vec2f(-13f - ls, -3f), Vec2f(-1f - ls, -3f), Vec2f(-1f - ls, 1f), Vec2f(-13f - ls, 1f)), WFUR_DARK),
+            SpriteLayer(listOf(Vec2f(1f + ls, -3f), Vec2f(13f + ls, -3f), Vec2f(13f + ls, 1f), Vec2f(1f + ls, 1f)), WFUR_DARK),
             // Body
-            SpriteLayer(listOf(Vec2f(-12f, -16f), Vec2f(12f, -16f), Vec2f(15f, -42f), Vec2f(-8f, -42f)), WFUR),
-            // Hump
-            SpriteLayer(listOf(Vec2f(-4f, -48f), Vec2f(10f, -48f), Vec2f(14f, -42f), Vec2f(-6f, -42f)), WFUR_LIGHT),
-            // Belly
-            SpriteLayer(listOf(Vec2f(-8f, -22f), Vec2f(8f, -22f), Vec2f(6f, -16f), Vec2f(-6f, -16f)), WFUR_LIGHT),
-            // Front legs with countersweep
-            SpriteLayer(listOf(Vec2f(-14f, -38f), Vec2f(-10f, -38f), Vec2f(-12f + ls * 0.3f, -18f), Vec2f(-16f + ls * 0.3f, -18f)), WFUR),
-            SpriteLayer(listOf(Vec2f(12f, -38f), Vec2f(16f, -38f), Vec2f(18f - ls * 0.3f, -18f), Vec2f(14f - ls * 0.3f, -18f)), WFUR),
-            // Front claws
-            SpriteLayer(listOf(Vec2f(-17f + ls * 0.3f, -20f), Vec2f(-11f + ls * 0.3f, -20f), Vec2f(-11f + ls * 0.3f, -18f), Vec2f(-17f + ls * 0.3f, -18f)), WCLAW),
-            SpriteLayer(listOf(Vec2f(13f - ls * 0.3f, -20f), Vec2f(19f - ls * 0.3f, -20f), Vec2f(19f - ls * 0.3f, -18f), Vec2f(13f - ls * 0.3f, -18f)), WCLAW),
-            // Head
-            SpriteLayer(listOf(Vec2f(-6f + 3f * m, -52f), Vec2f(8f + 3f * m, -52f), Vec2f(10f + 3f * m, -42f), Vec2f(-4f + 3f * m, -42f)), WFUR),
+            SpriteLayer(listOf(Vec2f(-14f, -16f), Vec2f(14f, -16f), Vec2f(16f, -28f), Vec2f(12f, -42f), Vec2f(-12f, -42f), Vec2f(-16f, -28f)), WFUR),
+            // Chest
+            SpriteLayer(listOf(Vec2f(-8f, -36f), Vec2f(8f, -36f), Vec2f(6f, -20f), Vec2f(-6f, -20f)), WFUR_LIGHT),
+            // Arms with countersweep
+            SpriteLayer(listOf(Vec2f(-20f, -40f), Vec2f(-14f, -40f), Vec2f(-16f + ls * 0.3f, -18f), Vec2f(-22f + ls * 0.3f, -18f)), WFUR),
+            SpriteLayer(listOf(Vec2f(14f, -40f), Vec2f(20f, -40f), Vec2f(22f - ls * 0.3f, -18f), Vec2f(16f - ls * 0.3f, -18f)), WFUR),
+            // Claws
+            SpriteLayer(listOf(Vec2f(-23f + ls * 0.3f, -20f), Vec2f(-15f + ls * 0.3f, -20f), Vec2f(-15f + ls * 0.3f, -16f), Vec2f(-23f + ls * 0.3f, -16f)), WCLAW),
+            SpriteLayer(listOf(Vec2f(15f - ls * 0.3f, -20f), Vec2f(23f - ls * 0.3f, -20f), Vec2f(23f - ls * 0.3f, -16f), Vec2f(15f - ls * 0.3f, -16f)), WCLAW),
+            // Big head
+            SpriteLayer(listOf(Vec2f(-6f, -68f), Vec2f(6f, -68f), Vec2f(12f, -62f), Vec2f(13f, -52f), Vec2f(10f, -42f), Vec2f(-10f, -42f), Vec2f(-13f, -52f), Vec2f(-12f, -62f)), WFUR),
             // Snout
-            SpriteLayer(listOf(Vec2f(2f + 5f * m, -50f), Vec2f(10f + 5f * m, -50f), Vec2f(12f + 5f * m, -46f), Vec2f(2f + 5f * m, -46f)), WFUR_DARK),
-            // Eyes
-            SpriteLayer(listOf(Vec2f(-2f + 3f * m, -51f), Vec2f(1f + 3f * m, -51f), Vec2f(1f + 3f * m, -49f), Vec2f(-2f + 3f * m, -49f)), WEYE),
-            SpriteLayer(listOf(Vec2f(3f + 3f * m, -51f), Vec2f(6f + 3f * m, -51f), Vec2f(6f + 3f * m, -49f), Vec2f(3f + 3f * m, -49f)), WEYE),
-            // Ears
-            SpriteLayer(listOf(Vec2f(-5f + 3f * m, -52f), Vec2f(-1f + 3f * m, -52f), Vec2f(-3f + 3f * m, -58f)), WFUR),
-            SpriteLayer(listOf(Vec2f(5f + 3f * m, -52f), Vec2f(9f + 3f * m, -52f), Vec2f(7f + 3f * m, -58f)), WFUR),
+            SpriteLayer(listOf(Vec2f(-4f + 4f * m, -58f), Vec2f(6f + 4f * m, -58f), Vec2f(8f + 4f * m, -52f), Vec2f(-2f + 4f * m, -52f)), WFUR_DARK),
             // Fangs
-            SpriteLayer(listOf(Vec2f(4f + 5f * m, -47f), Vec2f(6f + 5f * m, -47f), Vec2f(5f + 5f * m, -44f)), WFANG),
-            SpriteLayer(listOf(Vec2f(8f + 5f * m, -47f), Vec2f(10f + 5f * m, -47f), Vec2f(9f + 5f * m, -44f)), WFANG),
+            SpriteLayer(listOf(Vec2f(0f + 4f * m, -53f), Vec2f(3f + 4f * m, -53f), Vec2f(2f + 4f * m, -50f)), WFANG),
+            SpriteLayer(listOf(Vec2f(4f + 4f * m, -53f), Vec2f(7f + 4f * m, -53f), Vec2f(6f + 4f * m, -50f)), WFANG),
+            // Eyes
+            SpriteLayer(listOf(Vec2f(-6f, -63f), Vec2f(-2f, -63f), Vec2f(-2f, -60f), Vec2f(-6f, -60f)), WEYE),
+            SpriteLayer(listOf(Vec2f(2f, -63f), Vec2f(6f, -63f), Vec2f(6f, -60f), Vec2f(2f, -60f)), WEYE),
+            // Ears
+            SpriteLayer(listOf(Vec2f(-10f, -68f), Vec2f(-5f, -68f), Vec2f(-8f, -78f)), WFUR),
+            SpriteLayer(listOf(Vec2f(5f, -68f), Vec2f(10f, -68f), Vec2f(8f, -78f)), WFUR),
+            SpriteLayer(listOf(Vec2f(-9f, -68f), Vec2f(-6f, -68f), Vec2f(-8f, -74f)), WFUR_DARK),
+            SpriteLayer(listOf(Vec2f(6f, -68f), Vec2f(9f, -68f), Vec2f(8f, -74f)), WFUR_DARK),
             // Tail
-            SpriteLayer(listOf(Vec2f(10f, -22f), Vec2f(13f, -22f), Vec2f(20f, -34f), Vec2f(17f, -34f)), WFUR_DARK),
-            SpriteLayer(listOf(Vec2f(18f, -34f), Vec2f(21f, -34f), Vec2f(22f, -40f), Vec2f(19f, -40f)), WFUR),
+            SpriteLayer(listOf(Vec2f(12f, -20f), Vec2f(15f, -20f), Vec2f(22f, -30f), Vec2f(19f, -30f)), WFUR_DARK),
+            SpriteLayer(listOf(Vec2f(20f, -30f), Vec2f(23f, -30f), Vec2f(24f, -36f), Vec2f(21f, -36f)), WFUR),
         ))
     }
 }

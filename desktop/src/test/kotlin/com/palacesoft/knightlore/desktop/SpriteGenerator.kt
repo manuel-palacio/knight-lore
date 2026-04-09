@@ -37,54 +37,116 @@ class SpriteGenerator {
     }
 
     private fun drawHumanIdle(img: BufferedImage, ox: Int) {
-        val cx = ox + 16; val by = 47
-        img.rect(cx - 11, by - 9, 8, 9, BOOTS)
-        img.rect(cx + 3, by - 9, 8, 9, BOOTS)
-        img.rect(cx - 12, by - 2, 10, 2, BOOTS_D)
-        img.rect(cx + 2, by - 2, 10, 2, BOOTS_D)
-        img.rect(cx - 10, by - 30, 20, 20, TUNIC)
-        img.rect(cx - 8, by - 34, 16, 4, TUNIC)
-        img.rect(cx + 4, by - 30, 6, 18, TUNIC_D)
-        img.rect(cx - 15, by - 30, 4, 14, TUNIC_D)
-        img.rect(cx + 11, by - 30, 4, 14, TUNIC_D)
-        img.rect(cx - 16, by - 18, 5, 4, SKIN)
-        img.rect(cx + 11, by - 18, 5, 4, SKIN)
-        img.rect(cx - 7, by - 42, 14, 8, FACE_SHADOW)
-        img.rect(cx - 5, by - 40, 3, 3, EYE_W)
-        img.rect(cx + 2, by - 40, 3, 3, EYE_W)
-        img.px(cx - 4, by - 39, EYE_P)
-        img.px(cx + 3, by - 39, EYE_P)
-        img.rect(cx - 1, by - 37, 2, 2, SKIN)
-        img.rect(cx - 8, by - 50, 16, 8, HAT)
-        img.rect(cx - 12, by - 43, 24, 3, HAT)
-        img.rect(cx - 8, by - 44, 16, 2, HAT_BAND)
-        img.rect(cx - 5, by - 49, 10, 1, HAT_BAND)
+        val c = ox + 16; val b = 47  // center X, bottom Y
+
+        // ── BOOTS — rounded, separated ──
+        // Left boot (rounded shape)
+        img.rect(c-10, b-7, 6, 5, BOOTS)    // boot body
+        img.rect(c-11, b-4, 8, 2, BOOTS)    // boot wider part
+        img.rect(c-12, b-2, 9, 2, BOOTS_D)  // sole
+        img.px(c-10, b-8, BOOTS)             // rounded top
+        img.px(c-5, b-8, BOOTS)
+        // Right boot
+        img.rect(c+4, b-7, 6, 5, BOOTS)
+        img.rect(c+3, b-4, 8, 2, BOOTS)
+        img.rect(c+3, b-2, 9, 2, BOOTS_D)
+        img.px(c+4, b-8, BOOTS)
+        img.px(c+9, b-8, BOOTS)
+
+        // ── BODY — organic tunic, widest at belly, narrower at shoulders ──
+        img.rect(c-8, b-10, 16, 2, TUNIC)     // hip
+        img.rect(c-9, b-14, 18, 4, TUNIC)     // lower belly
+        img.rect(c-10, b-20, 20, 6, TUNIC)    // belly (widest)
+        img.rect(c-9, b-26, 18, 6, TUNIC)     // chest
+        img.rect(c-7, b-30, 14, 4, TUNIC)     // shoulders
+        // Shadow side
+        img.rect(c+4, b-26, 5, 16, TUNIC_D)
+
+        // ── ARMS — clearly separated, hanging ──
+        img.rect(c-14, b-28, 3, 12, TUNIC_D)  // left arm
+        img.rect(c-15, b-18, 4, 4, SKIN)      // left hand
+        img.rect(c+11, b-28, 3, 12, TUNIC_D)  // right arm
+        img.rect(c+11, b-18, 4, 4, SKIN)      // right hand
+
+        // ── FACE — rounded, with visible features under hat shadow ──
+        // Face shape: wider in middle (rounded)
+        img.rect(c-5, b-38, 10, 2, FACE_SHADOW)   // forehead
+        img.rect(c-6, b-36, 12, 4, FACE_SHADOW)   // mid face (wider)
+        img.rect(c-5, b-32, 10, 2, FACE_SHADOW)   // chin
+        // Eyes — big, expressive, white with black pupil
+        img.rect(c-5, b-37, 3, 3, EYE_W)    // left eye
+        img.rect(c+2, b-37, 3, 3, EYE_W)    // right eye
+        img.px(c-4, b-36, EYE_P)             // left pupil
+        img.px(c+3, b-36, EYE_P)             // right pupil
+        // Nose — small skin dot
+        img.px(c-1, b-34, SKIN)
+        img.px(c, b-34, SKIN)
+        // Mouth
+        img.rect(c-2, b-33, 4, 1, Color(0x30, 0x20, 0x18))
+
+        // ── HAT — rounded dome shape ──
+        // Brim — wide
+        img.rect(c-12, b-40, 24, 2, HAT)
+        // Crown — dome shape (wider in middle)
+        img.rect(c-7, b-46, 14, 2, HAT)     // top (narrower)
+        img.rect(c-8, b-44, 16, 2, HAT)     // upper
+        img.rect(c-8, b-42, 16, 2, HAT)     // lower crown
+        // Rounded top pixels
+        img.px(c-6, b-47, HAT)
+        img.px(c+5, b-47, HAT)
+        // Hat band
+        img.rect(c-8, b-41, 16, 1, HAT_BAND)
+        // Highlight
+        img.rect(c-4, b-45, 8, 1, HAT_BAND)
     }
 
     private fun drawHumanWalk(img: BufferedImage, ox: Int, phase: Int) {
-        val cx = ox + 16; val by = 47
-        val shift = if (phase == 0) 2 else -2
-        img.rect(cx - 11 - shift, by - 9, 8, 9, BOOTS)
-        img.rect(cx + 3 + shift, by - 9, 8, 9, BOOTS)
-        img.rect(cx - 12 - shift, by - 2, 10, 2, BOOTS_D)
-        img.rect(cx + 2 + shift, by - 2, 10, 2, BOOTS_D)
-        img.rect(cx - 10, by - 30, 20, 20, TUNIC)
-        img.rect(cx - 8, by - 34, 16, 4, TUNIC)
-        img.rect(cx + 4, by - 30, 6, 18, TUNIC_D)
+        val c = ox + 16; val b = 47
+        val s = if (phase == 0) 3 else -3  // boot swing
+
+        // Boots — swing apart when walking
+        img.rect(c-10-s, b-7, 6, 5, BOOTS)
+        img.rect(c-11-s, b-4, 8, 2, BOOTS)
+        img.rect(c-12-s, b-2, 9, 2, BOOTS_D)
+        img.rect(c+4+s, b-7, 6, 5, BOOTS)
+        img.rect(c+3+s, b-4, 8, 2, BOOTS)
+        img.rect(c+3+s, b-2, 9, 2, BOOTS_D)
+
+        // Body — same organic shape
+        img.rect(c-8, b-10, 16, 2, TUNIC)
+        img.rect(c-9, b-14, 18, 4, TUNIC)
+        img.rect(c-10, b-20, 20, 6, TUNIC)
+        img.rect(c-9, b-26, 18, 6, TUNIC)
+        img.rect(c-7, b-30, 14, 4, TUNIC)
+        img.rect(c+4, b-26, 5, 16, TUNIC_D)
+
         // Arms countersweep
-        img.rect(cx - 16 + shift, by - 28, 4, 14, TUNIC_D)
-        img.rect(cx + 12 - shift, by - 32, 4, 14, TUNIC_D)
-        img.rect(cx - 17 + shift, by - 16, 5, 4, SKIN)
-        img.rect(cx + 12 - shift, by - 20, 5, 4, SKIN)
-        img.rect(cx - 7, by - 42, 14, 8, FACE_SHADOW)
-        img.rect(cx - 5, by - 40, 3, 3, EYE_W)
-        img.rect(cx + 2, by - 40, 3, 3, EYE_W)
-        img.px(cx - 4, by - 39, EYE_P)
-        img.px(cx + 3, by - 39, EYE_P)
-        img.rect(cx - 1, by - 37, 2, 2, SKIN)
-        img.rect(cx - 8, by - 50, 16, 8, HAT)
-        img.rect(cx - 12, by - 43, 24, 3, HAT)
-        img.rect(cx - 8, by - 44, 16, 2, HAT_BAND)
+        img.rect(c-14+s, b-26, 3, 12, TUNIC_D)
+        img.rect(c-15+s, b-16, 4, 4, SKIN)
+        img.rect(c+11-s, b-30, 3, 12, TUNIC_D)
+        img.rect(c+11-s, b-20, 4, 4, SKIN)
+
+        // Face
+        img.rect(c-5, b-38, 10, 2, FACE_SHADOW)
+        img.rect(c-6, b-36, 12, 4, FACE_SHADOW)
+        img.rect(c-5, b-32, 10, 2, FACE_SHADOW)
+        img.rect(c-5, b-37, 3, 3, EYE_W)
+        img.rect(c+2, b-37, 3, 3, EYE_W)
+        img.px(c-4, b-36, EYE_P)
+        img.px(c+3, b-36, EYE_P)
+        img.px(c-1, b-34, SKIN)
+        img.px(c, b-34, SKIN)
+        img.rect(c-2, b-33, 4, 1, Color(0x30, 0x20, 0x18))
+
+        // Hat
+        img.rect(c-12, b-40, 24, 2, HAT)
+        img.rect(c-7, b-46, 14, 2, HAT)
+        img.rect(c-8, b-44, 16, 2, HAT)
+        img.rect(c-8, b-42, 16, 2, HAT)
+        img.px(c-6, b-47, HAT)
+        img.px(c+5, b-47, HAT)
+        img.rect(c-8, b-41, 16, 1, HAT_BAND)
+        img.rect(c-4, b-45, 8, 1, HAT_BAND)
     }
 
     private fun drawWolfIdle(img: BufferedImage, ox: Int) {

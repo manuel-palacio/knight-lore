@@ -39,11 +39,13 @@ class DefaultActorArtCatalog : ActorArtCatalog {
             Form.HUMAN -> when (motion) {
                 MovementState.IDLE -> humanIdle(facing, tick)
                 MovementState.WALKING -> humanWalk(facing, framePhase)
+                MovementState.TRANSFORMING -> transformPhase(tick, toWolf = true)
                 else -> null
             }
             Form.WEREWULF -> when (motion) {
                 MovementState.IDLE -> wolfIdle(facing, tick)
                 MovementState.WALKING -> wolfWalk(facing, framePhase)
+                MovementState.TRANSFORMING -> transformPhase(tick, toWolf = false)
                 else -> null
             }
         }
@@ -162,6 +164,90 @@ class DefaultActorArtCatalog : ActorArtCatalog {
     }
 
     // ═══════════════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════════
+    // TRANSFORMATION — 3 phases morphing between human and wolf
+    // ═══════════════════════════════════════════════════════════════════════
+
+    private fun transformPhase(tick: Long, toWolf: Boolean): AuthoredSprite {
+        // Transformation lasts 60 ticks. Use tick % 60 to cycle through phases.
+        val progress = (tick % 60).toInt()
+        val phase = when {
+            progress < 20 -> 0  // early: body starts bulging
+            progress < 40 -> 1  // mid: hybrid, ears emerging, arms lengthening
+            else -> 2           // late: nearly complete
+        }
+        // If transforming TO wolf: phases go 0→1→2
+        // If transforming FROM wolf: phases go 2→1→0
+        val p = if (toWolf) phase else 2 - phase
+
+        // Interpolation factors
+        val bodyW = 12f + p * 3f     // body widens: 12 → 15 → 18
+        val headH = 12f + p * 3f     // head grows: 12 → 15 → 18
+        val earH = p * 5f            // ears emerge: 0 → 5 → 10
+        val armLen = 20f + p * 4f    // arms lengthen: 20 → 24 → 28
+        val clawSize = p * 3f        // claws appear: 0 → 3 → 6
+
+        // Blend colors
+        val bodyColor = when (p) {
+            0 -> CLOAK           // still mostly human
+            1 -> 0xFF_4A4838.toInt()  // mid grey-brown blend
+            else -> WFUR         // nearly wolf
+        }
+        val faceColor = when (p) {
+            0 -> EDGE            // dark face (human)
+            1 -> 0xFF_3A3028.toInt()  // darkening fur
+            else -> WFUR         // wolf face
+        }
+        val eyeColor = when (p) {
+            0 -> 0xFF_FFFFFF.toInt()  // human white eyes
+            1 -> 0xFF_FF8800.toInt()  // transitioning to amber
+            else -> WEYE         // wolf amber
+        }
+
+        return AuthoredSprite("transform_$p", listOf(
+            // Shadow — grows wider
+            SpriteLayer(listOf(Vec2f(-bodyW, 0f), Vec2f(bodyW, 0f), Vec2f(bodyW - 2f, 3f), Vec2f(-bodyW + 2f, 3f)), SHADOW),
+            // Legs — getting thicker
+            SpriteLayer(listOf(Vec2f(-10f - p, -16f), Vec2f(-3f, -16f), Vec2f(-2f, 0f), Vec2f(-11f - p, 0f)), WFUR_DARK),
+            SpriteLayer(listOf(Vec2f(3f, -16f), Vec2f(10f + p, -16f), Vec2f(11f + p, 0f), Vec2f(2f, 0f)), WFUR_DARK),
+            // Body — bulging wider
+            SpriteLayer(listOf(
+                Vec2f(-bodyW, -16f), Vec2f(bodyW, -16f),
+                Vec2f(bodyW + 2f, -28f), Vec2f(bodyW - 2f, -44f),
+                Vec2f(-bodyW + 2f, -44f), Vec2f(-bodyW - 2f, -28f),
+            ), bodyColor),
+            // Arms — stretching longer
+            SpriteLayer(listOf(
+                Vec2f(-bodyW - 6f, -40f), Vec2f(-bodyW - 2f, -40f),
+                Vec2f(-bodyW - 3f, -40f + armLen), Vec2f(-bodyW - 7f, -40f + armLen),
+            ), bodyColor),
+            SpriteLayer(listOf(
+                Vec2f(bodyW + 2f, -40f), Vec2f(bodyW + 6f, -40f),
+                Vec2f(bodyW + 7f, -40f + armLen), Vec2f(bodyW + 3f, -40f + armLen),
+            ), bodyColor),
+            // Claws emerging
+            SpriteLayer(listOf(
+                Vec2f(-bodyW - 8f, -40f + armLen), Vec2f(-bodyW - 2f, -40f + armLen),
+                Vec2f(-bodyW - 2f, -40f + armLen + clawSize), Vec2f(-bodyW - 8f, -40f + armLen + clawSize),
+            ), WCLAW),
+            SpriteLayer(listOf(
+                Vec2f(bodyW + 2f, -40f + armLen), Vec2f(bodyW + 8f, -40f + armLen),
+                Vec2f(bodyW + 8f, -40f + armLen + clawSize), Vec2f(bodyW + 2f, -40f + armLen + clawSize),
+            ), WCLAW),
+            // Head — growing
+            SpriteLayer(listOf(
+                Vec2f(-headH / 2f, -44f - headH), Vec2f(headH / 2f, -44f - headH),
+                Vec2f(headH / 2f + 2f, -44f), Vec2f(-headH / 2f - 2f, -44f),
+            ), faceColor),
+            // Eyes — changing color
+            SpriteLayer(listOf(Vec2f(-5f, -50f - p * 2f), Vec2f(-2f, -50f - p * 2f), Vec2f(-2f, -47f - p * 2f), Vec2f(-5f, -47f - p * 2f)), eyeColor),
+            SpriteLayer(listOf(Vec2f(2f, -50f - p * 2f), Vec2f(5f, -50f - p * 2f), Vec2f(5f, -47f - p * 2f), Vec2f(2f, -47f - p * 2f)), eyeColor),
+            // Ears emerging — grow from nothing to full
+            SpriteLayer(listOf(Vec2f(-6f, -44f - headH), Vec2f(-2f, -44f - headH), Vec2f(-4f, -44f - headH - earH)), WFUR),
+            SpriteLayer(listOf(Vec2f(2f, -44f - headH), Vec2f(6f, -44f - headH), Vec2f(4f, -44f - headH - earH)), WFUR),
+        ))
+    }
+
     // WEREWOLF — upright muscular humanoid wolf (like the GBC reference)
     // Same height as human, wider, BIG head with ears and fangs
     // ═══════════════════════════════════════════════════════════════════════

@@ -6,20 +6,20 @@ package com.palacesoft.knightlore.core.geometry
  * (96×48px tiles), which improves readability and allows for smoother sprite scaling.
  */
 object TileMetrics {
-    /** Width of a single isometric tile in screen pixels (ZX Spectrum base: 32px × 3 scale). */
-    const val TILE_WIDTH = 96f
+    /** Width of a single isometric tile in screen pixels. Zoomed in ~35% for detail. */
+    const val TILE_WIDTH = 130f
 
-    /** Height of a single isometric tile in screen pixels (ZX Spectrum base: 16px × 2.5 scale). */
-    const val TILE_HEIGHT = 40f
+    /** Height of a single isometric tile in screen pixels. */
+    const val TILE_HEIGHT = 54f
 
     /** Half the width of an isometric tile, used for X-axis projection. */
-    const val HALF_TILE_WIDTH = 48f
+    const val HALF_TILE_WIDTH = 65f
 
-    /** Half the height of an isometric tile, used for Y-axis projection (steeper angle: more floor visible, was 24). */
-    const val HALF_TILE_HEIGHT = 20f
+    /** Half the height of an isometric tile, used for Y-axis projection. */
+    const val HALF_TILE_HEIGHT = 27f
 
-    /** Height of a single block unit in pixels. Taller blocks to match tile width scale (was 40). */
-    const val BLOCK_HEIGHT = 48f
+    /** Height of a single block unit in pixels. */
+    const val BLOCK_HEIGHT = 65f
 
     /** Default footprint for solid actors and obstacles (1.0 = full tile coverage). */
     const val STANDARD_BLOCK_FOOTPRINT = 1.0f

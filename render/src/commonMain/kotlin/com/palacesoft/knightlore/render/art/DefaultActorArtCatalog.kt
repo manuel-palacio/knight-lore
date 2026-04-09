@@ -107,35 +107,35 @@ class DefaultActorArtCatalog : ActorArtCatalog {
                     ),
                     fillColor = CLOAK,
                 ),
-                // Head — small, low
+                // Head/face — visible, not tiny
                 SpriteLayer(
                     points = listOf(
-                        Vec2f(-4f + lean, -42f), Vec2f(4f + lean, -42f),
-                        Vec2f(3f + lean, -36f), Vec2f(-3f + lean, -36f),
+                        Vec2f(-5f + lean, -44f), Vec2f(5f + lean, -44f),
+                        Vec2f(4f + lean, -36f), Vec2f(-4f + lean, -36f),
                     ),
-                    fillColor = CLOAK, // head hidden under hat
+                    fillColor = LEGS, // face slightly lighter than cloak
                 ),
-                // Hat crown — tall, slightly forward-tilted
+                // Hat crown — smaller, proportional
                 SpriteLayer(
                     points = listOf(
-                        Vec2f(-5f + lean, -52f), Vec2f(5f + lean, -52f),
-                        Vec2f(6f + lean, -42f), Vec2f(-6f + lean, -42f),
-                    ),
-                    fillColor = HAT,
-                ),
-                // Hat brim — DOMINANT, 1.5x shoulder width (~24px vs 16px shoulders)
-                SpriteLayer(
-                    points = listOf(
-                        Vec2f(-14f + lean, -43f), Vec2f(14f + lean, -43f),
-                        Vec2f(12f + lean, -40f), Vec2f(-12f + lean, -40f),
+                        Vec2f(-5f + lean, -50f), Vec2f(5f + lean, -50f),
+                        Vec2f(6f + lean, -44f), Vec2f(-6f + lean, -44f),
                     ),
                     fillColor = HAT,
                 ),
-                // Hat highlight — subtle lighter band on crown
+                // Hat brim — still dominant but not oversized (20px, ~1.25x shoulders)
                 SpriteLayer(
                     points = listOf(
-                        Vec2f(-4f + lean, -50f), Vec2f(3f + lean, -50f),
-                        Vec2f(3f + lean, -48f), Vec2f(-4f + lean, -48f),
+                        Vec2f(-10f + lean, -45f), Vec2f(10f + lean, -45f),
+                        Vec2f(9f + lean, -43f), Vec2f(-9f + lean, -43f),
+                    ),
+                    fillColor = HAT,
+                ),
+                // Hat highlight
+                SpriteLayer(
+                    points = listOf(
+                        Vec2f(-4f + lean, -49f), Vec2f(3f + lean, -49f),
+                        Vec2f(3f + lean, -47f), Vec2f(-4f + lean, -47f),
                     ),
                     fillColor = HAT_HL,
                 ),
@@ -158,7 +158,7 @@ class DefaultActorArtCatalog : ActorArtCatalog {
             else -> 1f
         }
         val lean = 3f * mirror // slightly more lean when walking
-        val legSwing = if (framePhase % 2 == 0) 3f else -3f
+        val legSwing = if (framePhase % 2 == 0) 6f else -6f
 
         return AuthoredSprite(
             id = "human_walk_$framePhase",
@@ -221,35 +221,35 @@ class DefaultActorArtCatalog : ActorArtCatalog {
                     ),
                     fillColor = CLOAK,
                 ),
-                // Head
+                // Head/face — visible
                 SpriteLayer(
                     points = listOf(
-                        Vec2f(-4f + lean, -42f), Vec2f(4f + lean, -42f),
-                        Vec2f(3f + lean, -36f), Vec2f(-3f + lean, -36f),
+                        Vec2f(-5f + lean, -44f), Vec2f(5f + lean, -44f),
+                        Vec2f(4f + lean, -36f), Vec2f(-4f + lean, -36f),
                     ),
-                    fillColor = CLOAK,
+                    fillColor = LEGS,
                 ),
-                // Hat crown
+                // Hat crown — proportional
                 SpriteLayer(
                     points = listOf(
-                        Vec2f(-5f + lean, -52f), Vec2f(5f + lean, -52f),
-                        Vec2f(6f + lean, -42f), Vec2f(-6f + lean, -42f),
+                        Vec2f(-5f + lean, -50f), Vec2f(5f + lean, -50f),
+                        Vec2f(6f + lean, -44f), Vec2f(-6f + lean, -44f),
                     ),
                     fillColor = HAT,
                 ),
-                // Hat brim — DOMINANT
+                // Hat brim — still dominant but not oversized
                 SpriteLayer(
                     points = listOf(
-                        Vec2f(-14f + lean, -43f), Vec2f(14f + lean, -43f),
-                        Vec2f(12f + lean, -40f), Vec2f(-12f + lean, -40f),
+                        Vec2f(-10f + lean, -45f), Vec2f(10f + lean, -45f),
+                        Vec2f(9f + lean, -43f), Vec2f(-9f + lean, -43f),
                     ),
                     fillColor = HAT,
                 ),
                 // Hat highlight
                 SpriteLayer(
                     points = listOf(
-                        Vec2f(-4f + lean, -50f), Vec2f(3f + lean, -50f),
-                        Vec2f(3f + lean, -48f), Vec2f(-4f + lean, -48f),
+                        Vec2f(-4f + lean, -49f), Vec2f(3f + lean, -49f),
+                        Vec2f(3f + lean, -47f), Vec2f(-4f + lean, -47f),
                     ),
                     fillColor = HAT_HL,
                 ),

@@ -33,15 +33,16 @@ class DefaultActorArtCatalog : ActorArtCatalog {
         motion: MovementState,
         facing: Direction8,
         framePhase: Int,
+        tick: Long,
     ): AuthoredSprite? {
         return when (form) {
             Form.HUMAN -> when (motion) {
-                MovementState.IDLE -> humanIdle(facing)
+                MovementState.IDLE -> humanIdle(facing, tick)
                 MovementState.WALKING -> humanWalk(facing, framePhase)
                 else -> null
             }
             Form.WEREWULF -> when (motion) {
-                MovementState.IDLE -> wolfIdle(facing)
+                MovementState.IDLE -> wolfIdle(facing, tick)
                 MovementState.WALKING -> wolfWalk(facing, framePhase)
                 else -> null
             }
@@ -49,12 +50,20 @@ class DefaultActorArtCatalog : ActorArtCatalog {
     }
 
     // ── IDLE ─────────────────────────────────────────────────────────────
-    private fun humanIdle(facing: Direction8): AuthoredSprite {
+    private fun humanIdle(facing: Direction8, tick: Long = 0L): AuthoredSprite {
         val mirror = when (facing) {
             Direction8.WEST, Direction8.NORTHWEST, Direction8.SOUTHWEST -> -1f
             else -> 1f
         }
-        val lean = 2f * mirror // forward lean
+        val lean = 2f * mirror
+
+        // Idle look-around: every ~4 seconds (240 ticks), glance left or right for ~1 second
+        val lookCycle = (tick % 240).toInt()
+        val headShift = when {
+            lookCycle in 180..210 -> -3f  // glance left
+            lookCycle in 210..240 -> 3f   // glance right
+            else -> 0f                     // look forward
+        }
 
         val l = lean
         return AuthoredSprite("human_idle", listOf(
@@ -75,37 +84,34 @@ class DefaultActorArtCatalog : ActorArtCatalog {
             // Hands — skin fists
             SpriteLayer(listOf(Vec2f(-22f, -20f), Vec2f(-16f, -20f), Vec2f(-16f, -16f), Vec2f(-22f, -16f)), SKIN),
             SpriteLayer(listOf(Vec2f(16f, -20f), Vec2f(22f, -20f), Vec2f(22f, -16f), Vec2f(16f, -16f)), SKIN),
-            // Face — DARK, in shadow of helmet brim, wider
+            // Face — shifts with headShift for idle look-around
+            val h = headShift
             SpriteLayer(listOf(
-                Vec2f(-9f + l, -55f), Vec2f(9f + l, -55f),
-                Vec2f(8f + l, -44f), Vec2f(-8f + l, -44f),
+                Vec2f(-9f + l + h, -55f), Vec2f(9f + l + h, -55f),
+                Vec2f(8f + l + h, -44f), Vec2f(-8f + l + h, -44f),
             ), EDGE),
-            // Eyes — bright white, spread wide apart
-            SpriteLayer(listOf(Vec2f(-7f + l, -52f), Vec2f(-3f + l, -52f), Vec2f(-3f + l, -49f), Vec2f(-7f + l, -49f)), 0xFF_FFFFFF.toInt()),
-            SpriteLayer(listOf(Vec2f(3f + l, -52f), Vec2f(7f + l, -52f), Vec2f(7f + l, -49f), Vec2f(3f + l, -49f)), 0xFF_FFFFFF.toInt()),
-            // Pupils — centered in white
-            SpriteLayer(listOf(Vec2f(-6f + l, -51f), Vec2f(-4f + l, -51f), Vec2f(-4f + l, -50f), Vec2f(-6f + l, -50f)), 0xFF_000000.toInt()),
-            SpriteLayer(listOf(Vec2f(4f + l, -51f), Vec2f(6f + l, -51f), Vec2f(6f + l, -50f), Vec2f(4f + l, -50f)), 0xFF_000000.toInt()),
-            // Nose — visible square
-            SpriteLayer(listOf(Vec2f(-2f + l, -48f), Vec2f(2f + l, -48f), Vec2f(2f + l, -45f), Vec2f(-2f + l, -45f)), SKIN),
-            // EXPLORER HAT — rounded dome (8-point polygon for roundness)
+            // Eyes — shift with head
+            SpriteLayer(listOf(Vec2f(-7f + l + h, -52f), Vec2f(-3f + l + h, -52f), Vec2f(-3f + l + h, -49f), Vec2f(-7f + l + h, -49f)), 0xFF_FFFFFF.toInt()),
+            SpriteLayer(listOf(Vec2f(3f + l + h, -52f), Vec2f(7f + l + h, -52f), Vec2f(7f + l + h, -49f), Vec2f(3f + l + h, -49f)), 0xFF_FFFFFF.toInt()),
+            // Pupils
+            SpriteLayer(listOf(Vec2f(-6f + l + h, -51f), Vec2f(-4f + l + h, -51f), Vec2f(-4f + l + h, -50f), Vec2f(-6f + l + h, -50f)), 0xFF_000000.toInt()),
+            SpriteLayer(listOf(Vec2f(4f + l + h, -51f), Vec2f(6f + l + h, -51f), Vec2f(6f + l + h, -50f), Vec2f(4f + l + h, -50f)), 0xFF_000000.toInt()),
+            // Nose
+            SpriteLayer(listOf(Vec2f(-2f + l + h, -48f), Vec2f(2f + l + h, -48f), Vec2f(2f + l + h, -45f), Vec2f(-2f + l + h, -45f)), SKIN),
+            // EXPLORER HAT — moves with head
             SpriteLayer(listOf(
-                Vec2f(-4f + l, -70f),   // top left
-                Vec2f(4f + l, -70f),    // top right
-                Vec2f(10f + l, -66f),   // upper right
-                Vec2f(12f + l, -60f),   // mid right
-                Vec2f(11f + l, -55f),   // lower right
-                Vec2f(-11f + l, -55f),  // lower left
-                Vec2f(-12f + l, -60f),  // mid left
-                Vec2f(-10f + l, -66f),  // upper left
+                Vec2f(-4f + l + h, -70f), Vec2f(4f + l + h, -70f),
+                Vec2f(10f + l + h, -66f), Vec2f(12f + l + h, -60f),
+                Vec2f(11f + l + h, -55f), Vec2f(-11f + l + h, -55f),
+                Vec2f(-12f + l + h, -60f), Vec2f(-10f + l + h, -66f),
             ), HAT),
-            // Hat BRIM — very wide, creates shadow on face
+            // Brim
             SpriteLayer(listOf(
-                Vec2f(-17f + l, -57f), Vec2f(17f + l, -57f),
-                Vec2f(16f + l, -53f), Vec2f(-16f + l, -53f),
+                Vec2f(-17f + l + h, -57f), Vec2f(17f + l + h, -57f),
+                Vec2f(16f + l + h, -53f), Vec2f(-16f + l + h, -53f),
             ), HAT),
-            // Hat band
-            SpriteLayer(listOf(Vec2f(-11f + l, -58f), Vec2f(11f + l, -58f), Vec2f(11f + l, -56f), Vec2f(-11f + l, -56f)), HAT_HL),
+            // Band
+            SpriteLayer(listOf(Vec2f(-11f + l + h, -58f), Vec2f(11f + l + h, -58f), Vec2f(11f + l + h, -56f), Vec2f(-11f + l + h, -56f)), HAT_HL),
         ))
     }
 
@@ -167,7 +173,7 @@ class DefaultActorArtCatalog : ActorArtCatalog {
     private val WEYE       = 0xFF_FF4400.toInt()  // red-orange eyes
     private val WFANG      = 0xFF_E0D8C0.toInt()
 
-    private fun wolfIdle(facing: Direction8): AuthoredSprite {
+    private fun wolfIdle(facing: Direction8, tick: Long = 0L): AuthoredSprite {
         val m = when (facing) {
             Direction8.WEST, Direction8.NORTHWEST, Direction8.SOUTHWEST -> -1f
             else -> 1f

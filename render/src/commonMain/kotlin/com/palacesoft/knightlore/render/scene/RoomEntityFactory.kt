@@ -2154,6 +2154,7 @@ object RoomEntityFactory {
             motion = player.movementState,
             facing = player.facing,
             framePhase = animPhase,
+            tick = state.time.tick,
         )
         if (authoredSprite != null) {
             // Emit authored sprite — art data lives in catalog, not here

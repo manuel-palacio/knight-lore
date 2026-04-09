@@ -14,5 +14,6 @@ interface ActorArtCatalog {
         motion: MovementState,
         facing: Direction8,
         framePhase: Int,
+        tick: Long = 0L,
     ): AuthoredSprite?
 }

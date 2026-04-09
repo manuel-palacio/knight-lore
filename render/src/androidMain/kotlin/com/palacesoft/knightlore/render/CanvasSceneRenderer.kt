@@ -140,6 +140,10 @@ object CanvasSceneRenderer {
                         }
                     }
                 }
+                is DrawPayload.Sprite -> {
+                    // Sprite sheet rendering — TODO: implement Android sprite loading
+                    // For now, no-op (falls through to nothing)
+                }
             }
         }
 

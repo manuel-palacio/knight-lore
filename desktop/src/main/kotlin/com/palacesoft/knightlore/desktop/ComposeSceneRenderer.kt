@@ -162,6 +162,37 @@ object ComposeSceneRenderer {
                         }
                     }
                 }
+                is DrawPayload.Sprite -> {
+                    // Sprite sheet rendering — load PNG and draw region
+                    val img = SpriteCache.get(payload.sheetId)
+                    if (img != null) {
+                        val srcLeft = payload.srcX.toFloat()
+                        val srcTop = payload.srcY.toFloat()
+                        val srcW = payload.srcW.toFloat()
+                        val srcH = payload.srcH.toFloat()
+                        val dstW = srcW * payload.scale
+                        val dstH = srcH * payload.scale
+                        val dstLeft = if (payload.flipX) left + dstW else left
+                        val dstTop = top
+
+                        scope.drawIntoCanvas { canvas ->
+                            if (payload.flipX) {
+                                canvas.save()
+                                canvas.scale(-1f, 1f)
+                                canvas.translate(-dstLeft * 2f - dstW, 0f)
+                            }
+                            canvas.drawImageRect(
+                                img,
+                                srcOffset = androidx.compose.ui.unit.IntOffset(payload.srcX, payload.srcY),
+                                srcSize = androidx.compose.ui.unit.IntSize(payload.srcW, payload.srcH),
+                                dstOffset = androidx.compose.ui.unit.IntOffset(dstLeft.toInt(), dstTop.toInt()),
+                                dstSize = androidx.compose.ui.unit.IntSize(dstW.toInt(), dstH.toInt()),
+                                paint = Paint().apply { isAntiAlias = false },
+                            )
+                            if (payload.flipX) canvas.restore()
+                        }
+                    }
+                }
             }
         }
 

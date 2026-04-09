@@ -69,12 +69,12 @@ class DefaultActorArtCatalog : ActorArtCatalog {
                 Vec2f(14f, -24f), Vec2f(10f + l, -44f),
                 Vec2f(-10f + l, -44f), Vec2f(-14f, -24f),
             ), CLOAK),
-            // Arms
-            SpriteLayer(listOf(Vec2f(-16f + l, -40f), Vec2f(-12f + l, -40f), Vec2f(-13f, -20f), Vec2f(-17f, -20f)), CLOAK_DARK),
-            SpriteLayer(listOf(Vec2f(12f + l, -40f), Vec2f(16f + l, -40f), Vec2f(17f, -20f), Vec2f(13f, -20f)), CLOAK_DARK),
-            // Hands
-            SpriteLayer(listOf(Vec2f(-18f, -22f), Vec2f(-12f, -22f), Vec2f(-12f, -18f), Vec2f(-18f, -18f)), SKIN),
-            SpriteLayer(listOf(Vec2f(12f, -22f), Vec2f(18f, -22f), Vec2f(18f, -18f), Vec2f(12f, -18f)), SKIN),
+            // Arms — pushed OUT from body with visible gap
+            SpriteLayer(listOf(Vec2f(-20f + l, -38f), Vec2f(-16f + l, -38f), Vec2f(-17f, -18f), Vec2f(-21f, -18f)), CLOAK_DARK),
+            SpriteLayer(listOf(Vec2f(16f + l, -38f), Vec2f(20f + l, -38f), Vec2f(21f, -18f), Vec2f(17f, -18f)), CLOAK_DARK),
+            // Hands — skin fists
+            SpriteLayer(listOf(Vec2f(-22f, -20f), Vec2f(-16f, -20f), Vec2f(-16f, -16f), Vec2f(-22f, -16f)), SKIN),
+            SpriteLayer(listOf(Vec2f(16f, -20f), Vec2f(22f, -20f), Vec2f(22f, -16f), Vec2f(16f, -16f)), SKIN),
             // Face — DARK, in shadow of helmet brim, wider
             SpriteLayer(listOf(
                 Vec2f(-9f + l, -55f), Vec2f(9f + l, -55f),
@@ -130,12 +130,12 @@ class DefaultActorArtCatalog : ActorArtCatalog {
                 Vec2f(14f, -24f), Vec2f(10f + l, -44f),
                 Vec2f(-10f + l, -44f), Vec2f(-14f, -24f),
             ), CLOAK),
-            // Arms with countersweep
-            SpriteLayer(listOf(Vec2f(-16f + l, -40f), Vec2f(-12f + l, -40f), Vec2f(-13f + ls * 0.3f, -20f), Vec2f(-17f + ls * 0.3f, -20f)), CLOAK_DARK),
-            SpriteLayer(listOf(Vec2f(12f + l, -40f), Vec2f(16f + l, -40f), Vec2f(17f - ls * 0.3f, -20f), Vec2f(13f - ls * 0.3f, -20f)), CLOAK_DARK),
+            // Arms — separated from body, countersweep with walk
+            SpriteLayer(listOf(Vec2f(-20f + l, -38f), Vec2f(-16f + l, -38f), Vec2f(-17f + ls * 0.3f, -18f), Vec2f(-21f + ls * 0.3f, -18f)), CLOAK_DARK),
+            SpriteLayer(listOf(Vec2f(16f + l, -38f), Vec2f(20f + l, -38f), Vec2f(21f - ls * 0.3f, -18f), Vec2f(17f - ls * 0.3f, -18f)), CLOAK_DARK),
             // Hands
-            SpriteLayer(listOf(Vec2f(-18f + ls * 0.3f, -22f), Vec2f(-12f + ls * 0.3f, -22f), Vec2f(-12f + ls * 0.3f, -18f), Vec2f(-18f + ls * 0.3f, -18f)), SKIN),
-            SpriteLayer(listOf(Vec2f(12f - ls * 0.3f, -22f), Vec2f(18f - ls * 0.3f, -22f), Vec2f(18f - ls * 0.3f, -18f), Vec2f(12f - ls * 0.3f, -18f)), SKIN),
+            SpriteLayer(listOf(Vec2f(-22f + ls * 0.3f, -20f), Vec2f(-16f + ls * 0.3f, -20f), Vec2f(-16f + ls * 0.3f, -16f), Vec2f(-22f + ls * 0.3f, -16f)), SKIN),
+            SpriteLayer(listOf(Vec2f(16f - ls * 0.3f, -20f), Vec2f(22f - ls * 0.3f, -20f), Vec2f(22f - ls * 0.3f, -16f), Vec2f(16f - ls * 0.3f, -16f)), SKIN),
             // Dark face — wide
             SpriteLayer(listOf(Vec2f(-9f + l, -55f), Vec2f(9f + l, -55f), Vec2f(8f + l, -44f), Vec2f(-8f + l, -44f)), EDGE),
             // Eyes — wide apart

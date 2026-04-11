@@ -637,7 +637,7 @@ object RoomEntityFactory {
                     commands += DrawCommand(
                         layer = DrawLayer.ITEM, depthKey = dk, entityId = id,
                         screenPos = Vec2f(screen.x - 24f, screen.y - 24f),
-                        payload = DrawPayload.Sprite("items", itemIdx * 24, 0, 24, 24, scale = 3f),
+                        payload = DrawPayload.Sprite("items", itemIdx * 24, 0, 24, 24, scale = 2f),
                     )
                     return@forEach // sprite rendered — skip polygon fallback
                 }
@@ -1868,7 +1868,7 @@ object RoomEntityFactory {
             commands += DrawCommand(
                 layer = DrawLayer.ACTOR, depthKey = dk, entityId = id,
                 screenPos = Vec2f(cx - 48f, cy - 48f),
-                payload = DrawPayload.Sprite(enemySheet, frameIdx * 48, 0, 48, 48, scale = 3f),
+                payload = DrawPayload.Sprite(enemySheet, frameIdx * 48, 0, 48, 48, scale = 2f),
             )
             return // sprite rendered — skip polygon fallback
         }

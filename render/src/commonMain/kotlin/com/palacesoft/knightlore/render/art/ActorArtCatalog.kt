@@ -15,7 +15,7 @@ import com.palacesoft.knightlore.domain.model.MovementState
 data class PlayerSpriteRef(
     val sheetId: String,
     val srcX: Int, val srcY: Int, val srcW: Int, val srcH: Int,
-    val scale: Float = 3f,  // 3x scale for visibility at zoomed-in tile size
+    val scale: Float = 2f,  // 2x scale
     val flipX: Boolean = false,
 )
 

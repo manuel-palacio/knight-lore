@@ -2147,9 +2147,9 @@ object RoomEntityFactory {
             player.transformState.phase == TransformPhase.TRANSFORMING_TO_HUMAN
         val bob = (kotlin.math.sin(state.time.tick.toDouble() * 0.10472) * 1.5).toFloat()
 
-        // ── Try PNG sprite sheet (disabled temporarily to debug movement) ─────
+        // ── Try PNG sprite sheet (Midjourney art) ─────────────────────────────
         val animPhase = ((state.time.tick * 0.25f).toInt() % 2)
-        val spriteRef: com.palacesoft.knightlore.render.art.PlayerSpriteRef? = null // actorArtCatalog.resolvePlayerSprite(
+        val spriteRef = actorArtCatalog.resolvePlayerSprite(
             form = player.form,
             motion = player.movementState,
             facing = player.facing,

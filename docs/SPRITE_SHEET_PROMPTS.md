@@ -25,7 +25,7 @@
 **Game scale:** 2×
 
 ```
-Pixel art sprite sheet, retro 8-bit isometric game character, explorer with wide-brimmed pith helmet, blue tunic, brown boots, dark face under hat shadow with visible white eyes, chunky cartoon proportions like Knight Lore ZX Spectrum, 7 animation frames in horizontal row: idle, idle mirrored, walk cycle 4 frames, jump, pure black background, no anti-aliasing, hard pixel edges --ar 14:3 --s 50 --style raw --no gradient smooth shading
+Pixel art sprite sheet, 7 separate character frames in a single horizontal strip, each frame clearly separated by a 2-pixel black gap. Retro 8-bit isometric 3/4 top-down view adventurer like Knight Lore or Sabreman. Wide-brimmed explorer pith helmet, visible round cartoon face with big eyes under hat shadow, blue-grey tunic with belt, skin-colored hands hanging at sides, short trousers, chunky brown boots with visible soles. Organic rounded proportions, NOT rectangular blocks. Frames left to right: standing idle SE, standing idle SW, walk SE foot forward, walk SE foot back, walk SW foot forward, walk SW foot back, jumping with tucked legs. Each frame on pure black background, hard pixel edges, no anti-aliasing, no gradients, crisp pixel boundaries --ar 14:3 --s 50 --style raw --no gradient smooth shading blur
 ```
 
 ---
@@ -37,7 +37,7 @@ Pixel art sprite sheet, retro 8-bit isometric game character, explorer with wide
 **Game scale:** 2×
 
 ```
-Pixel art sprite sheet, retro 8-bit isometric werewolf character, upright humanoid beast with large head, pointed ears, amber glowing eyes, visible fangs, hunched muscular body with shoulder humps, long arms with bone-white claws, wide power stance, dark brown fur, tail behind, 6 animation frames in horizontal row: idle, idle mirrored, walk cycle 4 frames, pure black background, Knight Lore game style --ar 30:7 --s 50 --style raw --no gradient smooth background
+Pixel art sprite sheet, 6 separate werewolf frames in a single horizontal strip, each frame clearly separated by a 2-pixel black gap. Retro 8-bit isometric 3/4 view humanoid werewolf beast like Knight Lore. Large wolf head with tall pointed ears, fierce amber glowing eyes, visible white fangs and open jaw, wide hunched muscular body with raised shoulder humps, long powerful arms reaching below knees with bone-white claws, thick digitigrade legs in wide power stance, curved tail behind. Dark brown fur with lighter chest. Must look completely different from human — threatening, bestial, heavy. Frames: idle SE, idle SW, walk SE two frames with arm/leg countersweep, walk SW two frames. Pure black background, hard pixel edges, no anti-aliasing, crisp pixel boundaries --ar 30:7 --s 50 --style raw --no gradient smooth blur
 ```
 
 ---
@@ -49,7 +49,7 @@ Pixel art sprite sheet, retro 8-bit isometric werewolf character, upright humano
 **Game scale:** 2×
 
 ```
-Pixel art sprite sheet, retro 8-bit transformation sequence, human explorer morphing into werewolf, 4 stages left to right: human body bulging with hat still on, hybrid form with ears emerging and arms lengthening, nearly wolf with snout and claws formed, full werewolf burst, isometric 3/4 view, exaggerated cartoon body horror, pure black background, Knight Lore ZX Spectrum style --ar 10:3 --s 50 --style raw --no gradient
+Pixel art sprite sheet, 4 separate transformation frames in a horizontal strip, each frame clearly separated by a 2-pixel black gap. Retro 8-bit isometric 3/4 view human-to-werewolf transformation like Knight Lore. Stage 1: explorer with hat, body starting to bulge and expand. Stage 2: hybrid — pointed wolf ears bursting through hat, arms lengthening, shoulders widening, face distorting. Stage 3: nearly full wolf — hat fallen off, full snout, claws formed, hunched posture. Stage 4: dramatic final burst — complete werewolf, human features gone, energy lines radiating. Exaggerated cartoon body horror, pure black background, hard pixel edges, crisp pixel boundaries --ar 10:3 --s 50 --style raw --no gradient smooth blur
 ```
 
 ---
@@ -104,7 +104,7 @@ Pixel art item icons sprite sheet, 10 medieval fantasy collectibles in a horizon
 **Final size:** 192 × 48 px (4 frames × 48×48)
 
 ```
-Pixel art sprite sheet, medieval castle guard enemy, 4 animation frames in row on black background, isometric 3/4 view: idle with halberd, walking frame 1, walking frame 2, attacking thrust, dark steel plate armor, sallet helmet with red plume, rigid upright military posture, retro 8-bit Knight Lore style --ar 4:1 --s 50 --style raw --no gradient smooth
+Pixel art sprite sheet, 4 separate guard frames in horizontal strip, each frame clearly separated by 2-pixel black gap. Medieval castle guard enemy, isometric 3/4 view like Knight Lore. Dark steel plate armor, sallet helmet with small red plume, carrying tall halberd weapon. Rigid upright military posture, imposing and dangerous. Frames: idle standing with halberd vertical, patrol walk frame 1, patrol walk frame 2, attacking halberd thrust forward. Pure black background, hard pixel edges, no anti-aliasing, crisp pixel boundaries --ar 4:1 --s 50 --style raw --no gradient smooth blur
 ```
 
 ---
@@ -115,7 +115,7 @@ Pixel art sprite sheet, medieval castle guard enemy, 4 animation frames in row o
 **Final size:** 192 × 48 px (4 frames × 48×48)
 
 ```
-Pixel art sprite sheet, ghost enemy, 4 animation frames in row on pure black background, isometric 3/4 view: floating translucent pale blue-white apparition, tapering wispy body fading to nothing at bottom, two dark void eyes, trailing ethereal tendrils, frames show subtle floating bob animation, semi-transparent spooky, retro 8-bit Knight Lore style --ar 4:1 --s 50 --style raw --no gradient
+Pixel art sprite sheet, 4 separate ghost frames in horizontal strip, each frame clearly separated by 2-pixel black gap. Floating ghost enemy, isometric 3/4 view like Knight Lore. Translucent pale blue-white apparition with tapering wispy body that fades to nothing at bottom, no legs. Two large dark void eyes, trailing ethereal tendrils swaying. Frames show floating bob animation — body drifts up and down, tendrils sway differently. Ethereal, spooky, semi-transparent feel. Pure black background, hard pixel edges, crisp pixel boundaries --ar 4:1 --s 50 --style raw --no gradient smooth blur
 ```
 
 ---
@@ -126,7 +126,7 @@ Pixel art sprite sheet, ghost enemy, 4 animation frames in row on pure black bac
 **Final size:** 192 × 48 px (4 frames × 48×48)
 
 ```
-Pixel art sprite sheet, dark druid sorcerer enemy, 4 frames in row on black background, isometric 3/4 view: hunched figure in dark hooded robe, crooked wooden staff with glowing green orb, skull-like face under hood, frames show idle, shuffling walk two frames, casting spell with brighter orb, dark brown robe, bone face, green magic glow, retro 8-bit style --ar 4:1 --s 50 --style raw --no gradient
+Pixel art sprite sheet, 4 separate druid frames in horizontal strip, each frame clearly separated by 2-pixel black gap. Dark druid sorcerer enemy, isometric 3/4 view like Knight Lore. Hunched figure in dark hooded robe, holding crooked wooden staff with glowing green magic orb at top. Skull-like bone face visible under deep hood with dark eye sockets. Asymmetric leaning posture. Frames: idle leaning on staff, shuffling walk frame 1, shuffling walk frame 2, casting spell with orb glowing brighter. Dark brown/black robe, bone-colored face, green magic glow. Pure black background, hard pixel edges, crisp boundaries --ar 4:1 --s 50 --style raw --no gradient smooth blur
 ```
 
 ---
@@ -137,7 +137,7 @@ Pixel art sprite sheet, dark druid sorcerer enemy, 4 frames in row on black back
 **Final size:** 192 × 48 px (4 frames × 48×48)
 
 ```
-Pixel art sprite sheet, mechanical golem construct enemy, 4 frames in row on black background, isometric 3/4 view: boxy angular dark metal body with panel seams, square head with glowing green scanning eye visor, segmented piston arms, blocky legs, small antenna, frames show idle, walking with piston motion two frames, eye glow intensified, dark steel grey, geometric angular not organic, retro 8-bit style --ar 4:1 --s 50 --style raw --no gradient
+Pixel art sprite sheet, 4 separate robot frames in horizontal strip, each frame clearly separated by 2-pixel black gap. Mechanical golem construct enemy, isometric 3/4 view like Knight Lore. Boxy angular body made of dark metal plates with visible panel seams and rivets, square head with glowing green scanning eye/visor slit, segmented arms with piston joints, blocky armored legs, small antenna on head. Geometric, angular, NOT organic — a cursed automaton. Frames: idle with eye scanning, walking frame 1 with piston motion, walking frame 2, eye glow intensified alert mode. Dark steel grey, green eye accent. Pure black background, hard pixel edges, crisp boundaries --ar 4:1 --s 50 --style raw --no gradient smooth blur
 ```
 
 ---

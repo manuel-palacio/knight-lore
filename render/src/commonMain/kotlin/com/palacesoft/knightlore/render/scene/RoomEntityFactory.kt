@@ -1387,13 +1387,13 @@ object RoomEntityFactory {
                 // Flame — in EFFECT layer so it's always in front of walls
                 commands += DrawCommand(DrawLayer.EFFECT, dk, 1, "${id}_flame",
                     Vec2f(flamePt.x - 3f, flamePt.y - 10f + flicker),
-                    DrawPayload.ColorOval(18f, 24f, 0xCC_FF8800.toInt()))
+                    DrawPayload.ColorOval(8f, 10f, 0xCC_FF8800.toInt()))
                 commands += DrawCommand(DrawLayer.EFFECT, dk, 2, "${id}_core",
                     Vec2f(flamePt.x - 1.5f, flamePt.y - 8f + flicker),
                     DrawPayload.ColorOval(3f, 4f, 0xFF_FFDD44.toInt()))
 
                 // Floor light cast
-                val floorAlpha = flickerAlpha(tick, tPhase, rate = 0.10, minAlpha = 0x08, maxAlpha = 0x18)
+                val floorAlpha = flickerAlpha(tick, tPhase, rate = 0.10, minAlpha = 0x03, maxAlpha = 0x08)
                 val tileX0 = (gx - 1f).coerceAtLeast(0f)
                 val tileX1 = (gx + 2f).coerceAtMost(room.width.toFloat())
                 var lightGx = tileX0
@@ -1432,13 +1432,13 @@ object RoomEntityFactory {
                     DrawPayload.Line(bracketFrom.x, bracketFrom.y, flamePt.x, flamePt.y, 0xFF_5A4020.toInt(), 1.5f))
                 commands += DrawCommand(DrawLayer.EFFECT, dk, 1, "${id}_flame",
                     Vec2f(flamePt.x - 3f, flamePt.y - 10f + flicker),
-                    DrawPayload.ColorOval(18f, 24f, 0xCC_FF8800.toInt()))
+                    DrawPayload.ColorOval(8f, 10f, 0xCC_FF8800.toInt()))
                 commands += DrawCommand(DrawLayer.EFFECT, dk, 2, "${id}_core",
                     Vec2f(flamePt.x - 1.5f, flamePt.y - 8f + flicker),
                     DrawPayload.ColorOval(3f, 4f, 0xFF_FFDD44.toInt()))
 
                 // Floor light
-                val floorAlpha = flickerAlpha(tick, tPhase, rate = 0.10, minAlpha = 0x08, maxAlpha = 0x18)
+                val floorAlpha = flickerAlpha(tick, tPhase, rate = 0.10, minAlpha = 0x03, maxAlpha = 0x08)
                 val tileY0 = (gy - 1f).coerceAtLeast(0f)
                 val tileY1 = (gy + 2f).coerceAtMost(room.depth.toFloat())
                 var lightGy = tileY0

@@ -1329,9 +1329,9 @@ object RoomEntityFactory {
                     val x1 = ((col + 1f) / bricksPerRow + offset - gap).coerceAtMost(1f - gap)
                     if (x0 >= x1) continue
 
-                    // Color variation — some bricks slightly lighter
+                    // Skip ~40% of bricks for sparse, old wall look
                     val seed = ((gx * 17 + row * 7 + col * 13).toInt() and 0x7FFF)
-                    val color = if (seed % 4 == 0) brickHighlight else brickColor
+                    if (seed % 5 < 2) continue  // skip this brick — leave dark gap
 
                     val pts = if (isSouthFace) listOf(
                         pt(gx + x0, faceY, z0, ox, oy), pt(gx + x1, faceY, z0, ox, oy),
@@ -1340,8 +1340,9 @@ object RoomEntityFactory {
                         pt(faceY, gy + x0, z0, ox, oy), pt(faceY, gy + x1, z0, ox, oy),
                         pt(faceY, gy + x1, z1, ox, oy), pt(faceY, gy + x0, z1, ox, oy),
                     )
+                    // Dithered brick — horizontal stripes inside each brick for texture
                     commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "${idPrefix}_b${row}_$col",
-                        pts[0], DrawPayload.ColorPath(pts, color))
+                        pts[0], DrawPayload.DitheredPath(pts, brickColor, brickHighlight, horizontal = true))
                 }
 
                 // Wrap brick for staggered rows
@@ -1356,7 +1357,7 @@ object RoomEntityFactory {
                             pt(faceY, gy + wx1, z1, ox, oy), pt(faceY, gy + gap, z1, ox, oy),
                         )
                         commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "${idPrefix}_bw$row",
-                            wpts[0], DrawPayload.ColorPath(wpts, brickColor))
+                            wpts[0], DrawPayload.DitheredPath(wpts, brickColor, brickHighlight, horizontal = true))
                     }
                 }
             }

@@ -39,19 +39,19 @@ object RoomEntityFactory {
         com.palacesoft.knightlore.render.art.DefaultActorArtCatalog()
 
     private object CastleColors {
-        // ── Wall faces — dark base with bright mortar lines (like original) ──
-        val WALL_SOUTH_BASE      = 0xFF_3A3428.toInt()  // dark stone
-        val WALL_SOUTH_JOINT     = 0xFF_7A7060.toInt()  // BRIGHT mortar lines (catch light)
-        val WALL_SOUTH_STONE_LO  = 0xFF_2A2418.toInt()  // very dark base row
-        val WALL_SOUTH_STONE_HI  = 0xFF_4A4030.toInt()  // slightly lighter row
+        // ── Wall faces — BRIGHT bricks on BLACK gaps (like original Knight Lore) ──
+        val WALL_SOUTH_BASE      = 0xFF_000000.toInt()  // black background (mortar = void)
+        val WALL_SOUTH_JOINT     = 0xFF_000000.toInt()  // gaps are black
+        val WALL_SOUTH_STONE_LO  = 0xFF_6A5A40.toInt()  // brick color
+        val WALL_SOUTH_STONE_HI  = 0xFF_8A7A58.toInt()  // bright brick
 
-        val WALL_EAST_BASE       = 0xFF_2A2418.toInt()  // very dark shadow side
-        val WALL_EAST_JOINT      = 0xFF_5A5040.toInt()  // mortar lighter than wall
-        val WALL_EAST_STONE_LO   = 0xFF_1A1810.toInt()
-        val WALL_EAST_STONE_HI   = 0xFF_3A3028.toInt()
+        val WALL_EAST_BASE       = 0xFF_000000.toInt()
+        val WALL_EAST_JOINT      = 0xFF_000000.toInt()
+        val WALL_EAST_STONE_LO   = 0xFF_4A3E28.toInt()  // darker brick (shadow side)
+        val WALL_EAST_STONE_HI   = 0xFF_6A5A40.toInt()
 
-        val WALL_TOP             = 0xFF_5A5040.toInt()
-        val WALL_TOP_HIGHLIGHT   = 0xFF_6A6050.toInt()
+        val WALL_TOP             = 0xFF_7A6A50.toInt()
+        val WALL_TOP_HIGHLIGHT   = 0xFF_9A8A68.toInt()
 
         // ── Floor — pure black like the original ────────────────────────────
         val FLOOR_SLAB           = 0xFF_080808.toInt()  // near-black
@@ -1304,50 +1304,60 @@ object RoomEntityFactory {
             }
         }
 
-        // Old worn stone wall — dithered base with sparse mortar lines here and there
-        fun drawOldStoneWall(
+        // Bright bricks on black background — like the original Knight Lore
+        fun drawBrickWall(
             gx: Float, gy: Float, faceY: Float,
-            baseLo: Int, baseHi: Int, mortarColor: Int,
+            brickColor: Int, brickHighlight: Int,
             dk: Int, idPrefix: String,
             isSouthFace: Boolean,
         ) {
-            // 1. Dithered base fill — the dominant stone surface
-            val facePts = if (isSouthFace) listOf(
-                pt(gx, faceY, 0f, ox, oy), pt(gx + 1f, faceY, 0f, ox, oy),
-                pt(gx + 1f, faceY, 3f, ox, oy), pt(gx, faceY, 3f, ox, oy),
-            ) else listOf(
-                pt(faceY, gy, 0f, ox, oy), pt(faceY, gy + 1f, 0f, ox, oy),
-                pt(faceY, gy + 1f, 3f, ox, oy), pt(faceY, gy, 3f, ox, oy),
-            )
-            commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "${idPrefix}_base",
-                facePts[0], DrawPayload.DitheredPath(facePts, baseLo, baseHi, horizontal = true))
+            // NO base fill — the wall background is pure black (from the void behind)
+            // Draw individual BRIGHT brick rectangles with dark gaps between them
 
-            // 2. Sparse mortar lines — only some courses visible (old, worn stone)
-            val seed = (gx * 31 + gy * 17).toInt()
-            val courseHeights = listOf(0.5f, 1.0f, 1.5f, 2.0f, 2.5f)
-            for ((ci, z) in courseHeights.withIndex()) {
-                // Only draw ~60% of mortar lines (seeded per wall column)
-                if ((seed + ci * 7) % 5 < 2) continue
-                val p1 = if (isSouthFace) pt(gx, faceY, z, ox, oy) else pt(faceY, gy, z, ox, oy)
-                val p2 = if (isSouthFace) pt(gx + 1f, faceY, z, ox, oy) else pt(faceY, gy + 1f, z, ox, oy)
-                commands += DrawCommand(DrawLayer.BLOCK, dk, 2, "${idPrefix}_m$ci",
-                    Vec2f(p1.x, p1.y),
-                    DrawPayload.Line(p1.x, p1.y, p2.x, p2.y, mortarColor, 1.5f))
-            }
+            val rows = 6  // brick courses across z=0..3
+            val bricksPerRow = 3
+            val courseH = 3f / rows  // height of each course
+            val gap = 0.04f  // mortar gap between bricks
 
-            // 3. Sparse vertical joints — staggered, only a few visible
-            val jointPositions = listOf(0.3f, 0.7f)
-            for ((ji, xFrac) in jointPositions.withIndex()) {
-                for (row in 0 until 3) {
-                    if ((seed + ji * 11 + row * 3) % 4 < 2) continue  // skip most
-                    val z0 = row.toFloat()
-                    val z1 = row + 1f
-                    val jx = if (row % 2 == 0) xFrac else 1f - xFrac  // stagger
-                    val j1 = if (isSouthFace) pt(gx + jx, faceY, z0, ox, oy) else pt(faceY, gy + jx, z0, ox, oy)
-                    val j2 = if (isSouthFace) pt(gx + jx, faceY, z1, ox, oy) else pt(faceY, gy + jx, z1, ox, oy)
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 2, "${idPrefix}_j${row}_$ji",
-                        Vec2f(j1.x, j1.y),
-                        DrawPayload.Line(j1.x, j1.y, j2.x, j2.y, mortarColor, 1f))
+            for (row in 0 until rows) {
+                val z0 = row * courseH + gap
+                val z1 = (row + 1) * courseH - gap
+                val offset = if (row % 2 == 0) 0f else 0.5f / bricksPerRow  // stagger
+
+                for (col in 0 until bricksPerRow) {
+                    val x0 = (col.toFloat() / bricksPerRow + offset + gap).coerceAtMost(1f - gap)
+                    val x1 = ((col + 1f) / bricksPerRow + offset - gap).coerceAtMost(1f - gap)
+                    if (x0 >= x1) continue
+
+                    // Color variation — some bricks slightly lighter
+                    val seed = ((gx * 17 + row * 7 + col * 13).toInt() and 0x7FFF)
+                    val color = if (seed % 4 == 0) brickHighlight else brickColor
+
+                    val pts = if (isSouthFace) listOf(
+                        pt(gx + x0, faceY, z0, ox, oy), pt(gx + x1, faceY, z0, ox, oy),
+                        pt(gx + x1, faceY, z1, ox, oy), pt(gx + x0, faceY, z1, ox, oy),
+                    ) else listOf(
+                        pt(faceY, gy + x0, z0, ox, oy), pt(faceY, gy + x1, z0, ox, oy),
+                        pt(faceY, gy + x1, z1, ox, oy), pt(faceY, gy + x0, z1, ox, oy),
+                    )
+                    commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "${idPrefix}_b${row}_$col",
+                        pts[0], DrawPayload.ColorPath(pts, color))
+                }
+
+                // Wrap brick for staggered rows
+                if (offset > 0f) {
+                    val wx1 = (offset - gap).coerceAtLeast(gap)
+                    if (wx1 > gap) {
+                        val wpts = if (isSouthFace) listOf(
+                            pt(gx + gap, faceY, z0, ox, oy), pt(gx + wx1, faceY, z0, ox, oy),
+                            pt(gx + wx1, faceY, z1, ox, oy), pt(gx + gap, faceY, z1, ox, oy),
+                        ) else listOf(
+                            pt(faceY, gy + gap, z0, ox, oy), pt(faceY, gy + wx1, z0, ox, oy),
+                            pt(faceY, gy + wx1, z1, ox, oy), pt(faceY, gy + gap, z1, ox, oy),
+                        )
+                        commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "${idPrefix}_bw$row",
+                            wpts[0], DrawPayload.ColorPath(wpts, brickColor))
+                    }
                 }
             }
         }
@@ -1357,9 +1367,9 @@ object RoomEntityFactory {
             val dk = IsoProjector.depthKey(Vec3f(gx + 0.5f, gy + 1f, 0f))
             val id = "wall_${gx.toInt()}_${gy.toInt()}"
 
-            drawOldStoneWall(gx, gy, gy + 1f,
-                baseLo = palette.wallSouthLo, baseHi = palette.wallSouthHi,
-                mortarColor = palette.wallSouthJoint,
+            drawBrickWall(gx, gy, gy + 1f,
+                brickColor = palette.wallSouthHi,
+                brickHighlight = palette.wallTopHighlight,
                 dk = dk, idPrefix = id, isSouthFace = true)
 
             // Torch — every 4th column, rendered in EFFECT layer (in front of walls)
@@ -1405,9 +1415,9 @@ object RoomEntityFactory {
             val dk = IsoProjector.depthKey(Vec3f(gx + 0.5f, gy + 1f, 0f))
             val id = "wall_${gx.toInt()}_${gy.toInt()}"
 
-            drawOldStoneWall(gx, gy, gx + 1f,
-                baseLo = palette.wallEastLo, baseHi = palette.wallEastHi,
-                mortarColor = palette.wallEastJoint,
+            drawBrickWall(gx, gy, gx + 1f,
+                brickColor = palette.wallEastHi,
+                brickHighlight = palette.wallTop,
                 dk = dk, idPrefix = id, isSouthFace = false)
 
             // Torch only — every 4th column, in EFFECT layer

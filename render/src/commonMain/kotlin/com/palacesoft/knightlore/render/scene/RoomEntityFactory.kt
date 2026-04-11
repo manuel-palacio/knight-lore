@@ -619,6 +619,29 @@ object RoomEntityFactory {
                 val pulseFactor = kotlin.math.sin(tick.toDouble() * 0.07).toFloat()
                 val id = "item_${item.id.value}"
 
+                // ── Sprite-sheet rendering for items (Midjourney assets) ──
+                val itemIdx: Int? = when (item.type) {
+                    ItemType.CRYSTAL_BALL -> 0
+                    ItemType.GOBLET -> 1
+                    ItemType.WINE_BOTTLE -> 2
+                    ItemType.GEM -> 3
+                    ItemType.POISON_VIAL -> 4
+                    ItemType.BOOT -> 5
+                    ItemType.TEACUP -> 6
+                    ItemType.KEY -> 7
+                    ItemType.TORCH -> 8
+                    ItemType.SKULL -> 9
+                    else -> null
+                }
+                if (itemIdx != null) {
+                    commands += DrawCommand(
+                        layer = DrawLayer.ITEM, depthKey = dk, entityId = id,
+                        screenPos = Vec2f(screen.x - 24f, screen.y - 24f),
+                        payload = DrawPayload.Sprite("items", itemIdx * 24, 0, 24, 24, scale = 2f),
+                    )
+                    return@forEach // sprite rendered — skip polygon fallback
+                }
+
                 // Per-type color palette
                 data class ItemPalette(val color: Int, val glow: Int, val w: Float, val h: Float)
                 val pal = when (item.type) {
@@ -1830,6 +1853,24 @@ object RoomEntityFactory {
         val cy = screen.y
         val id = "actor_${actor.id.value}"
         val phase = torchPhase(actor.position.x.toInt(), actor.position.y.toInt())
+
+        // ── Sprite-sheet rendering for enemies (Midjourney assets) ──
+        val enemySheet = when (actor.type) {
+            ActorType.GUARD -> "enemy_guard"
+            ActorType.GHOST -> "enemy_ghost"
+            ActorType.DRUID -> "enemy_druid"
+            ActorType.ROBOT -> "enemy_robot"
+            else -> null
+        }
+        if (enemySheet != null) {
+            val frameIdx = ((tick / 15) % 4).toInt()
+            commands += DrawCommand(
+                layer = DrawLayer.ACTOR, depthKey = dk, entityId = id,
+                screenPos = Vec2f(cx - 48f, cy - 48f),
+                payload = DrawPayload.Sprite(enemySheet, frameIdx * 48, 0, 48, 48, scale = 2f),
+            )
+            return // sprite rendered — skip polygon fallback
+        }
 
         when (actor.type) {
             ActorType.GUARD -> {

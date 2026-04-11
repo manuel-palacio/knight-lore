@@ -39,16 +39,16 @@ object RoomEntityFactory {
         com.palacesoft.knightlore.render.art.DefaultActorArtCatalog()
 
     private object CastleColors {
-        // ── Wall faces — warm tan/brown matching Midjourney texture ──────────
-        val WALL_SOUTH_BASE      = 0xFF_7A6A50.toInt()  // warm tan stone
-        val WALL_SOUTH_JOINT     = 0xFF_4A3A28.toInt()  // mortar
-        val WALL_SOUTH_STONE_LO  = 0xFF_5A4A38.toInt()  // darker brick row
-        val WALL_SOUTH_STONE_HI  = 0xFF_8A7A60.toInt()  // lighter brick row
+        // ── Wall faces — high contrast dither for visible brick texture ──────
+        val WALL_SOUTH_BASE      = 0xFF_7A6A50.toInt()
+        val WALL_SOUTH_JOINT     = 0xFF_3A2818.toInt()
+        val WALL_SOUTH_STONE_LO  = 0xFF_4A3828.toInt()  // dark mortar row
+        val WALL_SOUTH_STONE_HI  = 0xFF_9A8A68.toInt()  // bright stone row (big contrast!)
 
-        val WALL_EAST_BASE       = 0xFF_5A4A38.toInt()  // shadow side (darker)
+        val WALL_EAST_BASE       = 0xFF_5A4A38.toInt()
         val WALL_EAST_JOINT      = 0xFF_2A2018.toInt()
-        val WALL_EAST_STONE_LO   = 0xFF_3A3028.toInt()
-        val WALL_EAST_STONE_HI   = 0xFF_5A4A38.toInt()
+        val WALL_EAST_STONE_LO   = 0xFF_2A2018.toInt()  // very dark shadow row
+        val WALL_EAST_STONE_HI   = 0xFF_6A5A48.toInt()  // lighter row (visible contrast)
 
         val WALL_TOP             = 0xFF_8A7A60.toInt()
         val WALL_TOP_HIGHLIGHT   = 0xFF_9A8A70.toInt()
@@ -637,7 +637,7 @@ object RoomEntityFactory {
                     commands += DrawCommand(
                         layer = DrawLayer.ITEM, depthKey = dk, entityId = id,
                         screenPos = Vec2f(screen.x - 24f, screen.y - 24f),
-                        payload = DrawPayload.Sprite("items", itemIdx * 24, 0, 24, 24, scale = 2f),
+                        payload = DrawPayload.Sprite("items", itemIdx * 24, 0, 24, 24, scale = 3f),
                     )
                     return@forEach // sprite rendered — skip polygon fallback
                 }
@@ -1332,13 +1332,13 @@ object RoomEntityFactory {
                 // Flame — in EFFECT layer so it's always in front of walls
                 commands += DrawCommand(DrawLayer.EFFECT, dk, 1, "${id}_flame",
                     Vec2f(flamePt.x - 3f, flamePt.y - 10f + flicker),
-                    DrawPayload.ColorOval(6f, 8f, 0xCC_FF8800.toInt()))
+                    DrawPayload.ColorOval(18f, 24f, 0xCC_FF8800.toInt()))
                 commands += DrawCommand(DrawLayer.EFFECT, dk, 2, "${id}_core",
                     Vec2f(flamePt.x - 1.5f, flamePt.y - 8f + flicker),
                     DrawPayload.ColorOval(3f, 4f, 0xFF_FFDD44.toInt()))
 
                 // Floor light cast
-                val floorAlpha = flickerAlpha(tick, tPhase, rate = 0.10, minAlpha = 0x20, maxAlpha = 0x50)
+                val floorAlpha = flickerAlpha(tick, tPhase, rate = 0.10, minAlpha = 0x08, maxAlpha = 0x18)
                 val tileX0 = (gx - 1f).coerceAtLeast(0f)
                 val tileX1 = (gx + 2f).coerceAtMost(room.width.toFloat())
                 var lightGx = tileX0
@@ -1380,13 +1380,13 @@ object RoomEntityFactory {
                     DrawPayload.Line(bracketFrom.x, bracketFrom.y, flamePt.x, flamePt.y, 0xFF_5A4020.toInt(), 1.5f))
                 commands += DrawCommand(DrawLayer.EFFECT, dk, 1, "${id}_flame",
                     Vec2f(flamePt.x - 3f, flamePt.y - 10f + flicker),
-                    DrawPayload.ColorOval(6f, 8f, 0xCC_FF8800.toInt()))
+                    DrawPayload.ColorOval(18f, 24f, 0xCC_FF8800.toInt()))
                 commands += DrawCommand(DrawLayer.EFFECT, dk, 2, "${id}_core",
                     Vec2f(flamePt.x - 1.5f, flamePt.y - 8f + flicker),
                     DrawPayload.ColorOval(3f, 4f, 0xFF_FFDD44.toInt()))
 
                 // Floor light
-                val floorAlpha = flickerAlpha(tick, tPhase, rate = 0.10, minAlpha = 0x20, maxAlpha = 0x50)
+                val floorAlpha = flickerAlpha(tick, tPhase, rate = 0.10, minAlpha = 0x08, maxAlpha = 0x18)
                 val tileY0 = (gy - 1f).coerceAtLeast(0f)
                 val tileY1 = (gy + 2f).coerceAtMost(room.depth.toFloat())
                 var lightGy = tileY0
@@ -1868,7 +1868,7 @@ object RoomEntityFactory {
             commands += DrawCommand(
                 layer = DrawLayer.ACTOR, depthKey = dk, entityId = id,
                 screenPos = Vec2f(cx - 48f, cy - 48f),
-                payload = DrawPayload.Sprite(enemySheet, frameIdx * 48, 0, 48, 48, scale = 2f),
+                payload = DrawPayload.Sprite(enemySheet, frameIdx * 48, 0, 48, 48, scale = 3f),
             )
             return // sprite rendered — skip polygon fallback
         }

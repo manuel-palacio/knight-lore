@@ -163,15 +163,16 @@ object ComposeSceneRenderer {
                     }
                 }
                 is DrawPayload.Sprite -> {
-                    // Sprite sheet rendering — load PNG and draw region
                     val img = SpriteCache.get(payload.sheetId)
                     if (img != null) {
-                        val srcLeft = payload.srcX.toFloat()
-                        val srcTop = payload.srcY.toFloat()
-                        val srcW = payload.srcW.toFloat()
-                        val srcH = payload.srcH.toFloat()
-                        val dstW = srcW * payload.scale
-                        val dstH = srcH * payload.scale
+                        // Inset source rect by 1px to prevent frame bleeding
+                        val inset = 1
+                        val sx = payload.srcX + inset
+                        val sy = payload.srcY + inset
+                        val sw = (payload.srcW - inset * 2).coerceAtLeast(1)
+                        val sh = (payload.srcH - inset * 2).coerceAtLeast(1)
+                        val dstW = sw * payload.scale
+                        val dstH = sh * payload.scale
                         val dstLeft = if (payload.flipX) left + dstW else left
                         val dstTop = top
 
@@ -183,11 +184,14 @@ object ComposeSceneRenderer {
                             }
                             canvas.drawImageRect(
                                 img,
-                                srcOffset = androidx.compose.ui.unit.IntOffset(payload.srcX, payload.srcY),
-                                srcSize = androidx.compose.ui.unit.IntSize(payload.srcW, payload.srcH),
+                                srcOffset = androidx.compose.ui.unit.IntOffset(sx, sy),
+                                srcSize = androidx.compose.ui.unit.IntSize(sw, sh),
                                 dstOffset = androidx.compose.ui.unit.IntOffset(dstLeft.toInt(), dstTop.toInt()),
                                 dstSize = androidx.compose.ui.unit.IntSize(dstW.toInt(), dstH.toInt()),
-                                paint = Paint().apply { isAntiAlias = false },
+                                paint = Paint().apply {
+                                    isAntiAlias = false
+                                    filterQuality = androidx.compose.ui.graphics.FilterQuality.None
+                                },
                             )
                             if (payload.flipX) canvas.restore()
                         }

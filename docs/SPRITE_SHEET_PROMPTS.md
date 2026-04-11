@@ -242,20 +242,9 @@ After generating in Midjourney:
 
 ---
 
-## Asset Priority Order
+## Generation Order
 
-Generate in this order for maximum gameplay impact:
-
-1. **Player Human** — you see this every second of play
-2. **Player Werewolf** — second most visible character
-3. **Wall Tileset** — covers most screen area
-4. **Items** — core gameplay objects
-5. **Floor/Blocks** — environment foundation
-6. **Enemies** (Guard → Ghost → Druid → Robot)
-7. **Props** — room atmosphere
-8. **Archways** — structural detail
-9. **Hazards** — gameplay clarity
-10. **Transformation** — rare but dramatic moment
+Doesn't matter — generate in any order you like. Each PNG is independent. The game loads whatever exists and falls back to procedural rendering for anything missing.
 
 ---
 

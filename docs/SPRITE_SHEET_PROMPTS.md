@@ -1,37 +1,31 @@
-# Knight Lore — Sprite Sheet Asset List & AI Generation Prompts
+# Knight Lore — Sprite Sheet Assets & Midjourney Prompts
 
-**Purpose:** Complete list of every sprite sheet needed, with exact dimensions and copy-paste prompts for ChatGPT/DALL-E image generation.
+**Tool:** Midjourney v6+
+**Workflow:**
+1. Paste prompt into Midjourney
+2. Upscale best result (U1-U4)
+3. Crop/resize to exact dimensions in Photoshop/Pixelmator/GIMP
+4. Save as PNG with transparency where noted
+5. Drop into `desktop/src/main/resources/sprites/`
 
-**Workflow for each asset:**
-1. Copy the prompt below into ChatGPT (with DALL-E) or Bing Image Creator
-2. Download the generated PNG
-3. Crop/resize to the exact dimensions listed
-4. Place in `desktop/src/main/resources/sprites/` (Desktop) or `app/src/main/res/drawable/` (Android)
-5. The game loads it automatically via `SpriteCache`
-
-**Style reference:** Knight Lore ZX Spectrum / Game Boy Color — chunky pixel art, black outlines, strong silhouettes, 8-bit retro aesthetic.
+**Midjourney tips:**
+- `--no background` or `--style raw` for cleaner results
+- `--ar` sets aspect ratio (crucial for sprite sheets)
+- Add `--s 50` for less stylization if results are too artistic
+- Use `--tile` for seamless wall/floor textures
+- Upscale then downscale to target pixel size for crisp pixel art
+- If MJ struggles with exact pixel art, generate at higher res and pixelate in post
 
 ---
 
 ## 1. PLAYER — Human Form
 
 **File:** `sprites/player_human.png`
-**Dimensions:** 224 × 48 px (7 frames × 32×48 each)
-**Scale in game:** 2×
+**Final size:** 224 × 48 px (7 frames × 32×48)
+**Game scale:** 2×
 
-| Frame | Position | Description |
-|-------|----------|-------------|
-| idle_se | 0,0 | Standing, facing south-east |
-| idle_sw | 32,0 | Standing, facing south-west |
-| walk_se_0 | 64,0 | Walking SE, right foot forward |
-| walk_se_1 | 96,0 | Walking SE, left foot forward |
-| walk_sw_0 | 128,0 | Walking SW, right foot forward |
-| walk_sw_1 | 160,0 | Walking SW, left foot forward |
-| jump | 192,0 | Jumping (tucked legs) |
-
-**Prompt:**
 ```
-Pixel art sprite sheet on pure black background. 7 character frames in a single horizontal row, each frame exactly 32×48 pixels. The character is a small adventurer/explorer in isometric 3/4 view style like Knight Lore (ZX Spectrum). He wears a wide-brimmed explorer hat (pith helmet), has a visible face with eyes under the hat shadow, a blue-grey tunic/shirt, brown belt, short green-brown trousers, and chunky brown boots. Arms hang freely at his sides with visible skin-colored hands. The style is chunky retro 8-bit pixel art with black outlines. Frames from left to right: 1) idle facing south-east, 2) idle facing south-west (mirrored), 3-4) walk cycle SE (two frames, legs apart then together), 5-6) walk cycle SW (mirrored), 7) jumping with tucked legs. No anti-aliasing, hard pixel edges, retro game aesthetic.
+Pixel art sprite sheet, retro 8-bit isometric game character, explorer with wide-brimmed pith helmet, blue tunic, brown boots, dark face under hat shadow with visible white eyes, chunky cartoon proportions like Knight Lore ZX Spectrum, 7 animation frames in horizontal row: idle, idle mirrored, walk cycle 4 frames, jump, pure black background, no anti-aliasing, hard pixel edges --ar 7:1.5 --s 50 --style raw --no gradient smooth shading
 ```
 
 ---
@@ -39,21 +33,11 @@ Pixel art sprite sheet on pure black background. 7 character frames in a single 
 ## 2. PLAYER — Werewolf Form
 
 **File:** `sprites/player_wolf.png`
-**Dimensions:** 240 × 56 px (6 frames × 40×56 each)
-**Scale in game:** 2×
+**Final size:** 240 × 56 px (6 frames × 40×56)
+**Game scale:** 2×
 
-| Frame | Position | Description |
-|-------|----------|-------------|
-| idle_se | 0,0 | Standing, facing SE |
-| idle_sw | 40,0 | Standing, facing SW |
-| walk_se_0 | 80,0 | Walking SE frame 1 |
-| walk_se_1 | 120,0 | Walking SE frame 2 |
-| walk_sw_0 | 160,0 | Walking SW frame 1 |
-| walk_sw_1 | 200,0 | Walking SW frame 2 |
-
-**Prompt:**
 ```
-Pixel art sprite sheet on pure black background. 6 werewolf character frames in a single horizontal row, each frame exactly 40×56 pixels. The werewolf is an upright humanoid beast in isometric 3/4 view style like Knight Lore. It has a large head with pointed ears sticking up, fierce amber/orange eyes, visible fangs, a wide hunched muscular body with raised shoulder humps, long arms reaching below the knees with bone-white claws, thick legs in a wide power stance, and a curved tail behind. Dark brown fur with lighter chest. The style is chunky retro 8-bit pixel art with black outlines. Frames: 1) idle facing SE, 2) idle facing SW, 3-4) walk cycle SE (arms and legs counter-swinging), 5-6) walk cycle SW. Must look completely different from a human — threatening, bestial, heavy. No anti-aliasing.
+Pixel art sprite sheet, retro 8-bit isometric werewolf character, upright humanoid beast with large head, pointed ears, amber glowing eyes, visible fangs, hunched muscular body with shoulder humps, long arms with bone-white claws, wide power stance, dark brown fur, tail behind, 6 animation frames in horizontal row: idle, idle mirrored, walk cycle 4 frames, pure black background, Knight Lore game style --ar 6:1.4 --s 50 --style raw --no gradient smooth background
 ```
 
 ---
@@ -61,19 +45,11 @@ Pixel art sprite sheet on pure black background. 6 werewolf character frames in 
 ## 3. PLAYER — Transformation Sequence
 
 **File:** `sprites/player_transform.png`
-**Dimensions:** 192 × 56 px (4 frames × 48×56 each)
-**Scale in game:** 2×
+**Final size:** 192 × 56 px (4 frames × 48×56)
+**Game scale:** 2×
 
-| Frame | Position | Description |
-|-------|----------|-------------|
-| phase_1 | 0,0 | Human body starting to bulge |
-| phase_2 | 48,0 | Hybrid — ears emerging, arms lengthening |
-| phase_3 | 96,0 | Nearly wolf — wide shoulders, claws visible |
-| phase_4 | 144,0 | Full wolf emerging from human shell |
-
-**Prompt:**
 ```
-Pixel art sprite sheet on pure black background. 4 transformation frames in a horizontal row, each 48×56 pixels. Shows a human explorer morphing into a werewolf in isometric 3/4 view like Knight Lore. Frame 1: human body starts bulging, hat still on, body expanding. Frame 2: hybrid form — pointed ears emerging through hat, arms getting longer, shoulders widening. Frame 3: nearly complete wolf — hat fallen off, full snout visible, claws formed, body hunched. Frame 4: dramatic final burst — wolf fully emerged, human features gone. Chunky retro 8-bit pixel art, black outlines, exaggerated cartoon transformation. No anti-aliasing.
+Pixel art sprite sheet, retro 8-bit transformation sequence, human explorer morphing into werewolf, 4 stages left to right: human body bulging with hat still on, hybrid form with ears emerging and arms lengthening, nearly wolf with snout and claws formed, full werewolf burst, isometric 3/4 view, exaggerated cartoon body horror, pure black background, Knight Lore ZX Spectrum style --ar 4:1.2 --s 50 --style raw --no gradient
 ```
 
 ---
@@ -81,21 +57,10 @@ Pixel art sprite sheet on pure black background. 4 transformation frames in a ho
 ## 4. WALL TILESET
 
 **File:** `sprites/tileset_walls.png`
-**Dimensions:** 192 × 96 px (grid of tiles)
-**Scale in game:** 1× (tiles match isometric grid)
+**Final size:** 192 × 96 px (2×2 grid of 96×48 tiles)
 
-**Layout (each cell 96×48 — one isometric tile face):**
-
-| Position | Tile |
-|----------|------|
-| 0,0 | Wall south face — brick dither pattern (light) |
-| 96,0 | Wall east face — brick dither pattern (darker shadow) |
-| 0,48 | Wall top cap — diamond shape |
-| 96,48 | Floor tile — dark stone slab |
-
-**Prompt:**
 ```
-Pixel art tileset on pure black background, 192×96 pixels total, arranged as a 2×2 grid of isometric tiles (each 96×48 pixels). Medieval castle dungeon style like Knight Lore. Top-left: wall face with horizontal brick/stone pattern in warm olive-tan colors with dark mortar lines. Top-right: same wall face but darker (shadow side). Bottom-left: isometric diamond shape for wall top cap in lighter stone color. Bottom-right: dark floor tile with subtle stone slab texture and thin grout lines. Retro 8-bit pixel art style, no anti-aliasing. Colors: warm olive/brown stone (not grey, not blue).
+Pixel art isometric wall tileset, medieval castle dungeon, 2x2 grid on black background: top-left warm olive-tan brick wall face with mortar lines, top-right same wall darker shadow side, bottom-left isometric diamond wall cap lighter stone, bottom-right dark floor stone slab with grout lines, retro 8-bit style like Knight Lore, warm earth tones not grey --ar 2:1 --s 50 --style raw --tile --no gradient smooth
 ```
 
 ---
@@ -103,20 +68,10 @@ Pixel art tileset on pure black background, 192×96 pixels total, arranged as a 
 ## 5. ARCHWAY TILES
 
 **File:** `sprites/tileset_archway.png`
-**Dimensions:** 288 × 96 px (3 tiles wide × 2 tall)
+**Final size:** 288 × 96 px (3×2 grid)
 
-| Position | Tile |
-|----------|------|
-| 0,0 | Left jamb (wall column with arch start) |
-| 96,0 | Arch keystone / lintel top |
-| 192,0 | Right jamb (wall column with arch end) |
-| 0,48 | Dark void (passage behind archway) |
-| 96,48 | Threshold floor tile (lighter stone) |
-| 192,48 | Arch curve segment |
-
-**Prompt:**
 ```
-Pixel art tileset on pure black background, 288×96 pixels total, 3×2 grid of isometric tiles (each 96×48). Medieval castle archway pieces like Knight Lore. Top row: left stone pillar/jamb with arch beginning to curve, center keystone/lintel block, right pillar with arch curve ending. Bottom row: pure black void (the passage through the door), lighter threshold floor stone, curved arch segment piece. Warm olive-tan stone colors with brick texture. Retro 8-bit style. These tiles compose together to form a complete rounded archway in the castle wall.
+Pixel art isometric archway tileset, medieval castle doorway pieces, 3x2 grid on black: top row shows left stone pillar, center keystone lintel, right pillar forming a rounded arch, bottom row shows dark passage void, threshold floor stone, curved arch segment, warm olive-tan stone with brick texture, retro 8-bit Knight Lore style --ar 3:1 --s 50 --style raw --no gradient smooth
 ```
 
 ---
@@ -124,17 +79,10 @@ Pixel art tileset on pure black background, 288×96 pixels total, 3×2 grid of i
 ## 6. BLOCK TILESET
 
 **File:** `sprites/tileset_blocks.png`
-**Dimensions:** 288 × 48 px (3 tiles × 96×48 each)
+**Final size:** 288 × 48 px (3 tiles)
 
-| Position | Tile |
-|----------|------|
-| 0,0 | Block top face (isometric diamond) |
-| 96,0 | Block left/south face |
-| 192,0 | Block right/east face (darker) |
-
-**Prompt:**
 ```
-Pixel art tileset on pure black background, 288×48 pixels, 3 isometric block faces each 96×48 pixels. Medieval castle stone block like Knight Lore. Left: top face as an isometric diamond in light warm stone. Center: south-facing side with brick texture in medium olive-tan. Right: east-facing side in darker shadow stone. These three pieces compose to form a complete 3D isometric stone cube. Retro 8-bit pixel art, chunky stone texture, no anti-aliasing.
+Pixel art isometric stone block tileset, 3 faces of a medieval dungeon cube in a row on black background: bright top diamond face, medium south-facing brick wall side, darker east-facing shadow side, warm olive-tan stone texture, retro 8-bit Knight Lore style, these three compose into one 3D isometric cube --ar 6:1 --s 50 --style raw --no gradient
 ```
 
 ---
@@ -142,86 +90,54 @@ Pixel art tileset on pure black background, 288×48 pixels, 3 isometric block fa
 ## 7. COLLECTIBLE ITEMS
 
 **File:** `sprites/items.png`
-**Dimensions:** 240 × 24 px (10 items × 24×24 each)
+**Final size:** 240 × 24 px (10 items × 24×24)
 
-| Position | Item |
-|----------|------|
-| 0,0 | Crystal Ball — blue sphere on small base |
-| 24,0 | Goblet — gold cup with stem |
-| 48,0 | Wine Bottle — tall dark red bottle |
-| 72,0 | Gem — pink diamond shape |
-| 96,0 | Poison Vial — green bottle with skull label |
-| 120,0 | Boot — brown leather boot |
-| 144,0 | Teacup — blue cup with handle |
-| 168,0 | Key — gold key with teeth |
-| 192,0 | Torch — stick with flame |
-| 216,0 | Skull — bone white with eye sockets |
-
-**Prompt:**
 ```
-Pixel art sprite sheet on pure black background. 10 collectible item icons in a horizontal row, each 24×24 pixels. Medieval fantasy items for a dungeon game like Knight Lore. From left to right: 1) blue crystal ball on a small stand, 2) gold goblet/chalice with stem, 3) dark red wine bottle, 4) pink faceted gem/diamond, 5) green poison vial with cork, 6) brown leather boot, 7) blue and white teacup with handle, 8) gold key with circular bow and teeth, 9) wooden torch with orange flame, 10) white skull with dark eye sockets. Each item must be recognizable by silhouette alone. Chunky retro 8-bit pixel art, bright colors on black, no anti-aliasing.
+Pixel art item icons sprite sheet, 10 medieval fantasy collectibles in a horizontal row on pure black background: blue crystal ball on stand, gold goblet chalice, dark red wine bottle, pink faceted gem, green poison vial, brown leather boot, blue teacup with handle, gold ornate key, wooden torch with flame, white skull with eye sockets, each item has unique recognizable silhouette, bright colors, retro 8-bit style --ar 10:1 --s 50 --style raw --no gradient background
 ```
 
 ---
 
-## 8. ENEMIES — Guard
+## 8. ENEMY — Guard
 
 **File:** `sprites/enemy_guard.png`
-**Dimensions:** 192 × 48 px (4 frames × 48×48 each)
+**Final size:** 192 × 48 px (4 frames × 48×48)
 
-| Frame | Position | Description |
-|-------|----------|-------------|
-| idle | 0,0 | Standing with halberd |
-| walk_0 | 48,0 | Walk frame 1 |
-| walk_1 | 96,0 | Walk frame 2 |
-| attack | 144,0 | Halberd thrust |
-
-**Prompt:**
 ```
-Pixel art sprite sheet on pure black background. 4 frames of a medieval castle guard in a row, each 48×48 pixels, isometric 3/4 view like Knight Lore. The guard wears dark steel armor, a sallet helmet with a small red plume, and carries a tall halberd weapon. Rigid upright military posture. Frames: 1) standing idle with halberd vertical, 2-3) walking patrol (two frames), 4) thrusting halberd forward. Dark metallic grey armor, red plume accent. Chunky 8-bit pixel art, black outlines, retro game style. No anti-aliasing.
+Pixel art sprite sheet, medieval castle guard enemy, 4 animation frames in row on black background, isometric 3/4 view: idle with halberd, walking frame 1, walking frame 2, attacking thrust, dark steel plate armor, sallet helmet with red plume, rigid upright military posture, retro 8-bit Knight Lore style --ar 4:1 --s 50 --style raw --no gradient smooth
 ```
 
 ---
 
-## 9. ENEMIES — Ghost
+## 9. ENEMY — Ghost
 
 **File:** `sprites/enemy_ghost.png`
-**Dimensions:** 192 × 48 px (4 frames × 48×48 each)
+**Final size:** 192 × 48 px (4 frames × 48×48)
 
-| Frame | Position | Description |
-|-------|----------|-------------|
-| float_0 | 0,0 | Floating frame 1 |
-| float_1 | 48,0 | Floating frame 2 (bobbing) |
-| float_2 | 96,0 | Floating frame 3 |
-| fade | 144,0 | Fading/transparent |
-
-**Prompt:**
 ```
-Pixel art sprite sheet on pure black background. 4 frames of a ghost enemy in a row, each 48×48 pixels, isometric 3/4 view like Knight Lore. The ghost is a translucent pale blue-white floating apparition with a tapering wispy body that fades to nothing at the bottom (no legs). It has two dark void eyes and trailing ethereal tendrils. Frames show a subtle floating bob animation — body drifts up and down, tendrils sway. Frame 4 is more transparent/faded. Semi-transparent, ethereal, spooky but retro. 8-bit pixel art style, no anti-aliasing.
+Pixel art sprite sheet, ghost enemy, 4 animation frames in row on pure black background, isometric 3/4 view: floating translucent pale blue-white apparition, tapering wispy body fading to nothing at bottom, two dark void eyes, trailing ethereal tendrils, frames show subtle floating bob animation, semi-transparent spooky, retro 8-bit Knight Lore style --ar 4:1 --s 50 --style raw --no gradient
 ```
 
 ---
 
-## 10. ENEMIES — Druid
+## 10. ENEMY — Druid
 
 **File:** `sprites/enemy_druid.png`
-**Dimensions:** 192 × 48 px (4 frames × 48×48 each)
+**Final size:** 192 × 48 px (4 frames × 48×48)
 
-**Prompt:**
 ```
-Pixel art sprite sheet on pure black background. 4 frames of a dark druid/sorcerer in a row, each 48×48 pixels, isometric 3/4 view. Hunched figure in a dark hooded robe, holding a crooked wooden staff with a glowing green orb at the top. Skull-like face visible under the hood with dark eye sockets. Asymmetric posture — leaning on the staff. Frames: 1) idle, 2-3) shuffling walk, 4) casting spell (orb glows brighter). Dark brown/black robe, bone-colored face, green magic glow. Retro 8-bit pixel art. No anti-aliasing.
+Pixel art sprite sheet, dark druid sorcerer enemy, 4 frames in row on black background, isometric 3/4 view: hunched figure in dark hooded robe, crooked wooden staff with glowing green orb, skull-like face under hood, frames show idle, shuffling walk two frames, casting spell with brighter orb, dark brown robe, bone face, green magic glow, retro 8-bit style --ar 4:1 --s 50 --style raw --no gradient
 ```
 
 ---
 
-## 11. ENEMIES — Robot/Construct
+## 11. ENEMY — Robot/Construct
 
 **File:** `sprites/enemy_robot.png`
-**Dimensions:** 192 × 48 px (4 frames × 48×48 each)
+**Final size:** 192 × 48 px (4 frames × 48×48)
 
-**Prompt:**
 ```
-Pixel art sprite sheet on pure black background. 4 frames of a mechanical golem/construct in a row, each 48×48 pixels, isometric 3/4 view like Knight Lore. Boxy angular body made of dark metal plates with visible panel seams, a square head with a glowing green scanning eye/visor, segmented arms with piston joints, and blocky legs. Has a small antenna on the head. Frames: 1) idle with eye scanning, 2-3) walking with piston movement, 4) eye glow intensified. Dark steel grey, green eye accent. Geometric, angular, not organic. Retro 8-bit pixel art. No anti-aliasing.
+Pixel art sprite sheet, mechanical golem construct enemy, 4 frames in row on black background, isometric 3/4 view: boxy angular dark metal body with panel seams, square head with glowing green scanning eye visor, segmented piston arms, blocky legs, small antenna, frames show idle, walking with piston motion two frames, eye glow intensified, dark steel grey, geometric angular not organic, retro 8-bit style --ar 4:1 --s 50 --style raw --no gradient
 ```
 
 ---
@@ -229,26 +145,68 @@ Pixel art sprite sheet on pure black background. 4 frames of a mechanical golem/
 ## 12. PROPS — Room Set-Pieces
 
 **File:** `sprites/props.png`
-**Dimensions:** 288 × 96 px (various props in a grid)
+**Final size:** 288 × 96 px
 
-| Position | Prop | Size |
-|----------|------|------|
-| 0,0 | Cauldron (bubbling, green glow) | 48×48 |
-| 48,0 | Throne (stone, worn) | 48×48 |
-| 96,0 | Altar (ritual circle on top) | 48×48 |
-| 144,0 | Barred window (moonlight) | 48×48 |
-| 192,0 | Hanging cage | 48×48 |
-| 240,0 | Brazier (fire) | 48×48 |
-| 0,48 | Chain cluster (hanging) | 48×48 |
-| 48,48 | Torn banner (crimson) | 48×48 |
-| 96,48 | Broken column | 48×48 |
-| 144,48 | Torch sconce (wall-mounted) | 24×48 |
-| 168,48 | Cobweb | 24×24 |
-| 192,48 | Puddle | 48×24 |
+Generate these as **individual images** then compose into the sheet:
 
-**Prompt:**
+### 12a. Cauldron
 ```
-Pixel art prop sprite sheet on pure black background, 288×96 pixels total. Medieval fantasy dungeon props in isometric 3/4 view like Knight Lore. Top row (each 48×48): 1) bubbling cauldron with green glow, 2) crumbling stone throne, 3) ritual altar with magic circle on top, 4) barred window with pale moonlight beam, 5) hanging iron cage, 6) standing brazier with orange fire. Bottom row: 7) cluster of hanging chains (48×48), 8) torn crimson banner on pole (48×48), 9) broken stone column (48×48), 10) wall-mounted torch sconce with flame (24×48), 11) corner cobweb (24×24), 12) floor water puddle (48×24). Warm stone colors, atmospheric, retro 8-bit pixel art. No anti-aliasing.
+Pixel art isometric bubbling cauldron, medieval fantasy, iron pot with green glowing liquid, bubbles rising, warm orange firelight underneath, on pure black background, retro 8-bit Knight Lore style, 48x48 pixels --ar 1:1 --s 50 --style raw
+```
+
+### 12b. Throne
+```
+Pixel art isometric stone throne, medieval castle, crumbling worn ancient seat of power, dark stone with carved details, on pure black background, retro 8-bit Knight Lore style, 48x48 pixels --ar 1:1 --s 50 --style raw
+```
+
+### 12c. Altar
+```
+Pixel art isometric ritual altar, medieval fantasy, stone slab with glowing magic circle etched on top, dark mysterious, on pure black background, retro 8-bit style, 48x48 pixels --ar 1:1 --s 50 --style raw
+```
+
+### 12d. Barred Window
+```
+Pixel art isometric barred castle window, iron bars with pale moonlight beam streaming through, stone frame, on pure black background, retro 8-bit Knight Lore style, 48x48 pixels --ar 1:1 --s 50 --style raw
+```
+
+### 12e. Hanging Cage
+```
+Pixel art isometric hanging iron cage, medieval dungeon, suspended from chain, dark rusted metal, on pure black background, retro 8-bit style, 48x48 pixels --ar 1:1 --s 50 --style raw
+```
+
+### 12f. Brazier
+```
+Pixel art isometric standing brazier, medieval castle, iron bowl on tripod stand with orange crackling fire, warm glow, on pure black background, retro 8-bit style, 48x48 pixels --ar 1:1 --s 50 --style raw
+```
+
+### 12g. Chain Cluster
+```
+Pixel art isometric cluster of hanging chains, medieval dungeon, dark iron chains hanging from ceiling, on pure black background, retro 8-bit style, 48x48 pixels --ar 1:1 --s 50 --style raw
+```
+
+### 12h. Torn Banner
+```
+Pixel art isometric torn medieval banner on pole, tattered crimson red fabric, hanging from wall bracket, on pure black background, retro 8-bit style, 48x48 pixels --ar 1:1 --s 50 --style raw
+```
+
+### 12i. Broken Column
+```
+Pixel art isometric broken stone column, medieval ruins, cracked and crumbling pillar, rubble at base, on pure black background, retro 8-bit style, 48x48 pixels --ar 1:1 --s 50 --style raw
+```
+
+### 12j. Torch Sconce
+```
+Pixel art wall-mounted torch sconce, medieval castle, iron bracket with flickering orange flame, warm glow halo, on pure black background, retro 8-bit style, 24x48 pixels --ar 1:2 --s 50 --style raw
+```
+
+### 12k. Cobweb
+```
+Pixel art corner cobweb, thin white spider web strands in corner, dusty abandoned, on pure black background, retro 8-bit style, 24x24 pixels --ar 1:1 --s 50 --style raw
+```
+
+### 12l. Puddle
+```
+Pixel art floor water puddle, dark reflective surface, subtle ripple, medieval dungeon floor, on pure black background, retro 8-bit style, 48x24 pixels --ar 2:1 --s 50 --style raw
 ```
 
 ---
@@ -256,38 +214,65 @@ Pixel art prop sprite sheet on pure black background, 288×96 pixels total. Medi
 ## 13. HAZARDS
 
 **File:** `sprites/hazards.png`
-**Dimensions:** 192 × 48 px
+**Final size:** 192 × 48 px
 
-| Position | Hazard | Size |
-|----------|--------|------|
-| 0,0 | Spike pit (metallic spikes on red base) | 96×48 |
-| 96,0 | Crystal spike cluster (blue, on gold base) | 96×48 |
-
-**Prompt:**
 ```
-Pixel art hazard sprites on pure black background, 192×48 pixels. Two isometric floor hazard tiles, each 96×48 pixels. Left: spike pit with sharp metallic silver spikes rising from a dark red blood-stained base (isometric diamond shape). Right: cluster of blue crystal spikes on a gold/amber base (like Knight Lore GBC). Both must read as "danger — don't step here" at a glance. Retro 8-bit pixel art. No anti-aliasing.
+Pixel art isometric hazard tiles, 2 dangerous floor traps side by side on black background: left is spike pit with sharp metallic silver spikes on dark red blood base as isometric diamond, right is cluster of blue crystal spikes on gold amber base like Knight Lore GBC, both read as instant danger, retro 8-bit style --ar 4:1 --s 50 --style raw --no gradient smooth
 ```
 
 ---
 
-## Summary
+## Post-Processing Workflow
 
-| # | Asset | File | Dimensions | Frames |
-|---|-------|------|-----------|--------|
-| 1 | Player Human | `sprites/player_human.png` | 224×48 | 7 |
-| 2 | Player Wolf | `sprites/player_wolf.png` | 240×56 | 6 |
-| 3 | Transform | `sprites/player_transform.png` | 192×56 | 4 |
-| 4 | Wall Tileset | `sprites/tileset_walls.png` | 192×96 | 4 |
-| 5 | Archway | `sprites/tileset_archway.png` | 288×96 | 6 |
-| 6 | Blocks | `sprites/tileset_blocks.png` | 288×48 | 3 |
-| 7 | Items | `sprites/items.png` | 240×24 | 10 |
-| 8 | Guard | `sprites/enemy_guard.png` | 192×48 | 4 |
-| 9 | Ghost | `sprites/enemy_ghost.png` | 192×48 | 4 |
-| 10 | Druid | `sprites/enemy_druid.png` | 192×48 | 4 |
-| 11 | Robot | `sprites/enemy_robot.png` | 192×48 | 4 |
-| 12 | Props | `sprites/props.png` | 288×96 | 12 |
-| 13 | Hazards | `sprites/hazards.png` | 192×48 | 2 |
+After generating in Midjourney:
 
-**Total: 13 sprite sheets, ~60 individual frames**
+1. **Upscale** the best variant (U1-U4)
+2. **Crop** each frame to exact pixel dimensions listed above
+3. **Pixelate** if needed — Image → Mode → Indexed Color in Photoshop, or use nearest-neighbor downscale
+4. **Black background** — ensure background is pure `#000000` or transparent
+5. **Assemble** frames into horizontal sprite sheet at exact layout positions
+6. **Save** as PNG (8-bit with alpha channel)
+7. **Drop** into `desktop/src/main/resources/sprites/`
 
-Once generated, drop each PNG into `desktop/src/main/resources/sprites/` and the game will use them automatically.
+### Recommended tools for post-processing:
+- **Aseprite** ($20, best for pixel art editing and sprite sheets)
+- **Piskel** (free, browser-based at piskelapp.com)
+- **GIMP** (free, for cropping and compositing)
+- **TexturePacker** (free tier, assembles sprite sheets from individual frames)
+
+---
+
+## Asset Priority Order
+
+Generate in this order for maximum gameplay impact:
+
+1. **Player Human** — you see this every second of play
+2. **Player Werewolf** — second most visible character
+3. **Wall Tileset** — covers most screen area
+4. **Items** — core gameplay objects
+5. **Floor/Blocks** — environment foundation
+6. **Enemies** (Guard → Ghost → Druid → Robot)
+7. **Props** — room atmosphere
+8. **Archways** — structural detail
+9. **Hazards** — gameplay clarity
+10. **Transformation** — rare but dramatic moment
+
+---
+
+## Quick Reference — All Files
+
+| # | Asset | Filename | Size | Frames |
+|---|-------|----------|------|--------|
+| 1 | Player Human | `player_human.png` | 224×48 | 7 |
+| 2 | Player Wolf | `player_wolf.png` | 240×56 | 6 |
+| 3 | Transformation | `player_transform.png` | 192×56 | 4 |
+| 4 | Walls | `tileset_walls.png` | 192×96 | 4 |
+| 5 | Archways | `tileset_archway.png` | 288×96 | 6 |
+| 6 | Blocks | `tileset_blocks.png` | 288×48 | 3 |
+| 7 | Items | `items.png` | 240×24 | 10 |
+| 8 | Guard | `enemy_guard.png` | 192×48 | 4 |
+| 9 | Ghost | `enemy_ghost.png` | 192×48 | 4 |
+| 10 | Druid | `enemy_druid.png` | 192×48 | 4 |
+| 11 | Robot | `enemy_robot.png` | 192×48 | 4 |
+| 12 | Props | `props.png` | 288×96 | 12 |
+| 13 | Hazards | `hazards.png` | 192×48 | 2 |

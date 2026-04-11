@@ -39,31 +39,31 @@ object RoomEntityFactory {
         com.palacesoft.knightlore.render.art.DefaultActorArtCatalog()
 
     private object CastleColors {
-        // ── Wall faces — darker stone for mysterious castle atmosphere ─────────
-        val WALL_SOUTH_BASE      = 0xFF_4A4838.toInt()  // dark olive stone
-        val WALL_SOUTH_JOINT     = 0xFF_2A2818.toInt()
-        val WALL_SOUTH_STONE_LO  = 0xFF_3A3828.toInt()  // darker dither row
-        val WALL_SOUTH_STONE_HI  = 0xFF_5A5840.toInt()  // lighter dither row
+        // ── Wall faces — warm tan/brown matching Midjourney texture ──────────
+        val WALL_SOUTH_BASE      = 0xFF_7A6A50.toInt()  // warm tan stone
+        val WALL_SOUTH_JOINT     = 0xFF_4A3A28.toInt()  // mortar
+        val WALL_SOUTH_STONE_LO  = 0xFF_5A4A38.toInt()  // darker brick row
+        val WALL_SOUTH_STONE_HI  = 0xFF_8A7A60.toInt()  // lighter brick row
 
-        val WALL_EAST_BASE       = 0xFF_3A3828.toInt()  // deep shadow face
-        val WALL_EAST_JOINT      = 0xFF_1A1810.toInt()
-        val WALL_EAST_STONE_LO   = 0xFF_2A2818.toInt()
-        val WALL_EAST_STONE_HI   = 0xFF_3A3828.toInt()
+        val WALL_EAST_BASE       = 0xFF_5A4A38.toInt()  // shadow side (darker)
+        val WALL_EAST_JOINT      = 0xFF_2A2018.toInt()
+        val WALL_EAST_STONE_LO   = 0xFF_3A3028.toInt()
+        val WALL_EAST_STONE_HI   = 0xFF_5A4A38.toInt()
 
-        val WALL_TOP             = 0xFF_6A6850.toInt()  // dimmer cap
-        val WALL_TOP_HIGHLIGHT   = 0xFF_7A7860.toInt()
+        val WALL_TOP             = 0xFF_8A7A60.toInt()
+        val WALL_TOP_HIGHLIGHT   = 0xFF_9A8A70.toInt()
 
-        // ── Floor — pitch black, barely visible ──────────────────────────────
-        val FLOOR_SLAB           = 0xFF_0E0C08.toInt()  // almost black
-        val FLOOR_WORN           = 0xFF_141210.toInt()
-        val FLOOR_GROUT          = 0xFF_060604.toInt()
-        val FLOOR_CRACK          = 0xFF_040402.toInt()
+        // ── Floor — dark grey stone (visible but dark) ──────────────────────
+        val FLOOR_SLAB           = 0xFF_2A2828.toInt()  // dark grey
+        val FLOOR_WORN           = 0xFF_323030.toInt()
+        val FLOOR_GROUT          = 0xFF_1A1818.toInt()
+        val FLOOR_CRACK          = 0xFF_101010.toInt()
 
-        // ── Blocks — warm stone matching walls ──────────────────────────────
-        val BLOCK_TOP            = 0xFF_9A9878.toInt()
-        val BLOCK_LEFT           = 0xFF_6A6850.toInt()
-        val BLOCK_RIGHT          = 0xFF_3A3828.toInt()
-        val BLOCK_JOINT          = 0xFF_2A2818.toInt()
+        // ── Blocks — matching Midjourney warm stone ─────────────────────────
+        val BLOCK_TOP            = 0xFF_9A8A70.toInt()  // light warm cap
+        val BLOCK_LEFT           = 0xFF_7A6A50.toInt()  // south face matches wall
+        val BLOCK_RIGHT          = 0xFF_5A4A38.toInt()  // east shadow face
+        val BLOCK_JOINT          = 0xFF_3A2A20.toInt()
 
         // ── Accent / details ─────────────────────────────────────────────────
         val MOSS                 = 0xFF_2A4A2A.toInt()  // damp dark moss (not bright green)

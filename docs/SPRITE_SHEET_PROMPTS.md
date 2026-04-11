@@ -25,7 +25,7 @@
 **Game scale:** 2×
 
 ```
-Pixel art sprite sheet, retro 8-bit isometric game character, explorer with wide-brimmed pith helmet, blue tunic, brown boots, dark face under hat shadow with visible white eyes, chunky cartoon proportions like Knight Lore ZX Spectrum, 7 animation frames in horizontal row: idle, idle mirrored, walk cycle 4 frames, jump, pure black background, no anti-aliasing, hard pixel edges --ar 7:1.5 --s 50 --style raw --no gradient smooth shading
+Pixel art sprite sheet, retro 8-bit isometric game character, explorer with wide-brimmed pith helmet, blue tunic, brown boots, dark face under hat shadow with visible white eyes, chunky cartoon proportions like Knight Lore ZX Spectrum, 7 animation frames in horizontal row: idle, idle mirrored, walk cycle 4 frames, jump, pure black background, no anti-aliasing, hard pixel edges --ar 14:3 --s 50 --style raw --no gradient smooth shading
 ```
 
 ---
@@ -37,7 +37,7 @@ Pixel art sprite sheet, retro 8-bit isometric game character, explorer with wide
 **Game scale:** 2×
 
 ```
-Pixel art sprite sheet, retro 8-bit isometric werewolf character, upright humanoid beast with large head, pointed ears, amber glowing eyes, visible fangs, hunched muscular body with shoulder humps, long arms with bone-white claws, wide power stance, dark brown fur, tail behind, 6 animation frames in horizontal row: idle, idle mirrored, walk cycle 4 frames, pure black background, Knight Lore game style --ar 6:1.4 --s 50 --style raw --no gradient smooth background
+Pixel art sprite sheet, retro 8-bit isometric werewolf character, upright humanoid beast with large head, pointed ears, amber glowing eyes, visible fangs, hunched muscular body with shoulder humps, long arms with bone-white claws, wide power stance, dark brown fur, tail behind, 6 animation frames in horizontal row: idle, idle mirrored, walk cycle 4 frames, pure black background, Knight Lore game style --ar 30:7 --s 50 --style raw --no gradient smooth background
 ```
 
 ---
@@ -49,7 +49,7 @@ Pixel art sprite sheet, retro 8-bit isometric werewolf character, upright humano
 **Game scale:** 2×
 
 ```
-Pixel art sprite sheet, retro 8-bit transformation sequence, human explorer morphing into werewolf, 4 stages left to right: human body bulging with hat still on, hybrid form with ears emerging and arms lengthening, nearly wolf with snout and claws formed, full werewolf burst, isometric 3/4 view, exaggerated cartoon body horror, pure black background, Knight Lore ZX Spectrum style --ar 4:1.2 --s 50 --style raw --no gradient
+Pixel art sprite sheet, retro 8-bit transformation sequence, human explorer morphing into werewolf, 4 stages left to right: human body bulging with hat still on, hybrid form with ears emerging and arms lengthening, nearly wolf with snout and claws formed, full werewolf burst, isometric 3/4 view, exaggerated cartoon body horror, pure black background, Knight Lore ZX Spectrum style --ar 10:3 --s 50 --style raw --no gradient
 ```
 
 ---

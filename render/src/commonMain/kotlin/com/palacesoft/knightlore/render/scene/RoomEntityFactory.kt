@@ -1315,7 +1315,7 @@ object RoomEntityFactory {
                 DrawPayload.DitheredPath(listOf(
                     pt(gx, gy + 1f, 0f, ox, oy), pt(gx + 1f, gy + 1f, 0f, ox, oy),
                     pt(gx + 1f, gy + 1f, 3f, ox, oy), pt(gx, gy + 1f, 3f, ox, oy),
-                ), palette.wallSouthLo, palette.wallSouthHi, horizontal = false))
+                ), palette.wallSouthLo, palette.wallSouthHi, horizontal = true))
 
             // Torch — every 4th column, rendered in EFFECT layer (in front of walls)
             if (gx.toInt() % 4 == 2) {
@@ -1366,7 +1366,7 @@ object RoomEntityFactory {
                 DrawPayload.DitheredPath(listOf(
                     pt(gx + 1f, gy, 0f, ox, oy), pt(gx + 1f, gy + 1f, 0f, ox, oy),
                     pt(gx + 1f, gy + 1f, 3f, ox, oy), pt(gx + 1f, gy, 3f, ox, oy),
-                ), palette.wallEastLo, palette.wallEastHi, horizontal = false))
+                ), palette.wallEastLo, palette.wallEastHi, horizontal = true))
 
             // Torch only — every 4th column, in EFFECT layer
             if (gy.toInt() % 4 == 2) {

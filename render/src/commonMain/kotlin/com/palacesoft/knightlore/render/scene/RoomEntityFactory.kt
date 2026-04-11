@@ -1304,18 +1304,90 @@ object RoomEntityFactory {
             }
         }
 
-        // North wall block: visible faces = top + south-facing inner face (blockFaceLeft)
+        // Draw individual brick rectangles on a wall face for rich stone texture
+        fun drawBrickFace(
+            gx: Float, gy: Float, faceY: Float,
+            zFrom: Float, zTo: Float,
+            brickColor: Int, mortarColor: Int, highlightColor: Int,
+            dk: Int, idPrefix: String,
+            isSouthFace: Boolean,  // south face uses x-axis for brick width, east uses y-axis
+        ) {
+            val rows = 6  // 6 courses of bricks per wall (z=0..3, each 0.5 units tall)
+            val bricksPerRow = 2
+            val courseHeight = (zTo - zFrom) / rows
+
+            // Mortar background — fills the entire face, bricks overlay it
+            val facePts = if (isSouthFace) listOf(
+                pt(gx, faceY, zFrom, ox, oy), pt(gx + 1f, faceY, zFrom, ox, oy),
+                pt(gx + 1f, faceY, zTo, ox, oy), pt(gx, faceY, zTo, ox, oy),
+            ) else listOf(
+                pt(faceY, gy, zFrom, ox, oy), pt(faceY, gy + 1f, zFrom, ox, oy),
+                pt(faceY, gy + 1f, zTo, ox, oy), pt(faceY, gy, zTo, ox, oy),
+            )
+            commands += DrawCommand(DrawLayer.BLOCK, dk, 0, "${idPrefix}_mortar",
+                facePts[0], DrawPayload.ColorPath(facePts, mortarColor))
+
+            // Individual bricks — staggered per row
+            for (row in 0 until rows) {
+                val z0 = zFrom + row * courseHeight + 0.02f  // tiny mortar gap
+                val z1 = zFrom + (row + 1) * courseHeight - 0.02f
+                val offset = if (row % 2 == 0) 0f else 0.5f / bricksPerRow  // stagger
+
+                for (col in 0 until bricksPerRow) {
+                    val xFrac0 = (col.toFloat() / bricksPerRow + offset).coerceIn(0f, 1f)
+                    val xFrac1 = ((col + 1f) / bricksPerRow + offset).coerceAtMost(1f)
+                    if (xFrac0 >= 1f) continue
+
+                    // Slight color variation per brick (seeded on position)
+                    val seed = (gx * 17 + row * 7 + col * 13).toInt()
+                    val shade = if (seed % 3 == 0) highlightColor else brickColor
+
+                    val brickPts = if (isSouthFace) listOf(
+                        pt(gx + xFrac0, faceY, z0, ox, oy),
+                        pt(gx + xFrac1, faceY, z0, ox, oy),
+                        pt(gx + xFrac1, faceY, z1, ox, oy),
+                        pt(gx + xFrac0, faceY, z1, ox, oy),
+                    ) else listOf(
+                        pt(faceY, gy + xFrac0, z0, ox, oy),
+                        pt(faceY, gy + xFrac1, z0, ox, oy),
+                        pt(faceY, gy + xFrac1, z1, ox, oy),
+                        pt(faceY, gy + xFrac0, z1, ox, oy),
+                    )
+                    commands += DrawCommand(DrawLayer.BLOCK, dk, 1 + row, "${idPrefix}_b${row}_$col",
+                        brickPts[0], DrawPayload.ColorPath(brickPts, shade))
+
+                    // Wrap-around brick for staggered rows (partial brick at start)
+                    if (offset > 0f && col == 0) {
+                        val wrapPts = if (isSouthFace) listOf(
+                            pt(gx, faceY, z0, ox, oy),
+                            pt(gx + offset, faceY, z0, ox, oy),
+                            pt(gx + offset, faceY, z1, ox, oy),
+                            pt(gx, faceY, z1, ox, oy),
+                        ) else listOf(
+                            pt(faceY, gy, z0, ox, oy),
+                            pt(faceY, gy + offset, z0, ox, oy),
+                            pt(faceY, gy + offset, z1, ox, oy),
+                            pt(faceY, gy, z1, ox, oy),
+                        )
+                        commands += DrawCommand(DrawLayer.BLOCK, dk, 1 + row, "${idPrefix}_bw${row}",
+                            wrapPts[0], DrawPayload.ColorPath(wrapPts, brickColor))
+                    }
+                }
+            }
+        }
+
+        // North wall block
         fun wallBlockNorth(gx: Float, gy: Float) {
             val dk = IsoProjector.depthKey(Vec3f(gx + 0.5f, gy + 1f, 0f))
             val id = "wall_${gx.toInt()}_${gy.toInt()}"
 
-            // Flat dithered face z=0..3 — checkerboard creates rough stone texture
-            commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "${id}_face",
-                pt(gx, gy + 1f, 0f, ox, oy),
-                DrawPayload.DitheredPath(listOf(
-                    pt(gx, gy + 1f, 0f, ox, oy), pt(gx + 1f, gy + 1f, 0f, ox, oy),
-                    pt(gx + 1f, gy + 1f, 3f, ox, oy), pt(gx, gy + 1f, 3f, ox, oy),
-                ), palette.wallSouthLo, palette.wallSouthHi, horizontal = true))
+            // Individual brick rendering — rich stone texture
+            drawBrickFace(gx, gy, gy + 1f, 0f, 3f,
+                brickColor = palette.wallSouthHi,
+                mortarColor = palette.wallSouthJoint,
+                highlightColor = palette.wallTopHighlight,
+                dk = dk, idPrefix = id,
+                isSouthFace = true)
 
             // Torch — every 4th column, rendered in EFFECT layer (in front of walls)
             if (gx.toInt() % 4 == 2) {
@@ -1360,13 +1432,13 @@ object RoomEntityFactory {
             val dk = IsoProjector.depthKey(Vec3f(gx + 0.5f, gy + 1f, 0f))
             val id = "wall_${gx.toInt()}_${gy.toInt()}"
 
-            // Flat dithered face z=0..3 — checkerboard stone texture, no decorations
-            commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "${id}_face",
-                pt(gx + 1f, gy, 0f, ox, oy),
-                DrawPayload.DitheredPath(listOf(
-                    pt(gx + 1f, gy, 0f, ox, oy), pt(gx + 1f, gy + 1f, 0f, ox, oy),
-                    pt(gx + 1f, gy + 1f, 3f, ox, oy), pt(gx + 1f, gy, 3f, ox, oy),
-                ), palette.wallEastLo, palette.wallEastHi, horizontal = true))
+            // Individual brick rendering — east face (darker)
+            drawBrickFace(gx, gy, gx + 1f, 0f, 3f,
+                brickColor = palette.wallEastHi,
+                mortarColor = palette.wallEastJoint,
+                highlightColor = palette.wallSouthLo,  // lighter accent on shadow side
+                dk = dk, idPrefix = id,
+                isSouthFace = false)
 
             // Torch only — every 4th column, in EFFECT layer
             if (gy.toInt() % 4 == 2) {

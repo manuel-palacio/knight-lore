@@ -359,6 +359,11 @@ object RoomEntityFactory {
                         Vec2f(p.x + jitter(p.x, seed, i * 2), p.y + jitter(p.y, seed, i * 2 + 1))
                     }
 
+                    // Sprite: floor tile from tileset (rendered first as base)
+                    commands += DrawCommand(DrawLayer.FLOOR, dk, -1, "${id}_sprite",
+                        IsoProjector.toScreen(world) + offset,
+                        DrawPayload.Sprite("tileset_walls", 96, 48, 96, 48, scale = 1f))
+
                     // ── CRYPT override ──────────────────────────────────────────────────
                     val slabColor = if (roomType == RoomType.CRYPT) 0xFF_1A1018.toInt() else palette.floorSlab
                     val wornColor = if (roomType == RoomType.CRYPT) 0xFF_221820.toInt() else palette.floorWorn
@@ -438,6 +443,19 @@ object RoomEntityFactory {
                     val playerDk = IsoProjector.depthKey(Vec3f(playerPos.x + 0.5f, playerPos.y + 0.5f, playerPos.z))
                     val blockLayer = if (dk > playerDk) DrawLayer.FOREGROUND else DrawLayer.BLOCK
                     val id = "tile_${tile.gridX}_${tile.gridY}_${tile.gridZ}"
+
+                    // Sprite: block top face from tileset
+                    commands += DrawCommand(blockLayer, dk, 1, "${id}_top_sprite",
+                        IsoProjector.toScreen(Vec3f(gx, gy, gz + 1f)) + offset,
+                        DrawPayload.Sprite("tileset_blocks", 0, 0, 96, 48, scale = 1f))
+                    // Sprite: block left/south face from tileset
+                    commands += DrawCommand(blockLayer, dk, 1, "${id}_left_sprite",
+                        blockFaceLeft(gx, gy, gz, ox, oy).first(),
+                        DrawPayload.Sprite("tileset_blocks", 96, 0, 96, 48, scale = 1f))
+                    // Sprite: block right/east face from tileset
+                    commands += DrawCommand(blockLayer, dk, 1, "${id}_right_sprite",
+                        blockFaceRight(gx, gy, gz, ox, oy).first(),
+                        DrawPayload.Sprite("tileset_blocks", 192, 0, 96, 48, scale = 1f))
 
                     // Top face
                     commands += DrawCommand(blockLayer, dk, 2, "${id}_top",
@@ -995,6 +1013,23 @@ object RoomEntityFactory {
                 val dCy = dScreen.y
                 val dId = "decor_${decor.propKind.name}_${decor.gridX}_${decor.gridY}"
 
+                // Sprite-based prop rendering (Midjourney tilesets)
+                val propFile = when (decor.propKind) {
+                    PropKind.CAULDRON -> "cauldron"
+                    PropKind.THRONE -> "throne"
+                    PropKind.ALTAR -> "altar"
+                    PropKind.BARRED_WINDOW -> "barred_window"
+                    PropKind.HANGING_CAGE -> "hanging_cage"
+                    PropKind.CHAIN_CLUSTER -> "chain_cluster"
+                    PropKind.BANNER -> "torn_banner"
+                    else -> null
+                }
+                if (propFile != null) {
+                    commands += DrawCommand(DrawLayer.BLOCK, dDk, 5, "prop_${decor.gridX}_${decor.gridY}",
+                        dScreen, DrawPayload.Sprite(propFile, 0, 0, 48, 48, scale = decor.scale))
+                }
+
+                // Polygon-based fallback rendering
                 when (decor.propKind) {
                     PropKind.CHAIN_CLUSTER -> {
                         // 3 vertical chains hanging from z=2.5 with small oval links
@@ -1308,7 +1343,12 @@ object RoomEntityFactory {
             val dk = IsoProjector.depthKey(Vec3f(gx + 0.5f, gy + 1f, 0f))
             val id = "wall_${gx.toInt()}_${gy.toInt()}"
 
-            // Flat dithered face z=0..3 — checkerboard creates rough stone texture
+            // Sprite: south-facing wall face from tileset
+            commands += DrawCommand(DrawLayer.BLOCK, dk, 0, "${id}_sprite",
+                pt(gx, gy + 1f, 0f, ox, oy),
+                DrawPayload.Sprite("tileset_walls", 0, 0, 96, 48, scale = 1f))
+
+            // Flat dithered face z=0..3 — checkerboard creates rough stone texture (fallback)
             commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "${id}_face",
                 pt(gx, gy + 1f, 0f, ox, oy),
                 DrawPayload.DitheredPath(listOf(
@@ -1359,7 +1399,12 @@ object RoomEntityFactory {
             val dk = IsoProjector.depthKey(Vec3f(gx + 0.5f, gy + 1f, 0f))
             val id = "wall_${gx.toInt()}_${gy.toInt()}"
 
-            // Flat dithered face z=0..3 — checkerboard stone texture, no decorations
+            // Sprite: east-facing wall face from tileset
+            commands += DrawCommand(DrawLayer.BLOCK, dk, 0, "${id}_sprite",
+                pt(gx + 1f, gy, 0f, ox, oy),
+                DrawPayload.Sprite("tileset_walls", 96, 0, 96, 48, scale = 1f))
+
+            // Flat dithered face z=0..3 — checkerboard stone texture, no decorations (fallback)
             commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "${id}_face",
                 pt(gx + 1f, gy, 0f, ox, oy),
                 DrawPayload.DitheredPath(listOf(

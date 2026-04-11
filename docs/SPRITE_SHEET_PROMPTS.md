@@ -54,35 +54,57 @@ Pixel art sprite sheet, 4 separate transformation frames in a horizontal strip, 
 
 ---
 
-## 4. WALL TILESET
+## 4. WALL FACE — South (isometric parallelogram)
 
-**File:** `sprites/tileset_walls.png`
-**Final size:** 192 × 96 px (2×2 grid of 96×48 tiles)
+**File:** `sprites/wall_south.png`
+**Final size:** 96 × 96 px
+**IMPORTANT:** The shape must be a PARALLELOGRAM on transparent background — not a rectangle.
 
 ```
-Pixel art isometric wall tileset, medieval castle dungeon, 2x2 grid on black background: top-left warm olive-tan brick wall face with mortar lines, top-right same wall darker shadow side, bottom-left isometric diamond wall cap lighter stone, bottom-right dark floor stone slab with grout lines, retro 8-bit style like Knight Lore, warm earth tones not grey --ar 2:1 --s 50 --style raw --tile --no gradient smooth
+Single isometric wall face tile, pixel art on pure black background. The shape is a parallelogram leaning right — a south-facing castle wall seen from isometric 3/4 top-down view. Medieval stone brick pattern with horizontal mortar lines between rows of cut stone blocks. Warm olive-tan stone colors with darker mortar gaps. Only the parallelogram shape is filled, rest is black/transparent. Retro 8-bit pixel art like Knight Lore, hard pixel edges --ar 1:1 --s 50 --style raw --no gradient smooth blur
+```
+
+## 4b. WALL FACE — East (darker parallelogram)
+
+**File:** `sprites/wall_east.png`
+**Final size:** 96 × 96 px
+
+```
+Single isometric wall face tile, pixel art on pure black background. Parallelogram shape leaning LEFT — an east-facing wall in isometric view, the shadow side. Same medieval stone brick pattern but darker than the south face. Dark olive-brown with subtle mortar lines. Only the parallelogram filled, rest is black/transparent. Retro 8-bit pixel art like Knight Lore --ar 1:1 --s 50 --style raw --no gradient smooth blur
+```
+
+## 4c. FLOOR TILE (isometric diamond)
+
+**File:** `sprites/floor_tile.png`
+**Final size:** 96 × 48 px
+**IMPORTANT:** Diamond/rhombus shape only — all four corners point N/E/S/W.
+
+```
+Single isometric floor tile, pixel art on pure black background. Diamond rhombus shape — a flat stone floor slab seen from above in isometric 3/4 view. Very dark worn stone surface with subtle texture, thin grout lines at edges. Nearly black to make floor recede into darkness. Only the diamond shape filled, corners at top/right/bottom/left. Retro 8-bit pixel art like Knight Lore --ar 2:1 --s 50 --style raw --no gradient smooth blur
 ```
 
 ---
 
-## 5. ARCHWAY TILES
+## 5. ARCHWAY — Complete south-facing arch
 
-**File:** `sprites/tileset_archway.png`
-**Final size:** 288 × 96 px (3×2 grid)
+**File:** `sprites/archway_south.png`
+**Final size:** 192 × 144 px
+**IMPORTANT:** Single complete isometric archway — NOT separate tiles.
 
 ```
-Pixel art isometric archway tileset, medieval castle doorway pieces, 3x2 grid on black: top row shows left stone pillar, center keystone lintel, right pillar forming a rounded arch, bottom row shows dark passage void, threshold floor stone, curved arch segment, warm olive-tan stone with brick texture, retro 8-bit Knight Lore style --ar 3:1 --s 50 --style raw --no gradient smooth
+Single complete isometric archway, pixel art on pure black background. Medieval castle stone doorway seen from isometric 3/4 view — two stone pillar columns on left and right with a curved rounded arch connecting them at top. Dark void passage visible through the opening between the pillars. The arch and pillars are made of warm olive-tan brick matching castle walls. Classic medieval rounded arch shape. Entire archway rendered as one complete piece on transparent/black background. Retro 8-bit pixel art like Knight Lore --ar 4:3 --s 50 --style raw --no gradient smooth blur
 ```
 
 ---
 
-## 6. BLOCK TILESET
+## 6. ISOMETRIC BLOCK — Complete 3D cube
 
-**File:** `sprites/tileset_blocks.png`
-**Final size:** 288 × 48 px (3 tiles)
+**File:** `sprites/block.png`
+**Final size:** 96 × 96 px
+**IMPORTANT:** Complete isometric cube showing 3 faces — NOT separate tiles.
 
 ```
-Pixel art isometric stone block tileset, 3 faces of a medieval dungeon cube in a row on black background: bright top diamond face, medium south-facing brick wall side, darker east-facing shadow side, warm olive-tan stone texture, retro 8-bit Knight Lore style, these three compose into one 3D isometric cube --ar 6:1 --s 50 --style raw --no gradient
+Single isometric 3D stone cube, pixel art on pure black background. A complete cube seen from isometric 3/4 top-down view showing all three visible faces: bright diamond-shaped top face, medium-lit south-facing left side with brick texture, darker east-facing right side in shadow. Warm olive-tan medieval castle stone. The cube is a pushable puzzle block. Entire cube as one image on black/transparent background. Retro 8-bit pixel art like Knight Lore --ar 1:1 --s 50 --style raw --no gradient smooth blur
 ```
 
 ---

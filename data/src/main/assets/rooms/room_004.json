@@ -333,7 +333,7 @@
       "x": 6,
       "y": 6,
       "z": 0,
-      "type": "FLOOR"
+      "type": "HAZARD"
     },
     {
       "x": 6,
@@ -390,51 +390,9 @@
       "type": "FLOOR"
     },
     {
-      "x": 4,
-      "y": 4,
-      "z": 1,
-      "type": "SOLID_BLOCK"
-    },
-    {
-      "x": 4,
-      "y": 5,
-      "z": 1,
-      "type": "SOLID_BLOCK"
-    },
-    {
-      "x": 5,
-      "y": 4,
-      "z": 1,
-      "type": "SOLID_BLOCK"
-    },
-    {
       "x": 5,
       "y": 5,
       "z": 1,
-      "type": "SOLID_BLOCK"
-    },
-    {
-      "x": 4,
-      "y": 4,
-      "z": 2,
-      "type": "SOLID_BLOCK"
-    },
-    {
-      "x": 4,
-      "y": 5,
-      "z": 2,
-      "type": "SOLID_BLOCK"
-    },
-    {
-      "x": 5,
-      "y": 4,
-      "z": 2,
-      "type": "SOLID_BLOCK"
-    },
-    {
-      "x": 5,
-      "y": 5,
-      "z": 2,
       "type": "SOLID_BLOCK"
     }
   ],
@@ -448,31 +406,53 @@
   ],
   "itemAnchors": [
     {
-      "itemId": "crystal_ball_01",
-      "x": 5.0,
-      "y": 5.0,
-      "z": 3.0
-    },
-    {
-      "itemId": "shield_r004",
-      "x": 4.0,
-      "y": 4.0,
+      "itemId": "wine_bottle_r004",
+      "x": 5.5,
+      "y": 5.5,
       "z": 1.0
     }
   ],
-  "actorSpawns": [
+  "actorSpawns": [],
+  "dynamic_objects": [
     {
-      "actorType": "GUARD",
-      "x": 2.5,
-      "y": 2.5,
-      "z": 0.0
+      "id": "guard_r004_01",
+      "type": "PATROL_ENEMY",
+      "start_x": 1,
+      "start_y": 1,
+      "path": [
+        [
+          1,
+          1
+        ],
+        [
+          6,
+          1
+        ],
+        [
+          6,
+          6
+        ],
+        [
+          1,
+          6
+        ]
+      ],
+      "speed": 1.0,
+      "facing": "EAST"
     }
   ],
   "blocks": [
     {
-      "id": "block_r004_p",
+      "id": "block_r004_a",
       "x": 2,
-      "y": 4,
+      "y": 5,
+      "z": 0,
+      "pushable": true
+    },
+    {
+      "id": "block_r004_b",
+      "x": 3,
+      "y": 2,
       "z": 0,
       "pushable": true
     }

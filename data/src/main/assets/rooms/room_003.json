@@ -3,7 +3,7 @@
   "width": 8,
   "depth": 8,
   "height": 6,
-  "theme": "CASTLE",
+  "theme": "TOWER",
   "tiles": [
     {
       "x": 0,
@@ -388,15 +388,7 @@
       "y": 7,
       "z": 0,
       "type": "FLOOR"
-    },
-    {
-      "x": 4,
-      "y": 4,
-      "z": 1,
-      "type": "SOLID_BLOCK"
-    },
-    { "x": 1, "y": 6, "z": 0, "type": "HAZARD" },
-    { "x": 6, "y": 3, "z": 0, "type": "HAZARD" }
+    }
   ],
   "interactives": [],
   "exits": [
@@ -406,55 +398,62 @@
       "targetSpawnId": "spawn_e"
     },
     {
-      "side": "NORTH",
-      "targetRoomId": "room_002",
-      "targetSpawnId": "spawn_s"
-    },
-    {
       "side": "EAST",
       "targetRoomId": "room_004",
       "targetSpawnId": "spawn_w"
     },
     {
       "side": "SOUTH",
-      "targetRoomId": "room_006",
+      "targetRoomId": "room_005",
       "targetSpawnId": "spawn_n"
     }
   ],
   "itemAnchors": [
     {
       "itemId": "gem_r003",
-      "x": 5.5,
-      "y": 5.5,
+      "x": 1.5,
+      "y": 1.5,
       "z": 0.0
     }
   ],
-  "actorSpawns": [
-    { "actorType": "GHOST", "x": 5.5, "y": 1.5, "z": 0.0 }
-  ],
+  "actorSpawns": [],
   "dynamic_objects": [
     {
       "id": "guard_r003_01",
       "type": "PATROL_ENEMY",
-      "start_x": 2,
-      "start_y": 2,
-      "path": [[2, 2], [5, 2], [5, 5], [2, 5]],
+      "start_x": 1,
+      "start_y": 4,
+      "path": [
+        [
+          1,
+          4
+        ],
+        [
+          6,
+          4
+        ]
+      ],
       "speed": 1.8,
-      "facing": "SOUTH"
+      "facing": "EAST"
     },
     {
       "id": "guard_r003_02",
       "type": "PATROL_ENEMY",
-      "start_x": 6,
-      "start_y": 6,
-      "path": [[6, 6], [6, 1], [1, 1], [1, 6]],
-      "speed": 2.0,
-      "facing": "NORTH"
+      "start_x": 4,
+      "start_y": 1,
+      "path": [
+        [
+          4,
+          1
+        ],
+        [
+          4,
+          6
+        ]
+      ],
+      "speed": 1.5,
+      "facing": "SOUTH"
     }
   ],
-  "blocks": [
-    { "id": "block_r003_a", "x": 3, "y": 3, "z": 0, "pushable": true },
-    { "id": "block_r003_b", "x": 5, "y": 4, "z": 0, "pushable": true },
-    { "id": "block_r003_c", "x": 4, "y": 6, "z": 0, "pushable": true }
-  ]
+  "blocks": []
 }

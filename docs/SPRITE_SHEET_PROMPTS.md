@@ -188,4 +188,68 @@ Tools: Aseprite ($20), Piskel (free, piskelapp.com), GIMP (free)
 | 9 | Props | individual PNGs | 48×48 | 1 each |
 | 10 | Hazards | `hazards.png` | 192×48 | 2 |
 
-**NOT in Midjourney** (stays procedural): walls, floors, blocks, archways
+---
+
+## 11. WALL BRICK TEXTURES
+
+**Usage:** These are **flat rectangular** textures. The code will texture-map them onto isometric wall parallelograms. Do NOT generate isometric shapes.
+
+### Castle Wall (warm theme)
+
+**File:** `sprites/wall_castle.png`
+**Final size:** 128 × 128 px
+
+```
+Flat front-facing old castle stone brick wall texture tile, seamless tileable, retro 8-bit pixel art style like Knight Lore ZX Spectrum. Warm tan and brown stone bricks of varying sizes, some crumbling and weathered, dark mortar gaps between bricks, a few bricks missing leaving dark holes, patches of dark moss or lichen, aged medieval fortress wall. Sparse brick coverage — large areas of dark mortar visible between scattered stone blocks. NOT modern clean brickwork — ancient ruined castle stones. Pure black background behind the mortar gaps, hard pixel edges, no anti-aliasing, no gradients --ar 1:1 --s 50 --style raw --no gradient smooth blur shading
+```
+
+### Dungeon Wall (green theme)
+
+**File:** `sprites/wall_dungeon.png`
+**Final size:** 128 × 128 px
+
+```
+Flat front-facing damp dungeon stone wall texture tile, seamless tileable, retro 8-bit pixel art style like Knight Lore ZX Spectrum. Dark greenish-grey rough-hewn stone blocks, wet dripping patches, green slime and moss growing in cracks, dark mortar between stones, some stones cracked or missing. Sparse irregular stonework — large dark gaps between rough blocks. Underground medieval dungeon feel, cold damp ancient stone. Pure black background behind the mortar gaps, hard pixel edges, no anti-aliasing, no gradients --ar 1:1 --s 50 --style raw --no gradient smooth blur shading
+```
+
+### Tower Wall (blue-grey theme)
+
+**File:** `sprites/wall_tower.png`
+**Final size:** 128 × 128 px
+
+```
+Flat front-facing cold castle tower stone wall texture tile, seamless tileable, retro 8-bit pixel art style like Knight Lore ZX Spectrum. Cold blue-grey and silver stone blocks, moonlit ancient masonry, frost-touched stones, pale mortar between blocks, some stones worn smooth, icy cobwebs in corners. Sparse ashlar stonework — dark gaps between carefully cut but ancient stone. High tower in a cursed castle, cold and forbidding. Pure black background behind the mortar gaps, hard pixel edges, no anti-aliasing, no gradients --ar 1:1 --s 50 --style raw --no gradient smooth blur shading
+```
+
+---
+
+## Post-Processing — Wall Textures
+
+1. **Upscale** best variant (U1-U4)
+2. **Crop/resize** to exactly 128×128 px
+3. **Run `RemoveBlackBackground` test** to make mortar gaps transparent
+4. **Drop** into `desktop/src/main/resources/sprites/`
+
+The code will tile/clip these textures into the isometric wall shapes automatically.
+
+---
+
+## Quick Reference
+
+| # | Asset | Filename | Size | Frames |
+|---|-------|----------|------|--------|
+| 1 | Player Human | `player_human.png` | 224×48 | 7 |
+| 2 | Player Wolf | `player_wolf.png` | 240×56 | 6 |
+| 3 | Transformation | `player_transform.png` | 192×56 | 4 |
+| 4 | Items | `items.png` | 240×24 | 10 |
+| 5 | Guard | `enemy_guard.png` | 192×48 | 4 |
+| 6 | Ghost | `enemy_ghost.png` | 192×48 | 4 |
+| 7 | Druid | `enemy_druid.png` | 192×48 | 4 |
+| 8 | Robot | `enemy_robot.png` | 192×48 | 4 |
+| 9 | Props | individual PNGs | 48×48 | 1 each |
+| 10 | Hazards | `hazards.png` | 192×48 | 2 |
+| 11a | Castle Wall | `wall_castle.png` | 128×128 | texture |
+| 11b | Dungeon Wall | `wall_dungeon.png` | 128×128 | texture |
+| 11c | Tower Wall | `wall_tower.png` | 128×128 | texture |
+
+**Procedural only:** floors, blocks, archways

@@ -390,54 +390,10 @@
       "z": 0,
       "type": "FLOOR"
     },
-    {
-      "x": 3,
-      "y": 3,
-      "z": 1,
-      "type": "SOLID_BLOCK"
-    },
-    {
-      "x": 3,
-      "y": 4,
-      "z": 1,
-      "type": "SOLID_BLOCK"
-    },
-    {
-      "x": 4,
-      "y": 3,
-      "z": 1,
-      "type": "SOLID_BLOCK"
-    },
-    {
-      "x": 4,
-      "y": 4,
-      "z": 1,
-      "type": "SOLID_BLOCK"
-    },
-    {
-      "x": 0,
-      "y": 0,
-      "z": 1,
-      "type": "SOLID_BLOCK"
-    },
-    {
-      "x": 7,
-      "y": 0,
-      "z": 1,
-      "type": "SOLID_BLOCK"
-    },
-    {
-      "x": 0,
-      "y": 7,
-      "z": 1,
-      "type": "SOLID_BLOCK"
-    },
-    {
-      "x": 7,
-      "y": 7,
-      "z": 1,
-      "type": "SOLID_BLOCK"
-    }
+    { "x": 3, "y": 3, "z": 1, "type": "SOLID_BLOCK" },
+    { "x": 3, "y": 4, "z": 1, "type": "SOLID_BLOCK" },
+    { "x": 4, "y": 3, "z": 1, "type": "SOLID_BLOCK" },
+    { "x": 4, "y": 4, "z": 1, "type": "SOLID_BLOCK" }
   ],
   "interactives": [],
   "exits": [
@@ -452,27 +408,35 @@
       "targetSpawnId": "spawn_w"
     }
   ],
-  "itemAnchors": [
-    { "itemId": "crystal_ball_r001", "x": 3.5, "y": 3.5, "z": 1.0 },
-    { "itemId": "gem_r001", "x": 4.5, "y": 4.5, "z": 1.0 }
-  ],
-  "actorSpawns": [
-    { "actorType": "GUARD", "x": 1.5, "y": 6.5, "z": 0.0 }
-  ],
+  "itemAnchors": [],
+  "actorSpawns": [],
   "dynamic_objects": [
     {
-      "id": "goblin_r001_01",
+      "id": "guard_r001_01",
       "type": "PATROL_ENEMY",
       "start_x": 2,
       "start_y": 2,
-      "path": [[2, 2], [5, 2], [5, 5], [2, 5]],
-      "speed": 1.5
+      "path": [
+        [
+          2,
+          2
+        ],
+        [
+          5,
+          2
+        ],
+        [
+          5,
+          5
+        ],
+        [
+          2,
+          5
+        ]
+      ],
+      "speed": 1.2,
+      "facing": "EAST"
     }
   ],
-  "blocks": [
-    { "id": "block_r001_a", "x": 2, "y": 3, "z": 0, "pushable": true },
-    { "id": "block_r001_b", "x": 5, "y": 3, "z": 0, "pushable": true },
-    { "id": "block_r001_c", "x": 2, "y": 5, "z": 0, "pushable": true },
-    { "id": "block_r001_d", "x": 5, "y": 5, "z": 0, "pushable": true }
-  ]
+  "blocks": []
 }

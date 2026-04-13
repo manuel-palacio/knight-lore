@@ -54,9 +54,9 @@ object RoomEntityFactory {
         val WALL_TOP_HIGHLIGHT   = 0xFF_9A8A68.toInt()
 
         // ── Floor — pure black like the original ────────────────────────────
-        val FLOOR_SLAB           = 0xFF_080808.toInt()  // near-black
-        val FLOOR_WORN           = 0xFF_0C0C0C.toInt()
-        val FLOOR_GROUT          = 0xFF_040404.toInt()
+        val FLOOR_SLAB           = 0xFF_2A2420.toInt()  // dark warm stone
+        val FLOOR_WORN           = 0xFF_221E1A.toInt()  // worn darker variant
+        val FLOOR_GROUT          = 0xFF_141210.toInt()  // dark grout lines
         val FLOOR_CRACK          = 0xFF_020202.toInt()
 
         // ── Blocks — matching Midjourney warm stone ─────────────────────────
@@ -146,66 +146,66 @@ object RoomEntityFactory {
 
     private fun paletteFor(theme: RoomTheme): ThemePalette = when (theme) {
         RoomTheme.CASTLE -> ThemePalette(
-            // Dark walls with bright mortar — warm tan tint
-            wallSouthBase      = CastleColors.WALL_SOUTH_BASE,
-            wallSouthJoint     = CastleColors.WALL_SOUTH_JOINT,
-            wallSouthLo        = CastleColors.WALL_SOUTH_STONE_LO,
-            wallSouthHi        = CastleColors.WALL_SOUTH_STONE_HI,
-            wallEastBase       = CastleColors.WALL_EAST_BASE,
-            wallEastJoint      = CastleColors.WALL_EAST_JOINT,
-            wallEastLo         = CastleColors.WALL_EAST_STONE_LO,
-            wallEastHi         = CastleColors.WALL_EAST_STONE_HI,
-            wallTop            = CastleColors.WALL_TOP,
-            wallTopHighlight   = CastleColors.WALL_TOP_HIGHLIGHT,
-            floorSlab          = CastleColors.FLOOR_SLAB,
-            floorWorn          = CastleColors.FLOOR_WORN,
-            floorGrout         = CastleColors.FLOOR_GROUT,
-            blockTop           = CastleColors.BLOCK_TOP,
-            blockLeft          = CastleColors.BLOCK_LEFT,
-            blockRight         = CastleColors.BLOCK_RIGHT,
+            // Warm yellow/tan — like original ZX Spectrum castle rooms
+            wallSouthBase      = 0xFF_000000.toInt(),
+            wallSouthJoint     = 0xFF_000000.toInt(),
+            wallSouthLo        = 0xFF_8A7A48.toInt(),  // warm tan
+            wallSouthHi        = 0xFF_B8A860.toInt(),  // bright yellow-tan
+            wallEastBase       = 0xFF_000000.toInt(),
+            wallEastJoint      = 0xFF_000000.toInt(),
+            wallEastLo         = 0xFF_5A5030.toInt(),  // darker shadow side
+            wallEastHi         = 0xFF_7A6A40.toInt(),
+            wallTop            = 0xFF_C0B070.toInt(),
+            wallTopHighlight   = 0xFF_D8C888.toInt(),
+            floorSlab          = 0xFF_302818.toInt(),  // dark warm brown
+            floorWorn          = 0xFF_282010.toInt(),
+            floorGrout         = 0xFF_1A1408.toInt(),
+            blockTop           = 0xFF_C0B070.toInt(),
+            blockLeft          = 0xFF_8A7A48.toInt(),
+            blockRight         = 0xFF_5A5030.toInt(),
             fogColor           = 0x20_000000.toInt(),
             wallStyle          = WallStyle.ASHLAR,
         )
         RoomTheme.DUNGEON -> ThemePalette(
-            // Greenish dank dungeon — distinct from castle's warm brown
-            wallSouthBase      = 0xFF_2A3428.toInt(),  // dark green-grey
-            wallSouthJoint     = 0xFF_5A6A50.toInt(),  // bright green mortar
-            wallSouthLo        = 0xFF_1A2418.toInt(),
-            wallSouthHi        = 0xFF_3A4430.toInt(),
-            wallEastBase       = 0xFF_1A2418.toInt(),
-            wallEastJoint      = 0xFF_4A5A40.toInt(),
-            wallEastLo         = 0xFF_101810.toInt(),
-            wallEastHi         = 0xFF_2A3428.toInt(),
-            wallTop            = 0xFF_4A5A40.toInt(),
-            wallTopHighlight   = 0xFF_5A6A50.toInt(),
-            floorSlab          = 0xFF_080808.toInt(),  // pure black
-            floorWorn          = 0xFF_0C0C0C.toInt(),
-            floorGrout         = 0xFF_040404.toInt(),
-            blockTop           = 0xFF_4A5A40.toInt(),
-            blockLeft          = 0xFF_2A3428.toInt(),
-            blockRight         = 0xFF_1A2418.toInt(),
-            fogColor           = 0x20_001000.toInt(),
+            // Vivid green — like original ZX Spectrum dungeon rooms
+            wallSouthBase      = 0xFF_000000.toInt(),
+            wallSouthJoint     = 0xFF_000000.toInt(),
+            wallSouthLo        = 0xFF_2A6A28.toInt(),  // forest green
+            wallSouthHi        = 0xFF_48A040.toInt(),  // bright green
+            wallEastBase       = 0xFF_000000.toInt(),
+            wallEastJoint      = 0xFF_000000.toInt(),
+            wallEastLo         = 0xFF_1A4A18.toInt(),  // dark green shadow
+            wallEastHi         = 0xFF_2A6A28.toInt(),
+            wallTop            = 0xFF_58B850.toInt(),
+            wallTopHighlight   = 0xFF_70D068.toInt(),
+            floorSlab          = 0xFF_142A14.toInt(),  // dark green floor
+            floorWorn          = 0xFF_102010.toInt(),
+            floorGrout         = 0xFF_0A180A.toInt(),
+            blockTop           = 0xFF_58B850.toInt(),
+            blockLeft          = 0xFF_2A6A28.toInt(),
+            blockRight         = 0xFF_1A4A18.toInt(),
+            fogColor           = 0x20_002000.toInt(),
             wallStyle          = WallStyle.RUBBLE,
         )
         RoomTheme.TOWER -> ThemePalette(
-            // Cold blue-grey moonlit tower — distinct from warm castle
-            wallSouthBase      = 0xFF_2A2E38.toInt(),  // dark blue-grey
-            wallSouthJoint     = 0xFF_5A6070.toInt(),  // bright blue mortar
-            wallSouthLo        = 0xFF_1A1E28.toInt(),
-            wallSouthHi        = 0xFF_3A4050.toInt(),
-            wallEastBase       = 0xFF_1A1E28.toInt(),
-            wallEastJoint      = 0xFF_4A5060.toInt(),
-            wallEastLo         = 0xFF_101420.toInt(),
-            wallEastHi         = 0xFF_2A2E38.toInt(),
-            wallTop            = 0xFF_4A5060.toInt(),
-            wallTopHighlight   = 0xFF_5A6070.toInt(),
-            floorSlab          = 0xFF_080808.toInt(),  // pure black
-            floorWorn          = 0xFF_0C0C0C.toInt(),
-            floorGrout         = 0xFF_040404.toInt(),
-            blockTop           = 0xFF_4A5060.toInt(),
-            blockLeft          = 0xFF_2A2E38.toInt(),
-            blockRight         = 0xFF_1A1E28.toInt(),
-            fogColor           = 0x20_000010.toInt(),
+            // Cool cyan/blue — like original ZX Spectrum tower rooms
+            wallSouthBase      = 0xFF_000000.toInt(),
+            wallSouthJoint     = 0xFF_000000.toInt(),
+            wallSouthLo        = 0xFF_2850A0.toInt(),  // medium blue
+            wallSouthHi        = 0xFF_4878C8.toInt(),  // bright cyan-blue
+            wallEastBase       = 0xFF_000000.toInt(),
+            wallEastJoint      = 0xFF_000000.toInt(),
+            wallEastLo         = 0xFF_183870.toInt(),  // dark blue shadow
+            wallEastHi         = 0xFF_2850A0.toInt(),
+            wallTop            = 0xFF_5890D8.toInt(),
+            wallTopHighlight   = 0xFF_78A8E8.toInt(),
+            floorSlab          = 0xFF_101828.toInt(),  // dark blue floor
+            floorWorn          = 0xFF_0C1220.toInt(),
+            floorGrout         = 0xFF_080E18.toInt(),
+            blockTop           = 0xFF_5890D8.toInt(),
+            blockLeft          = 0xFF_2850A0.toInt(),
+            blockRight         = 0xFF_183870.toInt(),
+            fogColor           = 0x20_000020.toInt(),
             wallStyle          = WallStyle.ASHLAR,
         )
     }
@@ -619,28 +619,7 @@ object RoomEntityFactory {
                 val pulseFactor = kotlin.math.sin(tick.toDouble() * 0.07).toFloat()
                 val id = "item_${item.id.value}"
 
-                // ── Sprite-sheet rendering for items (Midjourney assets) ──
-                val itemIdx: Int? = when (item.type) {
-                    ItemType.CRYSTAL_BALL -> 0
-                    ItemType.GOBLET -> 1
-                    ItemType.WINE_BOTTLE -> 2
-                    ItemType.GEM -> 3
-                    ItemType.POISON_VIAL -> 4
-                    ItemType.BOOT -> 5
-                    ItemType.TEACUP -> 6
-                    ItemType.KEY -> 7
-                    ItemType.TORCH -> 8
-                    ItemType.SKULL -> 9
-                    else -> null
-                }
-                if (itemIdx != null) {
-                    commands += DrawCommand(
-                        layer = DrawLayer.ITEM, depthKey = dk, entityId = id,
-                        screenPos = Vec2f(screen.x - 24f, screen.y - 24f),
-                        payload = DrawPayload.Sprite("items", itemIdx * 24, 0, 24, 24, scale = 2f),
-                    )
-                    return@forEach // sprite rendered — skip polygon fallback
-                }
+                // Sprite items disabled — polygon rendering below looks cleaner
 
                 // Per-type color palette
                 data class ItemPalette(val color: Int, val glow: Int, val w: Float, val h: Float)
@@ -959,32 +938,7 @@ object RoomEntityFactory {
                 }
             }
 
-            // C) Anchor indicator — subtle pulsing glow on the floor at the focal point
-            val anchor = artProfile.anchor
-            if (anchor != null) {
-                val anchorWorld = Vec3f(anchor.gridX + 0.5f, anchor.gridY + 0.5f, anchor.gridZ.toFloat())
-                val aScreen = IsoProjector.toScreen(anchorWorld) + offset
-                val aDk = IsoProjector.depthKey(anchorWorld)
-                // Pulsing glow — alpha oscillates with tick
-                val pulseNorm = (kotlin.math.sin(tick.toDouble() * 0.06) + 1.0) / 2.0
-                val pulseAlpha = (0x20 + (pulseNorm * 0x28).toInt()).coerceIn(0x20, 0x48)
-                val glowW = 2.5f * com.palacesoft.knightlore.core.geometry.TileMetrics.HALF_TILE_WIDTH
-                val glowH = 2.5f * com.palacesoft.knightlore.core.geometry.TileMetrics.HALF_TILE_HEIGHT
-                commands += DrawCommand(
-                    DrawLayer.FLOOR, aDk, 9, "art_anchor_${anchor.gridX}_${anchor.gridY}",
-                    Vec2f(aScreen.x - glowW / 2f, aScreen.y - glowH / 2f),
-                    DrawPayload.ColorOval(glowW, glowH, (pulseAlpha shl 24) or 0xFFAA44),
-                )
-                // Inner bright core pulse
-                val coreW = glowW * 0.5f
-                val coreH = glowH * 0.5f
-                val coreAlpha = (0x10 + (pulseNorm * 0x30).toInt()).coerceIn(0x10, 0x40)
-                commands += DrawCommand(
-                    DrawLayer.FLOOR, aDk, 10, "art_anchor_core_${anchor.gridX}_${anchor.gridY}",
-                    Vec2f(aScreen.x - coreW / 2f, aScreen.y - coreH / 2f),
-                    DrawPayload.ColorOval(coreW, coreH, (coreAlpha shl 24) or 0xFFCC66),
-                )
-            }
+            // C) Anchor indicator — removed (the massive orange glow was distracting)
 
             // D) Decor placements — chains, banners, and other authored props
             for (decor in artProfile.decor) {
@@ -1097,45 +1051,9 @@ object RoomEntityFactory {
         buildPlayerCommands(state, commands, offset)
 
         // 7. Ambient dust particles at inner wall corners
-        buildDustParticles(room, offset, tick, commands)
+        // Dust particles removed — they looked like eyes on the walls
 
-        // 7b. Cobwebs at wall corners — ancient castle atmosphere
-        val webColor = 0x44_A0A0A0.toInt()  // semi-transparent grey
-        val rw = room.width.toFloat()
-        val rd = room.depth.toFloat()
-        val webCorners = listOf(
-            Vec3f(0.5f, 0.5f, 2.5f),                           // NW corner
-            Vec3f(rw - 0.5f, 0.5f, 2.5f),                      // NE corner
-            Vec3f(0.5f, rd - 0.5f, 2.5f),                      // SW corner
-            Vec3f(rw - 0.5f, rd - 0.5f, 2.5f),                 // SE corner
-        )
-        webCorners.forEachIndexed { wi, corner ->
-            val ws = IsoProjector.toScreen(corner) + offset
-            val wdk = IsoProjector.depthKey(corner)
-            val webId = "cobweb_$wi"
-            // 5 radiating strands from corner
-            for (si in 0..4) {
-                val angle = si * kotlin.math.PI / 4.0 + wi * kotlin.math.PI / 2.0
-                val endX = ws.x + (kotlin.math.cos(angle) * 18f).toFloat()
-                val endY = ws.y + (kotlin.math.sin(angle) * 12f).toFloat()
-                commands += DrawCommand(DrawLayer.EFFECT, wdk, 0, "${webId}_s$si",
-                    Vec2f(ws.x, ws.y),
-                    DrawPayload.Line(ws.x, ws.y, endX, endY, webColor, 0.7f))
-            }
-            // Cross threads connecting strands
-            for (si in 0..3) {
-                val a1 = si * kotlin.math.PI / 4.0 + wi * kotlin.math.PI / 2.0
-                val a2 = (si + 1) * kotlin.math.PI / 4.0 + wi * kotlin.math.PI / 2.0
-                val r = 10f
-                val x1 = ws.x + (kotlin.math.cos(a1) * r).toFloat()
-                val y1 = ws.y + (kotlin.math.sin(a1) * r).toFloat()
-                val x2 = ws.x + (kotlin.math.cos(a2) * r).toFloat()
-                val y2 = ws.y + (kotlin.math.sin(a2) * r).toFloat()
-                commands += DrawCommand(DrawLayer.EFFECT, wdk, 0, "${webId}_c$si",
-                    Vec2f(x1, y1),
-                    DrawPayload.Line(x1, y1, x2, y2, webColor, 0.5f))
-            }
-        }
+        // Cobwebs removed — they looked like eyes bobbling on the walls
 
         // 8. Thin edge vignette — only a narrow border, not a ceiling-inducing dark cap
         val fogC = palette.fogColor
@@ -1304,63 +1222,22 @@ object RoomEntityFactory {
             }
         }
 
-        // Bright bricks on black background — like the original Knight Lore
-        fun drawBrickWall(
+        // Clean dithered wall face — ZX Spectrum style flat panel with 2-color horizontal dithering
+        fun drawCleanWall(
             gx: Float, gy: Float, faceY: Float,
-            brickColor: Int, brickHighlight: Int,
+            color1: Int, color2: Int,
             dk: Int, idPrefix: String,
             isSouthFace: Boolean,
         ) {
-            // NO base fill — the wall background is pure black (from the void behind)
-            // Draw individual BRIGHT brick rectangles with dark gaps between them
-
-            val rows = 6  // brick courses across z=0..3
-            val bricksPerRow = 3
-            val courseH = 3f / rows  // height of each course
-            val gap = 0.04f  // mortar gap between bricks
-
-            for (row in 0 until rows) {
-                val z0 = row * courseH + gap
-                val z1 = (row + 1) * courseH - gap
-                val offset = if (row % 2 == 0) 0f else 0.5f / bricksPerRow  // stagger
-
-                for (col in 0 until bricksPerRow) {
-                    val x0 = (col.toFloat() / bricksPerRow + offset + gap).coerceAtMost(1f - gap)
-                    val x1 = ((col + 1f) / bricksPerRow + offset - gap).coerceAtMost(1f - gap)
-                    if (x0 >= x1) continue
-
-                    // Skip ~40% of bricks for sparse, old wall look
-                    val seed = ((gx * 17 + row * 7 + col * 13).toInt() and 0x7FFF)
-                    if (seed % 5 < 2) continue  // skip this brick — leave dark gap
-
-                    val pts = if (isSouthFace) listOf(
-                        pt(gx + x0, faceY, z0, ox, oy), pt(gx + x1, faceY, z0, ox, oy),
-                        pt(gx + x1, faceY, z1, ox, oy), pt(gx + x0, faceY, z1, ox, oy),
-                    ) else listOf(
-                        pt(faceY, gy + x0, z0, ox, oy), pt(faceY, gy + x1, z0, ox, oy),
-                        pt(faceY, gy + x1, z1, ox, oy), pt(faceY, gy + x0, z1, ox, oy),
-                    )
-                    // Dithered brick — horizontal stripes inside each brick for texture
-                    commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "${idPrefix}_b${row}_$col",
-                        pts[0], DrawPayload.DitheredPath(pts, brickColor, brickHighlight, horizontal = true))
-                }
-
-                // Wrap brick for staggered rows
-                if (offset > 0f) {
-                    val wx1 = (offset - gap).coerceAtLeast(gap)
-                    if (wx1 > gap) {
-                        val wpts = if (isSouthFace) listOf(
-                            pt(gx + gap, faceY, z0, ox, oy), pt(gx + wx1, faceY, z0, ox, oy),
-                            pt(gx + wx1, faceY, z1, ox, oy), pt(gx + gap, faceY, z1, ox, oy),
-                        ) else listOf(
-                            pt(faceY, gy + gap, z0, ox, oy), pt(faceY, gy + wx1, z0, ox, oy),
-                            pt(faceY, gy + wx1, z1, ox, oy), pt(faceY, gy + gap, z1, ox, oy),
-                        )
-                        commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "${idPrefix}_bw$row",
-                            wpts[0], DrawPayload.DitheredPath(wpts, brickColor, brickHighlight, horizontal = true))
-                    }
-                }
-            }
+            val facePts = if (isSouthFace) listOf(
+                pt(gx, faceY, 0f, ox, oy), pt(gx + 1f, faceY, 0f, ox, oy),
+                pt(gx + 1f, faceY, 3f, ox, oy), pt(gx, faceY, 3f, ox, oy),
+            ) else listOf(
+                pt(faceY, gy, 0f, ox, oy), pt(faceY, gy + 1f, 0f, ox, oy),
+                pt(faceY, gy + 1f, 3f, ox, oy), pt(faceY, gy, 3f, ox, oy),
+            )
+            commands += DrawCommand(DrawLayer.BLOCK, dk, 1, idPrefix,
+                facePts[0], DrawPayload.DitheredPath(facePts, color1, color2, horizontal = true))
         }
 
         // North wall
@@ -1368,242 +1245,108 @@ object RoomEntityFactory {
             val dk = IsoProjector.depthKey(Vec3f(gx + 0.5f, gy + 1f, 0f))
             val id = "wall_${gx.toInt()}_${gy.toInt()}"
 
-            drawBrickWall(gx, gy, gy + 1f,
-                brickColor = palette.wallSouthHi,
-                brickHighlight = palette.wallTopHighlight,
+            drawCleanWall(gx, gy, gy + 1f,
+                color1 = palette.wallSouthLo, color2 = palette.wallSouthHi,
                 dk = dk, idPrefix = id, isSouthFace = true)
-
-            // Torch — every 4th column, rendered in EFFECT layer (in front of walls)
-            if (gx.toInt() % 4 == 2) {
-                val tPhase = torchPhase(gx.toInt(), gy.toInt())
-                val flicker = (kotlin.math.sin(tick.toDouble() * 0.3 + tPhase) * 1.5f).toFloat()
-                val flamePt = pt(gx + 0.5f, gy + 0.85f, 1.5f, ox, oy)
-
-                // Bracket
-                val bracketFrom = pt(gx + 0.5f, gy + 1f, 1.5f, ox, oy)
-                commands += DrawCommand(DrawLayer.EFFECT, dk, 0, "${id}_bracket",
-                    Vec2f(bracketFrom.x, bracketFrom.y),
-                    DrawPayload.Line(bracketFrom.x, bracketFrom.y, flamePt.x, flamePt.y, 0xFF_5A4020.toInt(), 1.5f))
-
-                // Flame — in EFFECT layer so it's always in front of walls
-                commands += DrawCommand(DrawLayer.EFFECT, dk, 1, "${id}_flame",
-                    Vec2f(flamePt.x - 3f, flamePt.y - 10f + flicker),
-                    DrawPayload.ColorOval(8f, 10f, 0xCC_FF8800.toInt()))
-                commands += DrawCommand(DrawLayer.EFFECT, dk, 2, "${id}_core",
-                    Vec2f(flamePt.x - 1.5f, flamePt.y - 8f + flicker),
-                    DrawPayload.ColorOval(3f, 4f, 0xFF_FFDD44.toInt()))
-
-                // Floor light cast
-                val floorAlpha = flickerAlpha(tick, tPhase, rate = 0.10, minAlpha = 0x03, maxAlpha = 0x08)
-                val tileX0 = (gx - 1f).coerceAtLeast(0f)
-                val tileX1 = (gx + 2f).coerceAtMost(room.width.toFloat())
-                var lightGx = tileX0
-                while (lightGx < tileX1) {
-                    val lightWorld = Vec3f(lightGx, gy + 1f, 0f)
-                    val lightDk = IsoProjector.depthKey(lightWorld)
-                    commands += DrawCommand(DrawLayer.FLOOR, lightDk, 8, "nlight_${gx.toInt()}_${lightGx.toInt()}",
-                        IsoProjector.toScreen(lightWorld) + offset,
-                        DrawPayload.ColorPath(
-                            floorDiamond(lightGx, gy + 1f, 0f, ox, oy),
-                            (floorAlpha shl 24) or CastleColors.TORCH_FLOOR_CAST
-                        ))
-                    lightGx += 1f
-                }
-            }
         }
 
         fun wallBlockWest(gx: Float, gy: Float) {
             val dk = IsoProjector.depthKey(Vec3f(gx + 0.5f, gy + 1f, 0f))
             val id = "wall_${gx.toInt()}_${gy.toInt()}"
 
-            drawBrickWall(gx, gy, gx + 1f,
-                brickColor = palette.wallEastHi,
-                brickHighlight = palette.wallTop,
+            drawCleanWall(gx, gy, gx + 1f,
+                color1 = palette.wallEastLo, color2 = palette.wallEastHi,
                 dk = dk, idPrefix = id, isSouthFace = false)
-
-            // Torch only — every 4th column, in EFFECT layer
-            if (gy.toInt() % 4 == 2) {
-                val tPhase = torchPhase(gx.toInt(), gy.toInt())
-                val flicker = (kotlin.math.sin(tick.toDouble() * 0.3 + tPhase) * 1.5f).toFloat()
-                val bracketFrom = pt(gx + 1f, gy + 0.5f, 1.5f, ox, oy)
-                val flamePt = pt(gx + 0.85f, gy + 0.5f, 1.5f, ox, oy)
-
-                commands += DrawCommand(DrawLayer.EFFECT, dk, 0, "${id}_bracket",
-                    Vec2f(bracketFrom.x, bracketFrom.y),
-                    DrawPayload.Line(bracketFrom.x, bracketFrom.y, flamePt.x, flamePt.y, 0xFF_5A4020.toInt(), 1.5f))
-                commands += DrawCommand(DrawLayer.EFFECT, dk, 1, "${id}_flame",
-                    Vec2f(flamePt.x - 3f, flamePt.y - 10f + flicker),
-                    DrawPayload.ColorOval(8f, 10f, 0xCC_FF8800.toInt()))
-                commands += DrawCommand(DrawLayer.EFFECT, dk, 2, "${id}_core",
-                    Vec2f(flamePt.x - 1.5f, flamePt.y - 8f + flicker),
-                    DrawPayload.ColorOval(3f, 4f, 0xFF_FFDD44.toInt()))
-
-                // Floor light
-                val floorAlpha = flickerAlpha(tick, tPhase, rate = 0.10, minAlpha = 0x03, maxAlpha = 0x08)
-                val tileY0 = (gy - 1f).coerceAtLeast(0f)
-                val tileY1 = (gy + 2f).coerceAtMost(room.depth.toFloat())
-                var lightGy = tileY0
-                while (lightGy < tileY1) {
-                    val lightWorld = Vec3f(gx + 1f, lightGy, 0f)
-                    val lightDk = IsoProjector.depthKey(lightWorld)
-                    commands += DrawCommand(DrawLayer.FLOOR, lightDk, 8, "wlight_${gy.toInt()}_${lightGy.toInt()}",
-                        IsoProjector.toScreen(lightWorld) + offset,
-                        DrawPayload.ColorPath(
-                            floorDiamond(gx + 1f, lightGy, 0f, ox, oy),
-                            (floorAlpha shl 24) or CastleColors.TORCH_FLOOR_CAST
-                        ))
-                    lightGy += 1f
-                }
-            }
         }
 
-        // Clean rectangular doorway: dark void (z=0..2), narrow jamb columns, lintel at z=2.
+        // Doorway — bright highlighted opening clearly visible against walls.
         fun doorArchway(gx: Float, gy: Float, isFirst: Boolean, isLast: Boolean, side: ExitSide, targetRoomId: RoomId? = null) {
             val dk = IsoProjector.depthKey(Vec3f(gx + 0.5f, gy + 1f, 0f))
             val id = "door_${gx.toInt()}_${gy.toInt()}"
+            val highlight = palette.wallTop           // bright edge color
+            val highlightHi = palette.wallTopHighlight // brighter accent
 
-            // Floor tile at the threshold
-            commands += DrawCommand(DrawLayer.FLOOR, dk, 0, "${id}_floor",
+            // Bright threshold floor tile — makes exit obvious
+            commands += DrawCommand(DrawLayer.FLOOR, dk, 2, "${id}_floor",
                 IsoProjector.toScreen(Vec3f(gx, gy, 0f)) + offset,
-                DrawPayload.ColorPath(floorDiamond(gx, gy, 0f, ox, oy), palette.floorSlab))
+                DrawPayload.ColorPath(floorDiamond(gx, gy, 0f, ox, oy), highlight))
 
             if (side == ExitSide.NORTH) {
-                // Dark void z=0..2
-                val voidL = if (isFirst) gx + 0.35f else gx
-                val voidR = if (isLast) gx + 0.65f else gx + 1f
+                val faceY = gy + 1f
+                // Dark passage void z=0..2
+                val voidL = if (isFirst) gx + 0.25f else gx
+                val voidR = if (isLast) gx + 0.75f else gx + 1f
                 commands += DrawCommand(DrawLayer.BLOCK, dk, 0, "${id}_void",
-                    IsoProjector.toScreen(Vec3f(voidL, gy + 1f, 0f)) + offset,
+                    IsoProjector.toScreen(Vec3f(voidL, faceY, 0f)) + offset,
                     DrawPayload.ColorPath(listOf(
-                        pt(voidL, gy + 1f, 0f, ox, oy), pt(voidR, gy + 1f, 0f, ox, oy),
-                        pt(voidR, gy + 1f, 2f, ox, oy), pt(voidL, gy + 1f, 2f, ox, oy),
-                    ), ZXPalette.BLACK))
+                        pt(voidL, faceY, 0f, ox, oy), pt(voidR, faceY, 0f, ox, oy),
+                        pt(voidR, faceY, 2f, ox, oy), pt(voidL, faceY, 2f, ox, oy),
+                    ), 0xFF_0A0808.toInt()))
 
-                // Left jamb — narrow quad [gx, gx+0.35] on the y+1 face
+                // Bright left jamb pillar
                 if (isFirst) {
-                    for (jz in 0 until 2) {
-                        val jdk = IsoProjector.depthKey(Vec3f(gx + 0.15f, gy + 1f, jz.toFloat()))
-                        drawWallFace(
-                            commands, DrawLayer.BLOCK, jdk, "${id}_jl_$jz",
-                            listOf(
-                                pt(gx, gy + 1f, jz.toFloat(), ox, oy), pt(gx + 0.35f, gy + 1f, jz.toFloat(), ox, oy),
-                                pt(gx + 0.35f, gy + 1f, jz + 1f, ox, oy), pt(gx, gy + 1f, jz + 1f, ox, oy),
-                            ),
-                            baseColor  = palette.wallSouthBase,
-                            jointColor = palette.wallSouthJoint,
-                            loColor    = palette.wallSouthLo,
-                            hiColor    = palette.wallSouthHi,
-                            style      = palette.wallStyle,
-                            gxSeed     = gx.toInt(),
-                            gzOffset   = jz,
-                        )
-                    }
+                    val jPts = listOf(
+                        pt(gx, faceY, 0f, ox, oy), pt(gx + 0.25f, faceY, 0f, ox, oy),
+                        pt(gx + 0.25f, faceY, 2f, ox, oy), pt(gx, faceY, 2f, ox, oy),
+                    )
+                    commands += DrawCommand(DrawLayer.BLOCK, dk, 2, "${id}_jl",
+                        jPts[0], DrawPayload.DitheredPath(jPts, highlight, highlightHi, horizontal = true))
                 }
-                // Right jamb — narrow quad [gx+0.65, gx+1]
+                // Bright right jamb pillar
                 if (isLast) {
-                    for (jz in 0 until 2) {
-                        val jdk = IsoProjector.depthKey(Vec3f(gx + 0.85f, gy + 1f, jz.toFloat()))
-                        drawWallFace(
-                            commands, DrawLayer.BLOCK, jdk, "${id}_jr_$jz",
-                            listOf(
-                                pt(gx + 0.65f, gy + 1f, jz.toFloat(), ox, oy), pt(gx + 1f, gy + 1f, jz.toFloat(), ox, oy),
-                                pt(gx + 1f, gy + 1f, jz + 1f, ox, oy), pt(gx + 0.65f, gy + 1f, jz + 1f, ox, oy),
-                            ),
-                            baseColor  = palette.wallSouthBase,
-                            jointColor = palette.wallSouthJoint,
-                            loColor    = palette.wallSouthLo,
-                            hiColor    = palette.wallSouthHi,
-                            style      = palette.wallStyle,
-                            gxSeed     = gx.toInt(),
-                            gzOffset   = jz,
-                        )
-                    }
+                    val jPts = listOf(
+                        pt(gx + 0.75f, faceY, 0f, ox, oy), pt(gx + 1f, faceY, 0f, ox, oy),
+                        pt(gx + 1f, faceY, 2f, ox, oy), pt(gx + 0.75f, faceY, 2f, ox, oy),
+                    )
+                    commands += DrawCommand(DrawLayer.BLOCK, dk, 2, "${id}_jr",
+                        jPts[0], DrawPayload.DitheredPath(jPts, highlight, highlightHi, horizontal = true))
                 }
-
-                // Lintel at z=2 — top face + inner face
-                val ldk = IsoProjector.depthKey(Vec3f(gx + 0.5f, gy + 1f, 2f))
-                commands += DrawCommand(DrawLayer.BLOCK, ldk, 2, "${id}_lintel_top",
-                    IsoProjector.toScreen(Vec3f(gx, gy, 2f)) + offset,
-                    DrawPayload.ColorPath(floorDiamond(gx, gy, 2f, ox, oy), palette.wallTop))
-                drawWallFace(
-                    commands, DrawLayer.BLOCK, ldk, "${id}_lintel_face",
-                    blockFaceLeft(gx, gy, 1f, ox, oy),
-                    baseColor  = palette.wallSouthBase,
-                    jointColor = palette.wallSouthJoint,
-                    loColor    = palette.wallSouthLo,
-                    hiColor    = palette.wallSouthHi,
-                    style      = palette.wallStyle,
-                    gxSeed     = gx.toInt(),
-                    gzOffset   = 1,
+                // Lintel bar across top — bright horizontal beam
+                val ldk = IsoProjector.depthKey(Vec3f(gx + 0.5f, faceY, 2f))
+                val lintelPts = listOf(
+                    pt(gx, faceY, 2f, ox, oy), pt(gx + 1f, faceY, 2f, ox, oy),
+                    pt(gx + 1f, faceY, 2.3f, ox, oy), pt(gx, faceY, 2.3f, ox, oy),
                 )
+                commands += DrawCommand(DrawLayer.BLOCK, ldk, 3, "${id}_lintel",
+                    lintelPts[0], DrawPayload.DitheredPath(lintelPts, highlightHi, highlight, horizontal = true))
 
             } else { // WEST
                 val faceX = gx + 1f
-                val voidT = if (isFirst) gy + 0.35f else gy
-                val voidB = if (isLast) gy + 0.65f else gy + 1f
+                val voidT = if (isFirst) gy + 0.25f else gy
+                val voidB = if (isLast) gy + 0.75f else gy + 1f
                 commands += DrawCommand(DrawLayer.BLOCK, dk, 0, "${id}_void",
                     IsoProjector.toScreen(Vec3f(faceX, voidT, 0f)) + offset,
                     DrawPayload.ColorPath(listOf(
                         pt(faceX, voidT, 0f, ox, oy), pt(faceX, voidB, 0f, ox, oy),
                         pt(faceX, voidB, 2f, ox, oy), pt(faceX, voidT, 2f, ox, oy),
-                    ), ZXPalette.BLACK))
+                    ), 0xFF_0A0808.toInt()))
 
-                // Top jamb — narrow quad [gy, gy+0.35]
+                // Bright top jamb pillar
                 if (isFirst) {
-                    for (jz in 0 until 2) {
-                        val jdk = IsoProjector.depthKey(Vec3f(faceX, gy + 0.15f, jz.toFloat()))
-                        drawWallFace(
-                            commands, DrawLayer.BLOCK, jdk, "${id}_jl_$jz",
-                            listOf(
-                                pt(faceX, gy, jz.toFloat(), ox, oy), pt(faceX, gy + 0.35f, jz.toFloat(), ox, oy),
-                                pt(faceX, gy + 0.35f, jz + 1f, ox, oy), pt(faceX, gy, jz + 1f, ox, oy),
-                            ),
-                            baseColor  = palette.wallEastBase,
-                            jointColor = palette.wallEastJoint,
-                            loColor    = palette.wallEastLo,
-                            hiColor    = palette.wallEastHi,
-                            style      = palette.wallStyle,
-                            gxSeed     = gy.toInt(),
-                            gzOffset   = jz,
-                        )
-                    }
+                    val jPts = listOf(
+                        pt(faceX, gy, 0f, ox, oy), pt(faceX, gy + 0.25f, 0f, ox, oy),
+                        pt(faceX, gy + 0.25f, 2f, ox, oy), pt(faceX, gy, 2f, ox, oy),
+                    )
+                    commands += DrawCommand(DrawLayer.BLOCK, dk, 2, "${id}_jl",
+                        jPts[0], DrawPayload.DitheredPath(jPts, highlight, highlightHi, horizontal = true))
                 }
-                // Bottom jamb — narrow quad [gy+0.65, gy+1]
+                // Bright bottom jamb pillar
                 if (isLast) {
-                    for (jz in 0 until 2) {
-                        val jdk = IsoProjector.depthKey(Vec3f(faceX, gy + 0.85f, jz.toFloat()))
-                        drawWallFace(
-                            commands, DrawLayer.BLOCK, jdk, "${id}_jr_$jz",
-                            listOf(
-                                pt(faceX, gy + 0.65f, jz.toFloat(), ox, oy), pt(faceX, gy + 1f, jz.toFloat(), ox, oy),
-                                pt(faceX, gy + 1f, jz + 1f, ox, oy), pt(faceX, gy + 0.65f, jz + 1f, ox, oy),
-                            ),
-                            baseColor  = palette.wallEastBase,
-                            jointColor = palette.wallEastJoint,
-                            loColor    = palette.wallEastLo,
-                            hiColor    = palette.wallEastHi,
-                            style      = palette.wallStyle,
-                            gxSeed     = gy.toInt(),
-                            gzOffset   = jz,
-                        )
-                    }
+                    val jPts = listOf(
+                        pt(faceX, gy + 0.75f, 0f, ox, oy), pt(faceX, gy + 1f, 0f, ox, oy),
+                        pt(faceX, gy + 1f, 2f, ox, oy), pt(faceX, gy + 0.75f, 2f, ox, oy),
+                    )
+                    commands += DrawCommand(DrawLayer.BLOCK, dk, 2, "${id}_jr",
+                        jPts[0], DrawPayload.DitheredPath(jPts, highlight, highlightHi, horizontal = true))
                 }
-
-                // Lintel at z=2
+                // Lintel bar across top
                 val ldk = IsoProjector.depthKey(Vec3f(faceX, gy + 0.5f, 2f))
-                commands += DrawCommand(DrawLayer.BLOCK, ldk, 2, "${id}_lintel_top",
-                    IsoProjector.toScreen(Vec3f(gx, gy, 2f)) + offset,
-                    DrawPayload.ColorPath(floorDiamond(gx, gy, 2f, ox, oy), palette.wallTop))
-                drawWallFace(
-                    commands, DrawLayer.BLOCK, ldk, "${id}_lintel_face",
-                    blockFaceRight(gx, gy, 1f, ox, oy),
-                    baseColor  = palette.wallEastBase,
-                    jointColor = palette.wallEastJoint,
-                    loColor    = palette.wallEastLo,
-                    hiColor    = palette.wallEastHi,
-                    style      = palette.wallStyle,
-                    gxSeed     = gy.toInt(),
-                    gzOffset   = 1,
+                val lintelPts = listOf(
+                    pt(faceX, gy, 2f, ox, oy), pt(faceX, gy + 1f, 2f, ox, oy),
+                    pt(faceX, gy + 1f, 2.3f, ox, oy), pt(faceX, gy, 2.3f, ox, oy),
                 )
+                commands += DrawCommand(DrawLayer.BLOCK, ldk, 3, "${id}_lintel",
+                    lintelPts[0], DrawPayload.DitheredPath(lintelPts, highlightHi, highlight, horizontal = true))
             }
         }
 
@@ -1619,86 +1362,79 @@ object RoomEntityFactory {
                 ExitSide.NORTH,
                 northExitTarget)
         }
-        // Per-tile wall faces + decorations (no continuous segments — avoids depth issues)
-        for (x in 0 until w) {
-            if (x !in northGaps) wallBlockNorth(x.toFloat(), 0f)
+        // Continuous wall panels — one big polygon per non-gap run (no seam lines)
+        // North wall: spans along x-axis at y=0, face at y+1=1
+        run {
+            var spanStart = -1
+            for (x in 0..w) {
+                val isGap = x in northGaps || x == w
+                if (!isGap && spanStart < 0) spanStart = x
+                if (isGap && spanStart >= 0) {
+                    // Draw one panel from spanStart to x
+                    val x0 = spanStart.toFloat()
+                    val x1 = x.toFloat()
+                    val faceY = 1f  // north wall inner face
+                    val dk = IsoProjector.depthKey(Vec3f((x0 + x1) / 2f, faceY, 0f))
+                    val pts = listOf(
+                        pt(x0, faceY, 0f, ox, oy), pt(x1, faceY, 0f, ox, oy),
+                        pt(x1, faceY, 3f, ox, oy), pt(x0, faceY, 3f, ox, oy),
+                    )
+                    commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "nwall_${spanStart}",
+                        pts[0], DrawPayload.DitheredPath(pts, palette.wallSouthLo, palette.wallSouthHi, horizontal = true))
+                    spanStart = -1
+                }
+            }
         }
+        // West wall: spans along y-axis at x=0, face at x+1=1
+        run {
+            var spanStart = -1
+            for (y in 1..d - 1) {
+                val isGap = y in westGaps || y == d - 1
+                if (!isGap && spanStart < 0) spanStart = y
+                if (isGap && spanStart >= 0) {
+                    val y0 = spanStart.toFloat()
+                    val y1 = y.toFloat()
+                    val faceX = 1f
+                    val dk = IsoProjector.depthKey(Vec3f(faceX, (y0 + y1) / 2f, 0f))
+                    val pts = listOf(
+                        pt(faceX, y0, 0f, ox, oy), pt(faceX, y1, 0f, ox, oy),
+                        pt(faceX, y1, 3f, ox, oy), pt(faceX, y0, 3f, ox, oy),
+                    )
+                    commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "wwall_${spanStart}",
+                        pts[0], DrawPayload.DitheredPath(pts, palette.wallEastLo, palette.wallEastHi, horizontal = true))
+                    spanStart = -1
+                }
+            }
+        }
+        // West wall door archways
         for (y in 1 until d - 1) {
             if (y in westGaps) doorArchway(0f, y.toFloat(),
                 westGaps.minOrNull() == y,
                 westGaps.maxOrNull() == y,
                 ExitSide.WEST,
                 westExitTarget)
-            else wallBlockWest(0f, y.toFloat())
         }
 
         // South/East exits: plain dark opening with two solid half-wall pillars (no glow).
         for (exit in room.exits) {
             when (exit.side) {
                 ExitSide.SOUTH -> {
+                    // South exits: just draw dark void (no jambs — they peek above front walls)
                     val gapX0 = (w / 2 - 1).toFloat()
                     val gapY = (d - 1).toFloat()
                     for (gi in 0..1) {
                         val egx = gapX0 + gi
                         val edk = IsoProjector.depthKey(Vec3f(egx + 0.5f, gapY + 1f, 0f))
                         val eid = "sexit_${egx.toInt()}_${gapY.toInt()}"
-                        // Floor
                         commands += DrawCommand(DrawLayer.FLOOR, edk, 0, "${eid}_floor",
                             IsoProjector.toScreen(Vec3f(egx, gapY, 0f)) + offset,
                             DrawPayload.ColorPath(floorDiamond(egx, gapY, 0f, ox, oy), palette.floorSlab))
-                        // Dark void on south face
-                        val vL = if (gi == 0) egx + 0.35f else egx
-                        val vR = if (gi == 1) egx + 0.65f else egx + 1f
-                        commands += DrawCommand(DrawLayer.BLOCK, edk, 0, "${eid}_void",
-                            IsoProjector.toScreen(Vec3f(vL, gapY + 1f, 0f)) + offset,
-                            DrawPayload.ColorPath(listOf(
-                                pt(vL, gapY + 1f, 0f, ox, oy), pt(vR, gapY + 1f, 0f, ox, oy),
-                                pt(vR, gapY + 1f, 2f, ox, oy), pt(vL, gapY + 1f, 2f, ox, oy),
-                            ), ZXPalette.BLACK))
-                        // Left pillar on first tile
-                        if (gi == 0) {
-                            for (jz in 0 until 2) {
-                                drawWallFace(
-                                    commands, DrawLayer.BLOCK, edk, "${eid}_pl_$jz",
-                                    listOf(
-                                        pt(egx, gapY + 1f, jz.toFloat(), ox, oy), pt(egx + 0.35f, gapY + 1f, jz.toFloat(), ox, oy),
-                                        pt(egx + 0.35f, gapY + 1f, jz + 1f, ox, oy), pt(egx, gapY + 1f, jz + 1f, ox, oy),
-                                    ),
-                                    baseColor  = palette.wallSouthBase,
-                                    jointColor = palette.wallSouthJoint,
-                                    loColor    = palette.wallSouthLo,
-                                    hiColor    = palette.wallSouthHi,
-                                    style      = palette.wallStyle,
-                                    gxSeed     = egx.toInt(),
-                                    gzOffset   = jz,
-                                )
-                            }
-                        }
-                        // Right pillar on last tile
-                        if (gi == 1) {
-                            for (jz in 0 until 2) {
-                                drawWallFace(
-                                    commands, DrawLayer.BLOCK, edk, "${eid}_pr_$jz",
-                                    listOf(
-                                        pt(egx + 0.65f, gapY + 1f, jz.toFloat(), ox, oy), pt(egx + 1f, gapY + 1f, jz.toFloat(), ox, oy),
-                                        pt(egx + 1f, gapY + 1f, jz + 1f, ox, oy), pt(egx + 0.65f, gapY + 1f, jz + 1f, ox, oy),
-                                    ),
-                                    baseColor  = palette.wallSouthBase,
-                                    jointColor = palette.wallSouthJoint,
-                                    loColor    = palette.wallSouthLo,
-                                    hiColor    = palette.wallSouthHi,
-                                    style      = palette.wallStyle,
-                                    gxSeed     = egx.toInt(),
-                                    gzOffset   = jz,
-                                )
-                            }
-                        }
                     }
                 }
                 ExitSide.EAST -> {
+                    // East exits: just draw dark void (no jambs — they peek above front walls)
                     val gapX = (w - 1).toFloat()
                     val gapY0 = (d / 2 - 1).toFloat()
-                    val faceX = gapX + 1f
                     for (gi in 0..1) {
                         val egy = gapY0 + gi
                         val edk = IsoProjector.depthKey(Vec3f(gapX + 0.5f, egy + 1f, 0f))
@@ -1706,50 +1442,6 @@ object RoomEntityFactory {
                         commands += DrawCommand(DrawLayer.FLOOR, edk, 0, "${eid}_floor",
                             IsoProjector.toScreen(Vec3f(gapX, egy, 0f)) + offset,
                             DrawPayload.ColorPath(floorDiamond(gapX, egy, 0f, ox, oy), palette.floorSlab))
-                        val vT = if (gi == 0) egy + 0.35f else egy
-                        val vB = if (gi == 1) egy + 0.65f else egy + 1f
-                        commands += DrawCommand(DrawLayer.BLOCK, edk, 0, "${eid}_void",
-                            IsoProjector.toScreen(Vec3f(faceX, vT, 0f)) + offset,
-                            DrawPayload.ColorPath(listOf(
-                                pt(faceX, vT, 0f, ox, oy), pt(faceX, vB, 0f, ox, oy),
-                                pt(faceX, vB, 2f, ox, oy), pt(faceX, vT, 2f, ox, oy),
-                            ), ZXPalette.BLACK))
-                        if (gi == 0) {
-                            for (jz in 0 until 2) {
-                                drawWallFace(
-                                    commands, DrawLayer.BLOCK, edk, "${eid}_pl_$jz",
-                                    listOf(
-                                        pt(faceX, egy, jz.toFloat(), ox, oy), pt(faceX, egy + 0.35f, jz.toFloat(), ox, oy),
-                                        pt(faceX, egy + 0.35f, jz + 1f, ox, oy), pt(faceX, egy, jz + 1f, ox, oy),
-                                    ),
-                                    baseColor  = palette.wallEastBase,
-                                    jointColor = palette.wallEastJoint,
-                                    loColor    = palette.wallEastLo,
-                                    hiColor    = palette.wallEastHi,
-                                    style      = palette.wallStyle,
-                                    gxSeed     = egy.toInt(),
-                                    gzOffset   = jz,
-                                )
-                            }
-                        }
-                        if (gi == 1) {
-                            for (jz in 0 until 2) {
-                                drawWallFace(
-                                    commands, DrawLayer.BLOCK, edk, "${eid}_pr_$jz",
-                                    listOf(
-                                        pt(faceX, egy + 0.65f, jz.toFloat(), ox, oy), pt(faceX, egy + 1f, jz.toFloat(), ox, oy),
-                                        pt(faceX, egy + 1f, jz + 1f, ox, oy), pt(faceX, egy + 0.65f, jz + 1f, ox, oy),
-                                    ),
-                                    baseColor  = palette.wallEastBase,
-                                    jointColor = palette.wallEastJoint,
-                                    loColor    = palette.wallEastLo,
-                                    hiColor    = palette.wallEastHi,
-                                    style      = palette.wallStyle,
-                                    gxSeed     = egy.toInt(),
-                                    gzOffset   = jz,
-                                )
-                            }
-                        }
                     }
                 }
                 ExitSide.NORTH, ExitSide.WEST -> { /* handled by doorArchway above */ }
@@ -1771,61 +1463,46 @@ object RoomEntityFactory {
         val dk = IsoProjector.depthKey(cauldronWorld)
         val screen = IsoProjector.toScreen(cauldronWorld) + offset
 
-        // Dark base pot: 3-face isometric block at (3.2, 3.2, 1f), size 0.6×0.6×0.7
-        val potColor = 0xFF_1A1A2A.toInt()
-        val pgx = 3.2f; val pgy = 3.2f; val pgz = 1f
-        val pgxEnd = 3.8f; val pgyEnd = 3.8f; val pgzEnd = 1.7f
-        commands += DrawCommand(DrawLayer.BLOCK, dk, 2, "cauldron_top",
-            IsoProjector.toScreen(Vec3f(pgx, pgy, pgzEnd)) + offset,
-            DrawPayload.ColorPath(listOf(
-                pt(pgx,    pgy,    pgzEnd, ox, oy),
-                pt(pgxEnd, pgy,    pgzEnd, ox, oy),
-                pt(pgxEnd, pgyEnd, pgzEnd, ox, oy),
-                pt(pgx,    pgyEnd, pgzEnd, ox, oy),
-            ), potColor))
-        commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "cauldron_left",
-            IsoProjector.toScreen(Vec3f(pgx, pgyEnd, pgz)) + offset,
-            DrawPayload.ColorPath(listOf(
-                pt(pgx,    pgyEnd, pgz,    ox, oy),
-                pt(pgxEnd, pgyEnd, pgz,    ox, oy),
-                pt(pgxEnd, pgyEnd, pgzEnd, ox, oy),
-                pt(pgx,    pgyEnd, pgzEnd, ox, oy),
-            ), 0xFF_121220.toInt()))
-        commands += DrawCommand(DrawLayer.BLOCK, dk, 0, "cauldron_right",
-            IsoProjector.toScreen(Vec3f(pgxEnd, pgy, pgz)) + offset,
-            DrawPayload.ColorPath(listOf(
-                pt(pgxEnd, pgy,    pgz,    ox, oy),
-                pt(pgxEnd, pgyEnd, pgz,    ox, oy),
-                pt(pgxEnd, pgyEnd, pgzEnd, ox, oy),
-                pt(pgxEnd, pgy,    pgzEnd, ox, oy),
-            ), 0xFF_0E0E1A.toInt()))
+        // Cauldron — large round pot sitting on the 2×2 block platform
+        // Sized to visually cover the blocks underneath
+        val cx = screen.x
+        val cy = screen.y - 15f
+        val potW = 80f
+        val potH = 50f
 
-        // Cauldron rim: diamond path at z=1.7f
-        val rimPts = listOf(
-            pt(pgx,    pgy,    pgzEnd, ox, oy),
-            pt(pgxEnd, pgy,    pgzEnd, ox, oy),
-            pt(pgxEnd, pgyEnd, pgzEnd, ox, oy),
-            pt(pgx,    pgyEnd, pgzEnd, ox, oy),
-        )
-        commands += DrawCommand(DrawLayer.BLOCK, dk, 3, "cauldron_rim",
-            IsoProjector.toScreen(Vec3f(pgx, pgy, pgzEnd)) + offset,
-            DrawPayload.ColorPath(rimPts, 0xFF_2A2A3A.toInt()))
+        // Pot body — dark oval
+        commands += DrawCommand(DrawLayer.BLOCK, dk, 0, "cauldron_body",
+            Vec2f(cx - potW / 2f, cy - potH * 0.3f),
+            DrawPayload.ColorOval(potW, potH, 0xFF_1A1A2A.toInt()))
 
-        // Glowing liquid: oval at center screen position, alpha pulses between 0xCC..0xFF
+        // Pot body highlight — slightly lighter left side
+        commands += DrawCommand(DrawLayer.BLOCK, dk, 1, "cauldron_hl",
+            Vec2f(cx - potW / 2f + 2f, cy - potH * 0.25f),
+            DrawPayload.ColorOval(potW * 0.4f, potH * 0.7f, 0xFF_2A2A3A.toInt()))
+
+        // Rim — bright oval ring at top of pot
+        commands += DrawCommand(DrawLayer.BLOCK, dk, 2, "cauldron_rim",
+            Vec2f(cx - potW / 2f + 2f, cy - potH * 0.5f),
+            DrawPayload.ColorOval(potW - 4f, potH * 0.4f, 0xFF_3A3A4A.toInt()))
+
+        // Glowing liquid inside — green oval
         val liquidPhase = (tick % 60).toInt()
         val liquidAlpha = (0xCC + (liquidPhase * (0xFF - 0xCC)) / 60).coerceIn(0xCC, 0xFF)
         val liquidColor = (liquidAlpha shl 24) or (CastleColors.LIFE_GREEN and 0x00FFFFFF)
-        commands += DrawCommand(DrawLayer.EFFECT, dk, 4, "cauldron_liquid",
-            Vec2f(screen.x - 12f, screen.y - 6f),
-            DrawPayload.ColorOval(24f, 12f, liquidColor))
+        commands += DrawCommand(DrawLayer.EFFECT, dk, 3, "cauldron_liquid",
+            Vec2f(cx - potW / 2f + 6f, cy - potH * 0.45f),
+            DrawPayload.ColorOval(potW - 12f, potH * 0.3f, liquidColor))
 
-        // Pulsing green glow halo at floor level
-        val cauldPhase = torchPhase(3, 3) + 3.0
-        val cauldAlpha = flickerAlpha(tick, cauldPhase, rate = 0.06, minAlpha = 0x18, maxAlpha = 0x40)
-        val cauldScreen = IsoProjector.toScreen(Vec3f(3.5f, 3.5f, 1f)) + offset
-        commands += DrawCommand(DrawLayer.FLOOR, IsoProjector.depthKey(Vec3f(3.5f, 3.5f, 1f)), 5, "cauldron_glow",
-            Vec2f(cauldScreen.x - 28f, cauldScreen.y),
-            DrawPayload.ColorOval(56f, 28f, (cauldAlpha shl 24) or CastleColors.CAULDRON_GLOW))
+        // Legs — three small dark lines under the pot
+        val legY = cy + potH * 0.6f
+        for (li in -1..1) {
+            val lx = cx + li * 12f
+            commands += DrawCommand(DrawLayer.BLOCK, dk, -1, "cauldron_leg_$li",
+                Vec2f(lx, legY),
+                DrawPayload.Line(lx, legY, lx + li * 2f, legY + 8f, 0xFF_2A2A3A.toInt(), 2f))
+        }
+
+        // Cauldron floor glow removed — it looked like a green carpet
 
         // 3 bubble particles with staggered rising phases
         for (bi in 0..2) {

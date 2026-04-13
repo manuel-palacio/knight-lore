@@ -102,4 +102,17 @@ sealed interface DrawPayload {
         val scale: Float = 1f,
         val flipX: Boolean = false,
     ) : DrawPayload
+
+    /**
+     * Fills a polygon with a tiled texture from a sprite sheet.
+     * The texture is tiled at [tileScale] to fill the polygon's bounding box,
+     * then clipped to the polygon shape.
+     * [tintArgb] if non-null applies a color tint over the texture.
+     */
+    data class TexturedPath(
+        val points: List<Vec2f>,     // absolute screen coords — polygon clip shape
+        val sheetId: String,         // texture sheet ID (e.g. "wall_castle")
+        val tileScale: Float = 1f,   // scale factor for texture tiling
+        val tintArgb: Int? = null,   // optional color tint overlay
+    ) : DrawPayload
 }

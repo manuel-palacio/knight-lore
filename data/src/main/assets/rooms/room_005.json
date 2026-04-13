@@ -75,22 +75,22 @@
       "x": 1,
       "y": 3,
       "z": 0,
-      "type": "FLOOR"
-    },
-    {
-      "x": 1,
-      "y": 4,
-      "z": 0,
       "type": "HAZARD"
     },
     {
       "x": 1,
-      "y": 5,
+      "y": 4,
       "z": 0,
       "type": "FLOOR"
     },
     {
       "x": 1,
+      "y": 5,
+      "z": 0,
+      "type": "FLOOR"
+    },
+    {
+      "x": 1,
       "y": 6,
       "z": 0,
       "type": "FLOOR"
@@ -123,19 +123,19 @@
       "x": 2,
       "y": 3,
       "z": 0,
-      "type": "FLOOR"
+      "type": "HAZARD"
     },
     {
       "x": 2,
       "y": 4,
       "z": 0,
-      "type": "HAZARD"
+      "type": "FLOOR"
     },
     {
       "x": 2,
       "y": 5,
       "z": 0,
-      "type": "FLOOR"
+      "type": "HAZARD"
     },
     {
       "x": 2,
@@ -171,19 +171,19 @@
       "x": 3,
       "y": 3,
       "z": 0,
-      "type": "FLOOR"
+      "type": "HAZARD"
     },
     {
       "x": 3,
       "y": 4,
       "z": 0,
-      "type": "HAZARD"
+      "type": "FLOOR"
     },
     {
       "x": 3,
       "y": 5,
       "z": 0,
-      "type": "FLOOR"
+      "type": "HAZARD"
     },
     {
       "x": 3,
@@ -225,13 +225,13 @@
       "x": 4,
       "y": 4,
       "z": 0,
-      "type": "HAZARD"
+      "type": "FLOOR"
     },
     {
       "x": 4,
       "y": 5,
       "z": 0,
-      "type": "FLOOR"
+      "type": "HAZARD"
     },
     {
       "x": 4,
@@ -267,19 +267,19 @@
       "x": 5,
       "y": 3,
       "z": 0,
-      "type": "FLOOR"
+      "type": "HAZARD"
     },
     {
       "x": 5,
       "y": 4,
       "z": 0,
-      "type": "HAZARD"
+      "type": "FLOOR"
     },
     {
       "x": 5,
       "y": 5,
       "z": 0,
-      "type": "FLOOR"
+      "type": "HAZARD"
     },
     {
       "x": 5,
@@ -315,19 +315,19 @@
       "x": 6,
       "y": 3,
       "z": 0,
-      "type": "FLOOR"
+      "type": "HAZARD"
     },
     {
       "x": 6,
       "y": 4,
       "z": 0,
-      "type": "HAZARD"
+      "type": "FLOOR"
     },
     {
       "x": 6,
       "y": 5,
       "z": 0,
-      "type": "FLOOR"
+      "type": "HAZARD"
     },
     {
       "x": 6,
@@ -391,36 +391,29 @@
     }
   ],
   "interactives": [],
-  "dynamic_objects": [
-    {
-      "id": "goblin_001",
-      "type": "PATROL_ENEMY",
-      "start_x": 6,
-      "start_y": 2,
-      "path": [[6,2],[4,2],[4,4],[6,4]],
-      "speed": 0.8,
-      "facing": "SOUTH"
-    }
-  ],
   "exits": [
     {
       "side": "NORTH",
-      "targetRoomId": "room_007",
+      "targetRoomId": "room_003",
       "targetSpawnId": "spawn_s"
-    },
-    {
-      "side": "SOUTH",
-      "targetRoomId": "room_008",
-      "targetSpawnId": "spawn_n"
     }
   ],
   "itemAnchors": [
-    { "itemId": "wine_bottle_r005", "x": 5.0, "y": 6.0, "z": 1.0 }
+    {
+      "itemId": "crystal_ball_r005",
+      "x": 6.5,
+      "y": 6.5,
+      "z": 0.0
+    }
   ],
   "actorSpawns": [
-    { "actorType": "GHOST", "x": 2.0, "y": 2.0, "z": 1.0 }
+    {
+      "actorType": "GHOST",
+      "x": 4.5,
+      "y": 4.5,
+      "z": 0.0
+    }
   ],
-  "blocks": [
-    { "id": "block_r005_a", "x": 3, "y": 2, "z": 1, "pushable": true }
-  ]
+  "dynamic_objects": [],
+  "blocks": []
 }

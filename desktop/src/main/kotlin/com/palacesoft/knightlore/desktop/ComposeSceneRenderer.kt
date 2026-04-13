@@ -197,6 +197,86 @@ object ComposeSceneRenderer {
                         }
                     }
                 }
+                is DrawPayload.TexturedPath -> {
+                    val img = SpriteCache.get(payload.sheetId)
+                    if (img != null && payload.points.size >= 4) {
+                        val path = Path()
+                        payload.points.forEachIndexed { i, pt ->
+                            if (i == 0) path.moveTo(pt.x, pt.y) else path.lineTo(pt.x, pt.y)
+                        }
+                        path.close()
+
+                        // Points order: [bottomLeft, bottomRight, topRight, topLeft]
+                        val bl = payload.points[0]
+                        val br = payload.points[1]
+                        val tl = payload.points[3]
+
+                        // Affine transform: maps texture rect → wall parallelogram
+                        // Bottom edge vector (how x maps to screen)
+                        val bx = br.x - bl.x
+                        val by = br.y - bl.y
+                        // Left edge vector (how y maps to screen)
+                        val lx = tl.x - bl.x
+                        val ly = tl.y - bl.y
+
+                        val texW = img.width.toFloat()
+                        val texH = img.height.toFloat()
+
+                        // Clip to wall shape, then draw texture with affine transform
+                        scope.clipPath(path) {
+                            drawIntoCanvas { canvas ->
+                                canvas.save()
+                                // Build 4×4 column-major affine matrix:
+                                //   screen_x = (bx/texW)*px + (lx/texH)*py + bl.x
+                                //   screen_y = (by/texW)*px + (ly/texH)*py + bl.y
+                                val m = androidx.compose.ui.graphics.Matrix()
+                                m.reset()
+                                m.values[0]  = bx / texW   // scaleX
+                                m.values[1]  = by / texW   // skewY
+                                m.values[4]  = lx / texH   // skewX
+                                m.values[5]  = ly / texH   // scaleY
+                                m.values[12] = bl.x        // translateX
+                                m.values[13] = bl.y        // translateY
+
+                                canvas.concat(m)
+
+                                val paint = Paint().apply {
+                                    isAntiAlias = false
+                                    filterQuality = androidx.compose.ui.graphics.FilterQuality.None
+                                }
+                                // Draw texture at its natural size — the transform maps it to the wall
+                                canvas.drawImageRect(
+                                    img,
+                                    srcOffset = androidx.compose.ui.unit.IntOffset(0, 0),
+                                    srcSize = androidx.compose.ui.unit.IntSize(img.width, img.height),
+                                    dstOffset = androidx.compose.ui.unit.IntOffset(0, 0),
+                                    dstSize = androidx.compose.ui.unit.IntSize(img.width, img.height),
+                                    paint = paint,
+                                )
+                                canvas.restore()
+                            }
+                            // Optional tint overlay (in screen space)
+                            val tint = payload.tintArgb
+                            if (tint != null) {
+                                val bounds = path.getBounds()
+                                drawRect(
+                                    argbToComposeColor(tint),
+                                    Offset(bounds.left, bounds.top),
+                                    Size(bounds.width, bounds.height),
+                                )
+                            }
+                        }
+                        // Outline
+                        scope.drawIntoCanvas { canvas ->
+                            canvas.drawPath(path, Paint().apply {
+                                isAntiAlias = false
+                                color = OUTLINE_COLOR
+                                style = PaintingStyle.Stroke
+                                strokeWidth = 1f
+                            })
+                        }
+                    }
+                }
             }
         }
 
@@ -212,18 +292,7 @@ object ComposeSceneRenderer {
             scanY += 4f
         }
 
-        // Vignette — subtle radial gradient at edges only
-        val center = playerScreenPos ?: Offset(scope.size.width / 2f, scope.size.height / 2f)
-        val radius = minOf(scope.size.width, scope.size.height) * 0.9f
-        scope.drawRect(
-            brush = Brush.radialGradient(
-                colors = listOf(Color.Transparent, Color(0f, 0f, 0f, 0.35f)),
-                center = center,
-                radius = radius,
-            ),
-            topLeft = Offset.Zero,
-            size = scope.size,
-        )
+        // Vignette removed — it was showing as a visible semicircle behind walls
     }
 
     private fun argbToComposeColor(argb: Int): Color {

@@ -34,51 +34,11 @@ class DefaultActorArtCatalog : ActorArtCatalog {
         facing: Direction8,
         framePhase: Int,
         tick: Long,
-    ): AuthoredSprite? {
-        return when (form) {
-            Form.HUMAN -> when (motion) {
-                MovementState.IDLE -> humanIdle(facing, tick)
-                MovementState.WALKING -> humanWalk(facing, framePhase)
-                MovementState.TRANSFORMING -> transformPhase(tick, toWolf = true)
-                else -> null
-            }
-            Form.WEREWULF -> when (motion) {
-                MovementState.IDLE -> wolfIdle(facing, tick)
-                MovementState.WALKING -> wolfWalk(facing, framePhase)
-                MovementState.TRANSFORMING -> transformPhase(tick, toWolf = false)
-                else -> null
-            }
-        }
-    }
+    ): AuthoredSprite? = null  // Use legacy polygon rendering in RoomEntityFactory
 
     override fun resolvePlayerSprite(
         form: Form, motion: MovementState, facing: Direction8, framePhase: Int,
-    ): PlayerSpriteRef? {
-        val flipX = facing in listOf(Direction8.WEST, Direction8.NORTHWEST, Direction8.SOUTHWEST)
-        return when (form) {
-            Form.HUMAN -> {
-                val sheet = "player_human"
-                when (motion) {
-                    MovementState.WALKING -> {
-                        val fx = if (framePhase % 2 == 0) 64 else 96
-                        PlayerSpriteRef(sheet, fx, 0, 32, 48, flipX = flipX)
-                    }
-                    // All other states use idle frame (prevents teleport on state change)
-                    else -> PlayerSpriteRef(sheet, 0, 0, 32, 48, flipX = flipX)
-                }
-            }
-            Form.WEREWULF -> {
-                val sheet = "player_wolf"
-                when (motion) {
-                    MovementState.WALKING -> {
-                        val fx = if (framePhase % 2 == 0) 80 else 120
-                        PlayerSpriteRef(sheet, fx, 0, 40, 56, flipX = flipX)
-                    }
-                    else -> PlayerSpriteRef(sheet, 0, 0, 40, 56, flipX = flipX)
-                }
-            }
-        }
-    }
+    ): PlayerSpriteRef? = null  // Use polygon rendering — sprites disabled
 
     // ── IDLE ─────────────────────────────────────────────────────────────
     private fun humanIdle(facing: Direction8, tick: Long = 0L): AuthoredSprite {

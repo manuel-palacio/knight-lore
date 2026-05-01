@@ -98,3 +98,26 @@ describe('Player jump', () => {
     expect(player.state).toBe('airborne')
   })
 })
+
+describe('Player pickup', () => {
+  it('werewolf form rejects pickup attempt', () => {
+    const { state, player } = setupRoom()
+    state.toggleForm()
+    expect(state.form).toBe('werewolf')
+    const overlap = { id: 'goblet', position: player.position.clone() }
+    let picked: string | null = null
+    player.tryPickup(overlap, state, () => { picked = overlap.id })
+    expect(picked).toBe(null)
+    expect(player.carrying).toBe(null)
+  })
+
+  it('human form accepts pickup attempt', () => {
+    const { state, player } = setupRoom()
+    const overlap = { id: 'goblet', position: player.position.clone() }
+    let picked: string | null = null
+    player.tryPickup(overlap, state, () => { picked = overlap.id })
+    expect(picked).toBe('goblet')
+    expect(player.carrying).toBe('goblet')
+    expect(state.hasItem('goblet')).toBe(true)
+  })
+})

@@ -27,10 +27,9 @@ When you've finished a "user" task, ping Claude and the next "claude-doable" tas
 
 ## Style Anchor (Task 29)
 
-Pin one reference image to look at every time you generate an asset:
-- `1.png` (the existing repo reference, if visually relevant), or
-- A curated Tripo3D output you love, or
-- A Knight Lore screenshot for spirit reference
+![Style anchor reference — old game screenshot](../1.png)
+
+Pinned reference: `1.png` at repo root — a screenshot of the prior Knight Lore Android build. Use this as the spirit anchor (palette, mood, isometric room composition) when writing Tripo prompts. If you later want to swap in a curated Tripo output or a different Knight Lore screenshot, save it under `docs/` and update the path above.
 
 **Prompt fragment — paste this verbatim into every Tripo3D prompt:**
 

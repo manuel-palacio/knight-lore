@@ -2,31 +2,27 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+      - uses: pnpm/action-setup@v3
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          version: 10
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
 
-      - name: Run detekt
-        run: ./gradlew detekt
-
-      - name: Run JVM tests
-        run: ./gradlew jvmTest
-
-      - name: Assemble debug
-        run: ./gradlew assembleDebug
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm lint:no-render-pos
+      - run: pnpm test
+      - run: pnpm build

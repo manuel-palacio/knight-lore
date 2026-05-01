@@ -89,11 +89,10 @@ describe('Player jump', () => {
     const { grid, state, player } = setupRoom()
     grid.setSupport(1, 1, 1.6)
     player.position.set(2, 1.6, 2)
-    player.state = 'grounded'
     const c = { ...ctx(grid, state, { right: true }) }
     for (let i = 0; i < 60; i++) {
       player.update(1 / 60, c)
-      if (player.state === 'airborne') break
+      if ((player.state as string) === 'airborne') break
     }
     expect(player.state).toBe('airborne')
   })

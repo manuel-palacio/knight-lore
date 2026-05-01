@@ -4,38 +4,48 @@ import type { AssetLoader } from '../engine/AssetLoader'
 const TILE = 2
 const WALL_H = 3
 
+interface PbrSet {
+  map: THREE.Texture
+  normalMap: THREE.Texture
+  roughnessMap: THREE.Texture
+}
+
+async function tryLoadPbrSet(
+  loader: AssetLoader,
+  base: string,
+  repeat: [number, number],
+): Promise<PbrSet | null> {
+  try {
+    const map = await loader.loadTexture(`/assets/textures/${base}_diffuse.jpg`)
+    const normalMap = await loader.loadDataTexture(`/assets/textures/${base}_normal.jpg`)
+    const roughnessMap = await loader.loadDataTexture(`/assets/textures/${base}_roughness.jpg`)
+    for (const t of [map, normalMap, roughnessMap]) {
+      t.wrapS = t.wrapT = THREE.RepeatWrapping
+      t.repeat.set(repeat[0], repeat[1])
+    }
+    return { map, normalMap, roughnessMap }
+  } catch {
+    console.warn(`[Structure] Textures missing for "${base}"; using flat fallback.`)
+    return null
+  }
+}
+
 export async function buildStructure(loader: AssetLoader): Promise<THREE.Group> {
   const group = new THREE.Group()
 
-  const floorDiffuse = await loader.loadTexture('/assets/textures/stone_floor_diffuse.jpg')
-  const floorNormal = await loader.loadDataTexture('/assets/textures/stone_floor_normal.jpg')
-  const floorRough = await loader.loadDataTexture('/assets/textures/stone_floor_roughness.jpg')
-  for (const t of [floorDiffuse, floorNormal, floorRough]) {
-    t.wrapS = t.wrapT = THREE.RepeatWrapping
-    t.repeat.set(8, 8)
-  }
-  const floorMat = new THREE.MeshStandardMaterial({
-    map: floorDiffuse,
-    normalMap: floorNormal,
-    roughnessMap: floorRough,
-  })
+  const floorPbr = await tryLoadPbrSet(loader, 'stone_floor', [8, 8])
+  const floorMat = floorPbr
+    ? new THREE.MeshStandardMaterial(floorPbr)
+    : new THREE.MeshStandardMaterial({ color: 0x3a342d, roughness: 0.95, metalness: 0 })
   const floor = new THREE.Mesh(new THREE.BoxGeometry(8 * TILE, 0.3, 8 * TILE), floorMat)
   floor.position.set(8, -0.15, 8)
   floor.receiveShadow = true
   group.add(floor)
 
-  const wallDiffuse = await loader.loadTexture('/assets/textures/stone_wall_diffuse.jpg')
-  const wallNormal = await loader.loadDataTexture('/assets/textures/stone_wall_normal.jpg')
-  const wallRough = await loader.loadDataTexture('/assets/textures/stone_wall_roughness.jpg')
-  for (const t of [wallDiffuse, wallNormal, wallRough]) {
-    t.wrapS = t.wrapT = THREE.RepeatWrapping
-    t.repeat.set(8, 1.5)
-  }
-  const wallMat = new THREE.MeshStandardMaterial({
-    map: wallDiffuse,
-    normalMap: wallNormal,
-    roughnessMap: wallRough,
-  })
+  const wallPbr = await tryLoadPbrSet(loader, 'stone_wall', [8, 1.5])
+  const wallMat = wallPbr
+    ? new THREE.MeshStandardMaterial(wallPbr)
+    : new THREE.MeshStandardMaterial({ color: 0x6e6358, roughness: 0.9, metalness: 0 })
 
   const north = new THREE.Mesh(new THREE.BoxGeometry(8 * TILE, WALL_H, 0.3), wallMat)
   north.position.set(8, WALL_H / 2, 0)

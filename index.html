@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Knight Lore</title>
+    <style>
+      body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; }
+      #app { width: 100vw; height: 100vh; }
+      #hud { position: fixed; top: 12px; left: 12px; color: #ffefc4; font-size: 14px; pointer-events: none; }
+      #hud div { margin-bottom: 4px; }
+      #win { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.7); color: #ffefc4; font-size: 48px; }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <div id="hud">
+      <div id="hud-form"></div>
+      <div id="hud-timer"></div>
+      <div id="hud-carry"></div>
+    </div>
+    <div id="win">YOU WIN</div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

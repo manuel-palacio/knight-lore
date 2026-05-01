@@ -3,6 +3,7 @@ import { Renderer } from './engine/Renderer'
 import { GameLoop } from './engine/GameLoop'
 import { Input } from './engine/Input'
 import { AssetLoader } from './engine/AssetLoader'
+import { DebugOverlay } from './engine/DebugOverlay'
 import { buildTheHall, type HallBuild } from './scenes/TheHall'
 import { GameState } from './game/GameState'
 import { HUD } from './game/HUD'
@@ -30,6 +31,15 @@ async function main(): Promise<void> {
 
   const build: HallBuild = await buildTheHall(renderer.scene, loader, state)
   const { room, player, enemy, door, goblet } = build
+
+  const debug = new DebugOverlay(renderer.scene)
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'KeyD') debug.toggle()
+  })
+
+  state.onTransformed = () => {
+    build.burst.burst(player.position)
+  }
 
   state.onTransformWhileCarrying = (id) => {
     if (id === 'goblet') {
@@ -85,6 +95,7 @@ async function main(): Promise<void> {
     }
 
     state.tickTransform(dt)
+    build.burst.update(dt)
 
     if (door.open && player.position.z > 15.5) {
       state.won = true
@@ -95,6 +106,7 @@ async function main(): Promise<void> {
 
   loop.onRender(() => {
     room.updateRenderPositions(0.18)
+    debug.refresh(room)
     renderer.render()
   })
 

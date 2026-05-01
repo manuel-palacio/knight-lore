@@ -7,6 +7,7 @@ import { Pickup } from '../game/Pickup'
 import { Door } from '../game/Door'
 import { PatrolEnemy } from '../game/PatrolEnemy'
 import { Entity } from '../game/Entity'
+import { ParticleBurst } from '../game/ParticleBurst'
 import { Category } from '../engine/categories'
 import { buildStructure, buildLedgeMesh } from '../game/Structure'
 import { buildHallLights } from '../game/Lighting'
@@ -22,6 +23,7 @@ export interface HallBuild {
   enemy: PatrolEnemy
   door: Door
   goblet: Pickup
+  burst: ParticleBurst
 }
 
 class StaticVisual extends Entity {
@@ -140,6 +142,9 @@ export async function buildTheHall(
   room.add(player)
   room.setSpawn(player.position.x, player.position.z)
 
+  const burst = new ParticleBurst()
+  room.group.add(burst.mesh)
+
   scene.add(room.group)
-  return { room, player, enemy, door, goblet }
+  return { room, player, enemy, door, goblet, burst }
 }

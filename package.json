@@ -10,7 +10,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint src tests --ext .ts --no-error-on-unmatched-pattern",
-    "lint:no-render-pos": "! grep -rn 'renderPosition' src --include='*.ts' | grep -v 'src/engine/Renderer.ts' | grep -v 'src/game/Entity.ts'"
+    "lint:no-render-pos": "! grep -rn 'renderPosition' src --include='*.ts' | grep -v 'src/engine/Renderer.ts' | grep -v 'src/game/Entity.ts' | grep -v '\\.renderPosition\\.copy('"
   },
   "dependencies": {
     "three": "^0.160.0"

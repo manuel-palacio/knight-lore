@@ -57,3 +57,44 @@ describe('Player movement', () => {
     expect(player.position.x).toBeLessThan(4 - 0.4)
   })
 })
+
+describe('Player jump', () => {
+  it('jump fires only from grounded state', () => {
+    const { grid, state, player } = setupRoom()
+    expect(player.state).toBe('grounded')
+    let jumped = 0
+    const c = { ...ctx(grid, state, { jump: true }), onJumped: () => { jumped++ } }
+    player.update(1 / 60, c)
+    expect(jumped).toBe(1)
+    const c2 = { ...ctx(grid, state, { jump: true }), onJumped: () => { jumped++ } }
+    player.update(1 / 60, c2)
+    expect(jumped).toBe(1)
+  })
+
+  it('emits exactly one Landed event per landing', () => {
+    const { grid, state, player } = setupRoom()
+    let landed = 0
+    const c = { ...ctx(grid, state, { jump: true }), onLanded: () => { landed++ } }
+    player.update(1 / 60, c)
+    for (let i = 0; i < 120; i++) {
+      const c2 = { ...ctx(grid, state), onLanded: () => { landed++ } }
+      player.update(1 / 60, c2)
+      if (player.state === 'grounded') break
+    }
+    expect(player.state).toBe('grounded')
+    expect(landed).toBe(1)
+  })
+
+  it('stepping off support starts falling on next tick', () => {
+    const { grid, state, player } = setupRoom()
+    grid.setSupport(1, 1, 1.6)
+    player.position.set(2, 1.6, 2)
+    player.state = 'grounded'
+    const c = { ...ctx(grid, state, { right: true }) }
+    for (let i = 0; i < 60; i++) {
+      player.update(1 / 60, c)
+      if (player.state === 'airborne') break
+    }
+    expect(player.state).toBe('airborne')
+  })
+})

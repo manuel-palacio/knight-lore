@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
+import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader.js'
 
 export interface LoadedModel {
   scene: THREE.Group
@@ -11,6 +12,7 @@ export class AssetLoader {
   private gltf = new GLTFLoader()
   private texLoader = new THREE.TextureLoader()
   private rgbeLoader = new RGBELoader()
+  private exrLoader = new EXRLoader()
   private modelCache = new Map<string, LoadedModel>()
   private texCache = new Map<string, THREE.Texture>()
   private hdrCache = new Map<string, THREE.DataTexture>()
@@ -44,7 +46,8 @@ export class AssetLoader {
   async loadHDR(url: string): Promise<THREE.DataTexture> {
     const cached = this.hdrCache.get(url)
     if (cached) return cached
-    const tex = await this.rgbeLoader.loadAsync(url)
+    const loader = url.toLowerCase().endsWith('.exr') ? this.exrLoader : this.rgbeLoader
+    const tex = await loader.loadAsync(url)
     tex.mapping = THREE.EquirectangularReflectionMapping
     this.hdrCache.set(url, tex)
     return tex

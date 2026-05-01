@@ -22,7 +22,7 @@ async function main(): Promise<void> {
   const hud = new HUD()
 
   try {
-    const hdr = await loader.loadHDR('/assets/textures/castle_dungeon.hdr')
+    const hdr = await loader.loadHDR('/assets/textures/castle_dungeon.exr')
     renderer.setEnvironment(hdr)
   } catch {
     console.warn('HDR not present; skipping environment reflection')

@@ -59,8 +59,8 @@ export async function buildStructure(loader: AssetLoader): Promise<THREE.Group> 
   // Walls keep the cobblestone PBR set (loaded from stone_floor_*) with
   // wall-shape repeat. cloneWithRepeat is essential — texture.repeat is
   // per-instance state.
-  const cobblePbr = await tryLoadPbrSet(loader, 'stone_floor', [8, 2.5])
-  const wallPbr = cobblePbr ? cloneWithRepeat(cobblePbr, [8, 2.5]) : null
+  const cobblePbr = await tryLoadPbrSet(loader, 'stone_floor', [4, 2.5])
+  const wallPbr = cobblePbr ? cloneWithRepeat(cobblePbr, [4, 2.5]) : null
   const wallMat = wallPbr
     ? new THREE.MeshStandardMaterial(wallPbr)
     : new THREE.MeshStandardMaterial({ color: 0x6e6358, roughness: 0.9, metalness: 0 })

@@ -17,7 +17,7 @@ import {
   SANDSTONE_PALETTE,
   AMBER_BLOCK_PALETTE,
 } from '../game/Structure'
-import { buildHallLights } from '../game/Lighting'
+import { buildHallLights, TORCH_POSITIONS } from '../game/Lighting'
 import { makeToonMaterial } from '../game/Materials'
 import type { AssetLoader } from '../engine/AssetLoader'
 import type { GameState } from '../game/GameState'
@@ -167,10 +167,13 @@ export async function buildTheHall(
   const arch = buildArch(4 * TILE + TILE / 2, 8 * TILE - 0.1)
   room.group.add(arch)
 
-  // Visible torch in the SW corner, paired with the warm PointLight in
-  // Lighting.ts so the warm glow has a visible source.
-  const torch = buildTorch(0.5, 2.0, 8)
-  room.group.add(torch)
+  // Visible torches matching every PointLight in Lighting.ts. The y param
+  // for buildTorch places the bracket centre; the flame cone draws 0.3m
+  // above. The PointLight sits at the same position — the slight vertical
+  // offset between flame and light is imperceptible to the eye.
+  for (const [x, y, z] of TORCH_POSITIONS) {
+    room.group.add(buildTorch(x, y - 0.4, z))
+  }
 
   const burst = new ParticleBurst()
   room.group.add(burst.mesh)

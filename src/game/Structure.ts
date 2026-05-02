@@ -182,11 +182,11 @@ export function buildTorch(x: number, y: number, z: number): THREE.Group {
 export async function buildStructure(_loader: AssetLoader): Promise<THREE.Group> {
   const group = new THREE.Group()
 
-  // Sandstone tiled floor (3.png reference). Repeat (3, 3) on a 16m × 16m
-  // floor ⇒ 24 tiles across, ~0.67m per tile — enough density to read as
-  // floor pavement at our orthographic camera distance.
+  // Sandstone tiled floor (3.png reference). Repeat (2, 2) on a 16m × 16m
+  // floor ⇒ 16 tiles across, ~1m per tile — chunky paving stones that read
+  // clearly at our orthographic camera distance.
   const floorTex = makeFloorTexture(SANDSTONE_PALETTE)
-  floorTex.repeat.set(3, 3)
+  floorTex.repeat.set(2, 2)
   const floorMat = new THREE.MeshBasicMaterial({ map: floorTex })
   const floor = new THREE.Mesh(new THREE.BoxGeometry(8 * TILE, 0.3, 8 * TILE), floorMat)
   floor.position.set(8, -0.15, 8)

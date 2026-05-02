@@ -47,19 +47,20 @@ function cloneWithRepeat(set: PbrSet, repeat: [number, number]): PbrSet {
 export async function buildStructure(loader: AssetLoader): Promise<THREE.Group> {
   const group = new THREE.Group()
 
-  const floorPbr = await tryLoadPbrSet(loader, 'stone_floor', [8, 8])
-  const floorMat = floorPbr
-    ? new THREE.MeshStandardMaterial(floorPbr)
-    : new THREE.MeshStandardMaterial({ color: 0x3a342d, roughness: 0.95, metalness: 0 })
+  // Original Knight Lore look: floor is a featureless black void. Items,
+  // characters, and walls pop against it. MeshBasicMaterial ignores lights
+  // (and the HDR environment), so the surface stays pure black no matter
+  // what's overhead.
+  const floorMat = new THREE.MeshBasicMaterial({ color: 0x000000 })
   const floor = new THREE.Mesh(new THREE.BoxGeometry(8 * TILE, 0.3, 8 * TILE), floorMat)
   floor.position.set(8, -0.15, 8)
-  floor.receiveShadow = true
   group.add(floor)
 
-  // Walls reuse the floor's cobblestone PBR set with wall-shape repeat
-  // (8 × 1.5 = ~2m square per tile). Fall back to flat color if the floor
-  // textures themselves are missing.
-  const wallPbr = floorPbr ? cloneWithRepeat(floorPbr, [8, 1.5]) : null
+  // Walls keep the cobblestone PBR set (loaded from stone_floor_*) with
+  // wall-shape repeat. cloneWithRepeat is essential — texture.repeat is
+  // per-instance state.
+  const cobblePbr = await tryLoadPbrSet(loader, 'stone_floor', [8, 1.5])
+  const wallPbr = cobblePbr ? cloneWithRepeat(cobblePbr, [8, 1.5]) : null
   const wallMat = wallPbr
     ? new THREE.MeshStandardMaterial(wallPbr)
     : new THREE.MeshStandardMaterial({ color: 0x6e6358, roughness: 0.9, metalness: 0 })

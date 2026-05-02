@@ -135,14 +135,16 @@ export function buildArch(centerX: number, z: number): THREE.Group {
   const colH = 3
   const archR = 1
   const archTube = 0.15
-  const stoneMat = new THREE.MeshBasicMaterial({ color: WALL_PALETTE.body })
+  const stoneMat = new THREE.MeshLambertMaterial({ color: WALL_PALETTE.body })
 
   const leftCol = new THREE.Mesh(new THREE.BoxGeometry(colW, colH, colW), stoneMat)
   leftCol.position.set(centerX - archR, colH / 2, z)
+  leftCol.castShadow = true
   group.add(leftCol)
 
   const rightCol = new THREE.Mesh(new THREE.BoxGeometry(colW, colH, colW), stoneMat)
   rightCol.position.set(centerX + archR, colH / 2, z)
+  rightCol.castShadow = true
   group.add(rightCol)
 
   // Default torus is in XY plane (axis along Z) — already aligned with the
@@ -152,6 +154,7 @@ export function buildArch(centerX: number, z: number): THREE.Group {
     stoneMat,
   )
   archTop.position.set(centerX, colH, z)
+  archTop.castShadow = true
   group.add(archTop)
 
   return group
@@ -164,11 +167,13 @@ export function buildTorch(x: number, y: number, z: number): THREE.Group {
 
   const bracket = new THREE.Mesh(
     new THREE.BoxGeometry(0.18, 0.3, 0.18),
-    new THREE.MeshBasicMaterial({ color: 0x2a1a10 }),
+    new THREE.MeshLambertMaterial({ color: 0x2a1a10 }),
   )
   bracket.position.set(x, y, z)
   group.add(bracket)
 
+  // Flame keeps MeshBasicMaterial — it should glow at full brightness no
+  // matter what the surrounding lighting is doing. It IS the light source.
   const flame = new THREE.Mesh(
     new THREE.ConeGeometry(0.13, 0.4, 6),
     new THREE.MeshBasicMaterial({ color: 0xff9040 }),
@@ -182,29 +187,33 @@ export function buildTorch(x: number, y: number, z: number): THREE.Group {
 export async function buildStructure(_loader: AssetLoader): Promise<THREE.Group> {
   const group = new THREE.Group()
 
-  // Sandstone tiled floor (3.png reference). Repeat (2, 2) on a 16m × 16m
-  // floor ⇒ 16 tiles across, ~1m per tile — chunky paving stones that read
-  // clearly at our orthographic camera distance.
+  // Sandstone tiled floor. MeshLambertMaterial responds to torch / moon
+  // lighting — the warm pool of torchlight is what carves the dungeon
+  // atmosphere. receiveShadow lets the ledge/block cast onto the floor.
   const floorTex = makeFloorTexture(SANDSTONE_PALETTE)
   floorTex.repeat.set(2, 2)
-  const floorMat = new THREE.MeshBasicMaterial({ map: floorTex })
+  const floorMat = new THREE.MeshLambertMaterial({ map: floorTex })
   const floor = new THREE.Mesh(new THREE.BoxGeometry(8 * TILE, 0.3, 8 * TILE), floorMat)
   floor.position.set(8, -0.15, 8)
+  floor.receiveShadow = true
   group.add(floor)
 
-  // Walls: warm-brown shaded bricks (Retroworks Remake palette).
+  // Walls: warm-brown shaded bricks. Lambert too — the cool moon spot
+  // brushes the lit side, leaving the unlit side genuinely dark.
   const wallTex = makeBrickTexture(WALL_PALETTE)
   wallTex.repeat.set(3, 2)
-  const wallMat = new THREE.MeshBasicMaterial({ map: wallTex })
+  const wallMat = new THREE.MeshLambertMaterial({ map: wallTex })
 
-  // Render only the two BACK walls (north + west). Collision still works:
-  // Grid treats out-of-bounds cells as solid regardless of visible mesh.
   const north = new THREE.Mesh(new THREE.BoxGeometry(8 * TILE, WALL_H, 0.3), wallMat)
   north.position.set(8, WALL_H / 2, 0)
+  north.receiveShadow = true
+  north.castShadow = true
   group.add(north)
 
   const west = new THREE.Mesh(new THREE.BoxGeometry(0.3, WALL_H, 8 * TILE), wallMat)
   west.position.set(0, WALL_H / 2, 8)
+  west.receiveShadow = true
+  west.castShadow = true
   group.add(west)
 
   return group

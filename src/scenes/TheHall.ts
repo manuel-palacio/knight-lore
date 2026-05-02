@@ -62,8 +62,10 @@ export async function buildTheHall(
   ledgeTex.repeat.set(1, 1)
   const ledgeMesh = new THREE.Mesh(
     new THREE.BoxGeometry(2, 2, 2),
-    new THREE.MeshBasicMaterial({ map: ledgeTex }),
+    new THREE.MeshLambertMaterial({ map: ledgeTex }),
   )
+  ledgeMesh.castShadow = true
+  ledgeMesh.receiveShadow = true
   ledgeMesh.position.set(5 * TILE + TILE / 2, 1, 5 * TILE + TILE / 2)
   room.group.add(ledgeMesh)
   ledge.placeOnGrid(room.grid, TILE)
@@ -76,8 +78,10 @@ export async function buildTheHall(
   blockTex.repeat.set(0.8, 0.8)
   const blockMesh = new THREE.Mesh(
     new THREE.BoxGeometry(1.6, 1.6, 1.6),
-    new THREE.MeshBasicMaterial({ map: blockTex }),
+    new THREE.MeshLambertMaterial({ map: blockTex }),
   )
+  blockMesh.castShadow = true
+  blockMesh.receiveShadow = true
   block.object3D = blockMesh
   block.placeOnGrid(room.grid, TILE)
   blockMesh.position.copy(block.position)
@@ -103,7 +107,7 @@ export async function buildTheHall(
   const door = new Door('south', () => state.hasItem('goblet'))
   const doorMesh = new THREE.Mesh(
     new THREE.BoxGeometry(2, 2.4, 0.2),
-    new THREE.MeshBasicMaterial({ color: 0x3a2818 }),
+    new THREE.MeshLambertMaterial({ color: 0x3a2818 }),
   )
   doorMesh.castShadow = true
   door.object3D = doorMesh

@@ -4,80 +4,77 @@ import type { AssetLoader } from '../engine/AssetLoader'
 const TILE = 2
 const WALL_H = 5
 
-interface PbrSet {
-  map: THREE.Texture
-  normalMap: THREE.Texture
-  roughnessMap: THREE.Texture
-}
+// Procedural brick texture: oblong (2:1) staggered bricks rendered as
+// filled magenta rectangles on black, matching the original Knight Lore
+// Filmation engine. Canvas is tileable both axes — bottom row offset by
+// half a brick, top/bottom seam aligns with row boundaries.
+function makeBrickCanvasTexture(): THREE.CanvasTexture {
+  const W = 256
+  const H = 128
+  const COLS = 8
+  const ROWS = 8
+  const bw = W / COLS
+  const bh = H / ROWS
+  const m = 1
 
-async function tryLoadPbrSet(
-  loader: AssetLoader,
-  base: string,
-  repeat: [number, number],
-): Promise<PbrSet | null> {
-  try {
-    const map = await loader.loadTexture(`/assets/textures/${base}_diffuse.jpg`)
-    const normalMap = await loader.loadDataTexture(`/assets/textures/${base}_normal.jpg`)
-    const roughnessMap = await loader.loadDataTexture(`/assets/textures/${base}_roughness.jpg`)
-    for (const t of [map, normalMap, roughnessMap]) {
-      t.wrapS = t.wrapT = THREE.RepeatWrapping
-      t.repeat.set(repeat[0], repeat[1])
+  const canvas = document.createElement('canvas')
+  canvas.width = W
+  canvas.height = H
+  const ctx = canvas.getContext('2d')!
+
+  // Black mortar background fills the gaps between bricks.
+  ctx.fillStyle = '#000000'
+  ctx.fillRect(0, 0, W, H)
+
+  // Magenta brick fill (matches Knight Lore room palette in 1.png / 2.jpg).
+  ctx.fillStyle = '#ff2bbe'
+
+  for (let r = 0; r < ROWS; r++) {
+    const y = r * bh
+    const xOffset = (r % 2) * (bw / 2)
+    // Draw with c=-1 and c=COLS so half-bricks at the offset row wrap into
+    // the adjacent tile's matching half — no visible seam after tiling.
+    for (let c = -1; c <= COLS; c++) {
+      const x = c * bw + xOffset + m
+      ctx.fillRect(x, y + m, bw - 2 * m, bh - 2 * m)
     }
-    return { map, normalMap, roughnessMap }
-  } catch {
-    return null
   }
+
+  const tex = new THREE.CanvasTexture(canvas)
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping
+  tex.magFilter = THREE.NearestFilter
+  tex.minFilter = THREE.NearestMipmapLinearFilter
+  return tex
 }
 
-// Clones a PbrSet so the wall material can have its own repeat without
-// stomping on the floor material's repeat (textures share repeat state per
-// instance — clone() makes a new texture pointing at the same image).
-function cloneWithRepeat(set: PbrSet, repeat: [number, number]): PbrSet {
-  const map = set.map.clone()
-  const normalMap = set.normalMap.clone()
-  const roughnessMap = set.roughnessMap.clone()
-  for (const t of [map, normalMap, roughnessMap]) {
-    t.wrapS = t.wrapT = THREE.RepeatWrapping
-    t.repeat.set(repeat[0], repeat[1])
-    t.needsUpdate = true
-  }
-  return { map, normalMap, roughnessMap }
-}
-
-export async function buildStructure(loader: AssetLoader): Promise<THREE.Group> {
+export async function buildStructure(_loader: AssetLoader): Promise<THREE.Group> {
   const group = new THREE.Group()
 
   // Original Knight Lore look: floor is a featureless black void. Items,
   // characters, and walls pop against it. MeshBasicMaterial ignores lights
-  // (and the HDR environment), so the surface stays pure black no matter
-  // what's overhead.
+  // and the HDR environment so the surface stays pure black.
   const floorMat = new THREE.MeshBasicMaterial({ color: 0x000000 })
   const floor = new THREE.Mesh(new THREE.BoxGeometry(8 * TILE, 0.3, 8 * TILE), floorMat)
   floor.position.set(8, -0.15, 8)
   group.add(floor)
 
-  // Walls keep the cobblestone PBR set (loaded from stone_floor_*) with
-  // wall-shape repeat. cloneWithRepeat is essential — texture.repeat is
-  // per-instance state.
-  const cobblePbr = await tryLoadPbrSet(loader, 'stone_floor', [4, 2.5])
-  const wallPbr = cobblePbr ? cloneWithRepeat(cobblePbr, [4, 2.5]) : null
-  const wallMat = wallPbr
-    ? new THREE.MeshStandardMaterial(wallPbr)
-    : new THREE.MeshStandardMaterial({ color: 0x6e6358, roughness: 0.9, metalness: 0 })
+  // Walls: filled magenta bricks on black mortar. MeshBasicMaterial keeps
+  // the colours flat — no lighting, no shading interference. Repeat (3, 2)
+  // on a 16m × 5m wall ⇒ 24 bricks across × 16 rows tall, matching the
+  // density visible in the original game's screenshots.
+  const brickTex = makeBrickCanvasTexture()
+  brickTex.repeat.set(3, 2)
+  const wallMat = new THREE.MeshBasicMaterial({ map: brickTex })
 
-  // Knight Lore convention: render only the two BACK walls (north + west)
-  // facing the camera. South + east are omitted so the player can see in.
-  // Collision still works — Grid treats out-of-bounds cells as solid.
+  // Knight Lore convention: render only the two BACK walls (north + west).
+  // South + east are omitted so the player can see in. Collision still
+  // works — Grid treats out-of-bounds cells as solid.
   const north = new THREE.Mesh(new THREE.BoxGeometry(8 * TILE, WALL_H, 0.3), wallMat)
   north.position.set(8, WALL_H / 2, 0)
-  north.receiveShadow = true
-  north.castShadow = true
   group.add(north)
 
   const west = new THREE.Mesh(new THREE.BoxGeometry(0.3, WALL_H, 8 * TILE), wallMat)
   west.position.set(0, WALL_H / 2, 8)
-  west.receiveShadow = true
-  west.castShadow = true
   group.add(west)
 
   return group

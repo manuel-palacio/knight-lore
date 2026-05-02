@@ -1,11 +1,11 @@
 import * as THREE from 'three'
 
-// Owns WebGLRenderer, Scene, and the locked isometric OrthographicCamera.
-// Honors ART_DIRECTION § fixed-camera demands by never moving the camera.
 const CAMERA_DISTANCE = 30
 const CAMERA_HEIGHT = 22
 const VIEW_SIZE = 12
 
+// Owns WebGLRenderer, Scene, and the locked isometric OrthographicCamera.
+// Honors ART_DIRECTION § fixed-camera demands by never moving the camera.
 export class Renderer {
   readonly scene: THREE.Scene
   readonly camera: THREE.OrthographicCamera
@@ -17,12 +17,9 @@ export class Renderer {
 
     const aspect = window.innerWidth / window.innerHeight
     this.camera = new THREE.OrthographicCamera(
-      -VIEW_SIZE * aspect,
-      VIEW_SIZE * aspect,
-      VIEW_SIZE,
-      -VIEW_SIZE,
-      0.1,
-      200,
+      -VIEW_SIZE * aspect, VIEW_SIZE * aspect,
+      VIEW_SIZE, -VIEW_SIZE,
+      0.1, 200,
     )
     this.camera.position.set(CAMERA_DISTANCE, CAMERA_HEIGHT, CAMERA_DISTANCE)
     this.camera.lookAt(8, 0, 8)
@@ -31,6 +28,11 @@ export class Renderer {
     this.webgl.setSize(window.innerWidth, window.innerHeight)
     this.webgl.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     this.webgl.outputColorSpace = THREE.SRGBColorSpace
+    // Tier 1: ACES filmic tone mapping for cinematic compression of bright
+    // values. Without it, intense torch / particle highlights clip flatly
+    // to white instead of rolling off naturally.
+    this.webgl.toneMapping = THREE.ACESFilmicToneMapping
+    this.webgl.toneMappingExposure = 1.4
     this.webgl.shadowMap.enabled = true
     this.webgl.shadowMap.type = THREE.PCFSoftShadowMap
     container.appendChild(this.webgl.domElement)

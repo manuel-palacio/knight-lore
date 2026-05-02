@@ -12,12 +12,12 @@ import { Category } from '../engine/categories'
 import {
   buildStructure,
   buildArch,
-  buildTorch,
   makeBrickTexture,
   SANDSTONE_PALETTE,
   AMBER_BLOCK_PALETTE,
 } from '../game/Structure'
-import { buildHallLights, TORCH_POSITIONS } from '../game/Lighting'
+import { buildHallLights } from '../game/Lighting'
+import { Torch, TORCH_POSITIONS } from '../game/Torch'
 import { makeToonMaterial } from '../game/Materials'
 import type { AssetLoader } from '../engine/AssetLoader'
 import type { GameState } from '../game/GameState'
@@ -31,6 +31,7 @@ export interface HallBuild {
   door: Door
   goblet: Pickup
   burst: ParticleBurst
+  torches: Torch[]
 }
 
 class StaticVisual extends Entity {
@@ -167,17 +168,18 @@ export async function buildTheHall(
   const arch = buildArch(4 * TILE + TILE / 2, 8 * TILE - 0.1)
   room.group.add(arch)
 
-  // Visible torches matching every PointLight in Lighting.ts. The y param
-  // for buildTorch places the bracket centre; the flame cone draws 0.3m
-  // above. The PointLight sits at the same position — the slight vertical
-  // offset between flame and light is imperceptible to the eye.
-  for (const [x, y, z] of TORCH_POSITIONS) {
-    room.group.add(buildTorch(x, y - 0.4, z))
-  }
+  // Torches: each owns its mesh + PointLight + flicker phase. main.ts
+  // calls torch.update(dt) in the simulation loop to animate flicker.
+  const torches: Torch[] = TORCH_POSITIONS.map(([x, y, z]) => {
+    const torch = new Torch(x, y, z)
+    room.group.add(torch.group)
+    room.group.add(torch.light)
+    return torch
+  })
 
   const burst = new ParticleBurst()
   room.group.add(burst.mesh)
 
   scene.add(room.group)
-  return { room, player, enemy, door, goblet, burst }
+  return { room, player, enemy, door, goblet, burst, torches }
 }

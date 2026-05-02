@@ -3,6 +3,7 @@ import type { AssetLoader } from '../engine/AssetLoader'
 
 const TILE = 2
 const WALL_H = 5
+const TEXTURE_ANISOTROPY = 16
 
 export interface BrickPalette {
   body: string
@@ -74,17 +75,19 @@ export function makeBrickTexture(palette: BrickPalette = WALL_PALETTE): THREE.Ca
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping
   tex.magFilter = THREE.NearestFilter
   tex.minFilter = THREE.NearestMipmapLinearFilter
-  // Match the renderer's sRGB output expectation. Without this the painted
-  // pixels are treated as linear and gamma-corrected on output, brightening
-  // every colour by ~2x — turns dark brown into pale tan.
+  // sRGB so painted pixels match canvas colours (canvas treated as linear
+  // by default → gamma-corrected on output → brightened ~2x).
   tex.colorSpace = THREE.SRGBColorSpace
+  // Anisotropic filtering preserves brick detail at the 45° isometric
+  // angle. 16x is the common GPU max; three.js silently clamps to the
+  // device's actual capability.
+  tex.anisotropy = TEXTURE_ANISOTROPY
   return tex
 }
 
 // Procedural square stone-tile floor (no stagger, NW lighting). Reuses the
 // BrickPalette interface — the SANDSTONE_PALETTE gives the warm 3.png look,
-// but any palette works. Each call is a fresh canvas + texture so callers
-// can set their own repeat without sharing state.
+// but any palette works.
 export function makeFloorTexture(palette: BrickPalette = SANDSTONE_PALETTE): THREE.CanvasTexture {
   const W = 256
   const H = 256
@@ -123,6 +126,7 @@ export function makeFloorTexture(palette: BrickPalette = SANDSTONE_PALETTE): THR
   tex.magFilter = THREE.NearestFilter
   tex.minFilter = THREE.NearestMipmapLinearFilter
   tex.colorSpace = THREE.SRGBColorSpace
+  tex.anisotropy = TEXTURE_ANISOTROPY
   return tex
 }
 
@@ -156,30 +160,6 @@ export function buildArch(centerX: number, z: number): THREE.Group {
   archTop.position.set(centerX, colH, z)
   archTop.castShadow = true
   group.add(archTop)
-
-  return group
-}
-
-// Wall torch: dark bracket + bright flame cone. Pairs visually with the
-// warm PointLight in Lighting.ts so the eye sees what's casting the glow.
-export function buildTorch(x: number, y: number, z: number): THREE.Group {
-  const group = new THREE.Group()
-
-  const bracket = new THREE.Mesh(
-    new THREE.BoxGeometry(0.18, 0.3, 0.18),
-    new THREE.MeshLambertMaterial({ color: 0x2a1a10 }),
-  )
-  bracket.position.set(x, y, z)
-  group.add(bracket)
-
-  // Flame keeps MeshBasicMaterial — it should glow at full brightness no
-  // matter what the surrounding lighting is doing. It IS the light source.
-  const flame = new THREE.Mesh(
-    new THREE.ConeGeometry(0.13, 0.4, 6),
-    new THREE.MeshBasicMaterial({ color: 0xff9040 }),
-  )
-  flame.position.set(x, y + 0.3, z)
-  group.add(flame)
 
   return group
 }

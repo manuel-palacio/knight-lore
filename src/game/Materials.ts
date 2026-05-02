@@ -1,14 +1,18 @@
 import * as THREE from 'three'
 
-// Hero material per spec §6.6: MeshToonMaterial with 3-step ramp.
-// NEVER PBR for hero meshes (rule 9).
+// MeshToonMaterial samples its gradientMap with the Lambert light intensity
+// (0..1) → R channel → step colour. NearestFilter is critical: without it
+// the GPU bilinearly interpolates between steps, defeating cel-shading
+// (you get smooth Lambert instead). RedFormat = 1 byte/texel, the smallest
+// gradient that does the job.
 export function makeToonMaterial(color: THREE.ColorRepresentation = 0xc0a070): THREE.MeshToonMaterial {
-  const ramp = new Uint8Array([60, 60, 60, 255, 160, 160, 160, 255, 240, 240, 240, 255])
-  const gradient = new THREE.DataTexture(ramp, 3, 1, THREE.RGBAFormat)
+  // Three step values: shadow / mid / lit. Shadow lifted to 110 (was 60)
+  // so the unlit side of toon-shaded heroes stays visibly readable in the
+  // dim dungeon — at 60 they merged into the warm-brown architecture.
+  const ramp = new Uint8Array([110, 180, 245])
+  const gradient = new THREE.DataTexture(ramp, 3, 1, THREE.RedFormat)
+  gradient.minFilter = THREE.NearestFilter
+  gradient.magFilter = THREE.NearestFilter
   gradient.needsUpdate = true
   return new THREE.MeshToonMaterial({ color, gradientMap: gradient })
-}
-
-export function makeStoneMaterial(color = 0x6e6358): THREE.MeshStandardMaterial {
-  return new THREE.MeshStandardMaterial({ color, roughness: 0.9, metalness: 0.0 })
 }

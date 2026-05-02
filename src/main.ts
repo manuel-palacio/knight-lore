@@ -96,6 +96,7 @@ async function main(): Promise<void> {
 
     state.tickTransform(dt)
     build.burst.update(dt)
+    for (const torch of build.torches) torch.update(dt)
 
     if (door.open && player.position.z > 15.5) {
       state.won = true

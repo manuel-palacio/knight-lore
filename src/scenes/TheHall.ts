@@ -9,9 +9,16 @@ import { PatrolEnemy } from '../game/PatrolEnemy'
 import { Entity } from '../game/Entity'
 import { ParticleBurst } from '../game/ParticleBurst'
 import { Category } from '../engine/categories'
-import { buildStructure, buildLedgeMesh } from '../game/Structure'
+import {
+  buildStructure,
+  buildArch,
+  buildTorch,
+  makeBrickTexture,
+  SANDSTONE_PALETTE,
+  AMBER_BLOCK_PALETTE,
+} from '../game/Structure'
 import { buildHallLights } from '../game/Lighting'
-import { makeStoneMaterial, makeToonMaterial } from '../game/Materials'
+import { makeToonMaterial } from '../game/Materials'
 import type { AssetLoader } from '../engine/AssetLoader'
 import type { GameState } from '../game/GameState'
 
@@ -47,22 +54,30 @@ export async function buildTheHall(
 
   for (const l of buildHallLights()) room.group.add(l)
 
-  // Static raised ledge at grid (5,5), height 2m
+  // Static raised ledge at grid (5,5), 2m cube. Sandstone-tan bricks —
+  // visually distinct from the walls so the player reads it as architecture
+  // they can stand on rather than wall-they-bounce-off-of.
   const ledge = new StaticBlock(5, 5, 2)
-  const ledgeMesh = buildLedgeMesh(makeStoneMaterial(0x877a68))
+  const ledgeTex = makeBrickTexture(SANDSTONE_PALETTE)
+  ledgeTex.repeat.set(1, 1)
+  const ledgeMesh = new THREE.Mesh(
+    new THREE.BoxGeometry(2, 2, 2),
+    new THREE.MeshBasicMaterial({ map: ledgeTex }),
+  )
   ledgeMesh.position.set(5 * TILE + TILE / 2, 1, 5 * TILE + TILE / 2)
   room.group.add(ledgeMesh)
   ledge.placeOnGrid(room.grid, TILE)
   room.add(ledge)
 
-  // Push-block at grid (3,5)
+  // Push-block at grid (3,5). Amber bricks — warmer than the walls, signals
+  // "moveable" by being slightly different in colour from the architecture.
   const block = new PushBlock(3, 5)
+  const blockTex = makeBrickTexture(AMBER_BLOCK_PALETTE)
+  blockTex.repeat.set(0.8, 0.8)
   const blockMesh = new THREE.Mesh(
     new THREE.BoxGeometry(1.6, 1.6, 1.6),
-    makeToonMaterial(0x9b6a3a),
+    new THREE.MeshBasicMaterial({ map: blockTex }),
   )
-  blockMesh.castShadow = true
-  blockMesh.receiveShadow = true
   block.object3D = blockMesh
   block.placeOnGrid(room.grid, TILE)
   blockMesh.position.copy(block.position)
@@ -88,7 +103,7 @@ export async function buildTheHall(
   const door = new Door('south', () => state.hasItem('goblet'))
   const doorMesh = new THREE.Mesh(
     new THREE.BoxGeometry(2, 2.4, 0.2),
-    makeStoneMaterial(0x3a2818),
+    new THREE.MeshBasicMaterial({ color: 0x3a2818 }),
   )
   doorMesh.castShadow = true
   door.object3D = doorMesh
@@ -141,6 +156,17 @@ export async function buildTheHall(
   room.group.add(playerMesh)
   room.add(player)
   room.setSpawn(player.position.x, player.position.z)
+
+  // Stone arch framing the south door (the only visible exit from the
+  // camera's POV — the south wall itself is omitted). Adds the Knight Lore
+  // silhouette around what was previously a floating door slab.
+  const arch = buildArch(4 * TILE + TILE / 2, 8 * TILE - 0.1)
+  room.group.add(arch)
+
+  // Visible torch in the SW corner, paired with the warm PointLight in
+  // Lighting.ts so the warm glow has a visible source.
+  const torch = buildTorch(0.5, 2.0, 8)
+  room.group.add(torch)
 
   const burst = new ParticleBurst()
   room.group.add(burst.mesh)

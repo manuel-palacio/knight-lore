@@ -1,15 +1,28 @@
 import * as THREE from 'three'
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js'
+import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js'
 
 const CAMERA_DISTANCE = 30
 const CAMERA_HEIGHT = 22
 const VIEW_SIZE = 12
 
-// Owns WebGLRenderer, Scene, and the locked isometric OrthographicCamera.
-// Honors ART_DIRECTION § fixed-camera demands by never moving the camera.
+// Bloom tuning. Strength = how intense the glow, radius = how spread out,
+// threshold = luminance cutoff (only pixels brighter than this bloom).
+// 0.85 threshold means the warm walls / floor stay calm; only the HDR
+// torch flames and the particle burst on transformation glow.
+const BLOOM_STRENGTH = 0.55
+const BLOOM_RADIUS = 0.5
+const BLOOM_THRESHOLD = 0.85
+
+// Owns WebGLRenderer, Scene, OrthographicCamera, and the postprocessing
+// pipeline. Honors ART_DIRECTION § fixed-camera demands.
 export class Renderer {
   readonly scene: THREE.Scene
   readonly camera: THREE.OrthographicCamera
   readonly webgl: THREE.WebGLRenderer
+  private composer: EffectComposer
 
   constructor(container: HTMLElement) {
     this.scene = new THREE.Scene()
@@ -28,14 +41,25 @@ export class Renderer {
     this.webgl.setSize(window.innerWidth, window.innerHeight)
     this.webgl.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     this.webgl.outputColorSpace = THREE.SRGBColorSpace
-    // Tier 1: ACES filmic tone mapping for cinematic compression of bright
-    // values. Without it, intense torch / particle highlights clip flatly
-    // to white instead of rolling off naturally.
     this.webgl.toneMapping = THREE.ACESFilmicToneMapping
     this.webgl.toneMappingExposure = 1.4
     this.webgl.shadowMap.enabled = true
     this.webgl.shadowMap.type = THREE.PCFSoftShadowMap
     container.appendChild(this.webgl.domElement)
+
+    // Postprocessing: RenderPass writes scene to a half-float target
+    // (linear, allows >1 values). UnrealBloomPass extracts pixels above
+    // the luminance threshold and adds glow. OutputPass applies tone
+    // mapping + sRGB conversion at the very end so bloom samples linear
+    // values, not tone-mapped ones.
+    this.composer = new EffectComposer(this.webgl)
+    this.composer.addPass(new RenderPass(this.scene, this.camera))
+    const bloom = new UnrealBloomPass(
+      new THREE.Vector2(window.innerWidth, window.innerHeight),
+      BLOOM_STRENGTH, BLOOM_RADIUS, BLOOM_THRESHOLD,
+    )
+    this.composer.addPass(bloom)
+    this.composer.addPass(new OutputPass())
 
     window.addEventListener('resize', this.handleResize)
   }
@@ -48,10 +72,11 @@ export class Renderer {
     this.camera.bottom = -VIEW_SIZE
     this.camera.updateProjectionMatrix()
     this.webgl.setSize(window.innerWidth, window.innerHeight)
+    this.composer.setSize(window.innerWidth, window.innerHeight)
   }
 
   render(): void {
-    this.webgl.render(this.scene, this.camera)
+    this.composer.render()
   }
 
   setEnvironment(hdr: THREE.Texture): void {

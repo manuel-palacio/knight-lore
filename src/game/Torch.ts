@@ -6,6 +6,13 @@ const LIGHT_FLICKER = 0.30
 const FLAME_SCALE_FLICKER = 0.35
 const FLAME_Y_FLICKER = 0.05
 
+// HDR-bright flame colour (linear RGB > 1) so the bloom pass picks it up
+// as a true highlight after RenderPass writes to the half-float target.
+// ACES tone mapping in OutputPass compresses these >1 values back to
+// displayable range, but bloom has already sampled the linear brightness
+// and added its glow halo around each flame.
+const FLAME_COLOR = new THREE.Color(0xff9040).multiplyScalar(2.6)
+
 export const TORCH_POSITIONS: ReadonlyArray<readonly [number, number, number]> = [
   [0.4, 2.4, 4],
   [0.4, 2.4, 12],
@@ -37,7 +44,7 @@ export class Torch {
     this.flameBaseY = y + 0.3
     this.flame = new THREE.Mesh(
       new THREE.ConeGeometry(0.13, 0.4, 6),
-      new THREE.MeshBasicMaterial({ color: 0xff9040 }),
+      new THREE.MeshBasicMaterial({ color: FLAME_COLOR.clone() }),
     )
     this.flame.position.set(x, this.flameBaseY, z)
     this.group.add(this.flame)

@@ -25,7 +25,23 @@ async function tryLoadPbrSet(
     }
     return { map, normalMap, roughnessMap }
   } catch {
-    console.warn(`[Structure] Textures missing for "${base}"; using flat fallback.`)
+    return null
+  }
+}
+
+async function tryLoadTile(
+  loader: AssetLoader,
+  url: string,
+  repeat: [number, number],
+): Promise<THREE.Texture | null> {
+  try {
+    const tex = await loader.loadTexture(url)
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping
+    tex.repeat.set(repeat[0], repeat[1])
+    tex.magFilter = THREE.NearestFilter
+    tex.minFilter = THREE.NearestMipmapLinearFilter
+    return tex
+  } catch {
     return null
   }
 }
@@ -42,37 +58,36 @@ export async function buildStructure(loader: AssetLoader): Promise<THREE.Group> 
   floor.receiveShadow = true
   group.add(floor)
 
-  const wallPbr = await tryLoadPbrSet(loader, 'stone_wall', [8, 1.5])
-  const wallMat = wallPbr
-    ? new THREE.MeshStandardMaterial(wallPbr)
-    : new THREE.MeshStandardMaterial({ color: 0x6e6358, roughness: 0.9, metalness: 0 })
+  // Pixel-art tiles take precedence over the PBR set. If both tiles exist,
+  // mix them across walls (tile1 = front/back, tile2 = sides) for variety.
+  // Repeat (16, 3) = 1 tile per game-cell square (~1m × 1m).
+  const wallRepeat: [number, number] = [16, 3]
+  const wallTile1 = await tryLoadTile(loader, '/assets/textures/stone_wall_texture_tile.png', wallRepeat)
+  const wallTile2 = await tryLoadTile(loader, '/assets/textures/stone_wall_texture_tile2.png', wallRepeat)
+  const wallPbr = (wallTile1 || wallTile2) ? null : await tryLoadPbrSet(loader, 'stone_wall', [8, 1.5])
+  const flatWall = new THREE.MeshStandardMaterial({ color: 0x6e6358, roughness: 0.9, metalness: 0 })
+  const matFromTile = (t: THREE.Texture) => new THREE.MeshStandardMaterial({ map: t, roughness: 0.95, metalness: 0 })
+  const matAB = wallTile1 && wallTile2
+    ? { a: matFromTile(wallTile1), b: matFromTile(wallTile2) }
+    : wallTile1
+      ? { a: matFromTile(wallTile1), b: matFromTile(wallTile1) }
+      : wallTile2
+        ? { a: matFromTile(wallTile2), b: matFromTile(wallTile2) }
+        : wallPbr
+          ? { a: new THREE.MeshStandardMaterial(wallPbr), b: new THREE.MeshStandardMaterial(wallPbr) }
+          : { a: flatWall, b: flatWall }
 
-  const north = new THREE.Mesh(new THREE.BoxGeometry(8 * TILE, WALL_H, 0.3), wallMat)
+  // Knight Lore convention: render only the two BACK walls (north + west)
+  // facing the camera. The south + east walls would block the player's view
+  // of the play area, so they're omitted. Collision still works — Grid
+  // treats out-of-bounds cells as solid regardless of visible geometry.
+  const north = new THREE.Mesh(new THREE.BoxGeometry(8 * TILE, WALL_H, 0.3), matAB.a)
   north.position.set(8, WALL_H / 2, 0)
   north.receiveShadow = true
   north.castShadow = true
   group.add(north)
 
-  // South wall split for door gap (door at grid x=4, world x=9, gap = 1 tile = 2m)
-  const southLeft = new THREE.Mesh(new THREE.BoxGeometry(4 * TILE, WALL_H, 0.3), wallMat)
-  southLeft.position.set(4, WALL_H / 2, 16)
-  southLeft.receiveShadow = true
-  southLeft.castShadow = true
-  group.add(southLeft)
-
-  const southRight = new THREE.Mesh(new THREE.BoxGeometry(3 * TILE, WALL_H, 0.3), wallMat)
-  southRight.position.set(8 + 3, WALL_H / 2, 16)
-  southRight.receiveShadow = true
-  southRight.castShadow = true
-  group.add(southRight)
-
-  const east = new THREE.Mesh(new THREE.BoxGeometry(0.3, WALL_H, 8 * TILE), wallMat)
-  east.position.set(16, WALL_H / 2, 8)
-  east.receiveShadow = true
-  east.castShadow = true
-  group.add(east)
-
-  const west = new THREE.Mesh(new THREE.BoxGeometry(0.3, WALL_H, 8 * TILE), wallMat)
+  const west = new THREE.Mesh(new THREE.BoxGeometry(0.3, WALL_H, 8 * TILE), matAB.b)
   west.position.set(0, WALL_H / 2, 8)
   west.receiveShadow = true
   west.castShadow = true

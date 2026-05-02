@@ -4,10 +4,17 @@ import type { AssetLoader } from '../engine/AssetLoader'
 const TILE = 2
 const WALL_H = 5
 
-// Procedural brick texture: oblong (2:1) staggered bricks rendered as
-// filled magenta rectangles on black, matching the original Knight Lore
-// Filmation engine. Canvas is tileable both axes — bottom row offset by
-// half a brick, top/bottom seam aligns with row boundaries.
+// Procedural brick texture in the Retroworks Knight Lore Remake style:
+// warm dark-brown stones with a top-edge highlight and bottom-edge shadow
+// (NW lighting convention) against near-black mortar. Bricks are oblong
+// 2:1, staggered courses, tileable both axes — odd rows offset by half a
+// brick and the c=-1 / c=COLS bricks ensure the half-brick wrap matches
+// the adjacent tile.
+const BRICK_BODY = '#4a3a28'
+const BRICK_HIGHLIGHT = '#7a5d3d'
+const BRICK_SHADOW = '#2a1f15'
+const BRICK_MORTAR = '#0a0808'
+
 function makeBrickCanvasTexture(): THREE.CanvasTexture {
   const W = 256
   const H = 128
@@ -16,27 +23,32 @@ function makeBrickCanvasTexture(): THREE.CanvasTexture {
   const bw = W / COLS
   const bh = H / ROWS
   const m = 1
+  const edge = 2
 
   const canvas = document.createElement('canvas')
   canvas.width = W
   canvas.height = H
   const ctx = canvas.getContext('2d')!
 
-  // Black mortar background fills the gaps between bricks.
-  ctx.fillStyle = '#000000'
+  ctx.fillStyle = BRICK_MORTAR
   ctx.fillRect(0, 0, W, H)
-
-  // Magenta brick fill (matches Knight Lore room palette in 1.png / 2.jpg).
-  ctx.fillStyle = '#ff2bbe'
 
   for (let r = 0; r < ROWS; r++) {
     const y = r * bh
     const xOffset = (r % 2) * (bw / 2)
-    // Draw with c=-1 and c=COLS so half-bricks at the offset row wrap into
-    // the adjacent tile's matching half — no visible seam after tiling.
     for (let c = -1; c <= COLS; c++) {
       const x = c * bw + xOffset + m
-      ctx.fillRect(x, y + m, bw - 2 * m, bh - 2 * m)
+      const innerW = bw - 2 * m
+      const innerH = bh - 2 * m
+      // Body
+      ctx.fillStyle = BRICK_BODY
+      ctx.fillRect(x, y + m, innerW, innerH)
+      // Top edge highlight
+      ctx.fillStyle = BRICK_HIGHLIGHT
+      ctx.fillRect(x, y + m, innerW, edge)
+      // Bottom edge shadow
+      ctx.fillStyle = BRICK_SHADOW
+      ctx.fillRect(x, y + m + innerH - edge, innerW, edge)
     }
   }
 
@@ -58,10 +70,10 @@ export async function buildStructure(_loader: AssetLoader): Promise<THREE.Group>
   floor.position.set(8, -0.15, 8)
   group.add(floor)
 
-  // Walls: filled magenta bricks on black mortar. MeshBasicMaterial keeps
-  // the colours flat — no lighting, no shading interference. Repeat (3, 2)
-  // on a 16m × 5m wall ⇒ 24 bricks across × 16 rows tall, matching the
-  // density visible in the original game's screenshots.
+  // Walls: warm-brown shaded bricks (Retroworks Remake style) on near-black
+  // mortar. MeshBasicMaterial keeps colours flat — no lighting, no shading
+  // interference; the per-brick highlight/shadow IS the depth cue. Repeat
+  // (3, 2) on a 16m × 5m wall ⇒ 24 bricks across × 16 rows tall.
   const brickTex = makeBrickCanvasTexture()
   brickTex.repeat.set(3, 2)
   const wallMat = new THREE.MeshBasicMaterial({ map: brickTex })

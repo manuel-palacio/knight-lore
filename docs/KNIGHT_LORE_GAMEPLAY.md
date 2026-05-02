@@ -84,3 +84,35 @@ Our current MVP (`src/scenes/TheHall.ts`) is a single room with goblet → door 
 7. **Patrol-enemy aggression mode** — `PatrolEnemy` currently has fixed speed. Add an `aggressive: boolean` flag that increases speed or shortens patrol gaps when `state.form === 'werewolf'`.
 
 The plan's spec already references many of these (`docs/superpowers/specs/2026-05-01-knight-lore-web-3d-design.md`) but stops at the single-room MVP. This doc is the bridge from the implemented slice to a more authentic Knight Lore experience.
+
+---
+
+## Retroworks Remake — visual reference notes
+
+Source: https://www.retroworks.es/knightlorerkscr_en.html and the world map at `map-remake.png` (renamed locally from `mapa.png`, 6580 × 4014 px). The remake reimagines the 1984 game in modern pixel-art with a unified warm palette — much closer to the look our build is now reaching for than the harsh ZX Spectrum 2-color clash.
+
+### Visual style
+
+- **Palette is unified warm-earth** across the entire world: dark olive-brown stone, sandstone tan blocks, amber/ochre highlights, deep red carpets. No magenta/cyan/lime. Reads as candle-lit medieval dungeon.
+- **Bricks are shaded, not flat** — each stone has a subtle top-edge highlight and bottom-edge shadow drawn in. Two-tone rendering with one accent gives volume without going PBR. (Our current `Structure.ts` mimics this: `BRICK_BODY #4a3a28`, `BRICK_HIGHLIGHT #7a5d3d`, `BRICK_SHADOW #2a1f15`.)
+- **Black void floor preserved** as the dominant ground; some rooms add **red carpet tiles** (a deep maroon/blood-red, `~#7a1a1a`) for thematic variation — typically used as the "stage" for hazard rooms.
+- **Stone arches connect rooms** — visible cuts in the back wall framed by an arch, not bare gaps.
+- **Torches at fixed wall positions** with bright yellow/orange flame sprites; provide both atmosphere and a visual landmark for orientation.
+- **Multiple biomes** — the upper-right of the map shows a **forest area** with twisted dark-brown tree trunks instead of brick walls. Suggests stone-dungeon, forest, possibly cellar/cave variants of the same wall-and-floor template.
+- **Sandstone block-stacks** (a lighter tan, `~#a87650`) act as raised platforms or pedestals — distinct material from the dark wall stones.
+
+### Mechanical hints from the map (beyond the original-game notes above)
+
+- **Spike-grid hazard rooms** — many rooms feature a square grid of upward-pointing pink/magenta spikes covering a red-carpet floor. Looks like the player must navigate around them or jump over. Grid is fairly dense (4–8 spikes wide).
+- **Items balanced on enemies** — small purple dragon enemies are visible with red orbs and goblets balanced on their heads, confirming the Evercade article's "enemy-as-platform" mechanic. The dragons appear to patrol a small area carrying an item the player needs.
+- **Item spawns visible on map** — red orbs (likely "gem" or "crystal ball" pickups), a goblet with a halo glow, items scattered across the floor of rooms. The map gives away the locations to a careful reader (consistent with the distribution-table mechanic — a starting room reveals the table, the table tells you where the rest are).
+- **Room density** — counted ~50+ rooms in the remake map, significantly more than the original's 8 numbered rooms. The remake expands the world.
+
+### Implications for our build (additions to the list above)
+
+8. **Hazard category — spikes.** `Category.HAZARD` already exists; need a `SpikeGrid` entity that places multiple spike instances in a grid pattern, each marked HAZARD. Player contact should respawn (same logic as PatrolEnemy contact in `main.ts`).
+9. **Floor-tile variation per room.** Currently `Structure.ts` always draws a black void floor. Add an optional `floorOverlay: 'carpet' | 'tile' | null` parameter per room, drawing a coloured rectangle over the void where requested. Carpet rooms get `#7a1a1a` red.
+10. **Per-room palette swap.** Pull `BRICK_BODY/HIGHLIGHT/SHADOW/MORTAR` into a `WallPalette` interface; each `Room` constructor accepts one. Defaults to warm brown; cooler rooms (cellar, ice) override.
+11. **Forest biome wall texture.** A second canvas-texture function — `makeForestWallTexture()` — drawing dark vertical tree-trunk silhouettes instead of brick stagger. Same `MeshBasicMaterial` swap-in.
+12. **Item-on-enemy combo.** When a `PatrolEnemy` is configured to carry an item, attach the item's `object3D` to the enemy's `object3D` at offset `(0, height, 0)`. Player landing on the enemy's top (Y > enemy top - epsilon) picks up the item AND deals no damage. Adds new collision logic distinguishing top-down landing from side contact.
+13. **Stone arch connector geometry.** Currently door is a flat rectangle. A stone-arch frame would be a torus segment (or two columns + arch top mesh) drawn on the wall around the door, with the door's open/closed state still toggling the door slab inside the arch.

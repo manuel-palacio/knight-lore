@@ -74,6 +74,55 @@ export function makeBrickTexture(palette: BrickPalette = WALL_PALETTE): THREE.Ca
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping
   tex.magFilter = THREE.NearestFilter
   tex.minFilter = THREE.NearestMipmapLinearFilter
+  // Match the renderer's sRGB output expectation. Without this the painted
+  // pixels are treated as linear and gamma-corrected on output, brightening
+  // every colour by ~2x — turns dark brown into pale tan.
+  tex.colorSpace = THREE.SRGBColorSpace
+  return tex
+}
+
+// Procedural square stone-tile floor (no stagger, NW lighting). Reuses the
+// BrickPalette interface — the SANDSTONE_PALETTE gives the warm 3.png look,
+// but any palette works. Each call is a fresh canvas + texture so callers
+// can set their own repeat without sharing state.
+export function makeFloorTexture(palette: BrickPalette = SANDSTONE_PALETTE): THREE.CanvasTexture {
+  const W = 256
+  const H = 256
+  const COLS = 8
+  const ROWS = 8
+  const tw = W / COLS
+  const th = H / ROWS
+  const m = 1
+  const edge = 1
+
+  const canvas = document.createElement('canvas')
+  canvas.width = W
+  canvas.height = H
+  const ctx = canvas.getContext('2d')!
+
+  ctx.fillStyle = palette.mortar
+  ctx.fillRect(0, 0, W, H)
+
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const x = c * tw + m
+      const y = r * th + m
+      const w = tw - 2 * m
+      const h = th - 2 * m
+      ctx.fillStyle = palette.body
+      ctx.fillRect(x, y, w, h)
+      ctx.fillStyle = palette.highlight
+      ctx.fillRect(x, y, w, edge)
+      ctx.fillStyle = palette.shadow
+      ctx.fillRect(x, y + h - edge, w, edge)
+    }
+  }
+
+  const tex = new THREE.CanvasTexture(canvas)
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping
+  tex.magFilter = THREE.NearestFilter
+  tex.minFilter = THREE.NearestMipmapLinearFilter
+  tex.colorSpace = THREE.SRGBColorSpace
   return tex
 }
 
@@ -133,8 +182,12 @@ export function buildTorch(x: number, y: number, z: number): THREE.Group {
 export async function buildStructure(_loader: AssetLoader): Promise<THREE.Group> {
   const group = new THREE.Group()
 
-  // Original Knight Lore look: featureless black void floor.
-  const floorMat = new THREE.MeshBasicMaterial({ color: 0x000000 })
+  // Sandstone tiled floor (3.png reference). Repeat (3, 3) on a 16m × 16m
+  // floor ⇒ 24 tiles across, ~0.67m per tile — enough density to read as
+  // floor pavement at our orthographic camera distance.
+  const floorTex = makeFloorTexture(SANDSTONE_PALETTE)
+  floorTex.repeat.set(3, 3)
+  const floorMat = new THREE.MeshBasicMaterial({ map: floorTex })
   const floor = new THREE.Mesh(new THREE.BoxGeometry(8 * TILE, 0.3, 8 * TILE), floorMat)
   floor.position.set(8, -0.15, 8)
   group.add(floor)

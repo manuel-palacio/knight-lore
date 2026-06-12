@@ -60,6 +60,8 @@ export class CharacterAnimator {
       this.idleTime = 0
     } else if (this.state === 'idle') {
       this.idleTime += dt
+    } else if (this.state === 'jump' || this.state === 'fall') {
+      this.idleTime = 0
     }
 
     if (input.speed > MOVE_EPSILON) {

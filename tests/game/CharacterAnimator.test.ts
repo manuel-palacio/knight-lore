@@ -51,6 +51,14 @@ describe('CharacterAnimator walk phase', () => {
     for (let i = 0; i < 30; i++) a.update(1 / 60, GROUNDED_STILL)
     expect(a.phase).toBe(0)
   })
+
+  it('resets idleTime when the player leaves the ground', () => {
+    const a = new CharacterAnimator()
+    for (let i = 0; i < 60; i++) a.update(1 / 60, GROUNDED_STILL)
+    expect(a.idleTime).toBeGreaterThan(0)
+    a.update(1 / 60, { ...GROUNDED_STILL, playerState: 'jumping' })
+    expect(a.idleTime).toBe(0)
+  })
 })
 
 describe('CharacterAnimator facing', () => {

@@ -611,6 +611,7 @@ git commit -m "feat(characters): transform flash sequence — accelerating flick
 import { describe, it, expect } from 'vitest'
 import * as THREE from 'three'
 import { Rig } from '../../src/game/characters/Rig'
+import type { JointRotation, Pose } from '../../src/game/characters/CharacterAnimator'
 
 class StubRig extends Rig {
   constructor() {
@@ -622,26 +623,41 @@ class StubRig extends Rig {
   }
 }
 
+// Pose.joints is a full Record<JointName, JointRotation> — build a complete
+// neutral pose and mutate the joints under test.
+function makePose(overrides: Partial<Omit<Pose, 'joints'>> = {}): Pose {
+  const j = (): JointRotation => ({ x: 0, y: 0, z: 0 })
+  return {
+    joints: { torso: j(), head: j(), armL: j(), armR: j(), legL: j(), legR: j(), tail: j(), hat: j() },
+    rootBob: 0,
+    squash: 1,
+    yaw: 0,
+    ...overrides,
+  }
+}
+
 describe('Rig.applyPose', () => {
   it('applies pose rotations additively on top of the bind pose', () => {
     const rig = new StubRig()
-    rig.applyPose({ joints: { torso: { x: 0.1, y: 0, z: 0 } }, rootBob: 0, squash: 1, yaw: 0 })
+    const pose = makePose()
+    pose.joints.torso.x = 0.1
+    rig.applyPose(pose)
     expect(rig.joints.get('torso')!.rotation.x).toBeCloseTo(0.31, 5)
     // applying again must not accumulate
-    rig.applyPose({ joints: { torso: { x: 0.1, y: 0, z: 0 } }, rootBob: 0, squash: 1, yaw: 0 })
+    rig.applyPose(pose)
     expect(rig.joints.get('torso')!.rotation.x).toBeCloseTo(0.31, 5)
   })
 
   it('ignores pose entries for joints the rig does not have', () => {
     const rig = new StubRig()
-    expect(() =>
-      rig.applyPose({ joints: { tail: { x: 1, y: 0, z: 0 } }, rootBob: 0, squash: 1, yaw: 0 }),
-    ).not.toThrow()
+    const pose = makePose()
+    pose.joints.tail.x = 1
+    expect(() => rig.applyPose(pose)).not.toThrow()
   })
 
   it('applies yaw, bob and volume-preserving squash to the root', () => {
     const rig = new StubRig()
-    rig.applyPose({ joints: {}, rootBob: 0.05, squash: 0.8, yaw: 1.2 })
+    rig.applyPose(makePose({ rootBob: 0.05, squash: 0.8, yaw: 1.2 }))
     expect(rig.root.rotation.y).toBe(1.2)
     expect(rig.root.position.y).toBe(0.05)
     expect(rig.root.scale.y).toBe(0.8)
@@ -651,7 +667,7 @@ describe('Rig.applyPose', () => {
   it('clears jitter tilt on the next pose application', () => {
     const rig = new StubRig()
     rig.root.rotation.z = 0.2 // simulate transform jitter
-    rig.applyPose({ joints: {}, rootBob: 0, squash: 1, yaw: 0 })
+    rig.applyPose(makePose())
     expect(rig.root.rotation.z).toBe(0)
   })
 })
@@ -667,7 +683,7 @@ Expected: FAIL — cannot resolve `../../src/game/characters/Rig`
 ```typescript
 // src/game/characters/Rig.ts
 import * as THREE from 'three'
-import type { Pose } from './CharacterAnimator'
+import type { JointName, JointRotation, Pose } from './CharacterAnimator'
 
 // Puppet-rig base: a joint hierarchy of Groups. Poses are additive deltas
 // over each joint's bind rotation, so authored posture (stoop, hunch)
@@ -677,15 +693,17 @@ export class Rig {
   readonly joints = new Map<string, THREE.Object3D>()
   private bindRotations = new Map<string, THREE.Euler>()
 
-  protected registerJoint(name: string, node: THREE.Object3D): void {
+  protected registerJoint(name: JointName, node: THREE.Object3D): void {
     this.joints.set(name, node)
     this.bindRotations.set(name, node.rotation.clone())
   }
 
   applyPose(pose: Pose): void {
-    for (const [name, node] of this.joints) {
-      const delta = pose.joints[name]
-      if (!delta) continue
+    // iterate the pose (full record) and skip joints this rig doesn't have —
+    // the knight has no tail, the werewolf no hat
+    for (const [name, delta] of Object.entries(pose.joints) as [JointName, JointRotation][]) {
+      const node = this.joints.get(name)
+      if (!node) continue
       const bind = this.bindRotations.get(name)!
       node.rotation.set(bind.x + delta.x, bind.y + delta.y, bind.z + delta.z)
     }
@@ -1263,7 +1281,7 @@ describe('CharacterVisual', () => {
 Note: the last test requires joints to be findable by name. Add to `Rig.registerJoint`:
 
 ```typescript
-  protected registerJoint(name: string, node: THREE.Object3D): void {
+  protected registerJoint(name: JointName, node: THREE.Object3D): void {
     node.name = `joint:${name}`
     this.joints.set(name, node)
     this.bindRotations.set(name, node.rotation.clone())

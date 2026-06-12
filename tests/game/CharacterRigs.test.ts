@@ -3,6 +3,7 @@ import * as THREE from 'three'
 import { Rig } from '../../src/game/characters/Rig'
 import type { JointRotation, Pose } from '../../src/game/characters/CharacterAnimator'
 import { KnightRig } from '../../src/game/characters/KnightRig'
+import { WerewolfRig } from '../../src/game/characters/WerewolfRig'
 
 class StubRig extends Rig {
   constructor() {
@@ -114,5 +115,44 @@ describe('KnightRig', () => {
     })
     expect(radii.length).toBeGreaterThan(0)
     expect(Math.max(...radii) - Math.min(...radii)).toBeGreaterThan(0.02)
+  })
+})
+
+const WEREWOLF_JOINTS = ['torso', 'head', 'armL', 'armR', 'legL', 'legR', 'tail']
+
+describe('WerewolfRig', () => {
+  it('exposes the full joint contract', () => {
+    const rig = new WerewolfRig()
+    for (const name of WEREWOLF_JOINTS) {
+      expect(rig.joints.has(name), `missing joint ${name}`).toBe(true)
+    }
+  })
+
+  it('is hunched: reads lower than the knight but deeper front-to-back', () => {
+    const knight = new KnightRig()
+    const wolf = new WerewolfRig()
+    const kBox = new THREE.Box3().setFromObject(knight.root)
+    const wBox = new THREE.Box3().setFromObject(wolf.root)
+    expect(wBox.max.y).toBeLessThan(kBox.max.y)
+    expect(wBox.max.z - wBox.min.z).toBeGreaterThan(kBox.max.z - kBox.min.z)
+  })
+
+  it('shares no geometry or material instances with the knight', () => {
+    const knight = new KnightRig()
+    const wolf = new WerewolfRig()
+    const collect = (root: THREE.Object3D): Set<string> => {
+      const uuids = new Set<string>()
+      root.traverse((node) => {
+        if (node instanceof THREE.Mesh) {
+          uuids.add(node.geometry.uuid)
+          uuids.add((node.material as THREE.Material).uuid)
+        }
+      })
+      return uuids
+    }
+    const kSet = collect(knight.root)
+    for (const uuid of collect(wolf.root)) {
+      expect(kSet.has(uuid)).toBe(false)
+    }
   })
 })

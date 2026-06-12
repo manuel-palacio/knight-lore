@@ -42,7 +42,9 @@ export class Room {
   }
 
   updateRenderPositions(alpha = 0.18): void {
-    for (const e of this.entities) e.updateRenderPosition(alpha)
+    for (const e of this.entities) {
+      if (e.active) e.updateRenderPosition(alpha)
+    }
   }
 
   get tileSize(): number {

@@ -12,11 +12,13 @@ export class Pickup extends Entity {
     this.extents.set(0.6, 0.6, 0.6)
   }
 
-  update(_dt: number, _ctx: UpdateContext): void {
-    if (this.collected) this.active = false
-  }
+  update(_dt: number, _ctx: UpdateContext): void {}
 
   collect(): void {
     this.collected = true
+    // Deactivate immediately: once carried, the object3D is parented to the
+    // carrier and positioned locally — a render-position update would
+    // overwrite that local offset with the stale world position.
+    this.active = false
   }
 }

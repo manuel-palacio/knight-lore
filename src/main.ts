@@ -75,6 +75,7 @@ async function main(): Promise<void> {
       player.position.z = room.spawnZ
       player.position.y = 0
       player.state = 'grounded'
+      visual.resetMotion()
     }
 
     if (

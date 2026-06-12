@@ -99,4 +99,13 @@ describe('CharacterVisual', () => {
     }
     expect(moved).toBe(true)
   })
+
+  it('resetMotion prevents a teleport from reading as walk velocity', () => {
+    const v = new CharacterVisual()
+    const dt = 1 / 60
+    v.update(dt, { playerState: 'grounded', position: { x: 0, z: 0 } })
+    v.resetMotion()
+    v.update(dt, { playerState: 'grounded', position: { x: 10, z: 10 } })
+    expect(v.animator.state).toBe('idle')
+  })
 })

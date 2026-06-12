@@ -43,6 +43,11 @@ export class CharacterVisual {
     this.animator.notifyLanded()
   }
 
+  // Call after a teleport so the position jump doesn't read as velocity.
+  resetMotion(): void {
+    this.lastPosition = null
+  }
+
   update(dt: number, input: VisualInput): void {
     if (dt <= 0) return
     const last = this.lastPosition

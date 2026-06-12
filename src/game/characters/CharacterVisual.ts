@@ -21,8 +21,7 @@ export class CharacterVisual {
   private readonly werewolf = new WerewolfRig()
   private form: Form = 'human'
   private sequence: TransformSequence | null = null
-  private lastX: number | null = null
-  private lastZ = 0
+  private lastPosition: { x: number; z: number } | null = null
 
   constructor() {
     this.group.add(this.knight.root)
@@ -30,6 +29,7 @@ export class CharacterVisual {
     this.werewolf.root.visible = false
   }
 
+  // Lags GameState.form until the flicker commits — visual state only.
   get currentForm(): Form {
     return this.form
   }
@@ -45,10 +45,10 @@ export class CharacterVisual {
 
   update(dt: number, input: VisualInput): void {
     if (dt <= 0) return
-    const vx = this.lastX === null ? 0 : (input.position.x - this.lastX) / dt
-    const vz = this.lastX === null ? 0 : (input.position.z - this.lastZ) / dt
-    this.lastX = input.position.x
-    this.lastZ = input.position.z
+    const last = this.lastPosition
+    const vx = last === null ? 0 : (input.position.x - last.x) / dt
+    const vz = last === null ? 0 : (input.position.z - last.z) / dt
+    this.lastPosition = { x: input.position.x, z: input.position.z }
     this.animator.update(dt, {
       playerState: input.playerState,
       moveX: vx,

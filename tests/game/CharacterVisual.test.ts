@@ -66,6 +66,22 @@ describe('CharacterVisual', () => {
     expect(v.animator.state).toBe('idle')
   })
 
+  it('jitters the shown rig during the flicker (scale and tilt deviate)', () => {
+    const v = new CharacterVisual()
+    v.startTransform('werewolf')
+    let sawJitteredScale = false
+    let sawTilt = false
+    const dt = 1 / 120
+    for (let t = 0; t < TRANSFORM_DURATION - 0.05; t += dt) {
+      v.update(dt, STILL)
+      const shown = v.group.children.find((c) => c.visible)!
+      if (Math.abs(shown.scale.x - shown.scale.z) > 1e-6) sawJitteredScale = true
+      if (shown.rotation.z !== 0) sawTilt = true
+    }
+    expect(sawJitteredScale).toBe(true)
+    expect(sawTilt).toBe(true)
+  })
+
   it('applies the animator pose to the active rig (joints actually move)', () => {
     const v = new CharacterVisual()
     const dt = 1 / 60

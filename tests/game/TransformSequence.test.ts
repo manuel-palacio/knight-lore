@@ -10,8 +10,7 @@ function runFlips(seq: TransformSequence, from: number, to: number, step = 1 / 1
     const frame = seq.update(step)
     t += step
     if (t > from && last !== null && frame.showTarget !== last) flips++
-    if (t > from) last = frame.showTarget
-    else last = frame.showTarget
+    last = frame.showTarget
   }
   return flips
 }
@@ -53,5 +52,16 @@ describe('TransformSequence', () => {
     expect(seq.target).toBe('human')
     const frame = seq.update(0.1)
     expect(frame.done).toBe(false)
+  })
+
+  it('is deterministic: identical stepping yields identical jitter', () => {
+    const a = new TransformSequence('werewolf')
+    const b = new TransformSequence('werewolf')
+    for (let i = 0; i < 60; i++) {
+      const fa = a.update(1 / 120)
+      const fb = b.update(1 / 120)
+      expect(fa.jitterScale).toEqual(fb.jitterScale)
+      expect(fa.jitterTilt).toBe(fb.jitterTilt)
+    }
   })
 })

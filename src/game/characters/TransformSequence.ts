@@ -2,6 +2,9 @@ import type { Form } from '../GameState'
 
 export const TRANSFORM_DURATION = 0.9
 const FLIP_COUNT = 12
+const JITTER_SCALE_MIN = 0.92
+const JITTER_SCALE_RANGE = 0.18
+const TILT_RANGE = 0.24
 
 export interface TransformFrame {
   showTarget: boolean
@@ -10,12 +13,12 @@ export interface TransformFrame {
   done: boolean
 }
 
-const IDENTITY_FRAME: TransformFrame = {
+const IDENTITY_FRAME: TransformFrame = Object.freeze({
   showTarget: true,
-  jitterScale: { x: 1, y: 1, z: 1 },
+  jitterScale: Object.freeze({ x: 1, y: 1, z: 1 }),
   jitterTilt: 0,
   done: true,
-}
+})
 
 export class TransformSequence {
   target: Form
@@ -37,11 +40,11 @@ export class TransformSequence {
 
     // t² schedule: flip index accelerates — slow flicker becoming a strobe
     const flip = Math.floor(t * t * FLIP_COUNT)
-    const jitter = (n: number): number => 0.92 + pseudoRandom(flip * 7 + n) * 0.18
+    const jitter = (n: number): number => JITTER_SCALE_MIN + pseudoRandom(flip * 7 + n) * JITTER_SCALE_RANGE
     return {
       showTarget: flip % 2 === 1,
       jitterScale: { x: jitter(1), y: jitter(2), z: jitter(3) },
-      jitterTilt: (pseudoRandom(flip * 7 + 4) - 0.5) * 0.24,
+      jitterTilt: (pseudoRandom(flip * 7 + 4) - 0.5) * TILT_RANGE,
       done: false,
     }
   }

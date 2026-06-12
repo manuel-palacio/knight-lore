@@ -155,7 +155,6 @@ export async function buildTheHall(
   player.position.set(1 * TILE + TILE / 2, 0, 3 * TILE + TILE / 2)
   player.renderPosition.copy(player.position)
   visual.group.position.copy(player.position)
-  room.group.add(visual.group)
   room.add(player)
   room.setSpawn(player.position.x, player.position.z)
 

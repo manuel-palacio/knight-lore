@@ -65,8 +65,6 @@ function frame(): void {
   wolfPose.yaw = yaw
   knight.applyPose(knightPose)
   werewolf.applyPose(wolfPose)
-  knight.root.position.x = -1.2
-  werewolf.root.position.x = 1.2
   renderer.render(scene, camera)
 }
 frame()

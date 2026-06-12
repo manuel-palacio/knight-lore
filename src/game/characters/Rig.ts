@@ -16,6 +16,7 @@ export class Rig {
   readonly joints: ReadonlyMap<string, THREE.Object3D> = this.jointMap
 
   protected registerJoint(name: JointName, node: THREE.Object3D): void {
+    node.name = `joint:${name}`
     this.jointMap.set(name, node)
     this.bindRotations.set(name, node.rotation.clone())
   }

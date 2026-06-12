@@ -8,8 +8,11 @@ export interface JointRotation {
   z: number
 }
 
+export type JointName = 'torso' | 'head' | 'armL' | 'armR' | 'legL' | 'legR' | 'tail' | 'hat'
+
 export interface Pose {
-  joints: Record<string, JointRotation>
+  joints: Record<JointName, JointRotation>
+  /** Vertical offset of the rig root; positive = up from rest, never negative. */
   rootBob: number
   squash: number
   yaw: number
@@ -95,7 +98,7 @@ export class CharacterAnimator {
 
   pose(form: Form): Pose {
     const p = PARAMS[form]
-    const joints: Record<string, JointRotation> = {
+    const joints: Record<JointName, JointRotation> = {
       torso: zeroRotation(),
       head: zeroRotation(),
       armL: zeroRotation(),
@@ -112,54 +115,54 @@ export class CharacterAnimator {
       case 'idle': {
         const sway = Math.sin(this.time * p.idleFreq) * p.idleAmp
         const sag = form === 'human' ? Math.min(this.idleTime / 12, 1) * 0.08 : 0
-        joints.torso!.x = sway + sag
-        joints.head!.x = -sway * 0.6
-        joints.armL!.x = sway * 0.4
-        joints.armR!.x = -sway * 0.3
+        joints.torso.x = sway + sag
+        joints.head.x = -sway * 0.6
+        joints.armL.x = sway * 0.4
+        joints.armR.x = -sway * 0.3
         if (form === 'werewolf') {
-          joints.head!.y = Math.sin(this.time * 2.3) * 0.22
-          joints.tail!.y = Math.sin(this.time * 4.1) * 0.3
+          joints.head.y = Math.sin(this.time * 2.3) * 0.22
+          joints.tail.y = Math.sin(this.time * 4.1) * 0.3
         } else {
-          joints.hat!.z = sway * 0.6
+          joints.hat.z = sway * 0.6
         }
-        rootBob = Math.sin(this.time * p.idleFreq) * 0.012
+        rootBob = (1 + Math.sin(this.time * p.idleFreq)) * 0.006
         break
       }
       case 'walk': {
         const s = Math.sin(this.phase)
-        joints.legL!.x = s * p.stride
-        joints.legR!.x = -s * p.stride
-        joints.armL!.x = -s * p.armSwing
-        joints.armR!.x = s * p.armSwing * 0.7
-        joints.torso!.z = s * p.roll
-        joints.torso!.x = p.lunge
-        joints.head!.z = -s * p.roll * 0.5
-        if (form === 'werewolf') joints.tail!.y = s * 0.4
+        joints.legL.x = s * p.stride
+        joints.legR.x = -s * p.stride
+        joints.armL.x = -s * p.armSwing
+        joints.armR.x = s * p.armSwing * 0.7
+        joints.torso.z = s * p.roll
+        joints.torso.x = p.lunge
+        joints.head.z = -s * p.roll * 0.5
+        if (form === 'werewolf') joints.tail.y = s * 0.4
         rootBob = Math.abs(s) * p.bob
         break
       }
       case 'jump': {
-        joints.armL!.x = -1.2
-        joints.armR!.x = -1.0
-        joints.legL!.x = 0.5
-        joints.legR!.x = 0.7
+        joints.armL.x = -1.2
+        joints.armR.x = -1.0
+        joints.legL.x = 0.5
+        joints.legR.x = 0.7
         squash = 1.06
         break
       }
       case 'fall': {
-        joints.armL!.x = -1.4
-        joints.armR!.x = -1.3
-        joints.legL!.x = 0.2
-        joints.legR!.x = 0.35
+        joints.armL.x = -1.4
+        joints.armR.x = -1.3
+        joints.legL.x = 0.2
+        joints.legR.x = 0.35
         squash = 1.04
         break
       }
       case 'land': {
         const k = this.landRecovery
         squash = 1 - 0.22 * k
-        joints.torso!.x = 0.3 * k
-        joints.armL!.x = 0.5 * k
-        joints.armR!.x = 0.4 * k
+        joints.torso.x = 0.3 * k
+        joints.armL.x = 0.5 * k
+        joints.armR.x = 0.4 * k
         break
       }
     }

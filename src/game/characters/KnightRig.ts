@@ -138,10 +138,11 @@ function makeCloakGeometry(): THREE.LatheGeometry {
   const pos = geom.getAttribute('position') as THREE.BufferAttribute
   for (let i = 0; i < pos.count; i++) {
     if (pos.getY(i) < -0.5) {
-      const zig = i % 2 === 0 ? 0.06 : -0.04
+      const segment = Math.floor(i / points.length) % 10
+      const zig = segment % 2 === 0 ? 0.06 : -0.04
       pos.setX(i, pos.getX(i) * (1 + zig))
       pos.setZ(i, pos.getZ(i) * (1 + zig))
-      if (i % 3 === 0) pos.setY(i, pos.getY(i) + 0.08)
+      if (segment % 3 === 0) pos.setY(i, pos.getY(i) + 0.08)
     }
   }
   geom.computeVertexNormals()

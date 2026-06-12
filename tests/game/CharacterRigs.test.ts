@@ -93,9 +93,26 @@ describe('KnightRig', () => {
 
   it('has an asymmetric silhouette (left/right bounding differs)', () => {
     // art doc: "fully mirrored silhouette left/right" is forbidden.
-    // The satchel, shoulder and hat tilt must break symmetry measurably.
+    // Dominated by the uneven arm rest poses (armL 0.25 vs armR -0.15);
+    // satchel, raised shoulder and hat tilt add smaller breaks.
     const rig = new KnightRig()
     const box = new THREE.Box3().setFromObject(rig.root)
     expect(Math.abs(box.max.x) - Math.abs(box.min.x)).not.toBeCloseTo(0, 2)
+  })
+
+  it('cloak hem is ragged, not a smooth circle', () => {
+    const rig = new KnightRig()
+    const radii: number[] = []
+    rig.root.traverse((node) => {
+      const mesh = node as THREE.Mesh
+      if (!mesh.isMesh || !(mesh.geometry instanceof THREE.LatheGeometry)) return
+      const pos = mesh.geometry.getAttribute('position') as THREE.BufferAttribute
+      for (let i = 0; i < pos.count; i++) {
+        const y = pos.getY(i)
+        if (y < -0.45) radii.push(Math.hypot(pos.getX(i), pos.getZ(i)))
+      }
+    })
+    expect(radii.length).toBeGreaterThan(0)
+    expect(Math.max(...radii) - Math.min(...radii)).toBeGreaterThan(0.02)
   })
 })

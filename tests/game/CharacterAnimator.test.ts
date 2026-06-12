@@ -86,3 +86,91 @@ describe('lerpAngle', () => {
     expect(result).toBeGreaterThan(3.0)
   })
 })
+
+describe('CharacterAnimator pose', () => {
+  it('walk pose swings legs in opposition and changes with phase', () => {
+    const a = new CharacterAnimator()
+    a.update(1 / 60, GROUNDED_MOVING)
+    a.phase = Math.PI / 2 // peak of stride
+    const peak = a.pose('human')
+    expect(peak.joints.legL!.x).toBeGreaterThan(0)
+    expect(peak.joints.legR!.x).toBeLessThan(0)
+    expect(peak.joints.legL!.x).toBeCloseTo(-peak.joints.legR!.x, 5)
+    a.phase = Math.PI * 1.5 // opposite stride
+    const trough = a.pose('human')
+    expect(trough.joints.legL!.x).toBeLessThan(0)
+  })
+
+  it('walk pose is periodic over 2π', () => {
+    const a = new CharacterAnimator()
+    a.update(1 / 60, GROUNDED_MOVING)
+    a.phase = 0.7
+    const p1 = a.pose('human')
+    a.phase = 0.7 + Math.PI * 2
+    const p2 = a.pose('human')
+    expect(p2.joints.legL!.x).toBeCloseTo(p1.joints.legL!.x, 5)
+    expect(p2.rootBob).toBeCloseTo(p1.rootBob, 5)
+  })
+
+  it('walk changes body shape, not just legs (torso roll + bob)', () => {
+    const a = new CharacterAnimator()
+    a.update(1 / 60, GROUNDED_MOVING)
+    a.phase = Math.PI / 2
+    const pose = a.pose('human')
+    expect(pose.joints.torso!.z).not.toBe(0)
+    expect(pose.rootBob).toBeGreaterThan(0)
+  })
+
+  it('werewolf walk has larger stride and lunge than human', () => {
+    const a = new CharacterAnimator()
+    a.update(1 / 60, GROUNDED_MOVING)
+    a.phase = Math.PI / 2
+    const wolf = a.pose('werewolf')
+    const human = a.pose('human')
+    expect(Math.abs(wolf.joints.legL!.x)).toBeGreaterThan(Math.abs(human.joints.legL!.x))
+    expect(wolf.joints.torso!.x).toBeGreaterThan(human.joints.torso!.x)
+  })
+
+  it('land squashes below 1 and recovers', () => {
+    const a = new CharacterAnimator()
+    a.notifyLanded()
+    a.update(1 / 60, GROUNDED_STILL)
+    expect(a.pose('human').squash).toBeLessThan(1)
+    for (let i = 0; i < 20; i++) a.update(1 / 60, GROUNDED_STILL)
+    expect(a.pose('human').squash).toBe(1)
+  })
+
+  it('jump stretches above 1', () => {
+    const a = new CharacterAnimator()
+    a.update(1 / 60, { ...GROUNDED_STILL, playerState: 'jumping' })
+    expect(a.pose('human').squash).toBeGreaterThan(1)
+  })
+
+  it('human idle sag deepens over time (burden)', () => {
+    // sag is driven by idleTime, sway by time — pin time so both samples
+    // share the same sway phase and only the sag term differs
+    const a = new CharacterAnimator()
+    a.update(1 / 60, GROUNDED_STILL)
+    a.time = 1.0
+    const early = a.pose('human').joints.torso!.x
+    a.idleTime = 10
+    a.time = 1.0
+    const late = a.pose('human').joints.torso!.x
+    expect(late).toBeGreaterThan(early)
+  })
+
+  it('idle differs between forms (werewolf is restless)', () => {
+    const a = new CharacterAnimator()
+    a.update(1 / 60, GROUNDED_STILL)
+    a.time = 0.4
+    const wolf = a.pose('werewolf')
+    const human = a.pose('human')
+    expect(wolf.joints.head!.y).not.toBeCloseTo(human.joints.head!.y, 3)
+  })
+
+  it('pose yaw equals current facing', () => {
+    const a = new CharacterAnimator()
+    for (let i = 0; i < 120; i++) a.update(1 / 60, GROUNDED_MOVING)
+    expect(a.pose('human').yaw).toBe(a.facing)
+  })
+})

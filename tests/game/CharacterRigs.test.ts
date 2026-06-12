@@ -108,9 +108,11 @@ describe('KnightRig', () => {
       const mesh = node as THREE.Mesh
       if (!mesh.isMesh || !(mesh.geometry instanceof THREE.LatheGeometry)) return
       const pos = mesh.geometry.getAttribute('position') as THREE.BufferAttribute
+      // tunic hem ring sits at y = -0.2 (un-lifted vertices); the brim's
+      // lowest vertices are well above this filter
       for (let i = 0; i < pos.count; i++) {
         const y = pos.getY(i)
-        if (y < -0.45) radii.push(Math.hypot(pos.getX(i), pos.getZ(i)))
+        if (y < -0.16) radii.push(Math.hypot(pos.getX(i), pos.getZ(i)))
       }
     })
     expect(radii.length).toBeGreaterThan(0)

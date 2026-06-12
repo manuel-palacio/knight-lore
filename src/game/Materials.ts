@@ -16,3 +16,13 @@ export function makeToonMaterial(color: THREE.ColorRepresentation = 0xc0a070): T
   gradient.needsUpdate = true
   return new THREE.MeshToonMaterial({ color, gradientMap: gradient })
 }
+
+// Hero variant: a self-lit emissive base (like the original game's always-
+// bright sprite) keeps the player readable in any room lighting while the
+// toon ramp still adds form. Intensity stays below the bloom threshold.
+export function makeHeroMaterial(color: THREE.ColorRepresentation): THREE.MeshToonMaterial {
+  const material = makeToonMaterial(color)
+  material.emissive = new THREE.Color(color)
+  material.emissiveIntensity = 0.35
+  return material
+}

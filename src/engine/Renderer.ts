@@ -42,7 +42,9 @@ export class Renderer {
     this.webgl.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     this.webgl.outputColorSpace = THREE.SRGBColorSpace
     this.webgl.toneMapping = THREE.ACESFilmicToneMapping
-    this.webgl.toneMappingExposure = 1.4
+    // Lifted from 1.4 — players could barely see the room. The torch mood
+    // survives; visibility comes first.
+    this.webgl.toneMappingExposure = 2.2
     this.webgl.shadowMap.enabled = true
     this.webgl.shadowMap.type = THREE.PCFSoftShadowMap
     container.appendChild(this.webgl.domElement)

@@ -2,7 +2,6 @@ import * as THREE from 'three'
 import type { AssetLoader } from '../engine/AssetLoader'
 
 const TILE = 2
-const WALL_H = 5
 const TEXTURE_ANISOTROPY = 16
 
 export interface BrickPalette {
@@ -85,51 +84,6 @@ export function makeBrickTexture(palette: BrickPalette = WALL_PALETTE): THREE.Ca
   return tex
 }
 
-// Procedural square stone-tile floor (no stagger, NW lighting). Reuses the
-// BrickPalette interface — the SANDSTONE_PALETTE gives the warm 3.png look,
-// but any palette works.
-export function makeFloorTexture(palette: BrickPalette = SANDSTONE_PALETTE): THREE.CanvasTexture {
-  const W = 256
-  const H = 256
-  const COLS = 8
-  const ROWS = 8
-  const tw = W / COLS
-  const th = H / ROWS
-  const m = 1
-  const edge = 1
-
-  const canvas = document.createElement('canvas')
-  canvas.width = W
-  canvas.height = H
-  const ctx = canvas.getContext('2d')!
-
-  ctx.fillStyle = palette.mortar
-  ctx.fillRect(0, 0, W, H)
-
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      const x = c * tw + m
-      const y = r * th + m
-      const w = tw - 2 * m
-      const h = th - 2 * m
-      ctx.fillStyle = palette.body
-      ctx.fillRect(x, y, w, h)
-      ctx.fillStyle = palette.highlight
-      ctx.fillRect(x, y, w, edge)
-      ctx.fillStyle = palette.shadow
-      ctx.fillRect(x, y + h - edge, w, edge)
-    }
-  }
-
-  const tex = new THREE.CanvasTexture(canvas)
-  tex.wrapS = tex.wrapT = THREE.RepeatWrapping
-  tex.magFilter = THREE.NearestFilter
-  tex.minFilter = THREE.NearestMipmapLinearFilter
-  tex.colorSpace = THREE.SRGBColorSpace
-  tex.anisotropy = TEXTURE_ANISOTROPY
-  return tex
-}
-
 // Stone arch: two columns flanking a 2m-wide doorway with a half-torus
 // crown. Solid-color stone material — at column scale (0.3m wide), tiling
 // the brick texture would compress bricks unrecognizably.
@@ -164,37 +118,69 @@ export function buildArch(centerX: number, z: number): THREE.Group {
   return group
 }
 
+// Hand-authored fragment heights per wall tile (0 = gap). Tiles 2 and 6
+// stay tall on both walls — they carry the torch brackets (Torch.ts
+// TORCH_POSITIONS). Two different rhythms so the walls don't mirror.
+const NORTH_HEIGHTS = [3.4, 2.2, 4.6, 1.4, 0, 2.6, 4.2, 1.8]
+const WEST_HEIGHTS = [2.4, 4.4, 4.8, 1.0, 2.0, 0, 4.0, 2.8]
+
+// Ruin wall: one brick fragment per tile with jagged varied heights and
+// gaps, plus rubble caps on the tall pieces — the original game's rooms
+// are broken silhouettes against black, not solid slabs.
+function buildRuinWall(heights: number[], axis: 'north' | 'west'): THREE.Group {
+  const group = new THREE.Group()
+  for (let i = 0; i < heights.length; i++) {
+    const h = heights[i]!
+    if (h <= 0) continue
+    const along = i * TILE + TILE / 2
+
+    const tex = makeBrickTexture(WALL_PALETTE)
+    tex.repeat.set(1, h / 1.25)
+    const mat = new THREE.MeshLambertMaterial({ map: tex })
+
+    const fragment = new THREE.Mesh(new THREE.BoxGeometry(TILE, h, 0.5), mat)
+    fragment.castShadow = true
+    fragment.receiveShadow = true
+    if (axis === 'north') fragment.position.set(along, h / 2, 0)
+    else {
+      fragment.rotation.y = Math.PI / 2
+      fragment.position.set(0, h / 2, along)
+    }
+    group.add(fragment)
+
+    // rubble cap: an offset half-brick on top breaks the box outline
+    if (h >= 3) {
+      const cap = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.5, 0.55), mat)
+      const offset = i % 2 === 0 ? -0.4 : 0.35
+      if (axis === 'north') cap.position.set(along + offset, h + 0.25, 0)
+      else {
+        cap.rotation.y = Math.PI / 2
+        cap.position.set(0, h + 0.25, along + offset)
+      }
+      cap.castShadow = true
+      group.add(cap)
+    }
+  }
+  return group
+}
+
 export async function buildStructure(_loader: AssetLoader): Promise<THREE.Group> {
   const group = new THREE.Group()
 
-  // Sandstone tiled floor. MeshLambertMaterial responds to torch / moon
-  // lighting — the warm pool of torchlight is what carves the dungeon
-  // atmosphere. receiveShadow lets the ledge/block cast onto the floor.
-  const floorTex = makeFloorTexture(SANDSTONE_PALETTE)
-  floorTex.repeat.set(2, 2)
-  const floorMat = new THREE.MeshLambertMaterial({ map: floorTex })
+  // Near-black floor: the room is a stage in a void (original-game look) —
+  // props and characters pop by value contrast, not by fill light.
+  const floorMat = new THREE.MeshLambertMaterial({ color: 0x1a1322 })
   const floor = new THREE.Mesh(new THREE.BoxGeometry(8 * TILE, 0.3, 8 * TILE), floorMat)
   floor.position.set(8, -0.15, 8)
   floor.receiveShadow = true
   group.add(floor)
 
-  // Walls: warm-brown shaded bricks. Lambert too — the cool moon spot
-  // brushes the lit side, leaving the unlit side genuinely dark.
-  const wallTex = makeBrickTexture(WALL_PALETTE)
-  wallTex.repeat.set(3, 2)
-  const wallMat = new THREE.MeshLambertMaterial({ map: wallTex })
+  group.add(buildRuinWall(NORTH_HEIGHTS, 'north'))
+  group.add(buildRuinWall(WEST_HEIGHTS, 'west'))
 
-  const north = new THREE.Mesh(new THREE.BoxGeometry(8 * TILE, WALL_H, 0.3), wallMat)
-  north.position.set(8, WALL_H / 2, 0)
-  north.receiveShadow = true
-  north.castShadow = true
-  group.add(north)
-
-  const west = new THREE.Mesh(new THREE.BoxGeometry(0.3, WALL_H, 8 * TILE), wallMat)
-  west.position.set(0, WALL_H / 2, 8)
-  west.receiveShadow = true
-  west.castShadow = true
-  group.add(west)
+  // Broken arch standing in the north wall's gap (tile 4) — silhouette
+  // landmark per the reference screenshots.
+  group.add(buildArch(4 * TILE + TILE / 2, 0.25))
 
   return group
 }

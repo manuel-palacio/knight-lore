@@ -19,6 +19,7 @@ import {
 import { buildHallLights } from '../game/Lighting'
 import { Torch, TORCH_POSITIONS } from '../game/Torch'
 import { makeToonMaterial } from '../game/Materials'
+import { CharacterVisual } from '../game/characters/CharacterVisual'
 import type { AssetLoader } from '../engine/AssetLoader'
 import type { GameState } from '../game/GameState'
 
@@ -27,6 +28,7 @@ const TILE = 2
 export interface HallBuild {
   room: Room
   player: Player
+  visual: CharacterVisual
   enemy: PatrolEnemy
   door: Door
   goblet: Pickup
@@ -148,17 +150,12 @@ export async function buildTheHall(
 
   // Player spawn at grid (1,3)
   const player = new Player()
-  const playerMesh = new THREE.Mesh(
-    new THREE.CapsuleGeometry(0.3, 1.0, 4, 8),
-    makeToonMaterial(0x6080d0),
-  )
-  playerMesh.castShadow = true
-  player.object3D = playerMesh
+  const visual = new CharacterVisual()
+  player.object3D = visual.group
   player.position.set(1 * TILE + TILE / 2, 0, 3 * TILE + TILE / 2)
   player.renderPosition.copy(player.position)
-  playerMesh.position.copy(player.position)
-  playerMesh.position.y = 0.8
-  room.group.add(playerMesh)
+  visual.group.position.copy(player.position)
+  room.group.add(visual.group)
   room.add(player)
   room.setSpawn(player.position.x, player.position.z)
 
@@ -181,5 +178,5 @@ export async function buildTheHall(
   room.group.add(burst.mesh)
 
   scene.add(room.group)
-  return { room, player, enemy, door, goblet, burst, torches }
+  return { room, player, visual, enemy, door, goblet, burst, torches }
 }

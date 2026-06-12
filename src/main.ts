@@ -30,7 +30,7 @@ async function main(): Promise<void> {
   }
 
   const build: HallBuild = await buildTheHall(renderer.scene, loader, state)
-  const { room, player, enemy, door, goblet } = build
+  const { room, player, visual, enemy, door, goblet } = build
 
   const debug = new DebugOverlay(renderer.scene)
   window.addEventListener('keydown', (e) => {
@@ -39,6 +39,8 @@ async function main(): Promise<void> {
 
   state.onTransformed = () => {
     build.burst.burst(player.position)
+    // onTransformed fires after toggleForm — state.form is already the target
+    visual.startTransform(state.form)
   }
 
   state.onTransformWhileCarrying = (id) => {
@@ -62,7 +64,7 @@ async function main(): Promise<void> {
     room.update(dt, {
       input,
       state,
-      onLanded: () => {},
+      onLanded: () => visual.notifyLanded(),
       onJumped: () => {},
     })
 
@@ -95,6 +97,7 @@ async function main(): Promise<void> {
     }
 
     state.tickTransform(dt)
+    visual.update(dt, { playerState: player.state, position: player.position })
     build.burst.update(dt)
     for (const torch of build.torches) torch.update(dt)
 

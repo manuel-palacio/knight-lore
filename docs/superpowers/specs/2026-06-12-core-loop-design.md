@@ -60,13 +60,15 @@ disk for reference (shared structure helpers stay in `Structure.ts`).
 
 ### Cauldron (new — `src/game/Cauldron.ts`)
 
-- `sequence = ['goblet', 'gem', 'wine-bottle', 'crystal-ball']`, `progress = 0`,
-  `wantedItem` getter.
-- Delivery: action key (E/Enter) within interaction range while `form === 'human'`
-  and carrying `wantedItem` → consume item from inventory + player carry visual,
-  `progress++`, emit `delivered` via callback.
+- The cure sequence (`['goblet', 'gem', 'wine-bottle', 'crystal-ball']`),
+  `cureProgress`, and the delivery rules live in `GameState` (the HUD needs
+  `wantedItem` before the cauldron room is ever built). The Cauldron entity
+  contributes location (interaction range check) and the werewolf danger.
+- Delivery: action key (E) within interaction range while `form === 'human'`
+  and carrying `wantedItem` → `GameState.deliverCureItem` consumes the item
+  and advances progress.
 - Wrong item or werewolf form → no delivery; HUD shows what it wants.
-- `progress === 4` → `state.won = true`.
+- `cureProgress === 4` → `state.won = true`.
 - **Werewolf danger**: while the player is in the cauldron room in werewolf form,
   a 1.5 s grace timer runs; on expiry, `loseLife()`. Timer resets on leaving the
   room or returning to human.

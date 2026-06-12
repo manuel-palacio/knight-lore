@@ -36,6 +36,9 @@ describe('Rig.applyPose', () => {
     // applying again must not accumulate
     rig.applyPose(pose)
     expect(rig.joints.get('torso')!.rotation.x).toBeCloseTo(0.31, 5)
+    // neutral pose returns joint to its baked bind rotation
+    rig.applyPose(makePose())
+    expect(rig.joints.get('torso')!.rotation.x).toBeCloseTo(0.21, 5)
   })
 
   it('ignores pose entries for joints the rig does not have', () => {
@@ -52,6 +55,13 @@ describe('Rig.applyPose', () => {
     expect(rig.root.position.y).toBe(0.05)
     expect(rig.root.scale.y).toBe(0.8)
     expect(rig.root.scale.x).toBeGreaterThan(1) // squash widens
+  })
+
+  it('narrows on stretch (squash > 1)', () => {
+    const rig = new StubRig()
+    rig.applyPose(makePose({ squash: 1.06 }))
+    expect(rig.root.scale.x).toBeLessThan(1)
+    expect(rig.root.scale.y).toBeCloseTo(1.06, 5)
   })
 
   it('clears jitter tilt on the next pose application', () => {

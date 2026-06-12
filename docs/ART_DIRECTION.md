@@ -150,55 +150,66 @@ The following are explicitly forbidden unless justified by this document:
 ## Character Direction
 
 ### Player — Human form
-The human player character must feel like a cursed, weary fairy-tale adventurer.
+The human player character is a **cartoonish, appealing chibi explorer** in the
+spirit of the original Knight Lore sprite (see reference screenshots `1.png`,
+`2.jpg`, `3.png` in the repo root). Clean and charming, never grotesque.
 
 Not a generic explorer.
 Not a neutral knight mannequin.
+Not a hunchback or deformed figure.
 
 #### Required qualities
 - immediately recognizable silhouette
-- stooped posture or weighted stance
-- oversized headgear or head shape
-- heavy upper-body shape
-- distinctive lower silhouette, coat tails, tabard, boots, or ragged hem
-- one asymmetrical costume detail
-- visual sense of burden, mystery, or curse
+- chibi proportions: oversized head, compact body (~3 heads tall)
+- big round explorer hat (pith-helmet read, not a conical rice hat)
+- **visible face — eyes (and beard) must read from the isometric camera;
+  a faceless character has no soul**
+- bright, self-lit rendering: the player must read instantly in any room
+  lighting, like the original game's always-bright sprite
+- distinctive lower silhouette: visible legs and chunky boots, ragged tunic hem
+- one or two SUBTLE asymmetrical details (slight hat tilt, satchel)
+- upright stance with at most a gentle lean
 
 #### Must read as
-- vulnerable but determined
-- strange and memorable
+- cute, determined, adventurous
+- cartoonish and memorable
 - stylized, not proportionally correct
 
 #### Forbidden character traits
-- generic heroic upright stance
+- stooped, hunchbacked, or deformed posture
+- grotesque or unsettling body shapes
 - plain torso rectangle with attached arms
-- fully mirrored silhouette left/right
+- faceless or eyeless head
+- a long robe that hides the legs (reads as a different archetype entirely)
 - “blue shorts”, belts, or trim used as main identity device
 - expressionless mannequin posture
 
 ### Player — Werewolf form
 The werewolf must not read as “the same body but furry”.
-It needs a totally different mass distribution.
+It needs a totally different mass distribution — but it is still a **clean,
+appealing cartoon wolf**, never a deformed creature.
 
 #### Required qualities
-- hunched silhouette
-- long forearms or oversized claw mass
-- clear snout/head wedge
-- visible back arc or shoulder hump
-- stronger diagonal energy than human form
+- one continuous arched body mass (a separate hump shape reads as a tumor —
+  forbidden)
+- the wolf head clearly OUT IN FRONT of the body: snout, swept-back ears,
+  visible eyes
+- long forearms with oversized claw mass
+- digitigrade haunches and a tail
+- stronger diagonal energy than human form (forward lean, not folded in half)
 - predatory but tragic tone
 
 #### Must read as
-- unstable
-- cursed
+- a proper cartoon wolf-beast
 - dangerous
 - visually distinct even at small size
 
 #### Forbidden werewolf traits
+- bolted-on lumps, humps, or growths separate from the body silhouette
+- head buried in or merged with the chest mass
+- spine folded so far forward the figure reads as headless from the camera
 - upright human proportions with ears added
 - same leg and torso proportions as human form
-- smooth neutral pose
-- dependence on eye color or face detail for readability
 
 ### Other actors
 Enemies must each have a distinct dominant shape language.

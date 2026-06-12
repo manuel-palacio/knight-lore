@@ -80,20 +80,19 @@ Forbidden character construction patterns:
 
 If the body logic is generic, the character will stay generic.
 
-### Do not make the player a neutral adventurer
+### Do not make the player a neutral adventurer — or a grotesque one
 The player must not read as:
-- basic explorer
-- standard knight
 - generic hero unit
-- upright figurine
 - mobile game mascot
+- **hunchback, deformed figure, or grotesque shape** (rejected in playtest)
+- **a robed figure with hidden legs** (reads as a monk/wizard archetype)
 
 Forbidden traits:
-- neutral straight spine
-- even shoulder line
-- identical left/right silhouette
-- bland proportions
-- no burden, no curse, no tension
+- identical left/right silhouette (keep asymmetries SUBTLE — a slight hat
+  tilt and a satchel, not a warped body)
+- bland proportions (target: chibi — oversized head, compact body)
+- faceless head — eyes must read from the game camera
+- a character that is hard to see in the room lighting
 
 ### Do not let costume details carry the whole design
 Belts, buckles, shorts, trim, gloves, highlights, and little accessories are not the character.

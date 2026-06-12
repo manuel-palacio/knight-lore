@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import * as THREE from 'three'
 import { Rig } from '../../src/game/characters/Rig'
 import type { JointRotation, Pose } from '../../src/game/characters/CharacterAnimator'
+import { KnightRig } from '../../src/game/characters/KnightRig'
 
 class StubRig extends Rig {
   constructor() {
@@ -69,5 +70,32 @@ describe('Rig.applyPose', () => {
     rig.root.rotation.z = 0.2 // simulate transform jitter
     rig.applyPose(makePose())
     expect(rig.root.rotation.z).toBe(0)
+  })
+})
+
+const KNIGHT_JOINTS = ['torso', 'head', 'armL', 'armR', 'legL', 'legR', 'hat']
+
+describe('KnightRig', () => {
+  it('exposes the full joint contract', () => {
+    const rig = new KnightRig()
+    for (const name of KNIGHT_JOINTS) {
+      expect(rig.joints.has(name), `missing joint ${name}`).toBe(true)
+    }
+  })
+
+  it('stands roughly player-extents tall with origin at the feet', () => {
+    const rig = new KnightRig()
+    const box = new THREE.Box3().setFromObject(rig.root)
+    expect(box.min.y).toBeGreaterThan(-0.15)
+    expect(box.max.y).toBeGreaterThan(1.3)
+    expect(box.max.y).toBeLessThan(2.0)
+  })
+
+  it('has an asymmetric silhouette (left/right bounding differs)', () => {
+    // art doc: "fully mirrored silhouette left/right" is forbidden.
+    // The satchel, shoulder and hat tilt must break symmetry measurably.
+    const rig = new KnightRig()
+    const box = new THREE.Box3().setFromObject(rig.root)
+    expect(Math.abs(box.max.x) - Math.abs(box.min.x)).not.toBeCloseTo(0, 2)
   })
 })

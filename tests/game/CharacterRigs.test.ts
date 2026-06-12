@@ -137,6 +137,12 @@ describe('WerewolfRig', () => {
     expect(wBox.max.z - wBox.min.z).toBeGreaterThan(kBox.max.z - kBox.min.z)
   })
 
+  it('keeps its feet at the origin (nothing pokes through the floor)', () => {
+    const wolf = new WerewolfRig()
+    const box = new THREE.Box3().setFromObject(wolf.root)
+    expect(box.min.y).toBeGreaterThan(-0.02)
+  })
+
   it('shares no geometry or material instances with the knight', () => {
     const knight = new KnightRig()
     const wolf = new WerewolfRig()
@@ -145,7 +151,8 @@ describe('WerewolfRig', () => {
       root.traverse((node) => {
         if (node instanceof THREE.Mesh) {
           uuids.add(node.geometry.uuid)
-          uuids.add((node.material as THREE.Material).uuid)
+          const mats = Array.isArray(node.material) ? node.material : [node.material]
+          for (const mat of mats) uuids.add(mat.uuid)
         }
       })
       return uuids

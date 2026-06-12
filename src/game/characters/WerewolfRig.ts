@@ -79,10 +79,12 @@ export class WerewolfRig extends Rig {
     const earL = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.16, 5), furDark)
     earL.position.set(0.09, 0.14, -0.05)
     earL.rotation.x = -0.9 // swept back
+    earL.castShadow = true
     head.add(earL)
     const earR = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.16, 5), furDark)
     earR.position.set(-0.09, 0.14, -0.05)
     earR.rotation.x = -1.05 // uneven sweep
+    earR.castShadow = true
     head.add(earR)
 
     const tail = new THREE.Group()
@@ -91,7 +93,7 @@ export class WerewolfRig extends Rig {
     this.registerJoint('tail', tail)
 
     const tailMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.02, 0.45, 6), furDark)
-    tailMesh.rotation.x = Math.PI / 2 + 0.5 // points back and down
+    tailMesh.rotation.x = Math.PI / 2 - 0.5 // points back and down
     tailMesh.position.set(0, -0.05, -0.2)
     tailMesh.castShadow = true
     tail.add(tailMesh)
@@ -106,9 +108,9 @@ function buildHaunch(mat: THREE.Material): THREE.Group {
   thigh.position.set(0, -0.16, 0.06)
   thigh.castShadow = true
   haunch.add(thigh)
-  const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.045, 0.35, 6), mat)
+  const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.045, 0.3, 6), mat)
   shin.rotation.x = 0.6
-  shin.position.set(0, -0.42, 0.02)
+  shin.position.set(0, -0.38, 0.02)
   shin.castShadow = true
   haunch.add(shin)
   const paw = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.08, 0.24), mat)
@@ -137,6 +139,7 @@ function buildClawArm(furMat: THREE.Material, clawMat: THREE.Material): THREE.Gr
     const talon = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.12, 4), clawMat)
     talon.position.set((i - 1) * 0.06, -1.0, 0.12)
     talon.rotation.x = 1.3
+    talon.castShadow = true
     arm.add(talon)
   }
   return arm

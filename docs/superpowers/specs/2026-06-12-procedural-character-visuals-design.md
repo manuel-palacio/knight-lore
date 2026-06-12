@@ -72,8 +72,9 @@ Different mass distribution — not a recolor:
 
 ### Materials
 
-Flat-shaded `MeshLambertMaterial`, muted desaturated tones — consistent with the
-existing dungeon lighting; only torches glow under bloom.
+`makeToonMaterial` from `src/game/Materials.ts` (cel-shaded, shadow step lifted so
+heroes stay readable in the dim dungeon — already tuned for exactly this use), in
+muted desaturated tones. Only torches glow under bloom.
 
 ### Acceptance test (silhouette-first)
 

@@ -9,7 +9,7 @@
       #app { width: 100vw; height: 100vh; }
       #hud { position: fixed; top: 12px; left: 12px; color: #ffefc4; font-size: 14px; pointer-events: none; }
       #hud div { margin-bottom: 4px; }
-      #win { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.7); color: #ffefc4; font-size: 48px; }
+      .overlay { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.7); color: #ffefc4; font-size: 48px; text-align: center; }
     </style>
   </head>
   <body>
@@ -18,8 +18,18 @@
       <div id="hud-form"></div>
       <div id="hud-timer"></div>
       <div id="hud-carry"></div>
+      <div id="hud-wants"></div>
+      <div id="hud-cure"></div>
+      <div id="hud-day"></div>
+      <div id="hud-lives"></div>
     </div>
-    <div id="win">YOU WIN</div>
+    <div id="win" class="overlay">YOU WIN — PRESS R TO RESTART</div>
+    <div id="gameover" class="overlay">
+      <div>
+        <div id="gameover-reason"></div>
+        <div style="font-size: 20px; margin-top: 12px;">PRESS R TO RESTART</div>
+      </div>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

@@ -1,16 +1,25 @@
-import * as THREE from 'three'
 import { Renderer } from './engine/Renderer'
 import { GameLoop } from './engine/GameLoop'
 import { Input } from './engine/Input'
 import { AssetLoader } from './engine/AssetLoader'
 import { DebugOverlay } from './engine/DebugOverlay'
-import { buildTheHall, type HallBuild } from './scenes/TheHall'
 import { GameState } from './game/GameState'
 import { HUD } from './game/HUD'
 import { Category } from './engine/categories'
 import { Player } from './game/Player'
+import { Pickup } from './game/Pickup'
 import { PushBlock } from './game/PushBlock'
+import { Cauldron } from './game/Cauldron'
 import { Room } from './game/Room'
+import { RoomManager } from './game/RoomManager'
+import { ROOM_BUILDERS, START_ROOM } from './scenes/rooms/index'
+import { CharacterVisual } from './game/characters/CharacterVisual'
+import { ParticleBurst } from './game/ParticleBurst'
+import type { Entity } from './game/Entity'
+
+const PICKUP_RANGE = 1.0
+const PICKUP_HEIGHT = 1.5
+const CARRY_OFFSET_Y = 1.2
 
 async function main(): Promise<void> {
   const container = document.getElementById('app')
@@ -29,31 +38,154 @@ async function main(): Promise<void> {
     console.warn('HDR not present; skipping environment reflection')
   }
 
-  const build: HallBuild = await buildTheHall(renderer.scene, loader, state)
-  const { room, player, visual, enemy, door, goblet } = build
+  const manager = new RoomManager(renderer.scene, ROOM_BUILDERS, loader, state)
+
+  const player = new Player()
+  const visual = new CharacterVisual()
+  player.object3D = visual.group
+  renderer.scene.add(visual.group)
+
+  const burst = new ParticleBurst()
+  renderer.scene.add(burst.mesh)
+
+  let carriedPickup: Pickup | null = null
+  let transitioning = false
+
+  function activeRoom(): Room {
+    const room = manager.active
+    if (!room) throw new Error('No active room')
+    return room
+  }
+
+  function placePlayerAtSpawn(room: Room): void {
+    player.position.set(room.spawnX, 0, room.spawnZ)
+    player.renderPosition.copy(player.position)
+    player.state = 'grounded'
+    visual.resetMotion()
+  }
+
+  function enterRoom(room: Room): void {
+    placePlayerAtSpawn(room)
+    for (const e of room.entities) {
+      if (e instanceof Cauldron) e.resetDanger()
+    }
+  }
+
+  // Room 002's spawn is cell (2,2) — tileCenter(2) = 5 on both axes.
+  const startRoom = await manager.transitionTo(START_ROOM, 5, 5)
+  enterRoom(startRoom)
 
   const debug = new DebugOverlay(renderer.scene)
   window.addEventListener('keydown', (e) => {
     if (e.code === 'KeyD') debug.toggle()
+    if (e.code === 'KeyR' && (state.gameOver || state.won)) location.reload()
   })
 
   state.onTransformed = () => {
-    build.burst.burst(player.position)
-    // onTransformed fires after toggleForm — state.form is already the target
+    burst.burst(player.position)
     visual.startTransform(state.form)
   }
 
-  state.onTransformWhileCarrying = (id) => {
-    if (id === 'goblet') {
-      goblet.collected = false
-      if (goblet.object3D && player.object3D) {
-        player.object3D.remove(goblet.object3D)
-        goblet.object3D.position.copy(player.position)
-        goblet.object3D.position.y = 0.5
-        renderer.scene.add(goblet.object3D)
+  state.onTransformWhileCarrying = () => dropCarried()
+
+  state.onLifeLost = () => {
+    placePlayerAtSpawn(activeRoom())
+  }
+
+  function dropCarried(): void {
+    const pickup = carriedPickup
+    if (!pickup) return
+    carriedPickup = null
+    player.carrying = null
+    if (pickup.object3D && player.object3D) player.object3D.remove(pickup.object3D)
+    pickup.collected = false
+    pickup.active = true
+    pickup.position.set(player.position.x, 0.4, player.position.z)
+    pickup.renderPosition.copy(pickup.position)
+    if (pickup.object3D) pickup.object3D.position.copy(pickup.position)
+    activeRoom().add(pickup) // items migrate to wherever they were dropped
+  }
+
+  function tryPickupPass(room: Room): void {
+    if (!input.wasPressed('KeyE')) return
+    for (const e of room.entities) {
+      if (!(e instanceof Pickup) || e.collected) continue
+      const near =
+        Math.hypot(e.position.x - player.position.x, e.position.z - player.position.z) < PICKUP_RANGE &&
+        Math.abs(e.position.y - player.position.y) < PICKUP_HEIGHT
+      if (!near) continue
+      player.tryPickup({ id: e.id, position: e.position }, state, () => {
+        e.collect()
+        room.remove(e)
+        if (e.object3D && player.object3D) {
+          player.object3D.add(e.object3D)
+          e.object3D.position.set(0, CARRY_OFFSET_Y, 0)
+        }
+        carriedPickup = e
+      })
+      return
+    }
+  }
+
+  function tryDeliverPass(room: Room): boolean {
+    if (!input.wasPressed('KeyE')) return false
+    const cauldron = room.entities.find((e): e is Cauldron => e instanceof Cauldron)
+    if (!cauldron || !cauldron.isInRange(player.position)) return false
+    if (!state.deliverCureItem(player.carrying)) return false
+    const delivered = carriedPickup
+    carriedPickup = null
+    player.carrying = null
+    if (delivered?.object3D && player.object3D) player.object3D.remove(delivered.object3D)
+    return true
+  }
+
+  function touchesHazard(h: Entity): boolean {
+    return (
+      Math.abs(player.position.x - h.position.x) < (player.extents.x + h.extents.x) / 2 &&
+      Math.abs(player.position.z - h.position.z) < (player.extents.z + h.extents.z) / 2 &&
+      player.position.y - h.position.y < h.extents.y
+    )
+  }
+
+  function hazardPass(room: Room): void {
+    for (const e of room.entities) {
+      if (!e.active || !e.hasCategory(Category.HAZARD)) continue
+      if (touchesHazard(e)) {
+        state.loseLife()
+        return
       }
-      goblet.position.copy(player.position)
-      goblet.position.y = 0.5
+    }
+  }
+
+  function exitPass(): void {
+    if (transitioning) return
+    const exit = manager.exitAt(player.position.x, player.position.z)
+    if (!exit) return
+    transitioning = true
+    manager
+      .transitionTo(exit.targetRoomId, exit.entryX, exit.entryZ)
+      .then((room) => {
+        enterRoom(room)
+        transitioning = false
+      })
+      .catch((err) => {
+        console.error(err)
+        transitioning = false
+      })
+  }
+
+  function handlePushAttempt(room: Room): void {
+    for (const e of room.entities) {
+      if (!e.hasCategory(Category.SOLID_DYNAMIC)) continue
+      const block = e as PushBlock
+      const dx = block.position.x - player.position.x
+      const dz = block.position.z - player.position.z
+      const dist = Math.hypot(dx, dz)
+      if (dist < 1.4 && dist > 0.4) {
+        const dir =
+          Math.abs(dx) > Math.abs(dz) ? (dx > 0 ? 'east' : 'west') : dz > 0 ? 'south' : 'north'
+        block.tryPush(dir, room.grid, room.tileSize)
+      }
     }
   }
 
@@ -61,88 +193,47 @@ async function main(): Promise<void> {
   loop.onUpdate((dt) => {
     input.update()
 
-    room.update(dt, {
+    if (state.gameOver || state.won) {
+      hud.render(state, player.carrying)
+      return
+    }
+    if (transitioning) return
+
+    const room = activeRoom()
+    const sharedCtx = {
       input,
       state,
+      playerPosition: player.position,
       onLanded: () => visual.notifyLanded(),
       onJumped: () => {},
-    })
-
-    handlePushAttempt(player, room)
-
-    if (overlapsActor(player.position, enemy.position)) {
-      player.position.x = room.spawnX
-      player.position.z = room.spawnZ
-      player.position.y = 0
-      player.state = 'grounded'
-      visual.resetMotion()
     }
 
-    if (
-      !goblet.collected &&
-      Math.hypot(goblet.position.x - player.position.x, goblet.position.z - player.position.z) < 1.0 &&
-      Math.abs(goblet.position.y - player.position.y) < 1.5 &&
-      input.wasPressed('KeyE')
-    ) {
-      player.tryPickup(
-        { id: goblet.id, position: goblet.position },
-        state,
-        () => {
-          goblet.collect()
-          if (goblet.object3D && player.object3D) {
-            player.object3D.add(goblet.object3D)
-            goblet.object3D.position.set(0, 1.2, 0)
-          }
-        },
-      )
-    }
+    player.update(dt, { ...sharedCtx, grid: room.grid, tileSize: room.tileSize })
+    room.update(dt, sharedCtx)
+    handlePushAttempt(room)
+
+    if (!tryDeliverPass(room)) tryPickupPass(room)
+    hazardPass(room)
+    exitPass()
 
     state.tickTransform(dt)
     visual.update(dt, { playerState: player.state, position: player.position })
-    build.burst.update(dt)
-    for (const torch of build.torches) torch.update(dt)
-
-    if (door.open && player.position.z > 15.5) {
-      state.won = true
-    }
+    burst.update(dt)
 
     hud.render(state, player.carrying)
   })
 
   loop.onRender(() => {
-    room.updateRenderPositions(0.18)
-    debug.refresh(room)
+    const room = manager.active
+    if (room) {
+      room.updateRenderPositions(0.18)
+      debug.refresh(room)
+    }
+    player.updateRenderPosition(0.18)
     renderer.render()
   })
 
   loop.start()
-}
-
-function handlePushAttempt(player: Player, room: Room): void {
-  for (const e of room.entities) {
-    if (!e.hasCategory(Category.SOLID_DYNAMIC)) continue
-    const block = e as PushBlock
-    const dx = block.position.x - player.position.x
-    const dz = block.position.z - player.position.z
-    const dist = Math.hypot(dx, dz)
-    if (dist < 1.4 && dist > 0.4) {
-      let dir: 'east' | 'west' | 'north' | 'south'
-      if (Math.abs(dx) > Math.abs(dz)) {
-        dir = dx > 0 ? 'east' : 'west'
-      } else {
-        dir = dz > 0 ? 'south' : 'north'
-      }
-      block.tryPush(dir, room.grid, room.tileSize)
-    }
-  }
-}
-
-function overlapsActor(a: THREE.Vector3, b: THREE.Vector3): boolean {
-  return (
-    Math.abs(a.x - b.x) < 0.9 &&
-    Math.abs(a.z - b.z) < 0.9 &&
-    Math.abs(a.y - b.y) < 1.5
-  )
 }
 
 main().catch((err) => {

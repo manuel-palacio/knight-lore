@@ -30,26 +30,10 @@ export async function buildRoomShell(id: string, loader: AssetLoader): Promise<R
   return room
 }
 
-// Glowing exit beacon — a halo ring on the floor at the exit + a warm
-// PointLight to mark the passage. Players found dark exits invisible.
+// Subtle warm light under each exit arch — no floor ring (looked bad).
 function addExitBeacon(room: Room, x: number, z: number): void {
-  const halo = new THREE.Mesh(
-    new THREE.RingGeometry(0.7, 1.2, 32),
-    new THREE.MeshBasicMaterial({
-      color: 0xffb060,
-      transparent: true,
-      opacity: 0.55,
-      side: THREE.DoubleSide,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    }),
-  )
-  halo.rotation.x = -Math.PI / 2
-  halo.position.set(x, 0.05, z)
-  room.group.add(halo)
-
-  const light = new THREE.PointLight(0xffa050, 1.6, 6, 1.4)
-  light.position.set(x, 2, z)
+  const light = new THREE.PointLight(0xffa050, 2.0, 7, 1.3)
+  light.position.set(x, 1.6, z)
   room.group.add(light)
 }
 

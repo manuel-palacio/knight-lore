@@ -8,65 +8,73 @@
       body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; }
       #app { width: 100vw; height: 100vh; }
 
-      /* Bottom parchment scroll, original-game style */
-      #hud-scroll {
+      /* Bottom scroll, original-game style: a thin horizontal bar with rolled
+         parchment ends. Slim, low-contrast, lives center on a horizontal line. */
+      #hud {
         position: fixed; left: 0; right: 0; bottom: 0;
-        height: 64px;
-        background: linear-gradient(180deg, #2a1810 0%, #1a0e08 100%);
-        border-top: 2px solid #6a4a20;
+        height: 56px;
         display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
+        grid-template-columns: 60px 1fr 60px;
         align-items: center;
-        padding: 0 28px;
-        color: #ffd95a;
         font-family: 'Courier New', monospace;
-        font-size: 16px;
-        letter-spacing: 1px;
+        color: #d6c298;
         pointer-events: none;
         z-index: 5;
       }
-      .scroll-end-l, .scroll-end-r {
-        position: fixed; bottom: 0; width: 28px; height: 64px;
-        background: linear-gradient(90deg, #4a2a14, #2a1810);
-        border-top: 2px solid #6a4a20; z-index: 6;
+      /* The horizontal "string" the scroll hangs from */
+      #hud::before {
+        content: ''; position: absolute; left: 60px; right: 60px; top: 50%;
+        height: 1px; background: #d6c298;
       }
-      .scroll-end-l { left: 0; border-right: 2px solid #6a4a20; }
-      .scroll-end-r { right: 0; background: linear-gradient(270deg, #4a2a14, #2a1810); border-left: 2px solid #6a4a20; }
+      /* Rolled-parchment end caps (the dark cylinders in 1.png) */
+      .scroll-end {
+        position: relative; height: 40px; width: 40px; margin: 0 10px;
+        background: radial-gradient(ellipse at 30% 50%, #4a3220 0 35%, #2a1a10 65%);
+        border: 1px solid #d6c298; border-radius: 6px;
+      }
+      .scroll-end-l { justify-self: start; }
+      .scroll-end-r { justify-self: end; }
 
-      .hud-cell { display: flex; align-items: center; gap: 10px; }
-      .hud-left { justify-content: flex-start; }
-      .hud-center { justify-content: center; }
-      .hud-right { justify-content: flex-end; }
+      .hud-row {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 0 24px;
+        font-size: 18px;
+        letter-spacing: 2px;
+        position: relative;
+      }
 
+      .hud-cluster { display: flex; align-items: center; gap: 8px; }
+
+      /* Sabreman icon: pixel-art-ish silhouette, hat + cloak */
       .hero-icon {
-        width: 22px; height: 32px;
         display: inline-block;
+        width: 20px; height: 28px;
         background:
-          radial-gradient(circle at 50% 30%, #ffe4a0 0 6px, transparent 7px),
-          linear-gradient(180deg, #c79050 30%, #6a3818 100%);
-        clip-path: polygon(50% 0%, 100% 30%, 100% 100%, 0% 100%, 0% 30%);
+          /* hat brim */
+          linear-gradient(transparent 4px, #d6c298 4px, #d6c298 6px, transparent 6px),
+          /* hat top */
+          linear-gradient(#d6c298, #d6c298) 7px 0 / 6px 5px no-repeat,
+          /* body */
+          linear-gradient(#d6c298, #d6c298) 4px 8px / 12px 18px no-repeat,
+          /* arms */
+          linear-gradient(#d6c298, #d6c298) 1px 12px / 3px 8px no-repeat,
+          linear-gradient(#d6c298, #d6c298) 16px 12px / 3px 8px no-repeat;
+        background-color: transparent;
       }
 
-      .day-glyph { font-size: 22px; }
+      .day-glyph { font-size: 18px; }
       .sun-glyph { color: #ffd95a; }
       .moon-glyph { color: #cce4ff; }
 
-      .hud-hearts { color: #ff5566; font-size: 22px; letter-spacing: 1px; }
-
-      .hud-item-slot {
+      .hud-item {
         display: inline-flex; align-items: center; justify-content: center;
-        width: 38px; height: 38px;
-        border: 1px solid #6a4a20;
-        border-radius: 4px;
-        background: rgba(0,0,0,0.4);
-        font-size: 20px;
+        width: 26px; height: 26px;
+        font-size: 18px;
       }
       .item-goblet { color: #ffd95a; }
       .item-gem { color: #66ff88; }
       .item-wine-bottle { color: #ff7799; }
       .item-crystal-ball { color: #aaddff; }
-
-      .label { color: #a08868; font-size: 10px; letter-spacing: 2px; }
 
       .overlay {
         position: fixed; inset: 0; display: none;
@@ -103,32 +111,31 @@
   <body>
     <div id="app"></div>
 
-    <div id="hud-scroll">
-      <!-- Left: Sabreman icon + lives count -->
-      <div class="hud-cell hud-left">
-        <span class="hero-icon"></span>
-        <span id="hud-lives" class="hud-hearts">♥♥♥♥♥</span>
-      </div>
+    <div id="hud">
+      <div class="scroll-end scroll-end-l"></div>
+      <div class="hud-row">
+        <!-- Left: Sabreman icon + lives count, like 1.png "04" -->
+        <span class="hud-cluster">
+          <span class="hero-icon"></span>
+          <span id="hud-lives">05</span>
+        </span>
 
-      <!-- Center: DAY counter with sun/moon to mark form -->
-      <div class="hud-cell hud-center">
-        <span id="hud-form-glyph" class="day-glyph sun-glyph">☀</span>
-        <span><span class="label">DAY </span><span id="hud-day">01</span></span>
-        <span id="hud-timer" class="label">20s</span>
-      </div>
+        <!-- Center: DAY + sun (human) / moon (werewolf) -->
+        <span class="hud-cluster">
+          <span id="hud-form-glyph" class="day-glyph sun-glyph">☀</span>
+          <span>DAY:<span id="hud-day">01</span></span>
+        </span>
 
-      <!-- Right: currently carried + cauldron next-wanted -->
-      <div class="hud-cell hud-right">
-        <span class="label">CARRY</span>
-        <span class="hud-item-slot" id="hud-carry">—</span>
-        <span class="label">CAULDRON</span>
-        <span class="hud-item-slot" id="hud-wants">—</span>
-        <span class="label">CURE</span>
-        <span id="hud-cure" style="font-size:18px;">○○○○</span>
+        <!-- Right: cauldron-wants icon + cure-progress digit -->
+        <span class="hud-cluster">
+          <span class="hud-item" id="hud-carry">—</span>
+          <span style="color: #6a4a20;">|</span>
+          <span class="hud-item" id="hud-wants">—</span>
+          <span id="hud-cure">0</span>
+        </span>
       </div>
+      <div class="scroll-end scroll-end-r"></div>
     </div>
-    <div class="scroll-end-l"></div>
-    <div class="scroll-end-r"></div>
 
     <div id="intro">
       <div class="panel">
@@ -143,8 +150,7 @@
           <kbd>R</kbd><span>Restart after game over</span>
         </div>
         <p style="font-size: 14px; color: #c7a878;">
-          <strong>Tip:</strong> Items glow. Walk close and press <kbd>E</kbd>.
-          The cauldron room is dangerous while you're a werewolf — leave or wait for human form.
+          <strong>HUD:</strong> hero icon + lives left | sun/moon shows form (sun = safe to deliver, moon = werewolf danger near the cauldron) | left slot is what you're carrying, right slot is what the cauldron wants next, last digit is cure progress.
         </p>
         <div class="dismiss">Press any key to begin</div>
       </div>

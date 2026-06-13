@@ -217,17 +217,55 @@ async function main(): Promise<void> {
       })
   }
 
-  function handlePushAttempt(room: Room): void {
+  // PULL: press E next to a block to drag it one tile toward you. Lets the
+  // player recover from corner-trapping a block (Knight Lore's classic
+  // softlock). Only fires when E is pressed and no pickup happened.
+  function tryPullPass(room: Room): boolean {
+    if (!input.wasPressed('KeyE')) return false
     for (const e of room.entities) {
       if (!e.hasCategory(Category.SOLID_DYNAMIC)) continue
       const block = e as PushBlock
       const dx = block.position.x - player.position.x
       const dz = block.position.z - player.position.z
       const dist = Math.hypot(dx, dz)
-      if (dist <= PUSH_RANGE_MAX && dist > PUSH_RANGE_MIN) {
-        const dir =
-          Math.abs(dx) > Math.abs(dz) ? (dx > 0 ? 'east' : 'west') : dz > 0 ? 'south' : 'north'
-        block.tryPush(dir, room.grid, room.tileSize)
+      if (dist > PUSH_RANGE_MAX || dist <= PUSH_RANGE_MIN) continue
+
+      // Pull = push the block in the direction FROM block TO player (opposite
+      // of normal push). The PushBlock.tryPush call verifies the destination
+      // is free, so this won't tunnel through walls.
+      const dominantX = Math.abs(dx) > Math.abs(dz)
+      const dir = dominantX
+        ? (dx > 0 ? 'west' : 'east')
+        : (dz > 0 ? 'north' : 'south')
+      if (block.tryPush(dir, room.grid, room.tileSize)) return true
+    }
+    return false
+  }
+
+  function handlePushAttempt(room: Room): void {
+    // Player's input direction this tick; -1/0/+1 on each axis.
+    const px = (input.isDown('ArrowRight') ? 1 : 0) - (input.isDown('ArrowLeft') ? 1 : 0)
+    const pz = (input.isDown('ArrowDown') ? 1 : 0) - (input.isDown('ArrowUp') ? 1 : 0)
+    if (px === 0 && pz === 0) return // not walking; no push
+
+    for (const e of room.entities) {
+      if (!e.hasCategory(Category.SOLID_DYNAMIC)) continue
+      const block = e as PushBlock
+      const dx = block.position.x - player.position.x
+      const dz = block.position.z - player.position.z
+      const dist = Math.hypot(dx, dz)
+      if (dist > PUSH_RANGE_MAX || dist <= PUSH_RANGE_MIN) continue
+
+      // Push only when the player is walking INTO the block on its dominant
+      // axis. Walking past or around it does nothing — so you can't accidentally
+      // shove a block deeper into a corner.
+      const dominantX = Math.abs(dx) > Math.abs(dz)
+      if (dominantX) {
+        if (Math.sign(dx) !== px) continue
+        block.tryPush(px > 0 ? 'east' : 'west', room.grid, room.tileSize)
+      } else {
+        if (Math.sign(dz) !== pz) continue
+        block.tryPush(pz > 0 ? 'south' : 'north', room.grid, room.tileSize)
       }
     }
   }
@@ -277,7 +315,12 @@ async function main(): Promise<void> {
     handlePushAttempt(room)
     resolveActorOverlap(room)
 
-    if (!tryDeliverPass(room)) tryPickupPass(room)
+    // Action key (E) priority: deliver → pickup → pull-block.
+    if (!tryDeliverPass(room)) {
+      const hadPickup = player.carrying !== null
+      tryPickupPass(room)
+      if (!hadPickup && player.carrying === null) tryPullPass(room)
+    }
     hazardPass(room)
     exitPass()
 

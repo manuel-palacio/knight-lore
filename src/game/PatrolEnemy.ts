@@ -1,7 +1,17 @@
 import { Entity, type UpdateContext } from './Entity'
 import { Category } from '../engine/categories'
+import type { Grid } from '../engine/Grid'
 
 const DEFAULT_PATROL_SPEED = 1.6
+// How close to the next solid cell we get before treating it as a wall hit
+// and reversing direction. Slightly less than half the player's own slop so
+// the visual still touches the surface.
+const WALL_BUFFER = 0.45
+
+interface PatrolCtx extends UpdateContext {
+  grid?: Grid
+  tileSize?: number
+}
 
 export class PatrolEnemy extends Entity {
   private a: { x: number; z: number }
@@ -20,7 +30,14 @@ export class PatrolEnemy extends Entity {
     this.speed = speed
   }
 
-  update(dt: number, _ctx: UpdateContext): void {
+  private blocked(grid: Grid, tileSize: number, x: number, z: number): boolean {
+    const cx = Math.floor(x / tileSize)
+    const cz = Math.floor(z / tileSize)
+    return grid.isSolid(cx, cz) && grid.supportHeight(cx, cz) > this.position.y
+  }
+
+  update(dt: number, ctxRaw: UpdateContext): void {
+    const ctx = ctxRaw as PatrolCtx
     const target = this.dir === 1 ? this.b : this.a
     const dx = target.x - this.position.x
     const dz = target.z - this.position.z
@@ -29,7 +46,29 @@ export class PatrolEnemy extends Entity {
       this.dir = (this.dir === 1 ? -1 : 1) as 1 | -1
       return
     }
-    this.position.x += (dx / dist) * this.speed * dt
-    this.position.z += (dz / dist) * this.speed * dt
+    const stepX = (dx / dist) * this.speed * dt
+    const stepZ = (dz / dist) * this.speed * dt
+    const nextX = this.position.x + stepX
+    const nextZ = this.position.z + stepZ
+
+    // If the next position would step into a solid grid cell at our height,
+    // reverse the patrol and stop for this frame. This lets pushed blocks
+    // (and walls) act as actual barriers instead of being walked through.
+    if (ctx.grid && ctx.tileSize) {
+      const sx = Math.sign(stepX)
+      const sz = Math.sign(stepZ)
+      const probeX = nextX + sx * WALL_BUFFER
+      const probeZ = nextZ + sz * WALL_BUFFER
+      if (
+        this.blocked(ctx.grid, ctx.tileSize, probeX, this.position.z) ||
+        this.blocked(ctx.grid, ctx.tileSize, this.position.x, probeZ)
+      ) {
+        this.dir = (this.dir === 1 ? -1 : 1) as 1 | -1
+        return
+      }
+    }
+
+    this.position.x = nextX
+    this.position.z = nextZ
   }
 }

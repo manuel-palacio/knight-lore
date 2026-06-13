@@ -3,17 +3,20 @@ import { Entity, type UpdateContext } from './Entity'
 import { Category } from '../engine/categories'
 import type { GameState } from './GameState'
 
-export const DANGER_GRACE = 1.5
+export const DANGER_GRACE = 3
 const INTERACT_RANGE = 1.8
 const INTERACT_HEIGHT = 2.5
+const DANGER_RANGE = 2.6
 
 interface CauldronCtx extends UpdateContext {
   state: GameState
+  playerPosition?: THREE.Vector3
 }
 
 // The cure rules live in GameState.deliverCureItem; this entity contributes
-// a location (delivery range) and the werewolf danger. It only ticks while
-// its room is active, so "player is in the cauldron room" is implicit.
+// a location (delivery range) and the werewolf danger. Danger only fires
+// when the werewolf player is CLOSE to the cauldron — earlier we drained
+// lives anywhere in the room and new players died walking past.
 export class Cauldron extends Entity {
   private dangerTimer = DANGER_GRACE
 
@@ -34,7 +37,10 @@ export class Cauldron extends Entity {
 
   update(dt: number, ctxRaw: UpdateContext): void {
     const ctx = ctxRaw as CauldronCtx
-    if (ctx.state.form !== 'werewolf') {
+    const playerNear = ctx.playerPosition
+      ? Math.hypot(ctx.playerPosition.x - this.position.x, ctx.playerPosition.z - this.position.z) < DANGER_RANGE
+      : true
+    if (ctx.state.form !== 'werewolf' || !playerNear) {
       this.dangerTimer = DANGER_GRACE
       return
     }

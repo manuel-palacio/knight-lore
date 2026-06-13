@@ -30,19 +30,48 @@ export async function buildRoomShell(id: string, loader: AssetLoader): Promise<R
   return room
 }
 
+// Glowing exit beacon — a halo ring on the floor at the exit + a warm
+// PointLight to mark the passage. Players found dark exits invisible.
+function addExitBeacon(room: Room, x: number, z: number): void {
+  const halo = new THREE.Mesh(
+    new THREE.RingGeometry(0.7, 1.2, 32),
+    new THREE.MeshBasicMaterial({
+      color: 0xffb060,
+      transparent: true,
+      opacity: 0.55,
+      side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    }),
+  )
+  halo.rotation.x = -Math.PI / 2
+  halo.position.set(x, 0.05, z)
+  room.group.add(halo)
+
+  const light = new THREE.PointLight(0xffa050, 1.6, 6, 1.4)
+  light.position.set(x, 2, z)
+  room.group.add(light)
+}
+
 // Arch marking an exit. buildArch lays columns along x (north/south wall
-// plane); east/west exits get the same group rotated 90°.
+// plane); east/west exits get the same group rotated 90°. A glowing floor
+// halo + warm light underneath the arch makes the exit visible in the dim
+// scene.
 export function addExitArch(room: Room, direction: 'north' | 'south' | 'east' | 'west'): void {
   const mid = 4 * TILE // 8 — center of the 16-unit wall
   const edge = 8 * TILE - 0.25
   if (direction === 'north' || direction === 'south') {
-    room.group.add(buildArch(mid, direction === 'north' ? 0.25 : edge))
+    const z = direction === 'north' ? 0.25 : edge
+    room.group.add(buildArch(mid, z))
+    addExitBeacon(room, mid, z + (direction === 'north' ? 0.6 : -0.6))
     return
   }
   const arch = buildArch(0, 0)
   arch.rotation.y = Math.PI / 2
-  arch.position.set(direction === 'west' ? 0.25 : edge, 0, mid)
+  const x = direction === 'west' ? 0.25 : edge
+  arch.position.set(x, 0, mid)
   room.group.add(arch)
+  addExitBeacon(room, x + (direction === 'west' ? 0.6 : -0.6), mid)
 }
 
 // Raised sandstone platform: solid grid cell + visible mesh, the same
@@ -76,8 +105,47 @@ export function attachOffsetMesh(entity: Entity, mesh: THREE.Object3D, yOffset: 
   group.position.copy(entity.position)
 }
 
-// Standard patrol enemy: capsule body, dusty red, with the y-offset wrapped
-// so it doesn't sink into the floor.
+// Build a small skeleton-knight figure (head, hooded body, arms) instead of
+// a featureless capsule. Compound so it reads as a character at the camera
+// distance instead of a "blob".
+function buildPatrolFigure(): THREE.Group {
+  const g = new THREE.Group()
+  const cloak = makeToonMaterial(0x6a1a1a)
+  const skin = makeToonMaterial(0xd9b378)
+  const metal = makeToonMaterial(0x8a7060)
+
+  // Hooded body — tapered cylinder
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.45, 1.1, 12), cloak)
+  body.position.y = 0
+  g.add(body)
+
+  // Head with hood — sphere
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 10), skin)
+  head.position.y = 0.78
+  g.add(head)
+  const hood = new THREE.Mesh(new THREE.SphereGeometry(0.27, 12, 10, 0, Math.PI * 2, 0, Math.PI / 2), cloak)
+  hood.position.y = 0.78
+  g.add(hood)
+
+  // Arms — short cylinders by the sides
+  for (const sign of [-1, 1]) {
+    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.75, 8), cloak)
+    arm.position.set(0.32 * sign, 0.05, 0)
+    arm.rotation.z = sign * 0.15
+    g.add(arm)
+  }
+
+  // Belt — thin torus around the waist
+  const belt = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.04, 6, 18), metal)
+  belt.rotation.x = -Math.PI / 2
+  belt.position.y = 0
+  g.add(belt)
+
+  return g
+}
+
+// Standard patrol enemy: skeleton-knight figure, with the y-offset wrapped
+// in a Group so it doesn't sink into the floor.
 export function addPatrolEnemy(
   room: Room,
   a: { x: number; z: number },
@@ -85,12 +153,11 @@ export function addPatrolEnemy(
   speed?: number,
 ): PatrolEnemy {
   const enemy = new PatrolEnemy(a, b, speed)
-  const mesh = new THREE.Mesh(
-    new THREE.CapsuleGeometry(0.4, 1.0, 4, 8),
-    makeToonMaterial(0x884444),
-  )
-  mesh.castShadow = true
-  attachOffsetMesh(enemy, mesh, 0.9)
+  const figure = buildPatrolFigure()
+  figure.traverse((o) => {
+    if ((o as THREE.Mesh).isMesh) (o as THREE.Mesh).castShadow = true
+  })
+  attachOffsetMesh(enemy, figure, 0.55)
   room.add(enemy)
   return enemy
 }

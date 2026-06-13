@@ -79,7 +79,11 @@ async function main(): Promise<void> {
   enterRoom(startRoom)
 
   const debug = new DebugOverlay(renderer.scene)
+  const intro = document.getElementById('intro')
   window.addEventListener('keydown', (e) => {
+    if (intro && intro.style.display !== 'none') {
+      intro.style.display = 'none'
+    }
     if (e.code === 'KeyD') debug.toggle()
     if (e.code === 'KeyR' && (state.gameOver || state.won)) location.reload()
   })
@@ -123,6 +127,15 @@ async function main(): Promise<void> {
     placePlayerAtSpawn(activeRoom())
   }
 
+  // Halo toggle: child meshes flagged with userData.halo are hidden while
+  // the item is carried (otherwise the floor-glow wraps around the player).
+  function setHaloVisible(obj: THREE.Object3D | null, visible: boolean): void {
+    if (!obj) return
+    obj.traverse((c) => {
+      if (c.userData.halo) c.visible = visible
+    })
+  }
+
   function dropCarried(): void {
     const pickup = carriedPickup
     if (!pickup) return
@@ -134,6 +147,7 @@ async function main(): Promise<void> {
     pickup.position.set(player.position.x, 0.4, player.position.z)
     pickup.renderPosition.copy(pickup.position)
     if (pickup.object3D) pickup.object3D.position.copy(pickup.position)
+    setHaloVisible(pickup.object3D, true)
     activeRoom().add(pickup) // items migrate to wherever they were dropped
   }
 
@@ -151,6 +165,7 @@ async function main(): Promise<void> {
         if (e.object3D && player.object3D) {
           player.object3D.add(e.object3D)
           e.object3D.position.set(0, CARRY_OFFSET_Y, 0)
+          setHaloVisible(e.object3D, false)
         }
         carriedPickup = e
       })
@@ -220,6 +235,27 @@ async function main(): Promise<void> {
     }
   }
 
+  // Push player out of any ACTOR_BODY (patrol enemies) they overlap with —
+  // they're solid bodies, not phasable. Run after movement; the hazard pass
+  // still fires for damage. Skip ghosts and similar non-actor hazards.
+  function resolveActorOverlap(room: Room): void {
+    for (const e of room.entities) {
+      if (!e.active || !e.hasCategory(Category.ACTOR_BODY)) continue
+      const dx = player.position.x - e.position.x
+      const dz = player.position.z - e.position.z
+      const overlapX = (player.extents.x + e.extents.x) / 2 - Math.abs(dx)
+      const overlapZ = (player.extents.z + e.extents.z) / 2 - Math.abs(dz)
+      if (overlapX <= 0 || overlapZ <= 0) continue
+      // Push the player on whichever axis has the smaller overlap (so they
+      // slide along the actor rather than teleporting across it).
+      if (overlapX < overlapZ) {
+        player.position.x += dx >= 0 ? overlapX : -overlapX
+      } else {
+        player.position.z += dz >= 0 ? overlapZ : -overlapZ
+      }
+    }
+  }
+
   const loop = new GameLoop()
   loop.onUpdate((dt) => {
     input.update()
@@ -242,6 +278,7 @@ async function main(): Promise<void> {
     player.update(dt, { ...sharedCtx, grid: room.grid, tileSize: room.tileSize })
     room.update(dt, sharedCtx)
     handlePushAttempt(room)
+    resolveActorOverlap(room)
 
     if (!tryDeliverPass(room)) tryPickupPass(room)
     hazardPass(room)

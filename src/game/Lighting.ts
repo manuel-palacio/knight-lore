@@ -32,7 +32,7 @@ export function buildHallLights(): THREE.Object3D[] {
 
   // Cool ambient floor — high enough that the room always reads
   // (player feedback: the scene must be visible first, moody second).
-  const ambient = new THREE.AmbientLight(0x404858, 0.85)
+  const ambient = new THREE.AmbientLight(0x506070, 1.4)
 
   return [moon, moon.target, hemi, seFill, ambient]
 }

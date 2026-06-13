@@ -1,14 +1,15 @@
 import { Entity, type UpdateContext } from './Entity'
 import { Category } from '../engine/categories'
 
-const PATROL_SPEED = 1.6
+const DEFAULT_PATROL_SPEED = 1.6
 
 export class PatrolEnemy extends Entity {
   private a: { x: number; z: number }
   private b: { x: number; z: number }
   private dir: 1 | -1 = 1
+  private readonly speed: number
 
-  constructor(a: { x: number; z: number }, b: { x: number; z: number }) {
+  constructor(a: { x: number; z: number }, b: { x: number; z: number }, speed = DEFAULT_PATROL_SPEED) {
     super()
     this.categories = [Category.ACTOR_BODY, Category.HAZARD]
     this.extents.set(0.8, 1.6, 0.8)
@@ -16,6 +17,7 @@ export class PatrolEnemy extends Entity {
     this.b = b
     this.position.set(a.x, 0, a.z)
     this.renderPosition.copy(this.position)
+    this.speed = speed
   }
 
   update(dt: number, _ctx: UpdateContext): void {
@@ -27,7 +29,7 @@ export class PatrolEnemy extends Entity {
       this.dir = (this.dir === 1 ? -1 : 1) as 1 | -1
       return
     }
-    this.position.x += (dx / dist) * PATROL_SPEED * dt
-    this.position.z += (dz / dist) * PATROL_SPEED * dt
+    this.position.x += (dx / dist) * this.speed * dt
+    this.position.z += (dz / dist) * this.speed * dt
   }
 }

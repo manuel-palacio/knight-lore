@@ -1,9 +1,9 @@
 import type { GameState } from './GameState'
+import { CURE_SEQUENCE } from './GameState'
 
-// Original-Knight-Lore-style scroll HUD (see 1.png): a horizontal parchment
-// strip across the bottom with rolled-cylinder caps, lives as a "04"-style
-// number next to a hero icon, DAY + sun/moon center, item slots + cure
-// digit on the right.
+// Original-Knight-Lore-style scroll HUD (see 1.png, 5.png): hero icon +
+// lives + carry slot on the left, delivered-items row + DAY counter + sun/
+// moon in the centre, big pulsing "CAULDRON WANTS" slot on the right.
 const ITEM_GLYPH: Record<string, string> = {
   'goblet': '♕',
   'gem': '♦',
@@ -16,8 +16,8 @@ function glyphFor(id: string | null): string {
   return ITEM_GLYPH[id] ?? '?'
 }
 
-function itemClass(id: string | null): string {
-  return id ? `hud-item item-${id}` : 'hud-item'
+function itemClass(id: string | null, base = 'item-slot'): string {
+  return id ? `${base} item-${id}` : base
 }
 
 export class HUD {
@@ -26,13 +26,13 @@ export class HUD {
   private dayEl: HTMLElement
   private carryEl: HTMLElement
   private wantsEl: HTMLElement
-  private cureEl: HTMLElement
+  private deliveredEl: HTMLElement
   private winEl: HTMLElement
   private gameOverEl: HTMLElement
   private gameOverReasonEl: HTMLElement
 
   constructor() {
-    const ids = ['hud-lives', 'hud-form-glyph', 'hud-day', 'hud-carry', 'hud-wants', 'hud-cure', 'win', 'gameover', 'gameover-reason']
+    const ids = ['hud-lives', 'hud-form-glyph', 'hud-day', 'hud-carry', 'hud-wants', 'hud-delivered', 'win', 'gameover', 'gameover-reason']
     const els: Record<string, HTMLElement> = {}
     for (const id of ids) {
       const el = document.getElementById(id)
@@ -44,7 +44,7 @@ export class HUD {
     this.dayEl = els['hud-day']!
     this.carryEl = els['hud-carry']!
     this.wantsEl = els['hud-wants']!
-    this.cureEl = els['hud-cure']!
+    this.deliveredEl = els['hud-delivered']!
     this.winEl = els['win']!
     this.gameOverEl = els['gameover']!
     this.gameOverReasonEl = els['gameover-reason']!
@@ -59,12 +59,21 @@ export class HUD {
     this.dayEl.textContent = ' ' + String(Math.min(state.dayCount, 40)).padStart(2, '0')
 
     this.carryEl.textContent = glyphFor(carrying)
-    this.carryEl.className = itemClass(carrying)
+    this.carryEl.className = itemClass(carrying, 'item-slot carry-slot')
 
     this.wantsEl.textContent = glyphFor(state.wantedItem)
-    this.wantsEl.className = itemClass(state.wantedItem)
+    this.wantsEl.className = itemClass(state.wantedItem, 'item-slot wants-slot')
 
-    this.cureEl.textContent = String(state.cureProgress)
+    // Render the delivered items as a row of small icons
+    while (this.deliveredEl.firstChild) this.deliveredEl.removeChild(this.deliveredEl.firstChild)
+    for (let i = 0; i < CURE_SEQUENCE.length; i++) {
+      const slot = document.createElement('span')
+      const delivered = i < state.cureProgress
+      const id = CURE_SEQUENCE[i]!
+      slot.textContent = delivered ? glyphFor(id) : '·'
+      slot.className = delivered ? itemClass(id) : 'item-slot'
+      this.deliveredEl.appendChild(slot)
+    }
 
     this.winEl.style.display = state.won ? 'flex' : 'none'
     this.gameOverEl.style.display = state.gameOver ? 'flex' : 'none'

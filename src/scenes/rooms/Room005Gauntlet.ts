@@ -8,7 +8,7 @@ import type { RoomBuilder } from '../../game/RoomManager'
 
 // Two staggered spike rows (gap at x=4 then x=1) with a pursuing ghost.
 export const buildRoom005: RoomBuilder = async (loader, _state) => {
-  const room = await buildRoomShell('room-005', loader)
+  const room = await buildRoomShell('room-005', loader, 'purple')
   addPickup(room, 'crystal-ball', 6, 6)
   placeSpikes(room, [1, 2, 3, 5, 6].map((x) => ({ x, z: 3 })))
   placeSpikes(room, [2, 3, 4, 5, 6].map((x) => ({ x, z: 5 })))

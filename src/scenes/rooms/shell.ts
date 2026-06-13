@@ -12,7 +12,7 @@ import { Torch, TORCH_POSITIONS } from '../../game/Torch'
 import { StaticBlock } from '../../game/StaticBlock'
 import { PushBlock } from '../../game/PushBlock'
 import { PatrolEnemy } from '../../game/PatrolEnemy'
-import { makeToonMaterial } from '../../game/Materials'
+import { makeToonMaterial, makeHeroMaterial } from '../../game/Materials'
 import type { Entity } from '../../game/Entity'
 import type { AssetLoader } from '../../engine/AssetLoader'
 
@@ -22,11 +22,31 @@ export function tileCenter(cell: number): number {
   return cell * TILE + TILE / 2
 }
 
-export async function buildRoomShell(id: string, loader: AssetLoader): Promise<Room> {
+// Per-room colour: each Knight Lore room had a dominant ZX-Spectrum tint
+// (yellow / blue / green / purple). We add a coloured PointLight high above
+// the room to wash the walls/floor in that hue without losing readability.
+export type RoomTint = 'yellow' | 'blue' | 'green' | 'purple' | 'red'
+
+const TINT_RGB: Record<RoomTint, number> = {
+  yellow: 0xffc060,
+  blue: 0x4080c0,
+  green: 0x40b070,
+  purple: 0xa050c0,
+  red: 0xc04050,
+}
+
+export async function buildRoomShell(id: string, loader: AssetLoader, tint: RoomTint = 'yellow'): Promise<Room> {
   const room = new Room(id, 8, 8)
   room.group.add(await buildStructure(loader))
   for (const light of buildHallLights()) room.group.add(light)
   for (const [x, y, z] of TORCH_POSITIONS) room.addTorch(new Torch(x, y, z))
+
+  // Per-room colour tint — a coloured PointLight high above bathes the walls
+  // and the player in that hue without staining the floor.
+  const tintLight = new THREE.PointLight(TINT_RGB[tint], 2.0, 24, 1.2)
+  tintLight.position.set(8, 10, 8)
+  room.group.add(tintLight)
+
   return room
 }
 
@@ -89,47 +109,39 @@ export function attachOffsetMesh(entity: Entity, mesh: THREE.Object3D, yOffset: 
   group.position.copy(entity.position)
 }
 
-// Build a small skeleton-knight figure (head, hooded body, arms) instead of
-// a featureless capsule. Compound so it reads as a character at the camera
-// distance instead of a "blob".
+// Small ghost/blob shape — see 2.png. Wide rounded base, tapered top, two
+// little eyes. Low to the floor, hovers and bobs. Reads as a creature at
+// the isometric camera distance, not a tall capsule.
 function buildPatrolFigure(): THREE.Group {
   const g = new THREE.Group()
-  const cloak = makeToonMaterial(0x6a1a1a)
-  const skin = makeToonMaterial(0xd9b378)
-  const metal = makeToonMaterial(0x8a7060)
+  const body = makeHeroMaterial(0xc04060) // glowy pink-magenta like 2.png
+  const eye = makeToonMaterial(0x080808)
 
-  // Hooded body — tapered cylinder
-  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.45, 1.1, 12), cloak)
-  body.position.y = 0
-  g.add(body)
+  // Wide bottom hemisphere
+  const skirt = new THREE.Mesh(
+    new THREE.SphereGeometry(0.42, 16, 10, 0, Math.PI * 2, Math.PI * 0.4, Math.PI * 0.6),
+    body,
+  )
+  skirt.position.y = 0
+  g.add(skirt)
 
-  // Head with hood — sphere
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 10), skin)
-  head.position.y = 0.78
-  g.add(head)
-  const hood = new THREE.Mesh(new THREE.SphereGeometry(0.27, 12, 10, 0, Math.PI * 2, 0, Math.PI / 2), cloak)
-  hood.position.y = 0.78
-  g.add(hood)
+  // Rounded body — slightly squashed sphere
+  const blob = new THREE.Mesh(new THREE.SphereGeometry(0.35, 16, 12), body)
+  blob.position.y = 0.05
+  blob.scale.set(1, 1.1, 1)
+  g.add(blob)
 
-  // Arms — short cylinders by the sides
+  // Two small eyes
   for (const sign of [-1, 1]) {
-    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.75, 8), cloak)
-    arm.position.set(0.32 * sign, 0.05, 0)
-    arm.rotation.z = sign * 0.15
-    g.add(arm)
+    const e = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), eye)
+    e.position.set(0.14 * sign, 0.18, 0.28)
+    g.add(e)
   }
-
-  // Belt — thin torus around the waist
-  const belt = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.04, 6, 18), metal)
-  belt.rotation.x = -Math.PI / 2
-  belt.position.y = 0
-  g.add(belt)
 
   return g
 }
 
-// Standard patrol enemy: skeleton-knight figure, with the y-offset wrapped
-// in a Group so it doesn't sink into the floor.
+// Patrol enemy: floating ghost-blob shape, hovers slightly above the floor.
 export function addPatrolEnemy(
   room: Room,
   a: { x: number; z: number },
@@ -141,7 +153,7 @@ export function addPatrolEnemy(
   figure.traverse((o) => {
     if ((o as THREE.Mesh).isMesh) (o as THREE.Mesh).castShadow = true
   })
-  attachOffsetMesh(enemy, figure, 0.55)
+  attachOffsetMesh(enemy, figure, 0.45)
   room.add(enemy)
   return enemy
 }

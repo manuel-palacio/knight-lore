@@ -1,25 +1,16 @@
 import * as THREE from 'three'
 import { Entity, type UpdateContext } from './Entity'
 import { Category } from '../engine/categories'
-import type { GameState } from './GameState'
 
-export const DANGER_GRACE = 3
 const INTERACT_RANGE = 1.8
 const INTERACT_HEIGHT = 2.5
-const DANGER_RANGE = 2.6
 
-interface CauldronCtx extends UpdateContext {
-  state: GameState
-  playerPosition?: THREE.Vector3
-}
-
-// The cure rules live in GameState.deliverCureItem; this entity contributes
-// a location (delivery range) and the werewolf danger. Danger only fires
-// when the werewolf player is CLOSE to the cauldron — earlier we drained
-// lives anywhere in the room and new players died walking past.
+// The cure rules — sequence, wanted item, human-only delivery — all live in
+// GameState.deliverCureItem. The Cauldron entity is just a location with an
+// interaction range. (We previously had a werewolf-near-cauldron danger
+// timer; removed because it wasn't in the original game and was killing
+// players for nothing.)
 export class Cauldron extends Entity {
-  private dangerTimer = DANGER_GRACE
-
   constructor() {
     super()
     this.categories = [Category.INTERACTION_TRIGGER]
@@ -31,23 +22,7 @@ export class Cauldron extends Entity {
     return horizontal < INTERACT_RANGE && Math.abs(p.y - this.position.y) < INTERACT_HEIGHT
   }
 
-  resetDanger(): void {
-    this.dangerTimer = DANGER_GRACE
-  }
-
-  update(dt: number, ctxRaw: UpdateContext): void {
-    const ctx = ctxRaw as CauldronCtx
-    const playerNear = ctx.playerPosition
-      ? Math.hypot(ctx.playerPosition.x - this.position.x, ctx.playerPosition.z - this.position.z) < DANGER_RANGE
-      : true
-    if (ctx.state.form !== 'werewolf' || !playerNear) {
-      this.dangerTimer = DANGER_GRACE
-      return
-    }
-    this.dangerTimer -= dt
-    if (this.dangerTimer <= 0) {
-      ctx.state.loseLife()
-      this.dangerTimer = DANGER_GRACE
-    }
+  update(_dt: number, _ctx: UpdateContext): void {
+    // No-op: location-only entity. Interaction handled by main.ts deliver pass.
   }
 }

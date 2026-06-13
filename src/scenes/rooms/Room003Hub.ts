@@ -5,7 +5,7 @@ import type { RoomBuilder } from '../../game/RoomManager'
 // Crossroads: gem guarded by two patrols whose paths cross — slip between
 // their timing. Three exits.
 export const buildRoom003: RoomBuilder = async (loader, _state) => {
-  const room = await buildRoomShell('room-003', loader)
+  const room = await buildRoomShell('room-003', loader, 'blue')
   addPickup(room, 'gem', 1, 1)
   addPatrolEnemy(room, { x: 3, z: 5 }, { x: 13, z: 5 })
   addPatrolEnemy(room, { x: 9, z: 3 }, { x: 9, z: 13 })

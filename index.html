@@ -8,68 +8,104 @@
       body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; }
       #app { width: 100vw; height: 100vh; }
 
-      /* Bottom scroll, original-game style: a thin horizontal bar with rolled
-         parchment ends. Slim, low-contrast, lives center on a horizontal line. */
+      /*
+        Knight Lore HUD: a horizontal cord stretched between two rolled
+        parchment cylinders, with hud groups hanging UNDER the cord.
+        No filled bar — the game scene shows through. Matches 1.png.
+      */
       #hud {
         position: fixed; left: 0; right: 0; bottom: 0;
-        height: 56px;
-        display: grid;
-        grid-template-columns: 60px 1fr 60px;
-        align-items: center;
-        font-family: 'Courier New', monospace;
-        color: #d6c298;
+        height: 72px;
         pointer-events: none;
         z-index: 5;
-      }
-      /* The horizontal "string" the scroll hangs from */
-      #hud::before {
-        content: ''; position: absolute; left: 60px; right: 60px; top: 50%;
-        height: 1px; background: #d6c298;
-      }
-      /* Rolled-parchment end caps (the dark cylinders in 1.png) */
-      .scroll-end {
-        position: relative; height: 40px; width: 40px; margin: 0 10px;
-        background: radial-gradient(ellipse at 30% 50%, #4a3220 0 35%, #2a1a10 65%);
-        border: 1px solid #d6c298; border-radius: 6px;
-      }
-      .scroll-end-l { justify-self: start; }
-      .scroll-end-r { justify-self: end; }
-
-      .hud-row {
-        display: flex; align-items: center; justify-content: space-between;
-        padding: 0 24px;
-        font-size: 18px;
+        color: #d6c298;
+        font-family: 'Courier New', monospace;
+        font-size: 17px;
         letter-spacing: 2px;
-        position: relative;
       }
 
-      .hud-cluster { display: flex; align-items: center; gap: 8px; }
+      /* The horizontal cord that spans between the scroll rollers */
+      .hud-cord {
+        position: absolute; left: 56px; right: 56px; top: 16px;
+        height: 2px;
+        background: #d6c298;
+        border-radius: 1px;
+      }
 
-      /* Sabreman icon: pixel-art-ish silhouette, hat + cloak */
-      .hero-icon {
-        display: inline-block;
-        width: 20px; height: 28px;
+      /* Rolled-parchment cylinders at each end */
+      .roller {
+        position: absolute; bottom: 6px; width: 18px; height: 56px;
+        border-radius: 4px;
         background:
-          /* hat brim */
-          linear-gradient(transparent 4px, #d6c298 4px, #d6c298 6px, transparent 6px),
-          /* hat top */
-          linear-gradient(#d6c298, #d6c298) 7px 0 / 6px 5px no-repeat,
-          /* body */
-          linear-gradient(#d6c298, #d6c298) 4px 8px / 12px 18px no-repeat,
-          /* arms */
-          linear-gradient(#d6c298, #d6c298) 1px 12px / 3px 8px no-repeat,
-          linear-gradient(#d6c298, #d6c298) 16px 12px / 3px 8px no-repeat;
-        background-color: transparent;
+          linear-gradient(180deg, transparent 0 4px, rgba(0,0,0,0.6) 4px 8px, transparent 8px 16px, rgba(0,0,0,0.6) 16px 20px, transparent 20px 100%),
+          linear-gradient(90deg, #4a3220 0%, #d6c298 25%, #f0d8a8 45%, #d6c298 70%, #4a3220 100%);
+        border: 1px solid #6a4a20;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+      }
+      .roller-l { left: 28px; }
+      .roller-r { right: 28px; }
+
+      /* The HUD content row, hanging below the cord */
+      .hud-row {
+        position: absolute;
+        left: 70px; right: 70px;
+        top: 20px;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        align-items: start;
+      }
+      .hud-cell { display: flex; align-items: center; gap: 8px; padding-top: 4px; }
+      .hud-left { justify-self: start; }
+      .hud-center { justify-self: center; }
+      .hud-right { justify-self: end; }
+
+      /* Tiny pixel-art Sabreman: hat-cloak silhouette in 14×20 box */
+      .hero-icon {
+        display: inline-block; width: 14px; height: 20px;
+        background-color: #d6c298;
+        clip-path: polygon(
+          30% 0%, 70% 0%,         /* hat top */
+          85% 25%, 100% 30%,      /* brim right */
+          85% 35%, 75% 40%,       /* neck right */
+          90% 55%, 90% 95%, 70% 100%,  /* body right */
+          30% 100%, 10% 95%, 10% 55%,  /* body left */
+          25% 40%, 15% 35%,       /* neck left */
+          0% 30%, 15% 25%         /* brim left */
+        );
       }
 
-      .day-glyph { font-size: 18px; }
-      .sun-glyph { color: #ffd95a; }
-      .moon-glyph { color: #cce4ff; }
+      .lives-num { font-weight: bold; font-size: 18px; }
 
-      .hud-item {
+      .day-cluster { display: flex; align-items: center; gap: 6px; }
+      .day-label { letter-spacing: 1px; }
+      .sun-glyph { color: #ffd95a; font-size: 20px; }
+      .moon-glyph { color: #cce4ff; font-size: 20px; }
+
+      .item-slot {
         display: inline-flex; align-items: center; justify-content: center;
-        width: 26px; height: 26px;
-        font-size: 18px;
+        width: 32px; height: 32px;
+        border: 1px solid #6a4a20;
+        background: rgba(0,0,0,0.5);
+        font-size: 20px;
+      }
+      .carry-slot {
+        border-color: #ffd95a;
+        box-shadow: 0 0 6px rgba(255, 217, 90, 0.4);
+      }
+      .wants-slot {
+        border-color: #ff7050;
+        box-shadow: 0 0 8px rgba(255, 112, 80, 0.6);
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+      @keyframes pulse {
+        0%, 100% { box-shadow: 0 0 6px rgba(255, 112, 80, 0.5); }
+        50%      { box-shadow: 0 0 14px rgba(255, 112, 80, 0.9); }
+      }
+      .hud-wants-label { font-size: 10px; color: #a08868; letter-spacing: 2px; margin-right: 4px; }
+      .delivered-row { display: inline-flex; gap: 4px; margin-right: 12px; }
+      .delivered-row .item-slot {
+        width: 20px; height: 20px; font-size: 14px;
+        border-color: #6a4a20; opacity: 0.7;
       }
       .item-goblet { color: #ffd95a; }
       .item-gem { color: #66ff88; }
@@ -112,29 +148,31 @@
     <div id="app"></div>
 
     <div id="hud">
-      <div class="scroll-end scroll-end-l"></div>
+      <div class="roller roller-l"></div>
+      <div class="hud-cord"></div>
+      <div class="roller roller-r"></div>
+
       <div class="hud-row">
-        <!-- Left: Sabreman icon + lives count, like 1.png "04" -->
-        <span class="hud-cluster">
+        <!-- LEFT: hero icon + lives count + carried-item icon -->
+        <div class="hud-cell hud-left">
           <span class="hero-icon"></span>
-          <span id="hud-lives">05</span>
-        </span>
+          <span id="hud-lives" class="lives-num">05</span>
+          <span class="item-slot carry-slot" id="hud-carry">—</span>
+        </div>
 
-        <!-- Center: DAY + sun (human) / moon (werewolf) -->
-        <span class="hud-cluster">
-          <span id="hud-form-glyph" class="day-glyph sun-glyph">☀</span>
-          <span>DAY:<span id="hud-day">01</span></span>
-        </span>
+        <!-- CENTER: row of items already delivered + DAY counter + sun/moon -->
+        <div class="hud-cell hud-center">
+          <span class="delivered-row" id="hud-delivered"></span>
+          <span class="day-label">DAY:<span id="hud-day">01</span></span>
+          <span id="hud-form-glyph" class="sun-glyph">☀</span>
+        </div>
 
-        <!-- Right: cauldron-wants icon + cure-progress digit -->
-        <span class="hud-cluster">
-          <span class="hud-item" id="hud-carry">—</span>
-          <span style="color: #6a4a20;">|</span>
-          <span class="hud-item" id="hud-wants">—</span>
-          <span id="hud-cure">0</span>
-        </span>
+        <!-- RIGHT: cauldron-wants slot (the next item the cauldron wants) -->
+        <div class="hud-cell hud-right">
+          <span class="hud-wants-label">CAULDRON WANTS</span>
+          <span class="item-slot wants-slot" id="hud-wants">—</span>
+        </div>
       </div>
-      <div class="scroll-end scroll-end-r"></div>
     </div>
 
     <div id="intro">
@@ -150,7 +188,7 @@
           <kbd>R</kbd><span>Restart after game over</span>
         </div>
         <p style="font-size: 14px; color: #c7a878;">
-          <strong>HUD:</strong> hero icon + lives left | sun/moon shows form (sun = safe to deliver, moon = werewolf danger near the cauldron) | left slot is what you're carrying, right slot is what the cauldron wants next, last digit is cure progress.
+          <strong>HUD (left to right):</strong> hero + lives • DAY counter + sun/moon (form) • what you carry / what the cauldron wants / cure progress 0-4.
         </p>
         <div class="dismiss">Press any key to begin</div>
       </div>

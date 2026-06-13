@@ -71,10 +71,14 @@ export function addPushBlock(room: Room, gridX: number, gridZ: number): void {
   )
   mesh.castShadow = true
   mesh.receiveShadow = true
-  block.object3D = mesh
+  mesh.position.y = 0.5 // local offset inside the Group — can't be clobbered by the entity tick
+
+  const group = new THREE.Group()
+  group.add(mesh)
+  block.object3D = group
+
   block.placeOnGrid(room.grid, TILE)
-  mesh.position.copy(block.position)
-  mesh.position.y = 0.5
-  room.group.add(mesh)
+  group.position.copy(block.position)
+  room.group.add(group)
   room.add(block)
 }

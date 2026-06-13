@@ -64,6 +64,7 @@ export class Player extends Entity {
       this.aabb(this.position.x + dx, this.position.z + dz),
       ctx.grid,
       ctx.tileSize,
+      this.position.y,
     )
     this.position.x = r.x
     this.position.z = r.z

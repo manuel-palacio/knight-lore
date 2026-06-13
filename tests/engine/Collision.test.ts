@@ -71,4 +71,47 @@ describe('Collision.resolveHorizontal', () => {
     const r = resolveHorizontal(start, end, aabb(end.x, end.z), g, 1)
     expect(r.blockedX).toBe(true)
   })
+
+  describe('y-aware step-up', () => {
+    const shape = { minX: -0.4, maxX: 0.4, minZ: -0.4, maxZ: 0.4 }
+
+    it('actor below support height is blocked by a solid cell', () => {
+      const grid = new Grid(8, 8)
+      grid.setSolid(3, 2, true)
+      grid.setSupport(3, 2, 1.0)
+      const r = resolveHorizontal({ x: 5, z: 5 }, { x: 6.5, z: 5 }, shape, grid, 2, 0)
+      expect(r.blockedX).toBe(true)
+    })
+
+    it('actor at/above support height enters the solid cell', () => {
+      const grid = new Grid(8, 8)
+      grid.setSolid(3, 2, true)
+      grid.setSupport(3, 2, 1.0)
+      const r = resolveHorizontal({ x: 5, z: 5 }, { x: 6.5, z: 5 }, shape, grid, 2, 0.97)
+      expect(r.blockedX).toBe(false)
+      expect(r.x).toBeCloseTo(6.5)
+    })
+
+    it('out-of-bounds always blocks regardless of height', () => {
+      const grid = new Grid(8, 8)
+      const r = resolveHorizontal({ x: 1, z: 5 }, { x: -1, z: 5 }, shape, grid, 2, 99)
+      expect(r.blockedX).toBe(true)
+    })
+
+    it('solid cell with zero support (wall-like) always blocks', () => {
+      const grid = new Grid(8, 8)
+      grid.setSolid(3, 2, true)
+      grid.setSupport(3, 2, 0)
+      const r = resolveHorizontal({ x: 5, z: 5 }, { x: 6.5, z: 5 }, shape, grid, 2, 5)
+      expect(r.blockedX).toBe(true)
+    })
+
+    it('omitting actorY keeps legacy always-block behavior', () => {
+      const grid = new Grid(8, 8)
+      grid.setSolid(3, 2, true)
+      grid.setSupport(3, 2, 1.0)
+      const r = resolveHorizontal({ x: 5, z: 5 }, { x: 6.5, z: 5 }, shape, grid, 2)
+      expect(r.blockedX).toBe(true)
+    })
+  })
 })

@@ -2,7 +2,7 @@ import { Entity, type UpdateContext } from './Entity'
 import { Category } from '../engine/categories'
 import type { Grid } from '../engine/Grid'
 
-const BLOCK_HEIGHT = 1.6
+const BLOCK_HEIGHT = 1.0
 
 export type PushDir = 'north' | 'south' | 'east' | 'west'
 
@@ -14,7 +14,7 @@ export class PushBlock extends Entity {
   constructor(gridX: number, gridZ: number) {
     super()
     this.categories = [Category.SOLID_DYNAMIC, Category.SUPPORT_SURFACE]
-    this.extents.set(1.6, 1.6, 1.6)
+    this.extents.set(1.6, 1.0, 1.6)
     this.gridX = gridX
     this.gridZ = gridZ
   }

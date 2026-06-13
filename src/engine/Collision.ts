@@ -24,6 +24,16 @@ function worldToCell(worldX: number, tileSize: number): number {
   return Math.floor(worldX / tileSize)
 }
 
+// A solid cell stops an actor unless the actor is already at/above the
+// cell's support height (step-up). Zero-support solids and out-of-bounds
+// cells (isSolid=true, supportHeight=0) always block.
+function blocksActor(grid: Grid, cx: number, cz: number, actorY: number): boolean {
+  if (!grid.isSolid(cx, cz)) return false
+  const support = grid.supportHeight(cx, cz)
+  if (support <= 0) return true
+  return actorY + EPS.STEP < support
+}
+
 // Resolves horizontal movement against the grid's solid cells with axis tracking.
 // Implements PHYSICS_AND_COLLISION.md § Axis Resolution.
 export function resolveHorizontal(
@@ -32,6 +42,7 @@ export function resolveHorizontal(
   shape: AABB,
   grid: Grid,
   tileSize: number,
+  actorY = -Infinity,
 ): CollisionResult {
   const halfW = (shape.maxX - shape.minX) / 2
   const halfD = (shape.maxZ - shape.minZ) / 2
@@ -60,7 +71,7 @@ export function resolveHorizontal(
         movingPositive ? cx <= leadingCell : cx >= leadingCell;
         cx += step
       ) {
-        if (grid.isSolid(cx, cz)) {
+        if (blocksActor(grid, cx, cz, actorY)) {
           resolvedX = movingPositive
             ? cx * tileSize - halfW - EPS.OVERLAP
             : (cx + 1) * tileSize + halfW + EPS.OVERLAP
@@ -96,7 +107,7 @@ export function resolveHorizontal(
         movingPositive ? cz <= leadingCell : cz >= leadingCell;
         cz += step
       ) {
-        if (grid.isSolid(cx, cz)) {
+        if (blocksActor(grid, cx, cz, actorY)) {
           resolvedZ = movingPositive
             ? cz * tileSize - halfD - EPS.OVERLAP
             : (cz + 1) * tileSize + halfD + EPS.OVERLAP

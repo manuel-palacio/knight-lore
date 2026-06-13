@@ -113,5 +113,13 @@ describe('Collision.resolveHorizontal', () => {
       const r = resolveHorizontal({ x: 5, z: 5 }, { x: 6.5, z: 5 }, shape, grid, 2)
       expect(r.blockedX).toBe(true)
     })
+
+    it('actor exactly at support height is not blocked', () => {
+      const grid = new Grid(8, 8)
+      grid.setSolid(3, 2, true)
+      grid.setSupport(3, 2, 1.0)
+      const r = resolveHorizontal({ x: 5, z: 5 }, { x: 6.5, z: 5 }, shape, grid, 2, 1.0)
+      expect(r.blockedX).toBe(false)
+    })
   })
 })

@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { buildRoomShell, addExitArch, tileCenter } from './shell'
 import { placeSpikes } from '../../game/SpikeGrid'
 import { GhostEnemy } from '../../game/GhostEnemy'
-import { makeToonMaterial } from '../../game/Materials'
+import { makeHeroMaterial } from '../../game/Materials'
 import { addPickup } from './items'
 import type { RoomBuilder } from '../../game/RoomManager'
 
@@ -13,11 +13,12 @@ export const buildRoom005: RoomBuilder = async (loader, _state) => {
   placeSpikes(room, [1, 2, 3, 5, 6].map((x) => ({ x, z: 3 })))
   placeSpikes(room, [2, 3, 4, 5, 6].map((x) => ({ x, z: 5 })))
 
+  // Ghost: glowing pale blue sphere. Already floats at FLOAT_HEIGHT (no sink).
   const ghost = new GhostEnemy(tileCenter(6), tileCenter(1))
-  const mesh = new THREE.Mesh(
-    new THREE.SphereGeometry(0.45, 12, 10),
-    makeToonMaterial(0xbbccee),
-  )
+  const mat = makeHeroMaterial(0xaaccff)
+  mat.transparent = true
+  mat.opacity = 0.85
+  const mesh = new THREE.Mesh(new THREE.SphereGeometry(0.45, 16, 12), mat)
   mesh.castShadow = true
   ghost.object3D = mesh
   mesh.position.copy(ghost.position)

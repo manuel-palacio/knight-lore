@@ -1,7 +1,4 @@
-import * as THREE from 'three'
-import { buildRoomShell, addExitArch, tileCenter } from './shell'
-import { PatrolEnemy } from '../../game/PatrolEnemy'
-import { makeToonMaterial } from '../../game/Materials'
+import { buildRoomShell, addExitArch, addPatrolEnemy, tileCenter } from './shell'
 import { addPickup } from './items'
 import type { RoomBuilder } from '../../game/RoomManager'
 
@@ -10,19 +7,8 @@ import type { RoomBuilder } from '../../game/RoomManager'
 export const buildRoom003: RoomBuilder = async (loader, _state) => {
   const room = await buildRoomShell('room-003', loader)
   addPickup(room, 'gem', 1, 1)
-
-  const eastWest = new PatrolEnemy({ x: 3, z: 5 }, { x: 13, z: 5 })
-  const northSouth = new PatrolEnemy({ x: 9, z: 3 }, { x: 9, z: 13 })
-  for (const enemy of [eastWest, northSouth]) {
-    const mesh = new THREE.Mesh(
-      new THREE.CapsuleGeometry(0.4, 1.0, 4, 8),
-      makeToonMaterial(0x884444),
-    )
-    mesh.castShadow = true
-    enemy.object3D = mesh
-    mesh.position.copy(enemy.position)
-    room.add(enemy)
-  }
+  addPatrolEnemy(room, { x: 3, z: 5 }, { x: 13, z: 5 })
+  addPatrolEnemy(room, { x: 9, z: 3 }, { x: 9, z: 13 })
 
   room.addExit({ direction: 'west', targetRoomId: 'room-001', entryX: 15, entryZ: 8 })
   room.addExit({ direction: 'east', targetRoomId: 'room-004', entryX: 1, entryZ: 8 })

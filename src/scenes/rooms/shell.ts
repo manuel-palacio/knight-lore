@@ -11,6 +11,9 @@ import { buildHallLights } from '../../game/Lighting'
 import { Torch, TORCH_POSITIONS } from '../../game/Torch'
 import { StaticBlock } from '../../game/StaticBlock'
 import { PushBlock } from '../../game/PushBlock'
+import { PatrolEnemy } from '../../game/PatrolEnemy'
+import { makeToonMaterial } from '../../game/Materials'
+import type { Entity } from '../../game/Entity'
 import type { AssetLoader } from '../../engine/AssetLoader'
 
 export const TILE = 2
@@ -60,6 +63,38 @@ export function addPlatform(room: Room, gridX: number, gridZ: number, height: nu
   room.add(block)
 }
 
+// Wrap a mesh in a Group with a fixed y-offset and assign it as the entity's
+// object3D. Why: Entity.updateRenderPosition copies the entity's
+// renderPosition onto object3D.position every frame, which overwrites any
+// direct y-offset set on the mesh. Putting the offset INSIDE a Group keeps
+// it local and untouchable. Caller must still room.add(entity) afterwards.
+export function attachOffsetMesh(entity: Entity, mesh: THREE.Object3D, yOffset: number): void {
+  const group = new THREE.Group()
+  mesh.position.y = yOffset
+  group.add(mesh)
+  entity.object3D = group
+  group.position.copy(entity.position)
+}
+
+// Standard patrol enemy: capsule body, dusty red, with the y-offset wrapped
+// so it doesn't sink into the floor.
+export function addPatrolEnemy(
+  room: Room,
+  a: { x: number; z: number },
+  b: { x: number; z: number },
+  speed?: number,
+): PatrolEnemy {
+  const enemy = new PatrolEnemy(a, b, speed)
+  const mesh = new THREE.Mesh(
+    new THREE.CapsuleGeometry(0.4, 1.0, 4, 8),
+    makeToonMaterial(0x884444),
+  )
+  mesh.castShadow = true
+  attachOffsetMesh(enemy, mesh, 0.9)
+  room.add(enemy)
+  return enemy
+}
+
 // Amber push-block slab (1.0 high so a 1.0 jump can climb it — see Task 2).
 export function addPushBlock(room: Room, gridX: number, gridZ: number): void {
   const block = new PushBlock(gridX, gridZ)
@@ -71,14 +106,7 @@ export function addPushBlock(room: Room, gridX: number, gridZ: number): void {
   )
   mesh.castShadow = true
   mesh.receiveShadow = true
-  mesh.position.y = 0.5 // local offset inside the Group — can't be clobbered by the entity tick
-
-  const group = new THREE.Group()
-  group.add(mesh)
-  block.object3D = group
-
   block.placeOnGrid(room.grid, TILE)
-  group.position.copy(block.position)
-  room.group.add(group)
+  attachOffsetMesh(block, mesh, 0.5)
   room.add(block)
 }

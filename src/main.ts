@@ -17,9 +17,12 @@ import { CharacterVisual } from './game/characters/CharacterVisual'
 import { ParticleBurst } from './game/ParticleBurst'
 import type { Entity } from './game/Entity'
 
-const PICKUP_RANGE = 1.0
-const PICKUP_HEIGHT = 1.5
+const PICKUP_RANGE = 1.6
+const PICKUP_HEIGHT = 1.8
 const CARRY_OFFSET_Y = 1.2
+// Push trigger upper bound matches collision-pinned distance (half-tile + half-player + slack)
+const PUSH_RANGE_MAX = 1.5
+const PUSH_RANGE_MIN = 0.4
 
 async function main(): Promise<void> {
   const container = document.getElementById('app')
@@ -80,6 +83,34 @@ async function main(): Promise<void> {
     if (e.code === 'KeyD') debug.toggle()
     if (e.code === 'KeyR' && (state.gameOver || state.won)) location.reload()
   })
+
+  // Test/debug hook (e2e playtest reads positions via window.__game.snapshot()).
+  ;(window as unknown as { __game: unknown }).__game = {
+    snapshot: () => ({
+      player: { x: player.position.x, y: player.position.y, z: player.position.z, carrying: player.carrying, state: player.state },
+      room: manager.active?.id,
+      pickups: manager.active?.entities
+        .filter((e): e is Pickup => e instanceof Pickup)
+        .map((p) => ({ id: p.id, x: p.position.x, z: p.position.z, collected: p.collected, active: p.active })) ?? [],
+      state: { form: state.form, lives: state.lives, dayCount: state.dayCount, cureProgress: state.cureProgress, wantedItem: state.wantedItem, gameOver: state.gameOver, won: state.won },
+      transitioning,
+      carriedPickup: carriedPickup ? { id: carriedPickup.id } : null,
+    }),
+    allPickups: () => {
+      // Force-build all rooms by querying the manager's cache; we can't access private rooms, so look at scene children that belong to each room group
+      return manager.active?.entities
+        .filter((e): e is Pickup => e instanceof Pickup)
+        .map((p) => ({ id: p.id, x: p.position.x, z: p.position.z, collected: p.collected, active: p.active })) ?? []
+    },
+    teleport: (x: number, z: number, y = 0) => {
+      player.position.set(x, y, z)
+      player.renderPosition.copy(player.position)
+    },
+    setForm: (f: 'human' | 'werewolf') => {
+      if (state.form !== f) state.toggleForm()
+    },
+    pauseTimer: () => { state.transformTimer = 9999 },
+  }
 
   state.onTransformed = () => {
     burst.burst(player.position)
@@ -181,7 +212,7 @@ async function main(): Promise<void> {
       const dx = block.position.x - player.position.x
       const dz = block.position.z - player.position.z
       const dist = Math.hypot(dx, dz)
-      if (dist < 1.4 && dist > 0.4) {
+      if (dist <= PUSH_RANGE_MAX && dist > PUSH_RANGE_MIN) {
         const dir =
           Math.abs(dx) > Math.abs(dz) ? (dx > 0 ? 'east' : 'west') : dz > 0 ? 'south' : 'north'
         block.tryPush(dir, room.grid, room.tileSize)

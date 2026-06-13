@@ -1,8 +1,7 @@
 import * as THREE from 'three'
-import { buildRoomShell, addExitArch, addPlatform, tileCenter } from './shell'
+import { buildRoomShell, addExitArch, addPlatform, addPatrolEnemy, attachOffsetMesh, tileCenter } from './shell'
 import { Cauldron } from '../../game/Cauldron'
-import { PatrolEnemy } from '../../game/PatrolEnemy'
-import { makeToonMaterial } from '../../game/Materials'
+import { makeHeroMaterial, makeToonMaterial } from '../../game/Materials'
 import type { RoomBuilder } from '../../game/RoomManager'
 
 // The quest hub: cauldron on a raised 2×2 platform (height 1 — exactly
@@ -14,27 +13,43 @@ export const buildRoom001: RoomBuilder = async (loader, _state) => {
     addPlatform(room, gx, gz, 1)
   }
 
+  // Cauldron: dark bowl sitting on the platform top, with a glowing rim ring
+  // to mark it as the interaction target.
   const cauldron = new Cauldron()
   cauldron.position.set(8, 1, 8) // center of the 2×2 platform, on its top
   cauldron.renderPosition.copy(cauldron.position)
+  const cauldronVisual = new THREE.Group()
   const bowl = new THREE.Mesh(
     new THREE.SphereGeometry(0.7, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2),
-    makeToonMaterial(0x2d2620),
+    makeToonMaterial(0x1a140e),
   )
   bowl.castShadow = true
-  bowl.position.set(8, 1.5, 8)
-  cauldron.object3D = bowl
+  cauldronVisual.add(bowl)
+  const rim = new THREE.Mesh(
+    new THREE.TorusGeometry(0.7, 0.06, 8, 24),
+    makeHeroMaterial(0xffaa44),
+  )
+  rim.rotation.x = -Math.PI / 2
+  rim.position.y = 0.5
+  cauldronVisual.add(rim)
+  const halo = new THREE.Mesh(
+    new THREE.RingGeometry(0.85, 1.2, 24),
+    new THREE.MeshBasicMaterial({
+      color: 0xffaa44,
+      transparent: true,
+      opacity: 0.25,
+      side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    }),
+  )
+  halo.rotation.x = -Math.PI / 2
+  halo.position.y = 0.6
+  cauldronVisual.add(halo)
+  attachOffsetMesh(cauldron, cauldronVisual, 0.5)
   room.add(cauldron)
 
-  const guard = new PatrolEnemy({ x: 3, z: 11 }, { x: 13, z: 11 })
-  const guardMesh = new THREE.Mesh(
-    new THREE.CapsuleGeometry(0.4, 1.0, 4, 8),
-    makeToonMaterial(0x884444),
-  )
-  guardMesh.castShadow = true
-  guard.object3D = guardMesh
-  guardMesh.position.copy(guard.position)
-  room.add(guard)
+  addPatrolEnemy(room, { x: 3, z: 11 }, { x: 13, z: 11 })
 
   room.addExit({ direction: 'north', targetRoomId: 'room-002', entryX: 8, entryZ: 15 })
   room.addExit({ direction: 'east', targetRoomId: 'room-003', entryX: 1, entryZ: 8 })

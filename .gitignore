@@ -13,3 +13,6 @@ dist/
 *.log
 poly/
 *.rom
+.playwright-mcp/
+playtest-*.png
+room-*.png

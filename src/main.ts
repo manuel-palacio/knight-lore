@@ -111,6 +111,15 @@ async function main(): Promise<void> {
     setForm: (f: 'human' | 'werewolf') => {
       if (state.form !== f) state.toggleForm()
     },
+    triggerTransform: () => {
+      // Fire the visual transformation in the OPPOSITE direction of the
+      // current form (the target after toggle). Mirrors what tickTransform
+      // does at the natural cycle.
+      const target = state.form === 'human' ? 'werewolf' : 'human'
+      state.toggleForm()
+      state.onTransformed()
+      void target
+    },
     pauseTimer: () => { state.transformTimer = 9999 },
   }
 

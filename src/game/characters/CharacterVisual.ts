@@ -127,8 +127,11 @@ export class CharacterVisual {
       const isWolf = this.form === 'werewolf'
       this.humanSprite.sprite.visible = !isWolf
       this.wolfSprite.sprite.visible = isWolf
-      // Walking phase: advance frame while moving, freeze on idle.
-      if (Math.hypot(vx, vz) > 0.1) {
+      // The original Knight Lore used the same sprite frame during
+      // jumps — only Y position changed, no distinct airborne pose.
+      // We freeze the walk phase mid-air; only walking-on-ground cycles.
+      const moving = Math.hypot(vx, vz) > 0.1
+      if (moving && input.playerState === 'grounded') {
         this.walkPhase += dt * WALK_FPS
       }
       const active = isWolf ? this.wolfSprite : this.humanSprite

@@ -92,7 +92,8 @@ export function addExitArch(room: Room, direction: 'north' | 'south' | 'east' | 
 export function addPlatform(room: Room, gridX: number, gridZ: number, height: number): void {
   const block = new StaticBlock(gridX, gridZ, height)
   const tex = makeBrickTexture(SANDSTONE_PALETTE)
-  tex.repeat.set(1, 1)
+  // 2m wide => 2 bricks across; height/0.5 rows tall.
+  tex.repeat.set(0.25, height / 4)
   const mesh = new THREE.Mesh(
     new THREE.BoxGeometry(TILE, height, TILE),
     new THREE.MeshBasicMaterial({ map: tex }),
@@ -169,7 +170,8 @@ export function addPatrolEnemy(
 export function addPushBlock(room: Room, gridX: number, gridZ: number): void {
   const block = new PushBlock(gridX, gridZ)
   const tex = makeBrickTexture(AMBER_BLOCK_PALETTE)
-  tex.repeat.set(0.8, 0.8)
+  // 1.6m cube => 2 bricks across, 2 rows tall.
+  tex.repeat.set(0.25, 0.25)
   const mesh = new THREE.Mesh(
     new THREE.BoxGeometry(1.6, 1.0, 1.6),
     new THREE.MeshBasicMaterial({ map: tex }),

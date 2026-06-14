@@ -34,10 +34,15 @@ export const AMBER_BLOCK_PALETTE: BrickPalette = {
 
 export type WallSide = 'north' | 'south' | 'east' | 'west'
 
-// Procedural shaded brick (oblong 2:1, staggered, NW lighting). Tileable
-// both axes — odd rows offset by half a brick; c=-1 / c=COLS bricks ensure
-// the half-brick wrap aligns at the seam. Each call builds a fresh canvas
-// and Texture so callers can set their own repeat without sharing state.
+// Knight Lore brick: bright OUTLINE on black, not a filled brick. Each cell
+// is mostly empty (so the mono pass paints it black like the void) with
+// chunky 2-pixel borders drawn in the palette body colour. After the
+// mono shader's luminance quantisation, the outlines snap to the room's
+// tint at full brightness and the interiors snap to pure black — the
+// "wireframe brick wall on a void" look from 1.png / 4.png / 5.png.
+//
+// Staggered rows like a real masonry course; the c=-1 / c=COLS bricks
+// keep the half-brick wrap aligned at the texture seam.
 export function makeBrickTexture(palette: BrickPalette = WALL_PALETTE): THREE.CanvasTexture {
   const W = 256
   const H = 128
@@ -45,30 +50,31 @@ export function makeBrickTexture(palette: BrickPalette = WALL_PALETTE): THREE.Ca
   const ROWS = 8
   const bw = W / COLS
   const bh = H / ROWS
-  const m = 1
-  const edge = 2
+  const stroke = 2 // outline thickness in canvas px
 
   const canvas = document.createElement('canvas')
   canvas.width = W
   canvas.height = H
   const ctx = canvas.getContext('2d')!
 
-  ctx.fillStyle = palette.mortar
+  // Black background everywhere — bricks paint their outline on top.
+  ctx.fillStyle = '#000000'
   ctx.fillRect(0, 0, W, H)
 
+  ctx.fillStyle = palette.body
   for (let r = 0; r < ROWS; r++) {
     const y = r * bh
     const xOffset = (r % 2) * (bw / 2)
     for (let c = -1; c <= COLS; c++) {
-      const x = c * bw + xOffset + m
-      const innerW = bw - 2 * m
-      const innerH = bh - 2 * m
-      ctx.fillStyle = palette.body
-      ctx.fillRect(x, y + m, innerW, innerH)
-      ctx.fillStyle = palette.highlight
-      ctx.fillRect(x, y + m, innerW, edge)
-      ctx.fillStyle = palette.shadow
-      ctx.fillRect(x, y + m + innerH - edge, innerW, edge)
+      const x = c * bw + xOffset
+      // Top edge of the brick
+      ctx.fillRect(x, y, bw, stroke)
+      // Bottom edge (also draws the gap to next row)
+      ctx.fillRect(x, y + bh - stroke, bw, stroke)
+      // Left edge
+      ctx.fillRect(x, y, stroke, bh)
+      // Right edge
+      ctx.fillRect(x + bw - stroke, y, stroke, bh)
     }
   }
 
@@ -81,31 +87,34 @@ export function makeBrickTexture(palette: BrickPalette = WALL_PALETTE): THREE.Ca
   return tex
 }
 
-// Floor: chequered tile pattern with clearly contrasted shades so it reads
-// through the mono pass. Tile-edge highlights spell out the 8×8 grid.
+// Floor: thin tile-outline grid on black, like the brick walls. The mono
+// shader paints the outlines in the room tint and the rest pure black,
+// so the floor reads as "void with a faint grid" — the original game's
+// stage feel, not a high-contrast chequer.
 function makeFloorTexture(): THREE.CanvasTexture {
   const W = 256
   const H = 256
   const N = 8
   const cell = W / N
+  const stroke = 2
   const canvas = document.createElement('canvas')
   canvas.width = W
   canvas.height = H
   const ctx = canvas.getContext('2d')!
-  ctx.fillStyle = '#6a4a20'
+  ctx.fillStyle = '#000000'
   ctx.fillRect(0, 0, W, H)
+  ctx.fillStyle = '#a07840'
   for (let r = 0; r < N; r++) {
     for (let c = 0; c < N; c++) {
-      if ((r + c) % 2 === 0) {
-        ctx.fillStyle = '#a08050'
-        ctx.fillRect(c * cell, r * cell, cell, cell)
-      }
-      // bright tile border so the grid reads under mono quantisation
-      ctx.fillStyle = '#d6a060'
-      ctx.fillRect(c * cell, r * cell, cell, 2)
-      ctx.fillRect(c * cell, r * cell, 2, cell)
+      const x = c * cell
+      const y = r * cell
+      ctx.fillRect(x, y, cell, stroke)
+      ctx.fillRect(x, y, stroke, cell)
     }
   }
+  // close the last row/col
+  ctx.fillRect(0, H - stroke, W, stroke)
+  ctx.fillRect(W - stroke, 0, stroke, H)
   const tex = new THREE.CanvasTexture(canvas)
   tex.magFilter = THREE.NearestFilter
   tex.minFilter = THREE.NearestMipmapLinearFilter
@@ -154,8 +163,13 @@ function buildSolidWall(side: WallSide, hasExit: boolean): THREE.Group {
   const group = new THREE.Group()
   const tileCount = 8
 
+  // Brick texture has 8 columns x 8 rows on its 256x128 canvas. We want
+  // the outlines to be readable at the iso camera distance, so each visible
+  // brick should be ~1m wide x ~0.5m tall in world space.
+  // Slab is 2m wide x WALL_HEIGHT tall. 2 bricks wide => repeat.x = 0.25
+  // (8 cols * 0.25 = 2). WALL_HEIGHT / 0.5 brick rows => repeat.y = (h/0.5)/8.
   const tex = makeBrickTexture(WALL_PALETTE)
-  tex.repeat.set(2, WALL_HEIGHT / 1.0) // wider tiling = chunkier bricks
+  tex.repeat.set(0.25, WALL_HEIGHT / 4)
   const wallMat = new THREE.MeshBasicMaterial({ map: tex })
   const capMat = new THREE.MeshBasicMaterial({ color: WALL_PALETTE.highlight })
 
@@ -193,7 +207,8 @@ function buildSolidWall(side: WallSide, hasExit: boolean): THREE.Group {
 // sees a clear "front of the castle" silhouette.
 function buildCornerPillar(): THREE.Mesh {
   const tex = makeBrickTexture(WALL_PALETTE)
-  tex.repeat.set(1, WALL_HEIGHT / 1.0)
+  // Pillar is 0.8m wide — show 1 brick across, ~5 rows tall.
+  tex.repeat.set(0.125, (WALL_HEIGHT + 0.5) / 4)
   const mat = new THREE.MeshBasicMaterial({ map: tex })
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.8, WALL_HEIGHT + 0.5, 0.8), mat)
   mesh.position.set(0, (WALL_HEIGHT + 0.5) / 2, 0)

@@ -13,3 +13,6 @@ Aside from platform-hopping, Sabreman must avoid a series of enemies and hazards
 ## Items location
 
 https://strategywiki.org/wiki/Knight_Lore
+
+
+https://medium.com/@iain.mew/knight-lore-95faef2cb50e

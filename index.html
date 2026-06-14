@@ -59,19 +59,9 @@
       .hud-center { justify-self: center; }
       .hud-right { justify-self: end; }
 
-      /* Tiny pixel-art Sabreman: hat-cloak silhouette in 14×20 box */
       .hero-icon {
-        display: inline-block; width: 14px; height: 20px;
-        background-color: #d6c298;
-        clip-path: polygon(
-          30% 0%, 70% 0%,         /* hat top */
-          85% 25%, 100% 30%,      /* brim right */
-          85% 35%, 75% 40%,       /* neck right */
-          90% 55%, 90% 95%, 70% 100%,  /* body right */
-          30% 100%, 10% 95%, 10% 55%,  /* body left */
-          25% 40%, 15% 35%,       /* neck left */
-          0% 30%, 15% 25%         /* brim left */
-        );
+        display: inline-block; width: 22px; height: 22px;
+        image-rendering: pixelated;
       }
 
       .lives-num { font-weight: bold; font-size: 18px; }
@@ -155,7 +145,7 @@
       <div class="hud-row">
         <!-- LEFT: hero icon + lives count + carried-item icon -->
         <div class="hud-cell hud-left">
-          <span class="hero-icon"></span>
+          <span class="hero-icon" id="hud-hero"></span>
           <span id="hud-lives" class="lives-num">05</span>
           <span class="item-slot carry-slot" id="hud-carry">—</span>
         </div>

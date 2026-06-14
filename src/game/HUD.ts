@@ -1,23 +1,26 @@
 import type { GameState } from './GameState'
 import { CURE_SEQUENCE } from './GameState'
+import { iconUrl, isIconId } from './HudIcons'
 
 // Original-Knight-Lore-style scroll HUD (see 1.png, 5.png): hero icon +
 // lives + carry slot on the left, delivered-items row + DAY counter + sun/
 // moon in the centre, big pulsing "CAULDRON WANTS" slot on the right.
-const ITEM_GLYPH: Record<string, string> = {
-  'goblet': '♕',
-  'gem': '♦',
-  'wine-bottle': '⚱',
-  'crystal-ball': '◯',
-}
-
-function glyphFor(id: string | null): string {
-  if (!id) return '—'
-  return ITEM_GLYPH[id] ?? '?'
-}
-
-function itemClass(id: string | null, base = 'item-slot'): string {
-  return id ? `${base} item-${id}` : base
+// Item slots use inline SVG pixel-art icons (see HudIcons.ts).
+function setIconSlot(el: HTMLElement, id: string | null, baseClass = 'item-slot'): void {
+  while (el.firstChild) el.removeChild(el.firstChild)
+  if (id && isIconId(id)) {
+    const img = document.createElement('img')
+    img.src = iconUrl(id)
+    img.alt = id
+    img.style.width = '100%'
+    img.style.height = '100%'
+    img.style.imageRendering = 'pixelated'
+    el.appendChild(img)
+    el.className = `${baseClass} item-${id}`
+  } else {
+    el.textContent = '·'
+    el.className = baseClass
+  }
 }
 
 export class HUD {
@@ -32,13 +35,22 @@ export class HUD {
   private gameOverReasonEl: HTMLElement
 
   constructor() {
-    const ids = ['hud-lives', 'hud-form-glyph', 'hud-day', 'hud-carry', 'hud-wants', 'hud-delivered', 'win', 'gameover', 'gameover-reason']
+    const ids = ['hud-lives', 'hud-form-glyph', 'hud-day', 'hud-carry', 'hud-wants', 'hud-delivered', 'hud-hero', 'win', 'gameover', 'gameover-reason']
     const els: Record<string, HTMLElement> = {}
     for (const id of ids) {
       const el = document.getElementById(id)
       if (!el) throw new Error(`HUD element #${id} missing from index.html`)
       els[id] = el
     }
+    // Paint the hero icon once.
+    const hero = els['hud-hero']!
+    const heroImg = document.createElement('img')
+    heroImg.src = iconUrl('hero')
+    heroImg.alt = 'hero'
+    heroImg.style.width = '100%'
+    heroImg.style.height = '100%'
+    heroImg.style.imageRendering = 'pixelated'
+    hero.appendChild(heroImg)
     this.livesEl = els['hud-lives']!
     this.formGlyph = els['hud-form-glyph']!
     this.dayEl = els['hud-day']!
@@ -53,16 +65,21 @@ export class HUD {
   render(state: GameState, carrying: string | null): void {
     this.livesEl.textContent = String(state.lives).padStart(2, '0')
 
-    this.formGlyph.textContent = state.form === 'human' ? '☀' : '☾'
+    // Sun/moon as inline pixel-art image
+    while (this.formGlyph.firstChild) this.formGlyph.removeChild(this.formGlyph.firstChild)
+    const sm = document.createElement('img')
+    sm.src = iconUrl(state.form === 'human' ? 'sun' : 'moon')
+    sm.alt = state.form
+    sm.style.width = '20px'
+    sm.style.height = '20px'
+    sm.style.imageRendering = 'pixelated'
+    this.formGlyph.appendChild(sm)
     this.formGlyph.className = `day-glyph ${state.form === 'human' ? 'sun-glyph' : 'moon-glyph'}`
 
     this.dayEl.textContent = ' ' + String(Math.min(state.dayCount, 40)).padStart(2, '0')
 
-    this.carryEl.textContent = glyphFor(carrying)
-    this.carryEl.className = itemClass(carrying, 'item-slot carry-slot')
-
-    this.wantsEl.textContent = glyphFor(state.wantedItem)
-    this.wantsEl.className = itemClass(state.wantedItem, 'item-slot wants-slot')
+    setIconSlot(this.carryEl, carrying, 'item-slot carry-slot')
+    setIconSlot(this.wantsEl, state.wantedItem, 'item-slot wants-slot')
 
     // Render the delivered items as a row of small icons
     while (this.deliveredEl.firstChild) this.deliveredEl.removeChild(this.deliveredEl.firstChild)
@@ -70,8 +87,7 @@ export class HUD {
       const slot = document.createElement('span')
       const delivered = i < state.cureProgress
       const id = CURE_SEQUENCE[i]!
-      slot.textContent = delivered ? glyphFor(id) : '·'
-      slot.className = delivered ? itemClass(id) : 'item-slot'
+      setIconSlot(slot, delivered ? id : null)
       this.deliveredEl.appendChild(slot)
     }
 

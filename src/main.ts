@@ -69,6 +69,7 @@ async function main(): Promise<void> {
 
   function enterRoom(room: Room): void {
     placePlayerAtSpawn(room)
+    renderer.setTint(room.tint)
   }
 
   // Room 002's spawn is cell (2,2) — tileCenter(2) = 5 on both axes.

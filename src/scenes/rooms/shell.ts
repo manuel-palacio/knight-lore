@@ -37,16 +37,10 @@ const TINT_RGB: Record<RoomTint, number> = {
 
 export async function buildRoomShell(id: string, loader: AssetLoader, tint: RoomTint = 'yellow'): Promise<Room> {
   const room = new Room(id, 8, 8)
+  room.tint = TINT_RGB[tint]
   room.group.add(await buildStructure(loader))
   for (const light of buildHallLights()) room.group.add(light)
   for (const [x, y, z] of TORCH_POSITIONS) room.addTorch(new Torch(x, y, z))
-
-  // Per-room colour tint — a coloured PointLight high above bathes the walls
-  // and the player in that hue without staining the floor.
-  const tintLight = new THREE.PointLight(TINT_RGB[tint], 2.0, 24, 1.2)
-  tintLight.position.set(8, 10, 8)
-  room.group.add(tintLight)
-
   return room
 }
 
@@ -78,18 +72,16 @@ export function addExitArch(room: Room, direction: 'north' | 'south' | 'east' | 
   addExitBeacon(room, x + (direction === 'west' ? 0.6 : -0.6), mid)
 }
 
-// Raised sandstone platform: solid grid cell + visible mesh, the same
-// pairing TheHall used for its ledge.
+// Raised sandstone platform — full-bright material so the bricks paint
+// uniformly through the mono pass (no Lambert falloff).
 export function addPlatform(room: Room, gridX: number, gridZ: number, height: number): void {
   const block = new StaticBlock(gridX, gridZ, height)
   const tex = makeBrickTexture(SANDSTONE_PALETTE)
   tex.repeat.set(1, 1)
   const mesh = new THREE.Mesh(
     new THREE.BoxGeometry(TILE, height, TILE),
-    new THREE.MeshLambertMaterial({ map: tex }),
+    new THREE.MeshBasicMaterial({ map: tex }),
   )
-  mesh.castShadow = true
-  mesh.receiveShadow = true
   mesh.position.set(tileCenter(gridX), height / 2, tileCenter(gridZ))
   room.group.add(mesh)
   block.placeOnGrid(room.grid, TILE)
@@ -165,10 +157,8 @@ export function addPushBlock(room: Room, gridX: number, gridZ: number): void {
   tex.repeat.set(0.8, 0.8)
   const mesh = new THREE.Mesh(
     new THREE.BoxGeometry(1.6, 1.0, 1.6),
-    new THREE.MeshLambertMaterial({ map: tex }),
+    new THREE.MeshBasicMaterial({ map: tex }),
   )
-  mesh.castShadow = true
-  mesh.receiveShadow = true
   block.placeOnGrid(room.grid, TILE)
   attachOffsetMesh(block, mesh, 0.5)
   room.add(block)

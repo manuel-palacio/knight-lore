@@ -22,6 +22,7 @@ export class Room {
   readonly group: THREE.Group
   spawnX = 0
   spawnZ = 0
+  tint = 0xffd95a // default yellow; builders override per room
 
   constructor(id: string, width: number, depth: number) {
     this.id = id

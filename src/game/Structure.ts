@@ -93,16 +93,14 @@ export function buildArch(centerX: number, z: number): THREE.Group {
   const colH = 3
   const archR = 1
   const archTube = 0.15
-  const stoneMat = new THREE.MeshLambertMaterial({ color: WALL_PALETTE.body })
+  const stoneMat = new THREE.MeshBasicMaterial({ color: WALL_PALETTE.highlight })
 
   const leftCol = new THREE.Mesh(new THREE.BoxGeometry(colW, colH, colW), stoneMat)
   leftCol.position.set(centerX - archR, colH / 2, z)
-  leftCol.castShadow = true
   group.add(leftCol)
 
   const rightCol = new THREE.Mesh(new THREE.BoxGeometry(colW, colH, colW), stoneMat)
   rightCol.position.set(centerX + archR, colH / 2, z)
-  rightCol.castShadow = true
   group.add(rightCol)
 
   // Default torus is in XY plane (axis along Z) — already aligned with the
@@ -112,7 +110,6 @@ export function buildArch(centerX: number, z: number): THREE.Group {
     stoneMat,
   )
   archTop.position.set(centerX, colH, z)
-  archTop.castShadow = true
   group.add(archTop)
 
   return group
@@ -136,11 +133,12 @@ function buildRuinWall(heights: number[], axis: 'north' | 'west'): THREE.Group {
 
     const tex = makeBrickTexture(WALL_PALETTE)
     tex.repeat.set(1, h / 1.25)
-    const mat = new THREE.MeshLambertMaterial({ map: tex })
+    // MeshBasicMaterial: paint at full brightness regardless of lights.
+    // Mono post-pass picks up the brick highlights/shadows from the texture
+    // alone, matching the ZX Spectrum "no shading, just paint" style.
+    const mat = new THREE.MeshBasicMaterial({ map: tex })
 
     const fragment = new THREE.Mesh(new THREE.BoxGeometry(TILE, h, 0.5), mat)
-    fragment.castShadow = true
-    fragment.receiveShadow = true
     if (axis === 'north') fragment.position.set(along, h / 2, 0)
     else {
       fragment.rotation.y = Math.PI / 2
@@ -157,7 +155,6 @@ function buildRuinWall(heights: number[], axis: 'north' | 'west'): THREE.Group {
         cap.rotation.y = Math.PI / 2
         cap.position.set(0, h + 0.25, along + offset)
       }
-      cap.castShadow = true
       group.add(cap)
     }
   }
@@ -167,13 +164,9 @@ function buildRuinWall(heights: number[], axis: 'north' | 'west'): THREE.Group {
 export async function buildStructure(_loader: AssetLoader): Promise<THREE.Group> {
   const group = new THREE.Group()
 
-  // Near-black floor: the room is a stage in a void (original-game look) —
-  // props and characters pop by value contrast, not by fill light.
-  const floorMat = new THREE.MeshLambertMaterial({ color: 0x1a1322 })
-  const floor = new THREE.Mesh(new THREE.BoxGeometry(8 * TILE, 0.3, 8 * TILE), floorMat)
-  floor.position.set(8, -0.15, 8)
-  floor.receiveShadow = true
-  group.add(floor)
+  // No floor mesh, no shadows — Knight Lore rooms are stages in a void.
+  // Architecture renders with MeshBasicMaterial (full-bright) and the mono
+  // post-pass paints the rest black.
 
   group.add(buildRuinWall(NORTH_HEIGHTS, 'north'))
   group.add(buildRuinWall(WEST_HEIGHTS, 'west'))

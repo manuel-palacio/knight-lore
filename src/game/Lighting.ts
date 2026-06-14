@@ -30,9 +30,10 @@ export function buildHallLights(): THREE.Object3D[] {
   const seFill = new THREE.PointLight(0x9eb6d4, 2.0, 16, 1.0)
   seFill.position.set(14, 5, 14)
 
-  // Cool ambient floor — high enough that the room always reads
-  // (player feedback: the scene must be visible first, moody second).
-  const ambient = new THREE.AmbientLight(0x506070, 1.4)
+  // High ambient so the mono-tint post-pass has something to colour. With
+  // quantisation in MonoTintShader, anything below the lowest band drops
+  // to pure black; ambient ensures architecture stays visible.
+  const ambient = new THREE.AmbientLight(0xffffff, 3.2)
 
   return [moon, moon.target, hemi, seFill, ambient]
 }

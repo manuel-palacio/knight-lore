@@ -1,8 +1,10 @@
 import * as THREE from 'three'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js'
+import { MonoTintShader } from './MonoTintShader'
 
 const CAMERA_DISTANCE = 30
 const CAMERA_HEIGHT = 22
@@ -23,6 +25,7 @@ export class Renderer {
   readonly camera: THREE.OrthographicCamera
   readonly webgl: THREE.WebGLRenderer
   private composer: EffectComposer
+  private monoPass: ShaderPass
 
   constructor(container: HTMLElement) {
     this.scene = new THREE.Scene()
@@ -49,11 +52,14 @@ export class Renderer {
     this.webgl.shadowMap.type = THREE.PCFSoftShadowMap
     container.appendChild(this.webgl.domElement)
 
-    // Postprocessing: RenderPass writes scene to a half-float target
-    // (linear, allows >1 values). UnrealBloomPass extracts pixels above
-    // the luminance threshold and adds glow. OutputPass applies tone
-    // mapping + sRGB conversion at the very end so bloom samples linear
-    // values, not tone-mapped ones.
+    // Postprocessing pipeline:
+    // 1. RenderPass — paint scene into the linear half-float target.
+    // 2. UnrealBloomPass — glow on highlights (kept; the tint pass
+    //    inherits its bloom).
+    // 3. MonoTint ShaderPass — collapse RGB to luminance × room-tint, then
+    //    quantise into N flat brightness bands. This is what makes the
+    //    output read as "ZX Spectrum yellow on black" (or cyan, etc).
+    // 4. OutputPass — tone mapping + sRGB conversion at the very end.
     this.composer = new EffectComposer(this.webgl)
     this.composer.addPass(new RenderPass(this.scene, this.camera))
     const bloom = new UnrealBloomPass(
@@ -61,9 +67,17 @@ export class Renderer {
       BLOOM_STRENGTH, BLOOM_RADIUS, BLOOM_THRESHOLD,
     )
     this.composer.addPass(bloom)
+    this.monoPass = new ShaderPass(MonoTintShader)
+    this.composer.addPass(this.monoPass)
     this.composer.addPass(new OutputPass())
 
     window.addEventListener('resize', this.handleResize)
+  }
+
+  // Switch the active room's primary colour. Called by RoomManager on
+  // every transition.
+  setTint(color: number): void {
+    ;(this.monoPass.uniforms['uTint']!.value as THREE.Color).set(color)
   }
 
   private handleResize = (): void => {

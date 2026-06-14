@@ -49,20 +49,24 @@ export class CharacterVisual {
     this.knight.root.visible = false
     this.werewolf.root.visible = false
 
+    // worldHeight tuned so the sprite (scaled 2.2x by the group) renders
+    // at ~1.6m world height — about right for a Knight Lore character
+    // standing in a 2m tile, neither dwarfing nor lost in the room.
+    const SPRITE_H = 0.8
     this.humanSprite = new PixelSprite({
       url: '/sprites/sabreman-walk.png',
       frameCount: HUMAN_WALK_FRAMES,
-      worldHeight: 1.6,
+      worldHeight: SPRITE_H,
     })
     this.wolfSprite = new PixelSprite({
       url: '/sprites/sabrewulf-walk.png',
       frameCount: WOLF_WALK_FRAMES,
-      worldHeight: 1.6,
+      worldHeight: SPRITE_H,
     })
     this.transformSprite = new PixelSprite({
       url: '/sprites/transform-strip.png',
       frameCount: TRANSFORM_STRIP_FRAMES,
-      worldHeight: 1.6,
+      worldHeight: SPRITE_H,
     })
     this.humanSprite.sprite.visible = true
     this.wolfSprite.sprite.visible = false

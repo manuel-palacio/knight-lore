@@ -52,8 +52,13 @@ export class PixelSprite {
     this.tex.repeat.set(this.cellU, 1)
     this.tex.offset.set(0, 0)
 
+    // Use a 50%-gray base colour so the sprite's luminance stays BELOW
+    // the bloom pass's 0.85 threshold — no soft halo on the pixel art.
+    // The mono shader still picks up the gray as a mid-band tint, so the
+    // sprite reads clearly in the room's colour.
     const mat = new THREE.SpriteMaterial({
       map: this.tex,
+      color: 0x808080,
       transparent: true,
       alphaTest: 0.5,
       depthWrite: false,

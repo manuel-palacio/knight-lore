@@ -130,13 +130,15 @@ describe('WerewolfRig', () => {
     }
   })
 
-  it('is hunched: reads lower than the knight but deeper front-to-back', () => {
+  it('is bipedal upright, similar height to the knight (per both.png)', () => {
     const knight = new KnightRig()
     const wolf = new WerewolfRig()
     const kBox = new THREE.Box3().setFromObject(knight.root)
     const wBox = new THREE.Box3().setFromObject(wolf.root)
-    expect(wBox.max.y).toBeLessThan(kBox.max.y)
-    expect(wBox.max.z - wBox.min.z).toBeGreaterThan(kBox.max.z - kBox.min.z)
+    // Werewolf can be a touch shorter (no peaked finial) but not more than
+    // 30% off — they should read as the same character at the same scale.
+    expect(wBox.max.y).toBeGreaterThan(kBox.max.y * 0.7)
+    expect(wBox.max.y).toBeLessThan(kBox.max.y * 1.1)
   })
 
   it('keeps its feet at the origin (nothing pokes through the floor)', () => {

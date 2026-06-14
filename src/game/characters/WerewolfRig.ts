@@ -2,147 +2,147 @@ import * as THREE from 'three'
 import { Rig } from './Rig'
 import { makeHeroMaterial } from '../Materials'
 
-const FUR = 0x5a5046
-const FUR_DARK = 0x423a32
-const CLAW = 0xd8d0c0
+// Per both.png: BIPEDAL upright werewolf, similar height to Sabreman.
+// Pointed cat-like ears, short snout, arms held out at sides (slightly
+// bent), tail trailing behind. Single bright tint (mono shader will pick
+// the room's colour); we optimise for SHAPE over per-part colour.
 
-// Cartoon werewolf — clean and appealing, not deformed: one continuous
-// arched body mass (no bolted-on hump), wolf head clearly out front with
-// snout, ears and eyes, long claw forearms, digitigrade haunches, tail.
-// Different mass distribution from the knight per ART_DIRECTION.md.
-// Origin at the feet.
+const FUR = 0xf0d090
+const FUR_DARK = 0xc89060
+const CLAW = 0xfff0c0
+
 export class WerewolfRig extends Rig {
   constructor() {
     super()
     const fur = makeHeroMaterial(FUR)
-    const furDark = makeHeroMaterial(FUR_DARK)
-    const claw = makeHeroMaterial(CLAW)
+    const dark = makeHeroMaterial(FUR_DARK)
+    const claw = makeHeroMaterial(CLAW, 1.2)
 
-    const hips = new THREE.Group()
-    hips.position.y = 0.45
-    this.root.add(hips)
+    // Pelvis — same height as the knight's so the figures match in scale
+    const pelvis = new THREE.Group()
+    pelvis.position.y = 0.36
+    this.root.add(pelvis)
 
-    const legL = buildHaunch(furDark)
-    legL.position.set(0.2, 0, -0.05)
-    hips.add(legL)
+    const legL = buildBipedalLeg(fur, dark)
+    legL.position.set(0.16, 0, 0)
+    pelvis.add(legL)
     this.registerJoint('legL', legL)
 
-    const legR = buildHaunch(furDark)
-    legR.position.set(-0.2, 0, -0.05)
-    hips.add(legR)
+    const legR = buildBipedalLeg(fur, dark)
+    legR.position.set(-0.16, 0, 0)
+    pelvis.add(legR)
     this.registerJoint('legR', legR)
 
-    const spine = new THREE.Group()
-    spine.position.set(0, 0.1, 0)
-    spine.rotation.x = 0.38 // forward lean — predatory, not folded in half
-    hips.add(spine)
-    this.registerJoint('torso', spine)
+    // Slight forward lean (predator posture, not a full hunch)
+    const torso = new THREE.Group()
+    torso.position.set(0, 0.08, 0)
+    torso.rotation.x = 0.1
+    pelvis.add(torso)
+    this.registerJoint('torso', torso)
 
-    // one continuous body mass, broad at the shoulders, arched along the
-    // spine — reads as a powerful wolf torso, not a body with a growth
-    const body = new THREE.Mesh(new THREE.SphereGeometry(0.32, 10, 8), fur)
-    body.scale.set(1.05, 1.35, 1.1)
-    body.position.set(0, 0.45, 0.02)
+    // Body — wider barrel chest. One continuous mass, no hump.
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.3, 12, 8), fur)
+    body.scale.set(1.1, 1.3, 1.0)
+    body.position.y = 0.32
     body.castShadow = true
-    spine.add(body)
+    torso.add(body)
 
-    const armL = buildClawArm(fur, claw)
-    armL.position.set(0.3, 0.42, 0.08)
-    armL.rotation.set(-0.35, 0, 0.18)
-    spine.add(armL)
+    // Arms — held away from the body at the sides, slightly bent forward
+    // (the "ready to strike" pose in both.png).
+    const armL = buildArm(fur, claw)
+    armL.position.set(0.32, 0.5, 0)
+    armL.rotation.set(-0.15, 0, 0.35)
+    torso.add(armL)
     this.registerJoint('armL', armL)
 
-    const armR = buildClawArm(fur, claw)
-    armR.position.set(-0.3, 0.42, 0.08)
-    armR.rotation.set(-0.35, 0, -0.12) // asymmetric rest
-    spine.add(armR)
+    const armR = buildArm(fur, claw)
+    armR.position.set(-0.32, 0.5, 0)
+    armR.rotation.set(-0.2, 0, -0.3)
+    torso.add(armR)
     this.registerJoint('armR', armR)
 
+    // Head sits ON TOP of the torso (not pushed forward — bipedal)
     const head = new THREE.Group()
-    head.position.set(0, 0.82, 0.28) // clearly in front of the body mass
-    spine.add(head)
+    head.position.set(0, 0.58, 0)
+    torso.add(head)
     this.registerJoint('head', head)
 
-    const skull = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.24, 0.26), fur)
+    const skull = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 9), fur)
+    skull.scale.set(1.05, 1, 1.1)
     skull.castShadow = true
     head.add(skull)
 
-    const snout = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.13, 0.32), furDark)
-    snout.position.set(0, -0.04, 0.26)
+    // Short snout poking forward
+    const snout = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.1, 0.15), dark)
+    snout.position.set(0, -0.04, 0.18)
     snout.castShadow = true
     head.add(snout)
 
-    // amber predator eyes — the face needs to read alive, not a fur block
-    const eyeMat = makeHeroMaterial(0xd8b84a)
-    const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.032, 6, 5), eyeMat)
-    eyeL.position.set(0.08, 0.06, 0.14)
-    head.add(eyeL)
-    const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.032, 6, 5), eyeMat)
-    eyeR.position.set(-0.08, 0.06, 0.14)
-    head.add(eyeR)
-
-    const earL = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.16, 5), furDark)
-    earL.position.set(0.09, 0.14, -0.05)
-    earL.rotation.x = -0.9 // swept back
+    // Pointed cat-like ears on TOP of the head — the key silhouette feature
+    const earL = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.18, 5), fur)
+    earL.position.set(0.1, 0.18, -0.02)
+    earL.rotation.z = -0.15
     earL.castShadow = true
     head.add(earL)
-    const earR = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.16, 5), furDark)
-    earR.position.set(-0.09, 0.14, -0.05)
-    earR.rotation.x = -1.05 // uneven sweep
+    const earR = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.18, 5), fur)
+    earR.position.set(-0.1, 0.18, -0.02)
+    earR.rotation.z = 0.15
     earR.castShadow = true
     head.add(earR)
 
-    const tail = new THREE.Group()
-    tail.position.set(0, 0.05, -0.18)
-    hips.add(tail)
-    this.registerJoint('tail', tail)
+    // Eye dots — bright accents that read as a menacing face
+    const eyeMat = makeHeroMaterial(0x1a0e08, 0.4)
+    const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 5), eyeMat)
+    eyeL.position.set(0.07, 0.04, 0.13)
+    head.add(eyeL)
+    const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 5), eyeMat)
+    eyeR.position.set(-0.07, 0.04, 0.13)
+    head.add(eyeR)
 
-    const tailMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.02, 0.45, 6), furDark)
-    tailMesh.rotation.x = Math.PI / 2 - 0.5 // points back and down
-    tailMesh.position.set(0, -0.05, -0.2)
+    // Tail — trails behind, hanging down
+    const tail = new THREE.Group()
+    tail.position.set(0, 0.15, -0.18)
+    torso.add(tail)
+    this.registerJoint('tail', tail)
+    const tailMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.02, 0.35, 6), dark)
+    tailMesh.rotation.x = Math.PI / 2 - 0.6
+    tailMesh.position.set(0, -0.05, -0.16)
     tailMesh.castShadow = true
     tail.add(tailMesh)
   }
 }
 
-// Digitigrade haunch: baked two-segment bend (thigh forward, shin back).
-function buildHaunch(mat: THREE.Material): THREE.Group {
-  const haunch = new THREE.Group()
-  const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.06, 0.34, 6), mat)
-  thigh.rotation.x = -0.55
-  thigh.position.set(0, -0.12, 0.06)
+// Bipedal leg: cylinder thigh + box paw. Short and stocky like the knight's,
+// so the two figures match in scale.
+function buildBipedalLeg(fur: THREE.Material, dark: THREE.Material): THREE.Group {
+  const leg = new THREE.Group()
+  const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.1, 0.28, 7), fur)
+  thigh.position.y = -0.15
   thigh.castShadow = true
-  haunch.add(thigh)
-  const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.045, 0.26, 6), mat)
-  shin.rotation.x = 0.6
-  shin.position.set(0, -0.3, 0.02)
-  shin.castShadow = true
-  haunch.add(shin)
-  const paw = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.08, 0.24), mat)
-  paw.position.set(0, -0.41, 0.1)
+  leg.add(thigh)
+  const paw = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.1, 0.24), dark)
+  paw.position.set(0, -0.32, 0.04)
   paw.castShadow = true
-  haunch.add(paw)
-  return haunch
+  leg.add(paw)
+  return leg
 }
 
-// Long forearm flaring toward an oversized claw mass.
-function buildClawArm(furMat: THREE.Material, clawMat: THREE.Material): THREE.Group {
+// Werewolf arm: sleeve + clawed hand. Held at the sides (rotation set by
+// caller), shorter than the previous version's hanging-quadruped arm.
+function buildArm(fur: THREE.Material, claw: THREE.Material): THREE.Group {
   const arm = new THREE.Group()
-  const upper = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.06, 0.34, 6), furMat)
-  upper.position.y = -0.17
+  const upper = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.3, 6), fur)
+  upper.position.y = -0.15
   upper.castShadow = true
   arm.add(upper)
-  const forearm = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.09, 0.36, 6), furMat)
-  forearm.position.y = -0.5
-  forearm.castShadow = true
-  arm.add(forearm)
-  const hand = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.14, 0.22), furMat)
-  hand.position.y = -0.72
+  const hand = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.12, 0.14), fur)
+  hand.position.y = -0.32
   hand.castShadow = true
   arm.add(hand)
+  // Three small talons sticking forward from the hand
   for (let i = 0; i < 3; i++) {
-    const talon = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.12, 4), clawMat)
-    talon.position.set((i - 1) * 0.06, -0.77, 0.12)
+    const talon = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.08, 4), claw)
+    talon.position.set((i - 1) * 0.04, -0.4, 0.07)
     talon.rotation.x = 1.3
     talon.castShadow = true
     arm.add(talon)

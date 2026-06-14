@@ -13,9 +13,9 @@ export const buildRoom001: RoomBuilder = async (loader, _state) => {
     addPlatform(room, gx, gz, 1)
   }
 
-  // Cauldron: wide-rimmed iron pot with three legs and a bubbling cluster
-  // of steam puffs above it — see 1.png. All bright materials so the mono
-  // shader paints them in the room tint instead of dropping them to black.
+  // Cauldron per cauldron.png: spherical body with a clear rim, and a
+  // STARBURST CLUSTER of triangular spike-bubbles rising from the top —
+  // not soft round puffs, sharp pyramidal teeth pointing up & outward.
   const cauldron = new Cauldron()
   cauldron.position.set(8, 1, 8)
   cauldron.renderPosition.copy(cauldron.position)
@@ -23,41 +23,35 @@ export const buildRoom001: RoomBuilder = async (loader, _state) => {
   const ironMat = makeHeroMaterial(0xffaa44, 1.0)
 
   // Wide rim collar (thick torus, sits flat)
-  const rim = new THREE.Mesh(new THREE.TorusGeometry(0.7, 0.12, 10, 24), ironMat)
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(0.65, 0.1, 10, 24), ironMat)
   rim.rotation.x = -Math.PI / 2
-  rim.position.y = 0.55
+  rim.position.y = 0.5
   cauldronVisual.add(rim)
 
-  // Belly (slightly squashed sphere)
-  const belly = new THREE.Mesh(new THREE.SphereGeometry(0.68, 18, 14), ironMat)
-  belly.scale.set(1, 0.7, 1)
-  belly.position.y = 0.3
+  // Round belly — main cauldron body
+  const belly = new THREE.Mesh(new THREE.SphereGeometry(0.6, 18, 14), ironMat)
+  belly.scale.set(1.05, 0.8, 1.05)
+  belly.position.y = 0.28
   cauldronVisual.add(belly)
 
-  // Three short legs at 120° apart
-  const legMat = makeHeroMaterial(0xffaa44, 0.9)
-  for (let i = 0; i < 3; i++) {
-    const theta = i * (Math.PI * 2 / 3) + Math.PI / 6
-    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.15, 0.12), legMat)
-    leg.position.set(Math.cos(theta) * 0.42, 0.05, Math.sin(theta) * 0.42)
-    cauldronVisual.add(leg)
-  }
-
-  // Bubbling cluster — 7 small puffs in a roughly conical pile above the rim.
-  const steamMat = makeHeroMaterial(0xfff0c0, 1.2)
-  const bubbles: [number, number, number, number][] = [
-    [0, 0.85, 0, 0.16],
-    [0.18, 0.78, 0, 0.13],
-    [-0.16, 0.8, 0.08, 0.12],
-    [0.05, 1.05, 0.12, 0.14],
-    [-0.1, 1.0, -0.1, 0.11],
-    [0.13, 1.18, -0.06, 0.10],
-    [-0.04, 1.32, 0.04, 0.09],
-  ]
-  for (const [bx, by, bz, br] of bubbles) {
-    const b = new THREE.Mesh(new THREE.SphereGeometry(br, 8, 6), steamMat)
-    b.position.set(bx, by, bz)
-    cauldronVisual.add(b)
+  // STARBURST steam cluster — short cones pointing up & outward in a
+  // radial pattern, like the spike-burst in cauldron.png.
+  const steamMat = makeHeroMaterial(0xfff0c0, 1.4)
+  // Central plume
+  const center = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.45, 5), steamMat)
+  center.position.y = 0.95
+  cauldronVisual.add(center)
+  // Six outward radial spikes around the central plume
+  const RADIAL_COUNT = 6
+  for (let i = 0; i < RADIAL_COUNT; i++) {
+    const theta = (i / RADIAL_COUNT) * Math.PI * 2
+    const spike = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.32, 5), steamMat)
+    const r = 0.28
+    spike.position.set(Math.cos(theta) * r, 0.78, Math.sin(theta) * r)
+    // tilt outward (away from centre) by ~45 degrees
+    const tiltAxis = new THREE.Vector3(-Math.sin(theta), 0, Math.cos(theta))
+    spike.setRotationFromAxisAngle(tiltAxis, -Math.PI / 4)
+    cauldronVisual.add(spike)
   }
   attachOffsetMesh(cauldron, cauldronVisual, 0.5)
   room.add(cauldron)

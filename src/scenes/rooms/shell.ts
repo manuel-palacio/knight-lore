@@ -35,41 +35,56 @@ const TINT_RGB: Record<RoomTint, number> = {
   red: 0xc04050,
 }
 
-export async function buildRoomShell(id: string, loader: AssetLoader, tint: RoomTint = 'yellow'): Promise<Room> {
+// `exits` is the list of WALL SIDES that have a doorway. buildStructure
+// uses it to leave gaps in the corresponding walls and place an arch in
+// the gap. Pass the same sides you'll later room.addExit() on.
+export async function buildRoomShell(
+  id: string,
+  loader: AssetLoader,
+  tint: RoomTint = 'yellow',
+  exits: ('north' | 'south' | 'east' | 'west')[] = [],
+): Promise<Room> {
   const room = new Room(id, 8, 8)
   room.tint = TINT_RGB[tint]
-  room.group.add(await buildStructure(loader))
+  room.group.add(await buildStructure(loader, { exits }))
   for (const light of buildHallLights()) room.group.add(light)
   for (const [x, y, z] of TORCH_POSITIONS) room.addTorch(new Torch(x, y, z))
   return room
 }
 
-// Subtle warm light under each exit arch — no floor ring (looked bad).
+// Subtle warm light under each exit arch — players found dark exits invisible.
 function addExitBeacon(room: Room, x: number, z: number): void {
   const light = new THREE.PointLight(0xffa050, 2.0, 7, 1.3)
   light.position.set(x, 1.6, z)
   room.group.add(light)
 }
 
-// Arch marking an exit. buildArch lays columns along x (north/south wall
-// plane); east/west exits get the same group rotated 90°. A glowing floor
-// halo + warm light underneath the arch makes the exit visible in the dim
-// scene.
+// Arch + light for S/E exits (N/W exit arches are placed by buildStructure
+// because they sit IN a wall gap). This still adds the beacon for every
+// side so the player has a glow to walk toward.
 export function addExitArch(room: Room, direction: 'north' | 'south' | 'east' | 'west'): void {
-  const mid = 4 * TILE // 8 — center of the 16-unit wall
+  const mid = 4 * TILE
   const edge = 8 * TILE - 0.25
-  if (direction === 'north' || direction === 'south') {
-    const z = direction === 'north' ? 0.25 : edge
-    room.group.add(buildArch(mid, z))
-    addExitBeacon(room, mid, z + (direction === 'north' ? 0.6 : -0.6))
+  if (direction === 'north') {
+    addExitBeacon(room, mid, 0.85)
     return
   }
+  if (direction === 'west') {
+    addExitBeacon(room, 0.85, mid)
+    return
+  }
+  if (direction === 'south') {
+    const z = edge
+    room.group.add(buildArch(mid, z))
+    addExitBeacon(room, mid, z - 0.6)
+    return
+  }
+  // east
   const arch = buildArch(0, 0)
   arch.rotation.y = Math.PI / 2
-  const x = direction === 'west' ? 0.25 : edge
-  arch.position.set(x, 0, mid)
+  arch.position.set(edge, 0, mid)
   room.group.add(arch)
-  addExitBeacon(room, x + (direction === 'west' ? 0.6 : -0.6), mid)
+  addExitBeacon(room, edge - 0.6, mid)
 }
 
 // Raised sandstone platform — full-bright material so the bricks paint

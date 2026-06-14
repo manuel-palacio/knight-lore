@@ -6,7 +6,7 @@ import type { RoomBuilder } from '../../game/RoomManager'
 // Wine bottle on a height-2 platform: unreachable from the floor (jump
 // apex 1.0). Push a 1.0-high slab next to it, climb the slab, jump up.
 export const buildRoom004: RoomBuilder = async (loader, _state) => {
-  const room = await buildRoomShell('room-004', loader, 'green')
+  const room = await buildRoomShell('room-004', loader, 'green', ['west'])
   addPlatform(room, 5, 5, 2)
   addPickup(room, 'wine-bottle', 5, 5, 2.4)
   addPushBlock(room, 2, 5)

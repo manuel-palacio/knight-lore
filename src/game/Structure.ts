@@ -12,10 +12,10 @@ export interface BrickPalette {
 }
 
 export const WALL_PALETTE: BrickPalette = {
-  body: '#4a3a28',
-  highlight: '#7a5d3d',
-  shadow: '#2a1f15',
-  mortar: '#0a0808',
+  body: '#a07840',
+  highlight: '#f0c878',
+  shadow: '#503020',
+  mortar: '#1a0e08',
 }
 
 export const SANDSTONE_PALETTE: BrickPalette = {
@@ -31,6 +31,8 @@ export const AMBER_BLOCK_PALETTE: BrickPalette = {
   shadow: '#5a3010',
   mortar: '#10080a',
 }
+
+export type WallSide = 'north' | 'south' | 'east' | 'west'
 
 // Procedural shaded brick (oblong 2:1, staggered, NW lighting). Tileable
 // both axes — odd rows offset by half a brick; c=-1 / c=COLS bricks ensure
@@ -74,12 +76,40 @@ export function makeBrickTexture(palette: BrickPalette = WALL_PALETTE): THREE.Ca
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping
   tex.magFilter = THREE.NearestFilter
   tex.minFilter = THREE.NearestMipmapLinearFilter
-  // sRGB so painted pixels match canvas colours (canvas treated as linear
-  // by default → gamma-corrected on output → brightened ~2x).
   tex.colorSpace = THREE.SRGBColorSpace
-  // Anisotropic filtering preserves brick detail at the 45° isometric
-  // angle. 16x is the common GPU max; three.js silently clamps to the
-  // device's actual capability.
+  tex.anisotropy = TEXTURE_ANISOTROPY
+  return tex
+}
+
+// Floor: chequered tile pattern with clearly contrasted shades so it reads
+// through the mono pass. Tile-edge highlights spell out the 8×8 grid.
+function makeFloorTexture(): THREE.CanvasTexture {
+  const W = 256
+  const H = 256
+  const N = 8
+  const cell = W / N
+  const canvas = document.createElement('canvas')
+  canvas.width = W
+  canvas.height = H
+  const ctx = canvas.getContext('2d')!
+  ctx.fillStyle = '#6a4a20'
+  ctx.fillRect(0, 0, W, H)
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
+      if ((r + c) % 2 === 0) {
+        ctx.fillStyle = '#a08050'
+        ctx.fillRect(c * cell, r * cell, cell, cell)
+      }
+      // bright tile border so the grid reads under mono quantisation
+      ctx.fillStyle = '#d6a060'
+      ctx.fillRect(c * cell, r * cell, cell, 2)
+      ctx.fillRect(c * cell, r * cell, 2, cell)
+    }
+  }
+  const tex = new THREE.CanvasTexture(canvas)
+  tex.magFilter = THREE.NearestFilter
+  tex.minFilter = THREE.NearestMipmapLinearFilter
+  tex.colorSpace = THREE.SRGBColorSpace
   tex.anisotropy = TEXTURE_ANISOTROPY
   return tex
 }
@@ -89,10 +119,10 @@ export function makeBrickTexture(palette: BrickPalette = WALL_PALETTE): THREE.Ca
 // the brick texture would compress bricks unrecognizably.
 export function buildArch(centerX: number, z: number): THREE.Group {
   const group = new THREE.Group()
-  const colW = 0.3
-  const colH = 3
-  const archR = 1
-  const archTube = 0.15
+  const colW = 0.35
+  const colH = 3.2
+  const archR = 1.05
+  const archTube = 0.18
   const stoneMat = new THREE.MeshBasicMaterial({ color: WALL_PALETTE.highlight })
 
   const leftCol = new THREE.Mesh(new THREE.BoxGeometry(colW, colH, colW), stoneMat)
@@ -103,8 +133,6 @@ export function buildArch(centerX: number, z: number): THREE.Group {
   rightCol.position.set(centerX + archR, colH / 2, z)
   group.add(rightCol)
 
-  // Default torus is in XY plane (axis along Z) — already aligned with the
-  // south wall plane. Arc 0..PI traces the upper semicircle.
   const archTop = new THREE.Mesh(
     new THREE.TorusGeometry(archR, archTube, 8, 16, Math.PI),
     stoneMat,
@@ -115,72 +143,99 @@ export function buildArch(centerX: number, z: number): THREE.Group {
   return group
 }
 
-// Hand-authored fragment heights per wall tile (0 = gap). Tiles 2 and 6
-// stay tall on both walls — they carry the torch brackets (Torch.ts
-// TORCH_POSITIONS). Two different rhythms so the walls don't mirror.
-const NORTH_HEIGHTS = [3.4, 2.2, 4.6, 1.4, 0, 2.6, 4.2, 1.8]
-const WEST_HEIGHTS = [2.4, 4.4, 4.8, 1.0, 2.0, 0, 4.0, 2.8]
+// SOLID wall: full brick course at WALL_HEIGHT for every tile EXCEPT the
+// arch tile (which is left open and gets a stone arch instead). Adds
+// battlement caps along the top — alternating square teeth — for the
+// Knight Lore castle silhouette.
+const WALL_HEIGHT = 3.6
+const ARCH_TILE = 4 // centre tile (cell 4) reserved for the doorway
 
-// Ruin wall: one brick fragment per tile with jagged varied heights and
-// gaps, plus rubble caps on the tall pieces — the original game's rooms
-// are broken silhouettes against black, not solid slabs.
-function buildRuinWall(heights: number[], axis: 'north' | 'west'): THREE.Group {
+function buildSolidWall(side: WallSide, hasExit: boolean): THREE.Group {
   const group = new THREE.Group()
-  for (let i = 0; i < heights.length; i++) {
-    const h = heights[i]!
-    if (h <= 0) continue
+  const tileCount = 8
+
+  const tex = makeBrickTexture(WALL_PALETTE)
+  tex.repeat.set(2, WALL_HEIGHT / 1.0) // wider tiling = chunkier bricks
+  const wallMat = new THREE.MeshBasicMaterial({ map: tex })
+  const capMat = new THREE.MeshBasicMaterial({ color: WALL_PALETTE.highlight })
+
+  for (let i = 0; i < tileCount; i++) {
+    if (hasExit && i === ARCH_TILE) continue // open doorway
     const along = i * TILE + TILE / 2
 
-    const tex = makeBrickTexture(WALL_PALETTE)
-    tex.repeat.set(1, h / 1.25)
-    // MeshBasicMaterial: paint at full brightness regardless of lights.
-    // Mono post-pass picks up the brick highlights/shadows from the texture
-    // alone, matching the ZX Spectrum "no shading, just paint" style.
-    const mat = new THREE.MeshBasicMaterial({ map: tex })
-
-    const fragment = new THREE.Mesh(new THREE.BoxGeometry(TILE, h, 0.5), mat)
-    if (axis === 'north') fragment.position.set(along, h / 2, 0)
+    const slab = new THREE.Mesh(
+      new THREE.BoxGeometry(TILE, WALL_HEIGHT, 0.5),
+      wallMat,
+    )
+    if (side === 'north') slab.position.set(along, WALL_HEIGHT / 2, 0)
     else {
-      fragment.rotation.y = Math.PI / 2
-      fragment.position.set(0, h / 2, along)
+      slab.rotation.y = Math.PI / 2
+      slab.position.set(0, WALL_HEIGHT / 2, along)
     }
-    group.add(fragment)
+    group.add(slab)
 
-    // rubble cap: an offset half-brick on top breaks the box outline
-    if (h >= 3) {
-      const cap = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.5, 0.55), mat)
-      const offset = i % 2 === 0 ? -0.4 : 0.35
-      if (axis === 'north') cap.position.set(along + offset, h + 0.25, 0)
+    // Battlement: a small tooth on top of every other tile.
+    if (i % 2 === 0) {
+      const tooth = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.45, 0.55), capMat)
+      if (side === 'north') tooth.position.set(along, WALL_HEIGHT + 0.22, 0)
       else {
-        cap.rotation.y = Math.PI / 2
-        cap.position.set(0, h + 0.25, along + offset)
+        tooth.rotation.y = Math.PI / 2
+        tooth.position.set(0, WALL_HEIGHT + 0.22, along)
       }
-      group.add(cap)
+      group.add(tooth)
     }
   }
+
   return group
 }
 
-export async function buildStructure(_loader: AssetLoader): Promise<THREE.Group> {
+// Corner pillar at the NW corner — anchors the room visually so the camera
+// sees a clear "front of the castle" silhouette.
+function buildCornerPillar(): THREE.Mesh {
+  const tex = makeBrickTexture(WALL_PALETTE)
+  tex.repeat.set(1, WALL_HEIGHT / 1.0)
+  const mat = new THREE.MeshBasicMaterial({ map: tex })
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.8, WALL_HEIGHT + 0.5, 0.8), mat)
+  mesh.position.set(0, (WALL_HEIGHT + 0.5) / 2, 0)
+  return mesh
+}
+
+export interface ShellOptions {
+  exits: WallSide[] // which sides have exits (controls wall openings + arches)
+}
+
+export async function buildStructure(_loader: AssetLoader, opts: ShellOptions = { exits: [] }): Promise<THREE.Group> {
   const group = new THREE.Group()
 
-  // No floor mesh, no shadows — Knight Lore rooms are stages in a void.
-  // Architecture renders with MeshBasicMaterial (full-bright) and the mono
-  // post-pass paints the rest black.
+  // Floor: chequered stone tiles. Was a single dark slab; now a tiled
+  // pattern that reads under the mono pass.
+  const floorTex = makeFloorTexture()
+  const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(8 * TILE, 8 * TILE),
+    new THREE.MeshBasicMaterial({ map: floorTex }),
+  )
+  floor.rotation.x = -Math.PI / 2
+  floor.position.set(8, 0, 8)
+  group.add(floor)
 
-  group.add(buildRuinWall(NORTH_HEIGHTS, 'north'))
-  group.add(buildRuinWall(WEST_HEIGHTS, 'west'))
+  // North + west walls (the two visible from the iso camera).
+  group.add(buildSolidWall('north', opts.exits.includes('north')))
+  group.add(buildSolidWall('west', opts.exits.includes('west')))
 
-  // Broken arch standing in the north wall's gap (tile 4) — silhouette
-  // landmark per the reference screenshots.
-  group.add(buildArch(4 * TILE + TILE / 2, 0.25))
+  // Corner pillar at NW.
+  group.add(buildCornerPillar())
+
+  // Arches at any exits the camera can see (n/w). South/east exits — the
+  // player walks off the front-facing edge so no arch needed.
+  if (opts.exits.includes('north')) {
+    group.add(buildArch(ARCH_TILE * TILE + TILE / 2, 0.25))
+  }
+  if (opts.exits.includes('west')) {
+    const arch = buildArch(0, 0)
+    arch.rotation.y = Math.PI / 2
+    arch.position.set(0.25, 0, ARCH_TILE * TILE + TILE / 2)
+    group.add(arch)
+  }
 
   return group
-}
-
-export function buildLedgeMesh(material: THREE.Material): THREE.Mesh {
-  const mesh = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), material)
-  mesh.castShadow = true
-  mesh.receiveShadow = true
-  return mesh
 }

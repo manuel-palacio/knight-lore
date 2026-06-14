@@ -7,7 +7,7 @@ import type { RoomBuilder } from '../../game/RoomManager'
 // The quest hub: cauldron on a raised 2×2 platform (height 1 — exactly
 // jumpable), one guard patrolling in front of it.
 export const buildRoom001: RoomBuilder = async (loader, _state) => {
-  const room = await buildRoomShell('room-001', loader, 'yellow')
+  const room = await buildRoomShell('room-001', loader, 'yellow', ['north', 'east'])
 
   for (const [gx, gz] of [[3, 3], [4, 3], [3, 4], [4, 4]] as const) {
     addPlatform(room, gx, gz, 1)

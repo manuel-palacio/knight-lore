@@ -7,15 +7,18 @@ import { makeHeroMaterial } from '../Materials'
 // Single bright tint — under the mono shader everything reads as one
 // silhouette anyway, so we optimise for SHAPE over part-by-part colour.
 
-const BODY = 0xf0d090 // bright tan — pushes to top luminance band under mono
-const ACCENT = 0xc89060 // mid-tan for hat brim / satchel — same hue, dimmer
+const BODY = 0xc89060 // mid-tan for the bulk — body, legs, arms
+const HAT = 0xf0d090 // BRIGHT tan for the hat — reads as a distinct silhouette layer
+const DARK = 0x6a4a20 // satchel and other dark accents (still bright enough to read)
 
 export class KnightRig extends Rig {
   constructor() {
     super()
-    const bodyMat = makeHeroMaterial(BODY)
+    const bodyMat = makeHeroMaterial(BODY, 0.9)
     bodyMat.side = THREE.DoubleSide
-    const accentMat = makeHeroMaterial(ACCENT)
+    const hatMat = makeHeroMaterial(HAT, 1.4)
+    hatMat.side = THREE.DoubleSide
+    const accentMat = makeHeroMaterial(DARK, 0.7)
     accentMat.side = THREE.DoubleSide
 
     // Pelvis — short legs (~1/3 of total height to match the chibi reference)
@@ -93,9 +96,11 @@ export class KnightRig extends Rig {
     this.registerJoint('hat', hat)
 
     // Wide flat brim per both.png — almost a disc, sticks out past the head.
+    // Uses HAT material (brighter) so the hat reads as a separate silhouette
+    // layer on top of the body under the mono shader.
     const brim = new THREE.Mesh(
       new THREE.CylinderGeometry(0.4, 0.4, 0.04, 16),
-      accentMat,
+      hatMat,
     )
     brim.castShadow = true
     hat.add(brim)
@@ -103,7 +108,7 @@ export class KnightRig extends Rig {
     // Rounded dome on top, slightly squashed
     const dome = new THREE.Mesh(
       new THREE.SphereGeometry(0.22, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2),
-      bodyMat,
+      hatMat,
     )
     dome.scale.set(1, 0.9, 1)
     dome.position.y = 0.02
@@ -113,7 +118,7 @@ export class KnightRig extends Rig {
     // Small peak on top of the dome (the pith-helmet finial)
     const finial = new THREE.Mesh(
       new THREE.ConeGeometry(0.05, 0.08, 8),
-      accentMat,
+      hatMat,
     )
     finial.position.y = 0.22
     finial.castShadow = true

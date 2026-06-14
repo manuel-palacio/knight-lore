@@ -13,22 +13,32 @@ const ITEM_COLOR: Record<ItemId, number> = {
   'crystal-ball': 0xaaddff,
 }
 
-// Compound geometries — recognizable silhouettes instead of a single primitive.
+// Goblet per items.png: wide trophy-style chalice — flat-bottomed flared
+// bowl on a slim stem with a wide round base.
 function buildGoblet(): THREE.Group {
   const g = new THREE.Group()
   const gold = makeHeroMaterial(0xffd95a)
-  const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.3, 10), gold)
-  stem.position.y = 0.15
+  // Wide flared base
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.32, 0.06, 16), gold)
+  base.position.y = 0.03
+  g.add(base)
+  // Slim stem
+  const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 0.22, 10), gold)
+  stem.position.y = 0.18
   g.add(stem)
-  const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 0.08, 14), gold)
-  foot.position.y = 0.04
-  g.add(foot)
-  const knot = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), gold)
-  knot.position.y = 0.17
+  // Stem knot
+  const knot = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 8), gold)
+  knot.position.y = 0.22
   g.add(knot)
-  const bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.13, 0.25, 14, 1, true), gold)
-  bowl.position.y = 0.42
-  g.add(bowl)
+  // Wide flared cup (top wider than bottom — the chalice shape)
+  const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.18, 0.28, 16, 1, true), gold)
+  cup.position.y = 0.45
+  g.add(cup)
+  // Cup lip — torus around the rim
+  const lip = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.03, 8, 18), gold)
+  lip.rotation.x = -Math.PI / 2
+  lip.position.y = 0.59
+  g.add(lip)
   return g
 }
 

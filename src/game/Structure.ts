@@ -34,49 +34,34 @@ export const AMBER_BLOCK_PALETTE: BrickPalette = {
 
 export type WallSide = 'north' | 'south' | 'east' | 'west'
 
-// Knight Lore brick: bright OUTLINE on black, not a filled brick. Each cell
-// is mostly empty (so the mono pass paints it black like the void) with
-// chunky 2-pixel borders drawn in the palette body colour. After the
-// mono shader's luminance quantisation, the outlines snap to the room's
-// tint at full brightness and the interiors snap to pure black — the
-// "wireframe brick wall on a void" look from 1.png / 4.png / 5.png.
-//
-// Staggered rows like a real masonry course; the c=-1 / c=COLS bricks
-// keep the half-brick wrap aligned at the texture seam.
+// Knight Lore brick: bright OUTLINE on black with a horizontal interior
+// stripe (per 0.png — each brick has visible internal lines). Used for
+// SINGLE-brick meshes; texture is sized so one brick = one canvas tile.
 export function makeBrickTexture(palette: BrickPalette = WALL_PALETTE): THREE.CanvasTexture {
-  const W = 256
-  const H = 128
-  const COLS = 8
-  const ROWS = 8
-  const bw = W / COLS
-  const bh = H / ROWS
-  const stroke = 2 // outline thickness in canvas px
+  const W = 128
+  const H = 64
+  const stroke = 4
 
   const canvas = document.createElement('canvas')
   canvas.width = W
   canvas.height = H
   const ctx = canvas.getContext('2d')!
 
-  // Black background everywhere — bricks paint their outline on top.
   ctx.fillStyle = '#000000'
   ctx.fillRect(0, 0, W, H)
 
   ctx.fillStyle = palette.body
-  for (let r = 0; r < ROWS; r++) {
-    const y = r * bh
-    const xOffset = (r % 2) * (bw / 2)
-    for (let c = -1; c <= COLS; c++) {
-      const x = c * bw + xOffset
-      // Top edge of the brick
-      ctx.fillRect(x, y, bw, stroke)
-      // Bottom edge (also draws the gap to next row)
-      ctx.fillRect(x, y + bh - stroke, bw, stroke)
-      // Left edge
-      ctx.fillRect(x, y, stroke, bh)
-      // Right edge
-      ctx.fillRect(x + bw - stroke, y, stroke, bh)
-    }
-  }
+  // Outline rectangle around the whole brick
+  ctx.fillRect(0, 0, W, stroke)
+  ctx.fillRect(0, H - stroke, W, stroke)
+  ctx.fillRect(0, 0, stroke, H)
+  ctx.fillRect(W - stroke, 0, stroke, H)
+
+  // Two interior horizontal lines (gives the brick a "stacked thirds" look
+  // matching the visible stripes inside each brick in 0.png).
+  const lineThickness = 2
+  ctx.fillRect(stroke, H / 3, W - 2 * stroke, lineThickness)
+  ctx.fillRect(stroke, (2 * H) / 3, W - 2 * stroke, lineThickness)
 
   const tex = new THREE.CanvasTexture(canvas)
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping
@@ -152,50 +137,83 @@ export function buildArch(centerX: number, z: number): THREE.Group {
   return group
 }
 
-// SOLID wall: full brick course at WALL_HEIGHT for every tile EXCEPT the
-// arch tile (which is left open and gets a stone arch instead). Adds
-// battlement caps along the top — alternating square teeth — for the
-// Knight Lore castle silhouette.
+// BRICK WALL: per 0.png, walls are stacks of individual brick meshes with
+// staggered rows. Each brick is a small textured box. The wall as a whole
+// reads as "scattered stacked bricks on a void" rather than a smooth slab.
+//
+// Dimensions are configurable per room — different scenes vary wall
+// height, brick density, gaps. Defaults match the original castle look.
+const BRICK_W = 1.0       // brick width along the wall axis
+const BRICK_H = 0.5       // brick height
+const BRICK_D = 0.45      // brick depth (into the wall slab)
 const WALL_HEIGHT = 3.6
-const ARCH_TILE = 4 // centre tile (cell 4) reserved for the doorway
+const ARCH_TILE = 4
 
-function buildSolidWall(side: WallSide, hasExit: boolean): THREE.Group {
+// Shared materials/geometry across all bricks — keeps draw count flat
+// and the bricks visually identical.
+const sharedBrickGeom = new THREE.BoxGeometry(BRICK_W, BRICK_H, BRICK_D)
+
+function brickMaterial(palette: BrickPalette): THREE.MeshBasicMaterial {
+  const tex = makeBrickTexture(palette)
+  return new THREE.MeshBasicMaterial({ map: tex })
+}
+
+export interface WallOptions {
+  height?: number          // wall height in metres (default 3.6)
+  bricksAlong?: number     // number of brick columns along the wall (default 16)
+  palette?: BrickPalette   // brick palette (default WALL_PALETTE)
+  hasExit?: boolean        // punch a 2-brick-wide gap at the centre for a doorway
+  battlement?: boolean     // jagged tops with offset cap bricks (default true)
+}
+
+function buildBrickWall(side: WallSide, opts: WallOptions = {}): THREE.Group {
   const group = new THREE.Group()
-  const tileCount = 8
+  const height = opts.height ?? WALL_HEIGHT
+  const bricksAlong = opts.bricksAlong ?? 16
+  const palette = opts.palette ?? WALL_PALETTE
+  const hasExit = opts.hasExit ?? false
+  const battlement = opts.battlement ?? true
 
-  // Brick texture has 8 columns x 8 rows on its 256x128 canvas. We want
-  // the outlines to be readable at the iso camera distance, so each visible
-  // brick should be ~1m wide x ~0.5m tall in world space.
-  // Slab is 2m wide x WALL_HEIGHT tall. 2 bricks wide => repeat.x = 0.25
-  // (8 cols * 0.25 = 2). WALL_HEIGHT / 0.5 brick rows => repeat.y = (h/0.5)/8.
-  const tex = makeBrickTexture(WALL_PALETTE)
-  tex.repeat.set(0.25, WALL_HEIGHT / 4)
-  const wallMat = new THREE.MeshBasicMaterial({ map: tex })
-  const capMat = new THREE.MeshBasicMaterial({ color: WALL_PALETTE.highlight })
+  const rows = Math.max(1, Math.floor(height / BRICK_H))
+  const mat = brickMaterial(palette)
 
-  for (let i = 0; i < tileCount; i++) {
-    if (hasExit && i === ARCH_TILE) continue // open doorway
-    const along = i * TILE + TILE / 2
+  // Doorway gap: centre 2 brick columns for the arch
+  const doorMin = Math.floor(bricksAlong / 2) - 1
+  const doorMax = doorMin + 2
+  const doorHeight = Math.min(rows, 6) // open up to 6 rows above the door
 
-    const slab = new THREE.Mesh(
-      new THREE.BoxGeometry(TILE, WALL_HEIGHT, 0.5),
-      wallMat,
-    )
-    if (side === 'north') slab.position.set(along, WALL_HEIGHT / 2, 0)
-    else {
-      slab.rotation.y = Math.PI / 2
-      slab.position.set(0, WALL_HEIGHT / 2, along)
-    }
-    group.add(slab)
+  for (let r = 0; r < rows; r++) {
+    const y = r * BRICK_H + BRICK_H / 2
+    const offset = (r % 2) * (BRICK_W / 2) // masonry stagger
+    for (let c = 0; c < bricksAlong; c++) {
+      // doorway: skip bricks where the arch sits
+      if (hasExit && c >= doorMin && c < doorMax && r < doorHeight) continue
+      // small ruined feel — drop a brick every now and then on top rows
+      if (r === rows - 1 && (c + r) % 4 === 1) continue
 
-    // Battlement: a small tooth on top of every other tile.
-    if (i % 2 === 0) {
-      const tooth = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.45, 0.55), capMat)
-      if (side === 'north') tooth.position.set(along, WALL_HEIGHT + 0.22, 0)
-      else {
-        tooth.rotation.y = Math.PI / 2
-        tooth.position.set(0, WALL_HEIGHT + 0.22, along)
+      const along = c * BRICK_W + offset + BRICK_W / 2
+      // skip bricks that fall outside the wall (the stagger can push them past)
+      if (along > bricksAlong * BRICK_W - 0.05) continue
+
+      const brick = new THREE.Mesh(sharedBrickGeom, mat)
+      if (side === 'north') {
+        brick.position.set(along, y, BRICK_D / 2)
+      } else {
+        brick.position.set(BRICK_D / 2, y, along)
       }
+      group.add(brick)
+    }
+  }
+
+  // Battlements: chunky tooth bricks above the top course on every other column.
+  if (battlement) {
+    for (let c = 1; c < bricksAlong; c += 2) {
+      if (hasExit && c >= doorMin && c < doorMax) continue
+      const along = c * BRICK_W
+      const tooth = new THREE.Mesh(sharedBrickGeom, mat)
+      tooth.scale.set(0.9, 0.9, 1.0)
+      if (side === 'north') tooth.position.set(along, rows * BRICK_H + BRICK_H / 2, BRICK_D / 2)
+      else tooth.position.set(BRICK_D / 2, rows * BRICK_H + BRICK_H / 2, along)
       group.add(tooth)
     }
   }
@@ -203,27 +221,29 @@ function buildSolidWall(side: WallSide, hasExit: boolean): THREE.Group {
   return group
 }
 
-// Corner pillar at the NW corner — anchors the room visually so the camera
-// sees a clear "front of the castle" silhouette.
-function buildCornerPillar(): THREE.Mesh {
-  const tex = makeBrickTexture(WALL_PALETTE)
-  // Pillar is 0.8m wide — show 1 brick across, ~5 rows tall.
-  tex.repeat.set(0.125, (WALL_HEIGHT + 0.5) / 4)
-  const mat = new THREE.MeshBasicMaterial({ map: tex })
-  const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.8, WALL_HEIGHT + 0.5, 0.8), mat)
-  mesh.position.set(0, (WALL_HEIGHT + 0.5) / 2, 0)
-  return mesh
+// Corner pillar — a column of stacked bricks taller than the walls.
+function buildCornerPillar(palette: BrickPalette = WALL_PALETTE): THREE.Group {
+  const group = new THREE.Group()
+  const mat = brickMaterial(palette)
+  const rows = Math.floor((WALL_HEIGHT + 0.8) / BRICK_H)
+  for (let r = 0; r < rows; r++) {
+    const brick = new THREE.Mesh(sharedBrickGeom, mat)
+    brick.scale.set(0.8, 1, 0.8)
+    brick.position.set(BRICK_D / 2, r * BRICK_H + BRICK_H / 2, BRICK_D / 2)
+    group.add(brick)
+  }
+  return group
 }
 
 export interface ShellOptions {
-  exits: WallSide[] // which sides have exits (controls wall openings + arches)
+  exits: WallSide[]      // which sides have exits (gaps + arches)
+  wall?: WallOptions     // per-room wall styling (height, palette, density, battlements)
+  cornerPillar?: boolean // NW corner pillar (default true). Disable for ruin look.
 }
 
 export async function buildStructure(_loader: AssetLoader, opts: ShellOptions = { exits: [] }): Promise<THREE.Group> {
   const group = new THREE.Group()
 
-  // Floor: chequered stone tiles. Was a single dark slab; now a tiled
-  // pattern that reads under the mono pass.
   const floorTex = makeFloorTexture()
   const floor = new THREE.Mesh(
     new THREE.PlaneGeometry(8 * TILE, 8 * TILE),
@@ -233,15 +253,14 @@ export async function buildStructure(_loader: AssetLoader, opts: ShellOptions = 
   floor.position.set(8, 0, 8)
   group.add(floor)
 
-  // North + west walls (the two visible from the iso camera).
-  group.add(buildSolidWall('north', opts.exits.includes('north')))
-  group.add(buildSolidWall('west', opts.exits.includes('west')))
+  const wallOpts = opts.wall ?? {}
+  group.add(buildBrickWall('north', { ...wallOpts, hasExit: opts.exits.includes('north') }))
+  group.add(buildBrickWall('west', { ...wallOpts, hasExit: opts.exits.includes('west') }))
 
-  // Corner pillar at NW.
-  group.add(buildCornerPillar())
+  if (opts.cornerPillar ?? true) {
+    group.add(buildCornerPillar(wallOpts.palette))
+  }
 
-  // Arches at any exits the camera can see (n/w). South/east exits — the
-  // player walks off the front-facing edge so no arch needed.
   if (opts.exits.includes('north')) {
     group.add(buildArch(ARCH_TILE * TILE + TILE / 2, 0.25))
   }

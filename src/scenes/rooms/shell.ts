@@ -35,18 +35,34 @@ const TINT_RGB: Record<RoomTint, number> = {
   red: 0xc04050,
 }
 
-// `exits` is the list of WALL SIDES that have a doorway. buildStructure
-// uses it to leave gaps in the corresponding walls and place an arch in
-// the gap. Pass the same sides you'll later room.addExit() on.
+// Wall variants — each room can pick a flavour so they don't all look
+// identical. Castle = tall walls with battlements. Tower = even taller,
+// no battlements (clean turret look). Dungeon = shorter, no battlements
+// (low ruined feel). Hazard = mid-height with no battlements.
+export type RoomStyle = 'castle' | 'tower' | 'dungeon' | 'hazard'
+
+const STYLE_TO_WALL: Record<RoomStyle, { height: number; battlement: boolean; cornerPillar: boolean }> = {
+  castle:  { height: 3.6, battlement: true,  cornerPillar: true },
+  tower:   { height: 4.4, battlement: false, cornerPillar: true },
+  dungeon: { height: 2.6, battlement: false, cornerPillar: false },
+  hazard:  { height: 3.0, battlement: true,  cornerPillar: false },
+}
+
 export async function buildRoomShell(
   id: string,
   loader: AssetLoader,
   tint: RoomTint = 'yellow',
   exits: ('north' | 'south' | 'east' | 'west')[] = [],
+  style: RoomStyle = 'castle',
 ): Promise<Room> {
   const room = new Room(id, 8, 8)
   room.tint = TINT_RGB[tint]
-  room.group.add(await buildStructure(loader, { exits }))
+  const cfg = STYLE_TO_WALL[style]
+  room.group.add(await buildStructure(loader, {
+    exits,
+    wall: { height: cfg.height, battlement: cfg.battlement },
+    cornerPillar: cfg.cornerPillar,
+  }))
   for (const light of buildHallLights()) room.group.add(light)
   for (const [x, y, z] of TORCH_POSITIONS) room.addTorch(new Torch(x, y, z))
   return room
@@ -87,13 +103,13 @@ export function addExitArch(room: Room, direction: 'north' | 'south' | 'east' | 
   addExitBeacon(room, edge - 0.6, mid)
 }
 
-// Raised sandstone platform — full-bright material so the bricks paint
-// uniformly through the mono pass (no Lambert falloff).
+// Raised sandstone platform — repeat the single-brick texture across the
+// platform face so each brick reads at world scale (~1m wide × 0.5m tall).
 export function addPlatform(room: Room, gridX: number, gridZ: number, height: number): void {
   const block = new StaticBlock(gridX, gridZ, height)
   const tex = makeBrickTexture(SANDSTONE_PALETTE)
-  // 2m wide => 2 bricks across; height/0.5 rows tall.
-  tex.repeat.set(0.25, height / 4)
+  // 2m face: 2 bricks across × (height/0.5) rows tall
+  tex.repeat.set(2, height / 0.5)
   const mesh = new THREE.Mesh(
     new THREE.BoxGeometry(TILE, height, TILE),
     new THREE.MeshBasicMaterial({ map: tex }),
@@ -170,8 +186,8 @@ export function addPatrolEnemy(
 export function addPushBlock(room: Room, gridX: number, gridZ: number): void {
   const block = new PushBlock(gridX, gridZ)
   const tex = makeBrickTexture(AMBER_BLOCK_PALETTE)
-  // 1.6m cube => 2 bricks across, 2 rows tall.
-  tex.repeat.set(0.25, 0.25)
+  // 1.6m face: ~2 bricks across, 2 rows tall (brick is 1m × 0.5m)
+  tex.repeat.set(1.6, 2)
   const mesh = new THREE.Mesh(
     new THREE.BoxGeometry(1.6, 1.0, 1.6),
     new THREE.MeshBasicMaterial({ map: tex }),

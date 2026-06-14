@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import * as THREE from 'three'
 import { CharacterVisual } from '../../src/game/characters/CharacterVisual'
 import { TRANSFORM_DURATION } from '../../src/game/characters/TransformSequence'
 
@@ -9,39 +10,47 @@ function step(visual: CharacterVisual, seconds: number, input = STILL): void {
   for (let t = 0; t < seconds; t += dt) visual.update(dt, input)
 }
 
+function rigsAndSprite(v: CharacterVisual): { knight: THREE.Object3D; werewolf: THREE.Object3D; sprite: THREE.Object3D } {
+  const children = v.group.children
+  return {
+    knight: children[0]!,
+    werewolf: children[1]!,
+    sprite: children[2]!,
+  }
+}
+
 describe('CharacterVisual', () => {
-  it('starts as the human form with only the knight visible', () => {
+  it('starts as human with the knight rig visible and sprite hidden', () => {
     const v = new CharacterVisual()
     expect(v.currentForm).toBe('human')
-    const [knightRoot, werewolfRoot] = v.group.children
-    expect(knightRoot!.visible).toBe(true)
-    expect(werewolfRoot!.visible).toBe(false)
+    const { knight, werewolf, sprite } = rigsAndSprite(v)
+    // need one update tick to settle the initial visibility state
+    v.update(1 / 60, STILL)
+    expect(knight.visible).toBe(true)
+    expect(werewolf.visible).toBe(false)
+    expect(sprite.visible).toBe(false)
   })
 
-  it('completes a transform: form flips and only the target rig is visible', () => {
+  it('completes a transform: form flips, werewolf rig becomes the visible one', () => {
     const v = new CharacterVisual()
     v.startTransform('werewolf')
     step(v, TRANSFORM_DURATION + 0.1)
     expect(v.currentForm).toBe('werewolf')
-    const [knightRoot, werewolfRoot] = v.group.children
-    expect(knightRoot!.visible).toBe(false)
-    expect(werewolfRoot!.visible).toBe(true)
+    const { knight, werewolf, sprite } = rigsAndSprite(v)
+    expect(knight.visible).toBe(false)
+    expect(werewolf.visible).toBe(true)
+    expect(sprite.visible).toBe(false)
   })
 
-  it('flickers both rigs during the sequence', () => {
+  it('shows the pixel sprite during the transformation', () => {
     const v = new CharacterVisual()
     v.startTransform('werewolf')
-    let sawKnight = false
-    let sawWerewolf = false
-    const dt = 1 / 120
-    for (let t = 0; t < TRANSFORM_DURATION - 0.05; t += dt) {
-      v.update(dt, STILL)
-      const [knightRoot, werewolfRoot] = v.group.children
-      if (knightRoot!.visible) sawKnight = true
-      if (werewolfRoot!.visible) sawWerewolf = true
-    }
-    expect(sawKnight).toBe(true)
-    expect(sawWerewolf).toBe(true)
+    // sample mid-sequence
+    step(v, TRANSFORM_DURATION / 2)
+    const { knight, werewolf, sprite } = rigsAndSprite(v)
+    expect(sprite.visible).toBe(true)
+    expect(knight.visible).toBe(false)
+    expect(werewolf.visible).toBe(false)
   })
 
   it('re-trigger mid-sequence restarts toward the new target', () => {
@@ -58,28 +67,12 @@ describe('CharacterVisual', () => {
     const dt = 1 / 60
     let x = 0
     for (let i = 0; i < 30; i++) {
-      x += 4 * dt // moving at player speed
+      x += 4 * dt
       v.update(dt, { playerState: 'grounded', position: { x, z: 0 } })
     }
     expect(v.animator.state).toBe('walk')
     v.update(dt, { playerState: 'grounded', position: { x, z: 0 } })
     expect(v.animator.state).toBe('idle')
-  })
-
-  it('jitters the shown rig during the flicker (scale and tilt deviate)', () => {
-    const v = new CharacterVisual()
-    v.startTransform('werewolf')
-    let sawJitteredScale = false
-    let sawTilt = false
-    const dt = 1 / 120
-    for (let t = 0; t < TRANSFORM_DURATION - 0.05; t += dt) {
-      v.update(dt, STILL)
-      const shown = v.group.children.find((c) => c.visible)!
-      if (Math.abs(shown.scale.x - shown.scale.z) > 1e-6) sawJitteredScale = true
-      if (shown.rotation.z !== 0) sawTilt = true
-    }
-    expect(sawJitteredScale).toBe(true)
-    expect(sawTilt).toBe(true)
   })
 
   it('applies the animator pose to the active rig (joints actually move)', () => {

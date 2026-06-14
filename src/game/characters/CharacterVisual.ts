@@ -24,6 +24,10 @@ export class CharacterVisual {
   private lastPosition: { x: number; z: number } | null = null
 
   constructor() {
+    // Scale 1.6x: the rig was tuned for a 3D dungeon render; under the
+    // mono shader the original size read as a tiny blob. Bigger makes the
+    // hat / cloak / legs all distinguishable in the isometric silhouette.
+    this.group.scale.setScalar(1.6)
     this.group.add(this.knight.root)
     this.group.add(this.werewolf.root)
     this.werewolf.root.visible = false

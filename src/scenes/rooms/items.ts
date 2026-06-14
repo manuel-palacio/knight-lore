@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { Pickup } from '../../game/Pickup'
-import { makeHeroMaterial, makeToonMaterial } from '../../game/Materials'
+import { makeHeroMaterial } from '../../game/Materials'
 import type { Room } from '../../game/Room'
 import { tileCenter } from './shell'
 
@@ -60,7 +60,7 @@ function buildWineBottle(): THREE.Group {
   g.add(neck)
   const cork = new THREE.Mesh(
     new THREE.CylinderGeometry(0.055, 0.055, 0.04, 12),
-    makeToonMaterial(0x6a4a20),
+    makeHeroMaterial(0xc89060, 0.9),
   )
   cork.position.y = 0.85
   g.add(cork)
@@ -77,13 +77,13 @@ function buildCrystalBall(): THREE.Group {
   g.add(ball)
   const base = new THREE.Mesh(
     new THREE.CylinderGeometry(0.18, 0.22, 0.08, 14),
-    makeToonMaterial(0x4a3220),
+    makeHeroMaterial(0xc89060, 0.9),
   )
   base.position.y = 0.04
   g.add(base)
   const ring = new THREE.Mesh(
     new THREE.TorusGeometry(0.18, 0.025, 8, 18),
-    makeToonMaterial(0x6a4820),
+    makeHeroMaterial(0xddaa70, 0.9),
   )
   ring.rotation.x = -Math.PI / 2
   ring.position.y = 0.09
@@ -103,6 +103,7 @@ const BUILDERS: Record<ItemId, () => THREE.Group> = {
 export function makeItemMesh(id: ItemId): THREE.Object3D {
   const group = new THREE.Group()
   const shape = BUILDERS[id]()
+  shape.scale.setScalar(1.7) // scale up — pinpoint items vanished under iso/mono
   shape.traverse((o) => {
     if ((o as THREE.Mesh).isMesh) (o as THREE.Mesh).castShadow = true
   })

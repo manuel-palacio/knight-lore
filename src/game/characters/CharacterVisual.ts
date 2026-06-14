@@ -24,10 +24,11 @@ export class CharacterVisual {
   private lastPosition: { x: number; z: number } | null = null
 
   constructor() {
-    // Scale 1.6x: the rig was tuned for a 3D dungeon render; under the
-    // mono shader the original size read as a tiny blob. Bigger makes the
-    // hat / cloak / legs all distinguishable in the isometric silhouette.
-    this.group.scale.setScalar(1.6)
+    // Scale 2.2x: at the iso camera distance the character has to take up
+    // a clear chunk of the room for the hat brim / cloak / legs silhouette
+    // features to be readable. Smaller scales collapse to a single blob
+    // under the mono shader's quantisation.
+    this.group.scale.setScalar(2.2)
     this.group.add(this.knight.root)
     this.group.add(this.werewolf.root)
     this.werewolf.root.visible = false

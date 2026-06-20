@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import * as THREE from 'three'
 import { CharacterVisual } from '../../src/game/characters/CharacterVisual'
 import { TRANSFORM_DURATION } from '../../src/game/characters/TransformSequence'
 
@@ -96,6 +97,31 @@ describe('CharacterVisual', () => {
       lastRotation = legL!.rotation.x
     }
     expect(moved).toBe(true)
+  })
+
+  it('mirrors the sprite horizontally when moving screen-left, holds the facing while idle', () => {
+    const v = new CharacterVisual()
+    const dt = 1 / 60
+    // Walk in the +x direction. In iso, +x projects to screen-RIGHT
+    // (screenVx = vx - vz is positive), so the sprite faces right (natural).
+    let x = 0
+    for (let i = 0; i < 30; i++) {
+      x += 4 * dt
+      v.update(dt, { playerState: 'grounded', position: { x, z: 0 } })
+    }
+    const human = parts(v).humanSprite as THREE.Sprite
+    expect(human.scale.x).toBeGreaterThan(0)
+    // Stop. Facing should hold (still positive).
+    for (let i = 0; i < 30; i++) {
+      v.update(dt, { playerState: 'grounded', position: { x, z: 0 } })
+    }
+    expect(human.scale.x).toBeGreaterThan(0)
+    // Walk in -x: projects to screen-LEFT, sprite mirrors (negative).
+    for (let i = 0; i < 30; i++) {
+      x -= 4 * dt
+      v.update(dt, { playerState: 'grounded', position: { x, z: 0 } })
+    }
+    expect(human.scale.x).toBeLessThan(0)
   })
 
   it('resetMotion prevents a teleport from reading as walk velocity', () => {

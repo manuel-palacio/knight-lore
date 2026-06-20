@@ -38,6 +38,7 @@ export class CharacterVisual {
   private lastPosition: { x: number; z: number } | null = null
   private transformElapsed = 0
   private walkPhase = 0
+  private facingRight = true
 
   constructor() {
     // 3D rigs kept around invisibly so animator state (joints, tests)
@@ -141,6 +142,24 @@ export class CharacterVisual {
       const active = isWolf ? this.wolfSprite : this.humanSprite
       active.setFrame(Math.floor(this.walkPhase) % active.frameCount)
       this.rigFor(this.form).applyPose(this.animator.pose(this.form))
+    }
+
+    this.applyFacing(vx, vz)
+  }
+
+  // Sprite mirror for left-facing motion. Three.js orthographic camera at
+  // (D, H, D) looking at (8, 0, 8) computes its right-axis as
+  // normalize(forward × up) = (+1, 0, -1)/√2 in world space — so the
+  // projection of velocity onto screen-right is (vx - vz). Sticky: hold the
+  // last facing while idle so the character doesn't snap back when stopped.
+  private applyFacing(vx: number, vz: number): void {
+    const screenVx = vx - vz
+    if (Math.abs(screenVx) > 0.05) {
+      this.facingRight = screenVx > 0
+    }
+    const sign = this.facingRight ? 1 : -1
+    for (const s of [this.humanSprite.sprite, this.wolfSprite.sprite, this.transformSprite.sprite]) {
+      s.scale.x = sign * Math.abs(s.scale.x)
     }
   }
 

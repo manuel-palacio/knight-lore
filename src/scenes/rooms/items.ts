@@ -4,7 +4,19 @@ import { PixelSprite } from '../../game/PixelSprite'
 import type { Room } from '../../game/Room'
 import { tileCenter } from './shell'
 
-export type ItemId = 'goblet' | 'gem' | 'wine-bottle' | 'crystal-ball'
+// Cure-sequence items (the 4 the current quest tracks) plus the four
+// additional Knight Lore inventory items wired for future placement. Adding
+// to the union here is enough to spawn one via addPickup — the cure
+// sequence in GameState.ts decides which are required for the win.
+export type ItemId =
+  | 'goblet'
+  | 'gem'
+  | 'wine-bottle'
+  | 'crystal-ball'
+  | 'boot'
+  | 'teacup'
+  | 'poison'
+  | 'life'
 
 // Each sprite extracted from strategywiki.org and recoloured white-on-
 // transparent. The mono shader tints to the active room's hue.
@@ -13,6 +25,10 @@ const SPRITE_URL: Record<ItemId, string> = {
   'gem': '/sprites/items/gem.png',
   'wine-bottle': '/sprites/items/wine-bottle.png',
   'crystal-ball': '/sprites/items/crystal-ball.png',
+  'boot': '/sprites/items/boot.png',
+  'teacup': '/sprites/items/teacup.png',
+  'poison': '/sprites/items/poison.png',
+  'life': '/sprites/items/life.png',
 }
 
 // World height for a 16-25px sprite. ~0.5m world × 2 group scale wouldn't

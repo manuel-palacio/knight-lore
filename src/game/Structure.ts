@@ -72,41 +72,6 @@ export function makeBrickTexture(palette: BrickPalette = WALL_PALETTE): THREE.Ca
   return tex
 }
 
-// Floor: thin tile-outline grid on black, like the brick walls. The mono
-// shader paints the outlines in the room tint and the rest pure black,
-// so the floor reads as "void with a faint grid" — the original game's
-// stage feel, not a high-contrast chequer.
-function makeFloorTexture(): THREE.CanvasTexture {
-  const W = 256
-  const H = 256
-  const N = 8
-  const cell = W / N
-  const stroke = 2
-  const canvas = document.createElement('canvas')
-  canvas.width = W
-  canvas.height = H
-  const ctx = canvas.getContext('2d')!
-  ctx.fillStyle = '#000000'
-  ctx.fillRect(0, 0, W, H)
-  ctx.fillStyle = '#a07840'
-  for (let r = 0; r < N; r++) {
-    for (let c = 0; c < N; c++) {
-      const x = c * cell
-      const y = r * cell
-      ctx.fillRect(x, y, cell, stroke)
-      ctx.fillRect(x, y, stroke, cell)
-    }
-  }
-  // close the last row/col
-  ctx.fillRect(0, H - stroke, W, stroke)
-  ctx.fillRect(W - stroke, 0, stroke, H)
-  const tex = new THREE.CanvasTexture(canvas)
-  tex.magFilter = THREE.NearestFilter
-  tex.minFilter = THREE.NearestMipmapLinearFilter
-  tex.colorSpace = THREE.SRGBColorSpace
-  tex.anisotropy = TEXTURE_ANISOTROPY
-  return tex
-}
 
 // Stone arch: two columns flanking a 2m-wide doorway with a half-torus
 // crown. Solid-color stone material — at column scale (0.3m wide), tiling
@@ -244,10 +209,11 @@ export interface ShellOptions {
 export async function buildStructure(_loader: AssetLoader, opts: ShellOptions = { exits: [] }): Promise<THREE.Group> {
   const group = new THREE.Group()
 
-  const floorTex = makeFloorTexture()
+  // Pure-black void floor — no grid. Plane still kept so things above the
+  // floor (player, items, blocks) z-sort correctly against the room walls.
   const floor = new THREE.Mesh(
     new THREE.PlaneGeometry(8 * TILE, 8 * TILE),
-    new THREE.MeshBasicMaterial({ map: floorTex }),
+    new THREE.MeshBasicMaterial({ color: 0x000000 }),
   )
   floor.rotation.x = -Math.PI / 2
   floor.position.set(8, 0, 8)

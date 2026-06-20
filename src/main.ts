@@ -19,7 +19,6 @@ import type { Entity } from './game/Entity'
 
 const PICKUP_RANGE = 1.6
 const PICKUP_HEIGHT = 1.8
-const CARRY_OFFSET_Y = 1.2
 // Push trigger upper bound matches collision-pinned distance (half-tile + half-player + slack)
 const PUSH_RANGE_MAX = 1.5
 const PUSH_RANGE_MIN = 0.4
@@ -168,12 +167,10 @@ async function main(): Promise<void> {
       if (!near) continue
       player.tryPickup({ id: e.id, position: e.position }, state, () => {
         e.collect()
+        // Carried items live in the HUD carry slot, not on the hero. room.remove
+        // already detached the mesh from the scene; leave it detached until the
+        // item is dropped (dropCarried re-adds it to the room).
         room.remove(e)
-        if (e.object3D && player.object3D) {
-          player.object3D.add(e.object3D)
-          e.object3D.position.set(0, CARRY_OFFSET_Y, 0)
-          setHaloVisible(e.object3D, false)
-        }
         carriedPickup = e
       })
       return

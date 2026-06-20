@@ -17,7 +17,9 @@ export interface VisualInput {
 const TRANSFORM_STRIP_FRAMES = 30
 const WEREWOLF_IDLE_FRAME = TRANSFORM_STRIP_FRAMES - 1
 const HUMAN_WALK_FRAMES = 26
-const WOLF_WALK_FRAMES = 46
+// sabrewulf-walk.png re-extracted from recording.mov (5 clean front frames);
+// the prior 46-frame sheet was a garbled capture that rendered as a swirl.
+const WOLF_WALK_FRAMES = 5
 const WALK_FPS = 8
 
 // Owns the player's visuals — a pixel-art SPRITE for the on-screen body
@@ -75,6 +77,16 @@ export class CharacterVisual {
     this.group.add(this.humanSprite.sprite)
     this.group.add(this.wolfSprite.sprite)
     this.group.add(this.transformSprite.sprite)
+
+    // The hero reads as a flat billboard; depth-testing it against the room's
+    // 3D blocks clips the body whenever the player stands beside or behind a
+    // mesh. Visibility-first: draw the character last and skip depth-testing so
+    // the whole body always shows. (Knight Lore's tile occlusion isn't our goal
+    // here — never losing the player is.)
+    for (const s of [this.humanSprite.sprite, this.wolfSprite.sprite, this.transformSprite.sprite]) {
+      ;(s.material as THREE.SpriteMaterial).depthTest = false
+      s.renderOrder = 10
+    }
   }
 
   // Lags GameState.form until the flicker commits — visual state only.

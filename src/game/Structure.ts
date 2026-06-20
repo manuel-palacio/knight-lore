@@ -47,7 +47,12 @@ export function makeBrickTexture(palette: BrickPalette = WALL_PALETTE): THREE.Ca
   canvas.height = H
   const ctx = canvas.getContext('2d')!
 
-  ctx.fillStyle = '#000000'
+  // Brick FACE fill. Not pure black: the mono post-pass snaps luminance into
+  // bands and band 0 is the void floor's colour, so black-faced bricks dissolve
+  // into the floor as hollow wireframes. The palette's shadow shade lands one
+  // band up — solid dim faces with bright edges, like the original's filled
+  // blocks — while the floor plane itself stays #000000.
+  ctx.fillStyle = palette.shadow
   ctx.fillRect(0, 0, W, H)
 
   ctx.fillStyle = palette.body
@@ -219,21 +224,33 @@ export async function buildStructure(_loader: AssetLoader, opts: ShellOptions = 
   floor.position.set(8, 0, 8)
   group.add(floor)
 
+  // PHYSICS_AND_COLLISION.md treats the grid edge (world 0 / 16) as the room
+  // wall — the player is correctly blocked there. The brick meshes therefore
+  // must sit OUTSIDE that boundary (their interior face flush with the floor
+  // edge) so the body stops against the wall instead of overlapping it. We
+  // shift the N/W walls out by one brick depth; this aligns art to the
+  // authoritative boundary without touching collision.
   const wallOpts = opts.wall ?? {}
-  group.add(buildBrickWall('north', { ...wallOpts, hasExit: opts.exits.includes('north') }))
-  group.add(buildBrickWall('west', { ...wallOpts, hasExit: opts.exits.includes('west') }))
+  const northWall = buildBrickWall('north', { ...wallOpts, hasExit: opts.exits.includes('north') })
+  northWall.position.z = -BRICK_D
+  group.add(northWall)
+  const westWall = buildBrickWall('west', { ...wallOpts, hasExit: opts.exits.includes('west') })
+  westWall.position.x = -BRICK_D
+  group.add(westWall)
 
   if (opts.cornerPillar ?? true) {
-    group.add(buildCornerPillar(wallOpts.palette))
+    const pillar = buildCornerPillar(wallOpts.palette)
+    pillar.position.set(-BRICK_D, 0, -BRICK_D)
+    group.add(pillar)
   }
 
   if (opts.exits.includes('north')) {
-    group.add(buildArch(ARCH_TILE * TILE + TILE / 2, 0.25))
+    group.add(buildArch(ARCH_TILE * TILE + TILE / 2, 0.25 - BRICK_D))
   }
   if (opts.exits.includes('west')) {
     const arch = buildArch(0, 0)
     arch.rotation.y = Math.PI / 2
-    arch.position.set(0.25, 0, ARCH_TILE * TILE + TILE / 2)
+    arch.position.set(0.25 - BRICK_D, 0, ARCH_TILE * TILE + TILE / 2)
     group.add(arch)
   }
 

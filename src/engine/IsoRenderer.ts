@@ -140,14 +140,18 @@ export class IsoRenderer {
   }
 
   private cube(gx: number, gz: number, height: number, shades: Shades): Renderable {
-    // Depth from the near corner (max x/z) so a cube paints after everything behind it.
-    const nearX = (gx + 1) * TILE
-    const nearZ = (gz + 1) * TILE
+    // Sort by the CELL CENTRE, not the near corner. A tall back-wall cube sorted
+    // by its near corner over-sorts (its corner x exceeds an actor standing in
+    // front of it on a lower z), drawing the wall OVER the actor — the player
+    // appears to vanish into the wall. Cell-centre depth keeps walls behind any
+    // in-bounds actor.
+    const cx = (gx + 0.5) * TILE
+    const cz = (gz + 0.5) * TILE
     return {
       gx,
       gz,
       height,
-      depth: isoDepth(nearX, height, nearZ),
+      depth: isoDepth(cx, 0, cz),
       draw: (ctx, cfg) => drawIsoCube(ctx, cfg, gx, gz, height, shades),
     }
   }
@@ -223,57 +227,132 @@ function drawIsoCube(
   const Cb = bot(x1, z1)
   const Db = bot(x0, z1)
 
-  // Right (east) face
+  const rows = Math.max(2, Math.round(height * 2)) // ~2 brick courses per world unit
+
+  // Right (east) face, then left (south) face — fill, then staggered brickwork.
   fillQuad(ctx, [Bt, Ct, Cb, Bb], shades.right)
-  hatch(ctx, Bt, Ct, Bb, Cb, shades.line)
-  // Left (south) face
+  brickFace(ctx, Bt, Ct, Bb, Cb, rows, shades.line)
   fillQuad(ctx, [Dt, Ct, Cb, Db], shades.left)
-  hatch(ctx, Dt, Ct, Db, Cb, shades.line)
+  brickFace(ctx, Dt, Ct, Db, Cb, rows, shades.line)
   // Top diamond
   fillQuad(ctx, [At, Bt, Ct, Dt], shades.top)
+
+  // Crisp silhouette + edges — this is what makes the cube read as solid masonry.
+  ctx.lineJoin = 'round'
+  ctx.strokeStyle = shades.line
+  ctx.lineWidth = 1.5
+  strokePath(ctx, [At, Bt, Ct, Dt], true)
+  line(ctx, Bt, Bb)
+  line(ctx, Ct, Cb)
+  line(ctx, Dt, Db)
+  line(ctx, Bb, Cb)
+  line(ctx, Cb, Db)
 }
 
-// A brick horseshoe doorway: outer arch in the wall hue with a black opening and
-// a few course lines. Drawn front-facing at the doorway base (screen point).
-function drawArch(ctx: CanvasRenderingContext2D, sx: number, sy: number, shades: Shades): void {
-  const w = 17 // half width
-  const h = 50 // total height
-  const t = 6 // wall thickness
-  const springY = sy - (h - w) // where the semicircle springs from
+function facePoint(
+  tA: { sx: number; sy: number },
+  tB: { sx: number; sy: number },
+  bA: { sx: number; sy: number },
+  bB: { sx: number; sy: number },
+  u: number,
+  t: number,
+): { sx: number; sy: number } {
+  return lerp(lerp(tA, tB, u), lerp(bA, bB, u), t)
+}
 
-  const outer = (): void => {
-    ctx.beginPath()
-    ctx.moveTo(sx - w, sy)
-    ctx.lineTo(sx - w, springY)
-    ctx.arc(sx, springY, w, Math.PI, 0, false)
-    ctx.lineTo(sx + w, sy)
-    ctx.closePath()
+// Staggered brick courses on a quad face (tA-tB top edge, bA-bB bottom edge).
+function brickFace(
+  ctx: CanvasRenderingContext2D,
+  tA: { sx: number; sy: number },
+  tB: { sx: number; sy: number },
+  bA: { sx: number; sy: number },
+  bB: { sx: number; sy: number },
+  rows: number,
+  color: string,
+): void {
+  ctx.strokeStyle = color
+  ctx.lineWidth = 1
+  const cols = 2
+  for (let i = 1; i < rows; i++) {
+    line(ctx, lerp(tA, bA, i / rows), lerp(tB, bB, i / rows)) // course line
   }
+  for (let i = 0; i < rows; i++) {
+    const off = (i % 2) * 0.5
+    for (let j = 0; j <= cols; j++) {
+      const u = (j + off) / cols
+      if (u <= 0 || u >= 1) continue
+      line(ctx, facePoint(tA, tB, bA, bB, u, i / rows), facePoint(tA, tB, bA, bB, u, (i + 1) / rows))
+    }
+  }
+}
+
+function line(ctx: CanvasRenderingContext2D, a: { sx: number; sy: number }, b: { sx: number; sy: number }): void {
+  ctx.beginPath()
+  ctx.moveTo(a.sx, a.sy)
+  ctx.lineTo(b.sx, b.sy)
+  ctx.stroke()
+}
+
+function strokePath(ctx: CanvasRenderingContext2D, pts: { sx: number; sy: number }[], close: boolean): void {
+  ctx.beginPath()
+  ctx.moveTo(pts[0]!.sx, pts[0]!.sy)
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i]!.sx, pts[i]!.sy)
+  if (close) ctx.closePath()
+  ctx.stroke()
+}
+
+// A stacked-brick doorway: two jamb columns and a voussoir arch ring around a
+// black opening, with mortar joints. Drawn front-facing at the doorway base.
+function drawArch(ctx: CanvasRenderingContext2D, sx: number, sy: number, shades: Shades): void {
+  const w = 19 // outer half-width
+  const t = 8 // ring/jamb thickness
+  const cy = sy - 30 // arc centre (springline)
+  const ringPt = (r: number, theta: number): { sx: number; sy: number } => ({
+    sx: sx + r * Math.cos(theta),
+    sy: cy - r * Math.sin(theta),
+  })
+
+  // Outer silhouette: jambs + outer semicircle.
   ctx.fillStyle = shades.right
-  outer()
+  ctx.beginPath()
+  ctx.moveTo(sx - w, sy)
+  ctx.lineTo(sx - w, cy)
+  ctx.arc(sx, cy, w, Math.PI, 0, false)
+  ctx.lineTo(sx + w, sy)
+  ctx.closePath()
   ctx.fill()
 
-  // Opening
+  // Black opening.
   ctx.fillStyle = '#000'
   ctx.beginPath()
   ctx.moveTo(sx - w + t, sy)
-  ctx.lineTo(sx - w + t, springY)
-  ctx.arc(sx, springY, w - t, Math.PI, 0, false)
+  ctx.lineTo(sx - w + t, cy)
+  ctx.arc(sx, cy, w - t, Math.PI, 0, false)
   ctx.lineTo(sx + w - t, sy)
   ctx.closePath()
   ctx.fill()
 
-  // Course lines on the jambs
   ctx.strokeStyle = shades.line
   ctx.lineWidth = 1
-  for (let y = sy - 8; y > springY; y -= 10) {
-    ctx.beginPath()
-    ctx.moveTo(sx - w, y)
-    ctx.lineTo(sx - w + t, y)
-    ctx.moveTo(sx + w - t, y)
-    ctx.lineTo(sx + w, y)
-    ctx.stroke()
+  // Voussoir joints (radial) around the arch ring.
+  for (let k = 0; k <= 6; k++) {
+    const theta = (k / 6) * Math.PI
+    line(ctx, ringPt(w - t, theta), ringPt(w, theta))
   }
+  // Jamb courses (horizontal) on both columns.
+  for (let y = sy - 7; y > cy; y -= 8) {
+    line(ctx, { sx: sx - w, sy: y }, { sx: sx - w + t, sy: y })
+    line(ctx, { sx: sx + w - t, sy: y }, { sx: sx + w, sy: y })
+  }
+
+  // Crisp outline of the whole doorway.
+  ctx.lineWidth = 1.5
+  ctx.beginPath()
+  ctx.moveTo(sx - w, sy)
+  ctx.lineTo(sx - w, cy)
+  ctx.arc(sx, cy, w, Math.PI, 0, false)
+  ctx.lineTo(sx + w, sy)
+  ctx.stroke()
 }
 
 function fillQuad(ctx: CanvasRenderingContext2D, pts: { sx: number; sy: number }[], color: string): void {
@@ -283,31 +362,6 @@ function fillQuad(ctx: CanvasRenderingContext2D, pts: { sx: number; sy: number }
   ctx.closePath()
   ctx.fillStyle = color
   ctx.fill()
-}
-
-// Brick-hatch a face: a few lines parallel to the top edge (tTop→tBot is one
-// vertical edge, bTop... actually we draw horizontal courses between the two
-// vertical edges defined by (e0Top,e0Bot) and (e1Top,e1Bot)).
-function hatch(
-  ctx: CanvasRenderingContext2D,
-  e0Top: { sx: number; sy: number },
-  e1Top: { sx: number; sy: number },
-  e0Bot: { sx: number; sy: number },
-  e1Bot: { sx: number; sy: number },
-  color: string,
-): void {
-  ctx.strokeStyle = color
-  ctx.lineWidth = 1
-  const courses = 4
-  for (let i = 1; i < courses; i++) {
-    const t = i / courses
-    const a = lerp(e0Top, e0Bot, t)
-    const b = lerp(e1Top, e1Bot, t)
-    ctx.beginPath()
-    ctx.moveTo(a.sx, a.sy)
-    ctx.lineTo(b.sx, b.sy)
-    ctx.stroke()
-  }
 }
 
 function lerp(a: { sx: number; sy: number }, b: { sx: number; sy: number }, t: number): { sx: number; sy: number } {

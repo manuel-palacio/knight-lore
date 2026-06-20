@@ -40,4 +40,38 @@ describe('Pickup carry', () => {
     expect(pickup.object3D.position.x).toBeCloseTo(4, 5)
     expect(pickup.object3D.position.z).toBeCloseTo(4, 5)
   })
+
+  it('bobs the rendered Y around the simulation Y while uncollected', () => {
+    const room = new Room('test', 8, 8)
+    const pickup = new Pickup('goblet')
+    pickup.object3D = new THREE.Object3D()
+    pickup.position.set(4, 0.4, 4)
+    room.add(pickup)
+
+    // Before any update tick: bobPhase=0 -> sin(0)=0, no bob yet.
+    room.updateRenderPositions(1)
+    expect(pickup.object3D.position.y).toBeCloseTo(0.4, 5)
+
+    // Advance to a non-zero point on the sine — Y must depart from sim Y.
+    for (let i = 0; i < 60; i++) room.update(1 / 60, {})
+    room.updateRenderPositions(1)
+    expect(pickup.object3D.position.y).not.toBeCloseTo(0.4, 3)
+    // And the SIMULATION position must NOT move (gameplay unaffected).
+    expect(pickup.position.y).toBe(0.4)
+  })
+
+  it('does not bob while carried (skipped by the entity loop)', () => {
+    const room = new Room('test', 8, 8)
+    const pickup = new Pickup('goblet')
+    pickup.object3D = new THREE.Object3D()
+    pickup.position.set(4, 0.4, 4)
+    room.add(pickup)
+    pickup.collect()
+
+    for (let i = 0; i < 60; i++) room.update(1 / 60, {})
+    room.updateRenderPositions(1)
+    // No render-position update fired for an inactive entity — object3D
+    // keeps the carry-local position the carrier sets it to.
+    expect(pickup.object3D.position.y).toBe(0)
+  })
 })

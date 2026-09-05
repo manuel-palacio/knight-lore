@@ -19,6 +19,7 @@ import { ROOM_BUILDERS, START_ROOM } from './scenes/rooms/index'
 import { IsoRenderer, spriteDynamic, boxDynamic, type Dynamic, type SpriteDraw } from './engine/IsoRenderer'
 import { selectCharacterFrame, STRIP_CELLS } from './game/CharacterFrame'
 import { PushGauge } from './game/PushGauge'
+import { Transition } from './game/Transition'
 import { Beeper } from './engine/Beeper'
 import { projectToScreen, isoDepth } from './engine/IsoProjection'
 
@@ -28,6 +29,7 @@ const PUSH_RANGE_MAX = 1.5
 const PUSH_RANGE_MIN = 0.4
 const PUSH_STEPS_PER_TILE = 4
 const DEATH_FLASH_FRAMES = 2
+const WIPE_SECONDS = 0.25
 // Character strips are native ZX resolution, 24x36 cells per pose, drawn at
 // 1:1 canvas pixels so the sprite stays crisp. Cells per form: STRIP_CELLS.
 const TRANSFORM_FRAMES = 11
@@ -93,6 +95,7 @@ async function main(): Promise<void> {
   const player = new Player()
   const pushGauge = new PushGauge(PUSH_STEPS_PER_TILE)
   const beeper = new Beeper()
+  const wipe = new Transition(WIPE_SECONDS)
   let lastStepCount = 0
   let carriedPickup: Pickup | null = null
   let transitioning = false
@@ -229,12 +232,15 @@ async function main(): Promise<void> {
     const exit = manager.exitAt(player.position.x, player.position.z)
     if (!exit) return
     transitioning = true
+    wipe.start()
+    wipe.holdUntilLoaded()
     beeper.play('door')
     manager
       .transitionTo(exit.targetRoomId, exit.entryX, exit.entryZ)
       .then((room) => {
         entryFacing = exit.direction
         placePlayerAtSpawn(room)
+        wipe.loaded()
         transitioning = false
       })
       .catch((err) => {
@@ -407,7 +413,8 @@ async function main(): Promise<void> {
       hud.render(state, player.carrying)
       return
     }
-    if (transitioning) return
+    wipe.tick(dt)
+    if (transitioning || wipe.active) return
     const room = activeRoom()
     const ctx = {
       input,
@@ -443,6 +450,10 @@ async function main(): Promise<void> {
   loop.onRender(() => {
     const room = manager.active
     if (!room) return
+    if (wipe.active) {
+      renderer.clear()
+      return
+    }
     renderer.render(room, [...entityDynamics(room), characterDynamic()])
     if (state.isDusk && !morphing()) drawDusk()
     if (flashFrames > 0) {

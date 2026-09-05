@@ -50,10 +50,14 @@ export class IsoRenderer {
     return this.cfg
   }
 
+  clear(): void {
+    this.ctx.fillStyle = '#000'
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
+  }
+
   render(room: { grid: Grid; tint: number; exits?: { direction: string }[] }, dynamics: Dynamic[]): void {
     const ctx = this.ctx
-    ctx.fillStyle = '#000'
-    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
+    this.clear()
 
     const shades = toShades(room.tint)
     const items: Renderable[] = []

@@ -180,7 +180,10 @@ async function main(): Promise<void> {
     if (!input.wasPressed('KeyE')) return false
     const cauldron = room.entities.find((e): e is Cauldron => e instanceof Cauldron)
     if (!cauldron || !cauldron.isInRange(player.position)) return false
-    if (!state.deliverCureItem(player.carrying)) return false
+    if (!state.deliverCureItem(player.carrying)) {
+      if (player.carrying) beeper.play('wrong')
+      return false
+    }
     beeper.play(state.won ? 'win' : 'deliver')
     carriedPickup = null
     player.carrying = null

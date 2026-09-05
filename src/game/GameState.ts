@@ -1,3 +1,5 @@
+import { shuffled } from '../engine/Random'
+
 export type Form = 'human' | 'werewolf'
 
 export const HUMAN_DURATION = 20
@@ -5,7 +7,10 @@ export const WEREWOLF_DURATION = 20
 
 export const TOTAL_DAYS = 40
 export const STARTING_LIVES = 5
-export const CURE_SEQUENCE = ['goblet', 'gem', 'wine-bottle', 'crystal-ball'] as const
+// Every charm in the game. The cauldron asks for all of them, one at a time,
+// in an order drawn at the start of each game like the original.
+export const ALL_ITEMS = ['goblet', 'gem', 'wine-bottle', 'crystal-ball', 'boot', 'teacup', 'poison', 'life'] as const
+export type ItemId = (typeof ALL_ITEMS)[number]
 
 export type GameOverReason = 'days' | 'lives'
 
@@ -22,6 +27,11 @@ export class GameState {
   gameOver = false
   gameOverReason: GameOverReason | null = null
   cureProgress = 0
+  readonly cureSequence: ItemId[]
+
+  constructor(seed: number = Math.floor(Math.random() * 0x7fffffff)) {
+    this.cureSequence = shuffled(ALL_ITEMS, seed)
+  }
 
   onTransformed: () => void = () => {}
   onTransformWhileCarrying: (id: string) => void = () => {}
@@ -65,7 +75,7 @@ export class GameState {
   }
 
   get wantedItem(): string | null {
-    return CURE_SEQUENCE[this.cureProgress] ?? null
+    return this.cureSequence[this.cureProgress] ?? null
   }
 
   loseLife(): void {
@@ -82,7 +92,7 @@ export class GameState {
     if (carrying === null || carrying !== this.wantedItem) return false
     this.removeItem(carrying)
     this.cureProgress += 1
-    if (this.cureProgress >= CURE_SEQUENCE.length) this.won = true
+    if (this.cureProgress >= this.cureSequence.length) this.won = true
     return true
   }
 }

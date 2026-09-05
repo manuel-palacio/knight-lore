@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { SOUNDS, type SoundName } from '../../src/engine/Beeper'
 
-const EXPECTED: SoundName[] = ['step', 'jump', 'land', 'pickup', 'drop', 'deliver', 'transform', 'hurt', 'door', 'win']
+const EXPECTED: SoundName[] = ['step', 'jump', 'land', 'pickup', 'drop', 'deliver', 'transform', 'hurt', 'door', 'win', 'wrong']
 
 describe('beeper sound table', () => {
   it('defines every game sound as at least one audible note', () => {

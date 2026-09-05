@@ -1,3 +1,5 @@
+import { mulberry32 } from './Random'
+
 // Filmation room walls as a list of world-space bricks. Pure data so the layout
 // is unit-tested; IsoRenderer just draws boxes. The look copies the original:
 // solid corner columns joined by a sparse, see-through lattice of floating
@@ -139,16 +141,5 @@ function box(
     y0,
     y1,
     kind,
-  }
-}
-
-function mulberry32(seed: number): () => number {
-  let state = seed >>> 0
-  return () => {
-    state = (state + 0x6d2b79f5) >>> 0
-    let t = state
-    t = Math.imul(t ^ (t >>> 15), t | 1)
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
   }
 }

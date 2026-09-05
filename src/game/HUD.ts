@@ -1,16 +1,20 @@
 import type { GameState } from './GameState'
-import { CURE_SEQUENCE } from './GameState'
-import { iconUrl, isIconId } from './HudIcons'
+import { ALL_ITEMS } from './GameState'
+import { iconUrl } from './HudIcons'
 
 // Original-Knight-Lore-style scroll HUD (see 1.png, 5.png): hero icon +
 // lives + carry slot on the left, delivered-items row + DAY counter + sun/
 // moon in the centre, big pulsing "CAULDRON WANTS" slot on the right.
 // Item slots use inline SVG pixel-art icons (see HudIcons.ts).
+const ITEM_IDS: readonly string[] = ALL_ITEMS
+
+// Item slots show the real in-game item sprite, so the wanted item is
+// recognisable on the floor of a room.
 function setIconSlot(el: HTMLElement, id: string | null, baseClass = 'item-slot'): void {
   while (el.firstChild) el.removeChild(el.firstChild)
-  if (id && isIconId(id)) {
+  if (id && ITEM_IDS.includes(id)) {
     const img = document.createElement('img')
-    img.src = iconUrl(id)
+    img.src = `/sprites/items/${id}.png`
     img.alt = id
     img.style.width = '100%'
     img.style.height = '100%'
@@ -83,10 +87,10 @@ export class HUD {
 
     // Render the delivered items as a row of small icons
     while (this.deliveredEl.firstChild) this.deliveredEl.removeChild(this.deliveredEl.firstChild)
-    for (let i = 0; i < CURE_SEQUENCE.length; i++) {
+    for (let i = 0; i < state.cureSequence.length; i++) {
       const slot = document.createElement('span')
       const delivered = i < state.cureProgress
-      const id = CURE_SEQUENCE[i]!
+      const id = state.cureSequence[i]!
       setIconSlot(slot, delivered ? id : null)
       this.deliveredEl.appendChild(slot)
     }

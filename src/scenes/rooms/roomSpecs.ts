@@ -22,7 +22,7 @@ export interface RoomSpec {
   spikes?: Cell[]
   guards?: { from: Cell; to: Cell; speed?: number }[]
   ghosts?: Cell[]
-  pickups?: (Cell & { item: ItemId })[]
+  pickups?: (Cell & { item: ItemId; y?: number })[]
   movingPlatforms?: { from: Cell; to: Cell; height: number }[]
   pathGuards?: { path: Cell[] }[]
 }
@@ -70,6 +70,7 @@ export const LEGACY_ROOM_LINKS: { id: string; exits: { direction: Direction; tar
 export const ROOM_SPECS: RoomSpec[] = [
   {
     // Cellar: two ledges to hop between, blocks to shove into the spike corner.
+    pickups: [{ x: 6, z: 6, item: 'boot' }],
     id: 'room-006', tint: 'purple',
     exits: [{ direction: 'east', target: 'room-002' }, { direction: 'south', target: 'room-009' }],
     spawn: { x: 1, z: 1 },
@@ -80,6 +81,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     // Gate: a big central block with a guard sweeping the back row.
+    pickups: [{ x: 6, z: 1, item: 'goblet' }],
     id: 'room-007', tint: 'red',
     exits: [{ direction: 'south', target: 'room-004' }, { direction: 'west', target: 'room-010' }],
     spawn: { x: 1, z: 4 },
@@ -90,6 +92,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     // Pit: two spike rows with offset gaps, a ghost that closes in.
+    pickups: [{ x: 1, z: 7, item: 'poison' }],
     id: 'room-008', tint: 'red',
     exits: [{ direction: 'north', target: 'room-001' }, { direction: 'east', target: 'room-005' }],
     spawn: { x: 4, z: 1 },
@@ -102,6 +105,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     // Store: a two-step stair and a block to drag under the high ledge.
+    pickups: [{ x: 6, z: 6, item: 'gem' }],
     id: 'room-009', tint: 'yellow',
     exits: [{ direction: 'north', target: 'room-006' }, { direction: 'east', target: 'room-001' }],
     spawn: { x: 6, z: 1 },
@@ -111,6 +115,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     // Gallery: four pillars for cover from two crossing guards.
+    pickups: [{ x: 4, z: 4, item: 'teacup' }],
     id: 'room-010', tint: 'green',
     exits: [{ direction: 'south', target: 'room-003' }, { direction: 'west', target: 'room-002' }, { direction: 'east', target: 'room-007' }],
     spawn: { x: 1, z: 6 },
@@ -122,6 +127,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     // Armoury: dead end packed with blocks; the high ledge needs two stacked.
+    pickups: [{ x: 6, z: 1, item: 'wine-bottle', y: 2.4 }],
     id: 'room-011', tint: 'blue',
     exits: [{ direction: 'west', target: 'room-004' }],
     spawn: { x: 1, z: 4 },
@@ -131,6 +137,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     // Crypt: spikes in the far corner, a ghost and a guard on the near row.
+    pickups: [{ x: 6, z: 1, item: 'life' }],
     id: 'room-012', tint: 'purple',
     exits: [{ direction: 'north', target: 'room-004' }, { direction: 'west', target: 'room-005' }],
     spawn: { x: 3, z: 4 },
@@ -141,6 +148,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     // Well: a dead-end staircase to climb, spikes guarding the block.
+    pickups: [{ x: 3, z: 6, item: 'crystal-ball', y: 3.4 }],
     id: 'room-013', tint: 'blue',
     exits: [{ direction: 'north', target: 'room-005' }],
     spawn: { x: 4, z: 1 },

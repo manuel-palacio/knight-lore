@@ -1,6 +1,5 @@
 import { buildRoomShell, addPatrolEnemy, addPlatform, addPushBlock, tileCenter } from './shell'
 import { Spike } from '../../game/SpikeGrid'
-import { addPickup } from './items'
 import type { RoomBuilder } from '../../game/RoomManager'
 
 // Wine bottle on a height-2 platform: unreachable from the floor (jump
@@ -8,8 +7,6 @@ import type { RoomBuilder } from '../../game/RoomManager'
 export const buildRoom004: RoomBuilder = async () => {
   const room = buildRoomShell('room-004', 'green')
   addPlatform(room, 5, 5, 2)
-  addPickup(room, 'wine-bottle', 5, 5, 2.4)
-  addPickup(room, 'life', 6, 1)
   addPushBlock(room, 2, 5)
   addPushBlock(room, 3, 2)
   room.add(new Spike(6, 6, room.tileSize))

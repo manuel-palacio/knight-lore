@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { ROOM_SPECS, entryFor, oppositeOf, type RoomSpec } from '../../src/scenes/rooms/roomSpecs'
 import { LEGACY_ROOM_LINKS } from '../../src/scenes/rooms/roomSpecs'
+import { ALL_ITEMS } from '../../src/game/GameState'
 
 const GRID = 8
 
@@ -34,6 +35,11 @@ describe('room map', () => {
 
   it('adds at least eight rooms to the original five', () => {
     expect(ROOM_SPECS.length).toBeGreaterThanOrEqual(8)
+  })
+
+  it('places every item exactly once across the spec rooms', () => {
+    const placed = ROOM_SPECS.flatMap((s) => (s.pickups ?? []).map((p) => p.item))
+    expect([...placed].sort()).toEqual([...ALL_ITEMS].sort())
   })
 
   it('uses moving platforms and path guards somewhere on the map', () => {
@@ -73,6 +79,15 @@ describe('room specs content', () => {
     for (const s of ROOM_SPECS) {
       const solids = [...(s.platforms ?? []), ...(s.pushBlocks ?? []), ...(s.spikes ?? [])]
       expect(solids.some((c) => c.x === s.spawn.x && c.z === s.spawn.z), s.id).toBe(false)
+    }
+  })
+
+  it('puts a pickup that sits on a platform on top of it, never inside it', () => {
+    for (const s of ROOM_SPECS) {
+      for (const p of s.pickups ?? []) {
+        const under = (s.platforms ?? []).find((c) => c.x === p.x && c.z === p.z)
+        if (under) expect(p.y ?? 0, `${s.id} ${p.item} is inside a platform`).toBeGreaterThanOrEqual(under.height)
+      }
     }
   })
 

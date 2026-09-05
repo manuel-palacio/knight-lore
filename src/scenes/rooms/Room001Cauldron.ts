@@ -1,6 +1,5 @@
 import { buildRoomShell, addPlatform, addPatrolEnemy, tileCenter } from './shell'
 import { Cauldron } from '../../game/Cauldron'
-import { addPickup } from './items'
 import type { RoomBuilder } from '../../game/RoomManager'
 
 // The quest hub: cauldron on a raised 2×2 platform (height 1 — exactly
@@ -17,7 +16,6 @@ export const buildRoom001: RoomBuilder = async () => {
   room.add(cauldron)
 
   addPatrolEnemy(room, { x: 3, z: 11 }, { x: 13, z: 11 })
-  addPickup(room, 'poison', 1, 6)
 
   room.addExit({ direction: 'north', targetRoomId: 'room-002', entryX: 8, entryZ: 15 })
   room.addExit({ direction: 'east', targetRoomId: 'room-003', entryX: 1, entryZ: 8 })

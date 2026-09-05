@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { GameState } from '../../src/game/GameState'
+import { GameState, ALL_ITEMS } from '../../src/game/GameState'
 import { Door } from '../../src/game/Door'
 
 describe('GameState', () => {
@@ -79,31 +79,43 @@ describe('GameState', () => {
     expect(s.gameOverReason).toBe('days')
   })
 
+  it('draws a cure sequence of every item in a seeded random order', () => {
+    const a = new GameState(7)
+    const b = new GameState(7)
+    const c = new GameState(8)
+    expect(a.cureSequence).toHaveLength(ALL_ITEMS.length)
+    expect(new Set(a.cureSequence).size).toBe(ALL_ITEMS.length)
+    expect(a.cureSequence).toEqual(b.cureSequence)
+    expect(c.cureSequence).not.toEqual(a.cureSequence)
+  })
+
   it('wantedItem walks the cure sequence as items are delivered', () => {
     const s = new GameState()
-    expect(s.wantedItem).toBe('goblet')
-    s.addItem('goblet')
-    expect(s.deliverCureItem('goblet')).toBe(true)
+    const [first, second] = s.cureSequence
+    expect(s.wantedItem).toBe(first)
+    s.addItem(first!)
+    expect(s.deliverCureItem(first!)).toBe(true)
     expect(s.cureProgress).toBe(1)
-    expect(s.wantedItem).toBe('gem')
-    expect(s.hasItem('goblet')).toBe(false)
+    expect(s.wantedItem).toBe(second)
+    expect(s.hasItem(first!)).toBe(false)
   })
 
   it('rejects wrong item, empty hands, and werewolf deliveries', () => {
     const s = new GameState()
-    s.addItem('gem')
-    expect(s.deliverCureItem('gem')).toBe(false) // wants goblet
+    const [wanted, other] = s.cureSequence
+    s.addItem(other!)
+    expect(s.deliverCureItem(other!)).toBe(false)
     expect(s.deliverCureItem(null)).toBe(false)
-    s.removeItem('gem')
-    s.addItem('goblet')
+    s.removeItem(other!)
+    s.addItem(wanted!)
     s.toggleForm() // werewolf
-    expect(s.deliverCureItem('goblet')).toBe(false)
+    expect(s.deliverCureItem(wanted!)).toBe(false)
     expect(s.cureProgress).toBe(0)
   })
 
-  it('delivering all 4 items wins and wantedItem becomes null', () => {
+  it('delivering every item in order wins and wantedItem becomes null', () => {
     const s = new GameState()
-    for (const id of ['goblet', 'gem', 'wine-bottle', 'crystal-ball']) {
+    for (const id of s.cureSequence) {
       s.addItem(id)
       expect(s.deliverCureItem(id)).toBe(true)
     }

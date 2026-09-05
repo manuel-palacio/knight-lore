@@ -21,12 +21,15 @@ import { RoomManager } from './game/RoomManager'
 import { ROOM_BUILDERS, START_ROOM } from './scenes/rooms/index'
 import { IsoRenderer, spriteDynamic, type Dynamic, type SpriteDraw } from './engine/IsoRenderer'
 import { selectCharacterFrame } from './game/CharacterFrame'
+import { PushGauge } from './game/PushGauge'
+import { Beeper } from './engine/Beeper'
 import { projectToScreen, isoDepth } from './engine/IsoProjection'
 
 const PICKUP_RANGE = 1.6
 const PICKUP_HEIGHT = 1.8
 const PUSH_RANGE_MAX = 1.5
 const PUSH_RANGE_MIN = 0.4
+const PUSH_STEPS_PER_TILE = 4
 // Character strips are native ZX resolution: three 24x36 cells [stand, A, B]
 // per view. Drawn at 1:1 canvas pixels so the sprite stays crisp.
 const STRIP_FRAMES = 3
@@ -93,6 +96,9 @@ async function main(): Promise<void> {
   const scene = new THREE.Scene() // throwaway sink for RoomManager's 3D groups
   const manager = new RoomManager(scene, ROOM_BUILDERS, loader, state)
   const player = new Player()
+  const pushGauge = new PushGauge(PUSH_STEPS_PER_TILE)
+  const beeper = new Beeper()
+  let lastStepCount = 0
   let carriedPickup: Pickup | null = null
   let transitioning = false
 
@@ -126,6 +132,7 @@ async function main(): Promise<void> {
   state.onTransformed = () => {
     transformElapsed = 0
     transformTarget = state.form
+    beeper.play('transform')
   }
 
   // Dev hooks for verification.
@@ -163,6 +170,7 @@ async function main(): Promise<void> {
         Math.abs(e.position.y - player.position.y) < PICKUP_HEIGHT
       if (!near) continue
       player.tryPickup({ id: e.id, position: e.position }, state, () => {
+        beeper.play('pickup')
         e.collect()
         carriedPickup = e
       })
@@ -175,6 +183,7 @@ async function main(): Promise<void> {
     const cauldron = room.entities.find((e): e is Cauldron => e instanceof Cauldron)
     if (!cauldron || !cauldron.isInRange(player.position)) return false
     if (!state.deliverCureItem(player.carrying)) return false
+    beeper.play(state.won ? 'win' : 'deliver')
     carriedPickup = null
     player.carrying = null
     return true
@@ -193,6 +202,7 @@ async function main(): Promise<void> {
       if (!e.active || !e.hasCategory(Category.HAZARD)) continue
       if (touchesHazard(e)) {
         state.loseLife()
+        beeper.play('hurt')
         return
       }
     }
@@ -203,6 +213,7 @@ async function main(): Promise<void> {
     const exit = manager.exitAt(player.position.x, player.position.z)
     if (!exit) return
     transitioning = true
+    beeper.play('door')
     manager
       .transitionTo(exit.targetRoomId, exit.entryX, exit.entryZ)
       .then((room) => {
@@ -232,8 +243,14 @@ async function main(): Promise<void> {
     return false
   }
 
-  function handlePushAttempt(room: Room): void {
-    if (!input.isDown('ArrowUp') || player.state !== 'grounded') return
+  // The gauge charges once per step walked into the block, not per tick, so
+  // blocks feel heavy: four steps of shoving before a tile of movement.
+  function handlePushAttempt(room: Room, stepped: boolean): void {
+    if (!input.isDown('ArrowUp') || player.state !== 'grounded') {
+      pushGauge.release()
+      return
+    }
+    if (!stepped) return
     const px = player.facing === 'east' ? 1 : player.facing === 'west' ? -1 : 0
     const pz = player.facing === 'south' ? 1 : player.facing === 'north' ? -1 : 0
     for (const e of room.entities) {
@@ -244,14 +261,13 @@ async function main(): Promise<void> {
       const dist = Math.hypot(dx, dz)
       if (dist > PUSH_RANGE_MAX || dist <= PUSH_RANGE_MIN) continue
       const dominantX = Math.abs(dx) > Math.abs(dz)
-      if (dominantX) {
-        if (Math.sign(dx) !== px) continue
-        block.tryPush(px > 0 ? 'east' : 'west', room.grid, room.tileSize)
-      } else {
-        if (Math.sign(dz) !== pz) continue
-        block.tryPush(pz > 0 ? 'south' : 'north', room.grid, room.tileSize)
-      }
+      if (dominantX ? Math.sign(dx) !== px : Math.sign(dz) !== pz) continue
+      if (!pushGauge.press()) return
+      const dir = dominantX ? (px > 0 ? 'east' : 'west') : (pz > 0 ? 'south' : 'north')
+      if (block.tryPush(dir, room.grid, room.tileSize)) beeper.play('drop')
+      return
     }
+    pushGauge.release()
   }
 
   function resolveActorOverlap(room: Room): void {
@@ -367,12 +383,17 @@ async function main(): Promise<void> {
       grid: room.grid,
       tileSize: room.tileSize,
       playerPosition: player.position,
-      onLanded: () => {},
-      onJumped: () => {},
+      onLanded: () => beeper.play('land'),
+      onJumped: () => beeper.play('jump'),
     }
     if (!morphing()) player.update(dt, ctx)
+    const stepped = player.stepsTaken !== lastStepCount
+    if (stepped) {
+      lastStepCount = player.stepsTaken
+      beeper.play('step')
+    }
     room.update(dt, ctx)
-    handlePushAttempt(room)
+    handlePushAttempt(room, stepped)
     resolveActorOverlap(room)
     if (!tryDeliverPass(room)) {
       const had = player.carrying !== null

@@ -1,7 +1,7 @@
 // Knight Lore: the Filmation simulation drawn by IsoRenderer onto a canvas.
 import { Input } from './engine/Input'
 import { GameLoop } from './engine/GameLoop'
-import { GameState } from './game/GameState'
+import { GameState, type SavedGame } from './game/GameState'
 import { HUD } from './game/HUD'
 import { Player, type Facing } from './game/Player'
 import { Pickup } from './game/Pickup'
@@ -23,6 +23,7 @@ import { IsoRenderer, spriteDynamic, boxDynamic, type Dynamic, type SpriteDraw }
 import { selectCharacterFrame, STRIP_CELLS } from './game/CharacterFrame'
 import { PushGauge } from './game/PushGauge'
 import { Transition } from './game/Transition'
+import { loadSave, writeSave, clearSave } from './engine/SaveSlot'
 import { Beeper } from './engine/Beeper'
 import { projectToScreen, isoDepth } from './engine/IsoProjection'
 
@@ -69,6 +70,7 @@ async function main(): Promise<void> {
   if (!container) throw new Error('#app missing')
 
   const input = new Input()
+  const saved = loadSave()
   const state = new GameState()
   const hud = new HUD()
   const renderer = new IsoRenderer(container, 760, 560, 2)
@@ -127,10 +129,25 @@ async function main(): Promise<void> {
   placePlayerAtSpawn(startRoom)
 
   const intro = document.getElementById('intro')
+  const continueHint = document.getElementById('continue-hint')
+  if (continueHint && saved) continueHint.style.display = 'block'
   window.addEventListener('keydown', (e) => {
-    if (intro && intro.style.display !== 'none') intro.style.display = 'none'
+    if (intro && intro.style.display !== 'none') {
+      intro.style.display = 'none'
+      if (e.code === 'KeyC' && saved) resumeSavedGame(saved)
+      else clearSave()
+    }
     if (e.code === 'KeyR' && (state.gameOver || state.won)) location.reload()
   })
+
+  function resumeSavedGame(save: SavedGame): void {
+    state.apply(save)
+    transitioning = true
+    manager.transitionTo(save.currentRoomId, 8, 1).then((room) => {
+      placePlayerAtSpawn(room)
+      transitioning = false
+    })
+  }
 
   state.onTransformed = () => {
     transformElapsed = 0
@@ -154,6 +171,8 @@ async function main(): Promise<void> {
     steps: player.stepsTaken,
     frame: selectCharacterFrame(player.facing, player.stepsTaken, charMoving, player.state !== 'grounded', visualForm),
     form: visualForm,
+    room: state.currentRoomId,
+    day: state.dayCount,
     state: player.state,
     facing: player.facing,
     pos: { x: Number(player.position.x.toFixed(2)), y: Number(player.position.y.toFixed(2)), z: Number(player.position.z.toFixed(2)) },
@@ -174,9 +193,7 @@ async function main(): Promise<void> {
 
   function dropCarried(): void {
     if (!carriedPickup) return
-    carriedPickup.collected = false
-    carriedPickup.active = true
-    carriedPickup.position.set(player.position.x, 0.4, player.position.z)
+    carriedPickup.dropAt(player.position.x, 0.4, player.position.z)
     carriedPickup = null
     player.carrying = null
   }
@@ -247,6 +264,7 @@ async function main(): Promise<void> {
         placePlayerAtSpawn(room)
         wipe.loaded()
         transitioning = false
+        writeSave(state.serialize())
       })
       .catch((err) => {
         console.error(err)

@@ -15,6 +15,18 @@ export type ItemId = (typeof ALL_ITEMS)[number]
 
 export type GameOverReason = 'days' | 'lives'
 
+// Everything needed to pick a run back up. Carried items are not saved: the
+// original made you put things down before a break too.
+export interface SavedGame {
+  form: Form
+  transformTimer: number
+  currentRoomId: string
+  lives: number
+  dayCount: number
+  cureProgress: number
+  cureSequence: ItemId[]
+}
+
 export class GameState {
   inventory: string[] = []
   form: Form = 'human'
@@ -32,6 +44,35 @@ export class GameState {
 
   constructor(seed: number = Math.floor(Math.random() * 0x7fffffff)) {
     this.cureSequence = shuffled(ALL_ITEMS, seed)
+  }
+
+  serialize(): SavedGame {
+    return {
+      form: this.form,
+      transformTimer: this.transformTimer,
+      currentRoomId: this.currentRoomId,
+      lives: this.lives,
+      dayCount: this.dayCount,
+      cureProgress: this.cureProgress,
+      cureSequence: [...this.cureSequence],
+    }
+  }
+
+  static restore(saved: SavedGame): GameState {
+    const state = new GameState()
+    state.apply(saved)
+    return state
+  }
+
+  // Load a save into this instance, keeping its wired callbacks.
+  apply(saved: SavedGame): void {
+    this.form = saved.form
+    this.transformTimer = saved.transformTimer
+    this.currentRoomId = saved.currentRoomId
+    this.lives = saved.lives
+    this.dayCount = saved.dayCount
+    this.cureProgress = saved.cureProgress
+    this.cureSequence.splice(0, this.cureSequence.length, ...saved.cureSequence)
   }
 
   onTransformed: () => void = () => {}

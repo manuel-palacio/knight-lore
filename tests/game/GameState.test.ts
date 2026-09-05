@@ -96,6 +96,26 @@ describe('GameState', () => {
     expect(s.isDusk).toBe(true)
   })
 
+  it('serialises and restores the whole run: day, lives, form, timer, sequence, progress, room', () => {
+    const s = new GameState(3)
+    s.tickTransform(HUMAN_DURATION + 0.01)
+    s.loseLife()
+    s.currentRoomId = 'room-009'
+    const wanted = s.cureSequence[0]!
+    s.addItem(wanted)
+    s.toggleForm()
+    s.deliverCureItem(wanted)
+    const restored = GameState.restore(s.serialize())
+    expect(restored.dayCount).toBe(s.dayCount)
+    expect(restored.lives).toBe(s.lives)
+    expect(restored.form).toBe(s.form)
+    expect(restored.transformTimer).toBeCloseTo(s.transformTimer, 5)
+    expect(restored.cureSequence).toEqual(s.cureSequence)
+    expect(restored.cureProgress).toBe(1)
+    expect(restored.currentRoomId).toBe('room-009')
+    expect(restored.inventory).toEqual([])
+  })
+
   it('draws a cure sequence of every item in a seeded random order', () => {
     const a = new GameState(7)
     const b = new GameState(7)

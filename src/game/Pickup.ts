@@ -27,6 +27,12 @@ export class Pickup extends Entity {
     this.active = false
   }
 
+  dropAt(x: number, y: number, z: number): void {
+    this.collected = false
+    this.active = true
+    this.position.set(x, y, z)
+  }
+
   get bobOffset(): number {
     return Math.sin(this.bobPhase * BOB_SPEED) * BOB_AMPLITUDE
   }

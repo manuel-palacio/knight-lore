@@ -44,6 +44,21 @@ describe('RoomManager', () => {
     expect((aAgain.entities.find((e) => e instanceof Pickup) as Pickup).collected).toBe(true)
   })
 
+  it('keeps an item dropped on the floor after leaving and coming back', async () => {
+    const { manager } = makeManager()
+    const a = await manager.transitionTo('room-a', 8, 14)
+    const pickup = a.entities.find((e) => e instanceof Pickup) as Pickup
+    pickup.collect()
+    pickup.dropAt(3, 0.4, 9)
+    await manager.transitionTo('room-b', 8, 1)
+    const again = await manager.transitionTo('room-a', 8, 14)
+    const back = again.entities.find((e) => e instanceof Pickup) as Pickup
+    expect(back.collected).toBe(false)
+    expect(back.active).toBe(true)
+    expect(back.position.x).toBe(3)
+    expect(back.position.z).toBe(9)
+  })
+
   it('throws on unknown room ids', async () => {
     const { manager } = makeManager()
     await expect(manager.transitionTo('nope', 0, 0)).rejects.toThrow('Unknown room')

@@ -35,6 +35,11 @@ export class MovingPlatform extends Entity {
     return inside ? this.height : null
   }
 
+  override reset(): void {
+    this.position.set(this.from.x, 0, this.from.z)
+    this.headingOut = true
+  }
+
   private atTarget(): boolean {
     const target = this.headingOut ? this.to : this.from
     return target.x === this.position.x && target.z === this.position.z

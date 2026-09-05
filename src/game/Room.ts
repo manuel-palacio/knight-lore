@@ -37,6 +37,11 @@ export class Room {
     this.exits.push(exit)
   }
 
+  // After a death: everything that moves goes back to its starting place.
+  reset(): void {
+    for (const e of this.entities) e.reset()
+  }
+
   setSpawn(x: number, z: number): void {
     this.spawnX = x
     this.spawnZ = z

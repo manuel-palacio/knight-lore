@@ -17,6 +17,8 @@ export type { Facing }
 const JUMP_HEIGHT = 1.0
 const JUMP_STEPS = 6
 const FALL_PER_STEP = 0.5
+// Steps of grace after a respawn so a guard camping the door cannot chain kills.
+export const INVULNERABLE_STEPS = 12
 
 export interface PlayerCtx extends UpdateContext {
   grid: Grid
@@ -36,6 +38,7 @@ export class Player extends Entity {
   carrying: string | null = null
 
   private readonly clock = new StepClock()
+  private invulnerableSteps = 0
   private tappedKeys = new Set<string>()
   private jumpStep = 0
   private jumpStartY = 0
@@ -47,11 +50,24 @@ export class Player extends Entity {
     this.extents.set(0.8, 1.6, 0.8)
   }
 
+  get isInvulnerable(): boolean {
+    return this.invulnerableSteps > 0
+  }
+
+  respawnAt(x: number, z: number, facing: Facing): void {
+    this.position.set(x, 0, z)
+    this.facing = facing
+    this.state = 'grounded'
+    this.jumpMovesForward = false
+    this.invulnerableSteps = INVULNERABLE_STEPS
+  }
+
   update(_dt: number, ctxRaw: UpdateContext): void {
     const ctx = ctxRaw as PlayerCtx
     this.latchJumpRequest(ctx)
     this.latchTaps(ctx)
     if (!this.clock.tick()) return
+    if (this.invulnerableSteps > 0) this.invulnerableSteps--
     this.step(ctx)
     this.tappedKeys.clear()
   }

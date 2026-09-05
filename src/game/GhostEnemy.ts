@@ -15,11 +15,18 @@ interface GhostCtx extends UpdateContext {
 // Pursues the player in a straight line, ignoring the collision grid —
 // it's a ghost. (Also deletes the need for any pathfinding.)
 export class GhostEnemy extends Entity {
+  private readonly home: { x: number; z: number }
+
   constructor(x: number, z: number) {
     super()
     this.categories = [Category.HAZARD]
     this.extents.set(0.9, 1.4, 0.9)
+    this.home = { x, z }
     this.position.set(x, FLOAT_HEIGHT, z)
+  }
+
+  override reset(): void {
+    this.position.set(this.home.x, FLOAT_HEIGHT, this.home.z)
   }
 
   update(dt: number, ctxRaw: UpdateContext): void {

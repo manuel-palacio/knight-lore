@@ -15,6 +15,9 @@ export abstract class Entity {
 
   abstract update(dt: number, ctx: UpdateContext): void
 
+  // Put the entity back to how the room was built. Moving things override.
+  reset(): void {}
+
   hasCategory(c: Category): boolean {
     return this.categories.includes(c)
   }

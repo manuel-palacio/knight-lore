@@ -105,7 +105,7 @@ export class HUD {
 
     this.winEl.style.display = state.won ? 'flex' : 'none'
     this.gameOverEl.style.display = state.gameOver ? 'flex' : 'none'
-    this.gameOverReasonEl.textContent =
-      state.gameOverReason === 'days' ? 'THE 40 DAYS HAVE PASSED' : 'OUT OF LIVES'
+    const reason = state.gameOverReason === 'days' ? 'THE 40 DAYS HAVE PASSED' : 'OUT OF LIVES'
+    this.gameOverReasonEl.textContent = `${reason} — DAY ${state.dayCount}, ${state.cureProgress} OF ${state.cureSequence.length} CHARMS`
   }
 }

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { Grid } from '../../src/engine/Grid'
-import { Player, STEP_LENGTH, TICKS_PER_STEP } from '../../src/game/Player'
+import { Player, STEP_LENGTH, TICKS_PER_STEP, INVULNERABLE_STEPS } from '../../src/game/Player'
 import { GameState } from '../../src/game/GameState'
 import { SIMULATION_DT } from '../../src/engine/GameLoop'
 
@@ -224,6 +224,22 @@ describe('Player on dynamic supports', () => {
     gone = true
     step(player, c)
     expect(player.state).toBe('airborne')
+  })
+})
+
+describe('Player respawn', () => {
+  it('lands at the given spot facing the given way and is briefly invulnerable', () => {
+    const { grid, state, player } = setupRoom()
+    player.respawnAt(9, 1, 'north')
+    expect(player.position.x).toBe(9)
+    expect(player.position.z).toBe(1)
+    expect(player.facing).toBe('north')
+    expect(player.state).toBe('grounded')
+    expect(player.isInvulnerable).toBe(true)
+    step(player, ctx(grid, state), INVULNERABLE_STEPS - 1)
+    expect(player.isInvulnerable).toBe(true)
+    step(player, ctx(grid, state))
+    expect(player.isInvulnerable).toBe(false)
   })
 })
 

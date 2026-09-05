@@ -3,7 +3,7 @@ import { Input } from './engine/Input'
 import { GameLoop } from './engine/GameLoop'
 import { GameState } from './game/GameState'
 import { HUD } from './game/HUD'
-import { Player } from './game/Player'
+import { Player, type Facing } from './game/Player'
 import { Pickup } from './game/Pickup'
 import { PushBlock } from './game/PushBlock'
 import { Cauldron } from './game/Cauldron'
@@ -27,6 +27,7 @@ const PICKUP_HEIGHT = 1.8
 const PUSH_RANGE_MAX = 1.5
 const PUSH_RANGE_MIN = 0.4
 const PUSH_STEPS_PER_TILE = 4
+const DEATH_FLASH_FRAMES = 2
 // Character strips are native ZX resolution, 24x36 cells per pose, drawn at
 // 1:1 canvas pixels so the sprite stays crisp. Cells per form: STRIP_CELLS.
 const TRANSFORM_FRAMES = 11
@@ -108,9 +109,11 @@ async function main(): Promise<void> {
     return room
   }
 
+  let entryFacing: Facing = 'south'
+  let flashFrames = 0
+
   function placePlayerAtSpawn(room: Room): void {
-    player.position.set(room.spawnX, 0, room.spawnZ)
-    player.state = 'grounded'
+    player.respawnAt(room.spawnX, room.spawnZ, entryFacing)
   }
 
   const startRoom = await manager.transitionTo(START_ROOM, 5, 5)
@@ -134,7 +137,7 @@ async function main(): Promise<void> {
   ;(window as unknown as { __timer: (seconds: number) => void }).__timer = (seconds) => { state.transformTimer = seconds }
   ;(window as unknown as { __room: (id: string) => void }).__room = (id) => {
     transitioning = true
-    manager.transitionTo(id, 5, 5).then((room) => { placePlayerAtSpawn(room); transitioning = false })
+    manager.transitionTo(id, 8, 1).then((room) => { placePlayerAtSpawn(room); transitioning = false })
   }
   ;(window as unknown as { __pos: (x: number, y: number, z: number) => void }).__pos = (x, y, z) => {
     player.position.set(x, y, z)
@@ -153,7 +156,13 @@ async function main(): Promise<void> {
     beeper.play('drop')
     hud.flashCarrySlot()
   }
-  state.onLifeLost = () => placePlayerAtSpawn(activeRoom())
+  // Death: white flash, the room's movers go back to their starts, and
+  // Sabreman reappears at the door he came in through.
+  state.onLifeLost = () => {
+    flashFrames = DEATH_FLASH_FRAMES
+    activeRoom().reset()
+    placePlayerAtSpawn(activeRoom())
+  }
 
   function dropCarried(): void {
     if (!carriedPickup) return
@@ -204,6 +213,7 @@ async function main(): Promise<void> {
   }
 
   function hazardPass(room: Room): void {
+    if (player.isInvulnerable) return
     for (const e of room.entities) {
       if (!e.active || !e.hasCategory(Category.HAZARD)) continue
       if (touchesHazard(e)) {
@@ -223,8 +233,8 @@ async function main(): Promise<void> {
     manager
       .transitionTo(exit.targetRoomId, exit.entryX, exit.entryZ)
       .then((room) => {
+        entryFacing = exit.direction
         placePlayerAtSpawn(room)
-        player.facing = exit.direction
         transitioning = false
       })
       .catch((err) => {
@@ -435,7 +445,18 @@ async function main(): Promise<void> {
     if (!room) return
     renderer.render(room, [...entityDynamics(room), characterDynamic()])
     if (state.isDusk && !morphing()) drawDusk()
+    if (flashFrames > 0) {
+      flashFrames--
+      drawFlash()
+    }
   })
+
+  function drawFlash(): void {
+    const ctx = renderer.canvas.getContext('2d')
+    if (!ctx) return
+    ctx.fillStyle = '#fff'
+    ctx.fillRect(0, 0, renderer.canvas.width, renderer.canvas.height)
+  }
 
   // The last seconds before a transform: the room flickers dark, as a warning.
   function drawDusk(): void {

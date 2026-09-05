@@ -22,6 +22,13 @@ export class PathGuard extends Entity {
     this.facing = this.facingToTarget()
   }
 
+  override reset(): void {
+    this.position.set(this.path[0]!.x, 0, this.path[0]!.z)
+    this.targetIndex = 1
+    this.stepsTaken = 0
+    this.facing = this.facingToTarget()
+  }
+
   update(_dt: number, _ctx: UpdateContext): void {
     if (!this.clock.tick()) return
     const target = this.path[this.targetIndex]!

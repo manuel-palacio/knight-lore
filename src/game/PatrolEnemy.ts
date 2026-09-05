@@ -29,6 +29,11 @@ export class PatrolEnemy extends Entity {
     this.speed = speed
   }
 
+  override reset(): void {
+    this.position.set(this.a.x, 0, this.a.z)
+    this.dir = 1
+  }
+
   private blocked(grid: Grid, tileSize: number, x: number, z: number): boolean {
     const cx = Math.floor(x / tileSize)
     const cz = Math.floor(z / tileSize)

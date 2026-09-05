@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest'
 import { Room } from '../../src/game/Room'
 import { Pickup } from '../../src/game/Pickup'
 import { PatrolEnemy } from '../../src/game/PatrolEnemy'
-import * as THREE from 'three'
 
 describe('Room', () => {
   it('stores declared exits', () => {
@@ -12,15 +11,13 @@ describe('Room', () => {
     expect(room.exits[0]!.targetRoomId).toBe('other')
   })
 
-  it('remove() detaches the entity and its mesh', () => {
+  it('remove() detaches the entity', () => {
     const room = new Room('r', 8, 8)
     const p = new Pickup('gem')
-    p.object3D = new THREE.Object3D()
     room.add(p)
     expect(room.entities).toContain(p)
     room.remove(p)
     expect(room.entities).not.toContain(p)
-    expect(room.group.children).not.toContain(p.object3D)
   })
 
   it('patrol enemy honors a custom speed', () => {

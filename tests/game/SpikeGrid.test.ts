@@ -10,7 +10,6 @@ describe('Spike', () => {
     expect(s.position.x).toBe(7)
     expect(s.position.z).toBe(11)
     expect(s.extents.y).toBeLessThan(1.0)
-    expect(s.object3D).not.toBeNull()
   })
 
   it('placeSpikes adds one entity per tile to the room', () => {

@@ -1,4 +1,4 @@
-import { projectToScreen, isoDepth, type IsoConfig } from './IsoProjection'
+import { projectToScreen, isoDepth, filmationConfig, type IsoConfig } from './IsoProjection'
 import type { Grid } from './Grid'
 import { buildWallLayout, type ExitDirection, type WallBox } from './WallLayout'
 
@@ -43,18 +43,7 @@ export class IsoRenderer {
     this.ctx = ctx
     this.ctx.imageSmoothingEnabled = false
 
-    // Centre an 8x8 room: world x/z span 0..16, so screen x spans ±128 at
-    // tileW=32. Place the origin so the room sits centred with headroom for walls.
-    const tileW = 36
-    const tileH = 18
-    this.cfg = {
-      tile: TILE,
-      tileW,
-      tileH,
-      heightScale: tileH,
-      originX: width / 2,
-      originY: height * 0.32,
-    }
+    this.cfg = filmationConfig(width, height)
   }
 
   get config(): IsoConfig {

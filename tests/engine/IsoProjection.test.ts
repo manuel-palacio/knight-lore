@@ -55,3 +55,18 @@ describe('IsoProjection.isoDepth', () => {
     expect(isoDepth(2, 0, 2)).toBeLessThan(isoDepth(2, 1, 2))
   })
 })
+
+describe('filmationConfig', () => {
+  it('projects one tile 32px wide and 16px tall, one height unit to 16px, like the original', async () => {
+    const { filmationConfig } = await import('../../src/engine/IsoProjection')
+    const cfg = filmationConfig(760, 560)
+    const origin = projectToScreen(0, 0, 0, cfg)
+    const east = projectToScreen(cfg.tile, 0, 0, cfg)
+    const south = projectToScreen(0, 0, cfg.tile, cfg)
+    const up = projectToScreen(0, 1, 0, cfg)
+    expect(east.sx - origin.sx).toBe(16)
+    expect(east.sy - origin.sy).toBe(8)
+    expect(east.sx - south.sx).toBe(32)
+    expect(origin.sy - up.sy).toBe(16)
+  })
+})

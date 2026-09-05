@@ -26,7 +26,6 @@ export class PatrolEnemy extends Entity {
     this.a = a
     this.b = b
     this.position.set(a.x, 0, a.z)
-    this.renderPosition.copy(this.position)
     this.speed = speed
   }
 

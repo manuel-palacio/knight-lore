@@ -1,13 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import * as THREE from 'three'
 import { RoomManager, type RoomBuilder } from '../../src/game/RoomManager'
 import { Room } from '../../src/game/Room'
 import { Pickup } from '../../src/game/Pickup'
 import { GameState } from '../../src/game/GameState'
-import { AssetLoader } from '../../src/engine/AssetLoader'
 
 function makeManager() {
-  const scene = new THREE.Scene()
   const state = new GameState()
   let buildsA = 0
   const builders = new Map<string, RoomBuilder>([
@@ -20,29 +17,27 @@ function makeManager() {
     }],
     ['room-b', async () => new Room('room-b', 8, 8)],
   ])
-  const manager = new RoomManager(scene, builders, new AssetLoader(), state)
-  return { scene, state, manager, builds: () => buildsA }
+  const manager = new RoomManager(builders, state)
+  return { state, manager, builds: () => buildsA }
 }
 
 describe('RoomManager', () => {
-  it('builds lazily, adds to scene, sets currentRoomId and entry spawn', async () => {
-    const { scene, state, manager } = makeManager()
+  it('builds lazily, sets currentRoomId and entry spawn', async () => {
+    const { state, manager } = makeManager()
     const room = await manager.transitionTo('room-a', 8, 14)
-    expect(scene.children).toContain(room.group)
     expect(state.currentRoomId).toBe('room-a')
     expect(room.spawnX).toBe(8)
     expect(room.spawnZ).toBe(14)
     expect(manager.active).toBe(room)
   })
 
-  it('swaps groups on transition and reuses cached rooms with their state', async () => {
-    const { scene, manager, builds } = makeManager()
+  it('swaps the active room and reuses cached rooms with their state', async () => {
+    const { manager, builds } = makeManager()
     const a = await manager.transitionTo('room-a', 8, 14)
     const pickup = a.entities.find((e) => e instanceof Pickup) as Pickup
     pickup.collect()
     const b = await manager.transitionTo('room-b', 8, 1)
-    expect(scene.children).not.toContain(a.group)
-    expect(scene.children).toContain(b.group)
+    expect(manager.active).toBe(b)
     const aAgain = await manager.transitionTo('room-a', 1, 8)
     expect(aAgain).toBe(a)
     expect(builds()).toBe(1)

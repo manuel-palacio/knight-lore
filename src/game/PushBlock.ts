@@ -28,7 +28,6 @@ export class PushBlock extends Entity {
       0,
       this.gridZ * tileSize + tileSize / 2,
     )
-    this.renderPosition.copy(this.position)
   }
 
   tryPush(dir: PushDir, grid: Grid, tileSize: number): boolean {

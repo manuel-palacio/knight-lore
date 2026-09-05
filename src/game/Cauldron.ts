@@ -1,4 +1,3 @@
-import * as THREE from 'three'
 import { Entity, type UpdateContext } from './Entity'
 import { Category } from '../engine/categories'
 
@@ -17,7 +16,7 @@ export class Cauldron extends Entity {
     this.extents.set(1.4, 1, 1.4)
   }
 
-  isInRange(p: THREE.Vector3): boolean {
+  isInRange(p: { x: number; y: number; z: number }): boolean {
     const horizontal = Math.hypot(p.x - this.position.x, p.z - this.position.z)
     return horizontal < INTERACT_RANGE && Math.abs(p.y - this.position.y) < INTERACT_HEIGHT
   }

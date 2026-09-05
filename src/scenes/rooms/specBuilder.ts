@@ -1,4 +1,4 @@
-import { buildRoomShell, addExitArch, addPlatform, addPushBlock, addPatrolEnemy, tileCenter } from './shell'
+import { buildRoomShell, addPlatform, addPushBlock, addPatrolEnemy, tileCenter } from './shell'
 import { placeSpikes } from '../../game/SpikeGrid'
 import { GhostEnemy } from '../../game/GhostEnemy'
 import { MovingPlatform } from '../../game/MovingPlatform'
@@ -8,8 +8,8 @@ import { entryFor, type RoomSpec } from './roomSpecs'
 import type { RoomBuilder } from '../../game/RoomManager'
 
 export function buildRoomFromSpec(spec: RoomSpec): RoomBuilder {
-  return async (loader) => {
-    const room = await buildRoomShell(spec.id, loader, spec.tint, spec.exits.map((e) => e.direction), spec.style)
+  return async () => {
+    const room = buildRoomShell(spec.id, spec.tint)
     for (const p of spec.platforms ?? []) addPlatform(room, p.x, p.z, p.height)
     for (const b of spec.pushBlocks ?? []) addPushBlock(room, b.x, b.z)
     placeSpikes(room, spec.spikes ?? [])
@@ -25,7 +25,6 @@ export function buildRoomFromSpec(spec: RoomSpec): RoomBuilder {
     for (const e of spec.exits) {
       const entry = entryFor(e.direction)
       room.addExit({ direction: e.direction, targetRoomId: e.target, entryX: entry.x, entryZ: entry.z })
-      addExitArch(room, e.direction)
     }
     room.setSpawn(tileCenter(spec.spawn.x), tileCenter(spec.spawn.z))
     return room

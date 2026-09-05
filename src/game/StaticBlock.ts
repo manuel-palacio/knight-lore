@@ -25,7 +25,6 @@ export class StaticBlock extends Entity {
       0,
       this.gridZ * tileSize + tileSize / 2,
     )
-    this.renderPosition.copy(this.position)
   }
 
   update(_dt: number, _ctx: UpdateContext): void {

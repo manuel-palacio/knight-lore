@@ -19,7 +19,6 @@ export class PathGuard extends Entity {
     this.extents.set(0.8, 1.6, 0.8)
     this.path = path
     this.position.set(path[0]!.x, 0, path[0]!.z)
-    this.renderPosition.copy(this.position)
     this.facing = this.facingToTarget()
   }
 

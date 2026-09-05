@@ -1,4 +1,4 @@
-import type { RoomTint, RoomStyle } from './shell'
+import type { RoomTint } from './shell'
 import type { ItemId } from './items'
 
 // Data-driven rooms. A spec is pure data (unit-tested for map integrity);
@@ -15,7 +15,6 @@ export interface Cell {
 export interface RoomSpec {
   id: string
   tint: RoomTint
-  style: RoomStyle
   exits: { direction: Direction; target: string }[]
   spawn: Cell
   platforms?: (Cell & { height: number })[]
@@ -71,7 +70,7 @@ export const LEGACY_ROOM_LINKS: { id: string; exits: { direction: Direction; tar
 export const ROOM_SPECS: RoomSpec[] = [
   {
     // Cellar: two ledges to hop between, blocks to shove into the spike corner.
-    id: 'room-006', tint: 'purple', style: 'dungeon',
+    id: 'room-006', tint: 'purple',
     exits: [{ direction: 'east', target: 'room-002' }, { direction: 'south', target: 'room-009' }],
     spawn: { x: 1, z: 1 },
     platforms: [{ x: 2, z: 2, height: 1 }, { x: 5, z: 2, height: 1 }],
@@ -81,7 +80,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     // Gate: a big central block with a guard sweeping the back row.
-    id: 'room-007', tint: 'red', style: 'castle',
+    id: 'room-007', tint: 'red',
     exits: [{ direction: 'south', target: 'room-004' }, { direction: 'west', target: 'room-010' }],
     spawn: { x: 1, z: 4 },
     platforms: [{ x: 3, z: 3, height: 1 }, { x: 4, z: 3, height: 1 }, { x: 3, z: 4, height: 2 }, { x: 4, z: 4, height: 2 }],
@@ -91,7 +90,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     // Pit: two spike rows with offset gaps, a ghost that closes in.
-    id: 'room-008', tint: 'red', style: 'hazard',
+    id: 'room-008', tint: 'red',
     exits: [{ direction: 'north', target: 'room-001' }, { direction: 'east', target: 'room-005' }],
     spawn: { x: 4, z: 1 },
     spikes: [
@@ -103,7 +102,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     // Store: a two-step stair and a block to drag under the high ledge.
-    id: 'room-009', tint: 'yellow', style: 'castle',
+    id: 'room-009', tint: 'yellow',
     exits: [{ direction: 'north', target: 'room-006' }, { direction: 'east', target: 'room-001' }],
     spawn: { x: 6, z: 1 },
     platforms: [{ x: 2, z: 3, height: 1 }, { x: 3, z: 3, height: 2 }, { x: 5, z: 5, height: 1 }],
@@ -112,7 +111,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     // Gallery: four pillars for cover from two crossing guards.
-    id: 'room-010', tint: 'green', style: 'tower',
+    id: 'room-010', tint: 'green',
     exits: [{ direction: 'south', target: 'room-003' }, { direction: 'west', target: 'room-002' }, { direction: 'east', target: 'room-007' }],
     spawn: { x: 1, z: 6 },
     platforms: [{ x: 2, z: 2, height: 1 }, { x: 5, z: 2, height: 1 }, { x: 2, z: 5, height: 1 }, { x: 5, z: 5, height: 1 }],
@@ -123,7 +122,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     // Armoury: dead end packed with blocks; the high ledge needs two stacked.
-    id: 'room-011', tint: 'blue', style: 'castle',
+    id: 'room-011', tint: 'blue',
     exits: [{ direction: 'west', target: 'room-004' }],
     spawn: { x: 1, z: 4 },
     pushBlocks: [{ x: 2, z: 2 }, { x: 4, z: 2 }, { x: 2, z: 5 }, { x: 5, z: 5 }, { x: 3, z: 3 }],
@@ -132,7 +131,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     // Crypt: spikes in the far corner, a ghost and a guard on the near row.
-    id: 'room-012', tint: 'purple', style: 'dungeon',
+    id: 'room-012', tint: 'purple',
     exits: [{ direction: 'north', target: 'room-004' }, { direction: 'west', target: 'room-005' }],
     spawn: { x: 3, z: 4 },
     spikes: [{ x: 1, z: 1 }, { x: 2, z: 1 }, { x: 1, z: 2 }],
@@ -142,7 +141,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     // Well: a dead-end staircase to climb, spikes guarding the block.
-    id: 'room-013', tint: 'blue', style: 'tower',
+    id: 'room-013', tint: 'blue',
     exits: [{ direction: 'north', target: 'room-005' }],
     spawn: { x: 4, z: 1 },
     platforms: [{ x: 1, z: 6, height: 1 }, { x: 2, z: 6, height: 2 }, { x: 3, z: 6, height: 3 }, { x: 3, z: 5, height: 2 }],

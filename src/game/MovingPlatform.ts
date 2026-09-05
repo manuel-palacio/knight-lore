@@ -27,7 +27,6 @@ export class MovingPlatform extends Entity {
     this.to = to
     this.height = height
     this.position.set(from.x, 0, from.z)
-    this.renderPosition.copy(this.position)
   }
 
   supportAt(x: number, z: number): number | null {

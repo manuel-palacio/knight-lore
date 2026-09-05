@@ -11,7 +11,6 @@ function setupRoom() {
   const state = new GameState()
   const player = new Player()
   player.position.set(4, 0, 4)
-  player.renderPosition.copy(player.position)
   return { grid, state, player }
 }
 

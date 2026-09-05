@@ -1,9 +1,7 @@
-import * as THREE from 'three'
 import { Room, type Exit } from './Room'
-import type { AssetLoader } from '../engine/AssetLoader'
 import type { GameState } from './GameState'
 
-export type RoomBuilder = (loader: AssetLoader, state: GameState) => Promise<Room>
+export type RoomBuilder = (state: GameState) => Promise<Room>
 
 const EDGE_MARGIN = 0.5
 
@@ -12,9 +10,7 @@ export class RoomManager {
   private readonly rooms = new Map<string, Room>()
 
   constructor(
-    private readonly scene: THREE.Scene,
     private readonly builders: Map<string, RoomBuilder>,
-    private readonly loader: AssetLoader,
     private readonly state: GameState,
   ) {}
 
@@ -23,11 +19,9 @@ export class RoomManager {
     if (!builder) throw new Error(`Unknown room: ${roomId}`)
     let room = this.rooms.get(roomId)
     if (!room) {
-      room = await builder(this.loader, this.state)
+      room = await builder(this.state)
       this.rooms.set(roomId, room)
     }
-    if (this.active) this.scene.remove(this.active.group)
-    this.scene.add(room.group)
     room.setSpawn(entryX, entryZ)
     this.state.currentRoomId = roomId
     this.active = room

@@ -20,7 +20,6 @@ export class GhostEnemy extends Entity {
     this.categories = [Category.HAZARD]
     this.extents.set(0.9, 1.4, 0.9)
     this.position.set(x, FLOAT_HEIGHT, z)
-    this.renderPosition.copy(this.position)
   }
 
   update(dt: number, ctxRaw: UpdateContext): void {

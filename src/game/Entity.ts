@@ -5,16 +5,11 @@ export interface UpdateContext {
   [key: string]: unknown
 }
 
-// PHYSICS_AND_COLLISION.md § Coordinate model:
-//   position: authoritative simulation state, integer-grid + height
-//   renderPosition: visual-only, lerped, NEVER read by gameplay logic
-// Linter rule (pnpm lint:no-render-pos) enforces renderPosition appears
-// only in this file and Renderer.ts.
+// PHYSICS_AND_COLLISION.md § Coordinate model: `position` is the authoritative
+// simulation state on the step lattice. The renderer draws it directly.
 export abstract class Entity {
   position = new THREE.Vector3()
-  renderPosition = new THREE.Vector3()
   categories: Category[] = []
-  object3D: THREE.Object3D | null = null
   extents = new THREE.Vector3(1, 1, 1)
   active = true
 
@@ -22,12 +17,5 @@ export abstract class Entity {
 
   hasCategory(c: Category): boolean {
     return this.categories.includes(c)
-  }
-
-  updateRenderPosition(alpha = 0.18): void {
-    this.renderPosition.lerp(this.position, alpha)
-    if (this.object3D) {
-      this.object3D.position.copy(this.renderPosition)
-    }
   }
 }

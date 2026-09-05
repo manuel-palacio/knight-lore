@@ -12,6 +12,9 @@ import { PatrolEnemy } from './game/PatrolEnemy'
 import { GhostEnemy } from './game/GhostEnemy'
 import { MovingPlatform } from './game/MovingPlatform'
 import { PathGuard } from './game/PathGuard'
+import { Table } from './game/Table'
+import { VanishingBlock } from './game/VanishingBlock'
+import { BouncingBall } from './game/BouncingBall'
 import { Category } from './engine/categories'
 import { Room } from './game/Room'
 import { RoomManager } from './game/RoomManager'
@@ -292,11 +295,11 @@ async function main(): Promise<void> {
     pushGauge.release()
   }
 
-  function dynamicSupportAt(room: Room, x: number, z: number): number | null {
+  function dynamicSupportAt(room: Room, x: number, z: number, y: number): number | null {
     let best: number | null = null
     for (const e of room.entities) {
-      if (!(e instanceof MovingPlatform)) continue
-      const h = e.supportAt(x, z)
+      if (!(e instanceof MovingPlatform || e instanceof Table || e instanceof VanishingBlock)) continue
+      const h = e.supportAt(x, z, y)
       if (h !== null && (best === null || h > best)) best = h
     }
     return best
@@ -401,6 +404,12 @@ async function main(): Promise<void> {
       } else if (e instanceof MovingPlatform) {
         const half = e.extents.x / 2
         out.push(boxDynamic({ x0: e.position.x - half, x1: e.position.x + half, z0: e.position.z - half, z1: e.position.z + half, y0: 0, y1: e.height }))
+      } else if (e instanceof Table) {
+        out.push(...tableDynamics(e))
+      } else if (e instanceof VanishingBlock) {
+        if (e.present) out.push(vanishingDynamic(e))
+      } else if (e instanceof BouncingBall) {
+        out.push(ballDynamic(e))
       }
     }
     return out
@@ -422,7 +431,7 @@ async function main(): Promise<void> {
       grid: room.grid,
       tileSize: room.tileSize,
       playerPosition: player.position,
-      dynamicSupport: (x: number, z: number) => dynamicSupportAt(room, x, z),
+      dynamicSupport: (x: number, z: number, y: number) => dynamicSupportAt(room, x, z, y),
       onLanded: () => beeper.play('land'),
       onJumped: () => beeper.play('jump'),
     }
@@ -482,6 +491,51 @@ async function main(): Promise<void> {
 }
 
 // --- Set-piece drawing ---
+
+const TABLE_TOP = 0.25
+const TABLE_LEG = 0.25
+
+// A slab on four legs: the slab is one box, each leg a thin box at a corner.
+function tableDynamics(t: Table): Dynamic[] {
+  const half = t.extents.x / 2
+  const x0 = t.position.x - half
+  const z0 = t.position.z - half
+  const legs: Dynamic[] = []
+  for (const [lx, lz] of [[x0, z0], [x0 + t.extents.x - TABLE_LEG, z0], [x0, z0 + t.extents.z - TABLE_LEG], [x0 + t.extents.x - TABLE_LEG, z0 + t.extents.z - TABLE_LEG]]) {
+    legs.push(boxDynamic({ x0: lx, x1: lx + TABLE_LEG, z0: lz, z1: lz + TABLE_LEG, y0: 0, y1: t.height - TABLE_TOP }))
+  }
+  const top = boxDynamic({ x0, x1: x0 + t.extents.x, z0, z1: z0 + t.extents.z, y0: t.height - TABLE_TOP, y1: t.height })
+  return [...legs, { ...top, depth: isoDepth(t.position.x + half, t.height, t.position.z + half) }]
+}
+
+// Crumbling blocks flicker in their last steps before vanishing.
+function vanishingDynamic(v: VanishingBlock): Dynamic {
+  const half = v.extents.x / 2
+  const box = boxDynamic({ x0: v.position.x - half, x1: v.position.x + half, z0: v.position.z - half, z1: v.position.z + half, y0: 0, y1: v.height })
+  const crumbling = v.stepsUntilVanish >= 0 && v.stepsUntilVanish <= 3
+  if (!crumbling) return box
+  return { ...box, draw: (ctx, cfg, shades) => { if (Math.floor(performance.now() / 80) % 2 === 0) box.draw(ctx, cfg, shades) } }
+}
+
+const BALL_RADIUS_PX = 6
+
+function ballDynamic(b: BouncingBall): Dynamic {
+  return {
+    x: b.position.x,
+    y: b.position.y,
+    z: b.position.z,
+    draw: (ctx, cfg, shades) => {
+      const p = projectToScreen(b.position.x, b.position.y + 0.4, b.position.z, cfg)
+      ctx.fillStyle = shades.top
+      ctx.beginPath()
+      ctx.arc(Math.round(p.sx), Math.round(p.sy), BALL_RADIUS_PX, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.strokeStyle = shades.line
+      ctx.lineWidth = 1
+      ctx.stroke()
+    },
+  }
+}
 
 function setPieceSprite(image: HTMLCanvasElement, x: number, y: number, z: number, flip = false): Dynamic {
   return spriteDynamic({ image, frameX: 0, frameW: image.width, frameH: image.height, scale: 1, flip, x, y, z })

@@ -26,7 +26,7 @@ export interface PlayerCtx extends UpdateContext {
   tileSize: number
   input: { isDown: (code: string) => boolean; wasPressed: (code: string) => boolean }
   // Height of any moving support under a point, or null. Grid support is static.
-  dynamicSupport?: (x: number, z: number) => number | null
+  dynamicSupport?: (x: number, z: number, actorY: number) => number | null
   onLanded: () => void
   onJumped: () => void
 }
@@ -158,7 +158,7 @@ export class Player extends Entity {
   }
 
   private dynamicSupportAt(ctx: PlayerCtx, x: number, z: number): number {
-    return ctx.dynamicSupport?.(x, z) ?? -Infinity
+    return ctx.dynamicSupport?.(x, z, this.position.y) ?? -Infinity
   }
 
   private aabb(x: number, z: number): AABB {

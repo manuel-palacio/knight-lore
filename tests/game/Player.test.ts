@@ -194,7 +194,7 @@ describe('Player jump', () => {
 })
 
 describe('Player on dynamic supports', () => {
-  const lift = (x: number, z: number, top: number) => (px: number, pz: number) =>
+  const lift = (x: number, z: number, top: number) => (px: number, pz: number, _py: number) =>
     Math.abs(px - x) <= 1 && Math.abs(pz - z) <= 1 ? top : null
 
   it('lands on a dynamic support instead of falling to the floor', () => {
@@ -218,12 +218,23 @@ describe('Player on dynamic supports', () => {
     const { grid, state, player } = setupRoom()
     player.position.set(4, 1, 4)
     let gone = false
-    const c = { ...ctx(grid, state), dynamicSupport: (px: number, pz: number) => (gone ? null : lift(4, 4, 1)(px, pz)) }
+    const c = { ...ctx(grid, state), dynamicSupport: (px: number, pz: number, py: number) => (gone ? null : lift(4, 4, 1)(px, pz, py)) }
     step(player, c)
     expect(player.state as string).toBe('grounded')
     gone = true
     step(player, c)
     expect(player.state).toBe('airborne')
+  })
+})
+
+describe('Player under a table', () => {
+  it('walks freely under a support that only counts near its top', () => {
+    const { grid, state, player } = setupRoom()
+    const table = (px: number, pz: number, py: number) => (Math.abs(px - 4) <= 1 && Math.abs(pz - 6) <= 1 && py >= 1 ? 1.5 : null)
+    const c = { ...ctx(grid, state, { up: true }), dynamicSupport: table }
+    step(player, c, 8)
+    expect(player.position.z).toBe(6)
+    expect(player.position.y).toBe(0)
   })
 })
 

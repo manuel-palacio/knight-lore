@@ -25,6 +25,9 @@ export interface RoomSpec {
   pickups?: (Cell & { item: ItemId; y?: number })[]
   movingPlatforms?: { from: Cell; to: Cell; height: number }[]
   pathGuards?: { path: Cell[] }[]
+  tables?: (Cell & { height: number })[]
+  vanishing?: (Cell & { height: number })[]
+  balls?: { from: Cell; to: Cell }[]
 }
 
 const OPPOSITE: Record<Direction, Direction> = { north: 'south', south: 'north', east: 'west', west: 'east' }
@@ -110,6 +113,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     exits: [{ direction: 'north', target: 'room-006' }, { direction: 'east', target: 'room-001' }],
     spawn: { x: 6, z: 1 },
     platforms: [{ x: 2, z: 3, height: 1 }, { x: 3, z: 3, height: 2 }, { x: 5, z: 5, height: 1 }],
+    tables: [{ x: 5, z: 3, height: 1.5 }, { x: 6, z: 3, height: 1.5 }],
     pushBlocks: [{ x: 1, z: 6 }],
     guards: [{ from: { x: 1, z: 2 }, to: { x: 6, z: 2 } }],
   },
@@ -122,8 +126,8 @@ export const ROOM_SPECS: RoomSpec[] = [
     platforms: [{ x: 2, z: 2, height: 1 }, { x: 5, z: 2, height: 1 }, { x: 2, z: 5, height: 1 }, { x: 5, z: 5, height: 1 }],
     pathGuards: [
       { path: [{ x: 1, z: 1 }, { x: 6, z: 1 }, { x: 6, z: 6 }, { x: 1, z: 6 }] },
-      { path: [{ x: 3, z: 3 }, { x: 4, z: 3 }, { x: 4, z: 4 }, { x: 3, z: 4 }] },
     ],
+    balls: [{ from: { x: 1, z: 3 }, to: { x: 6, z: 3 } }],
   },
   {
     // Armoury: dead end packed with blocks; the high ledge needs two stacked.
@@ -152,7 +156,8 @@ export const ROOM_SPECS: RoomSpec[] = [
     id: 'room-013', tint: 'blue',
     exits: [{ direction: 'north', target: 'room-005' }],
     spawn: { x: 4, z: 1 },
-    platforms: [{ x: 1, z: 6, height: 1 }, { x: 2, z: 6, height: 2 }, { x: 3, z: 6, height: 3 }, { x: 3, z: 5, height: 2 }],
+    platforms: [{ x: 1, z: 6, height: 1 }, { x: 3, z: 6, height: 3 }, { x: 3, z: 5, height: 2 }],
+    vanishing: [{ x: 2, z: 6, height: 2 }, { x: 1, z: 4, height: 1 }],
     pushBlocks: [{ x: 6, z: 2 }],
     spikes: [{ x: 5, z: 4 }, { x: 6, z: 4 }],
     movingPlatforms: [{ from: { x: 5, z: 6 }, to: { x: 5, z: 2 }, height: 1 }],

@@ -42,6 +42,12 @@ describe('room map', () => {
     expect([...placed].sort()).toEqual([...ALL_ITEMS].sort())
   })
 
+  it('uses tables, vanishing blocks, and bouncing balls somewhere on the map', () => {
+    expect(ROOM_SPECS.some((s) => (s.tables ?? []).length > 0)).toBe(true)
+    expect(ROOM_SPECS.some((s) => (s.vanishing ?? []).length > 0)).toBe(true)
+    expect(ROOM_SPECS.some((s) => (s.balls ?? []).length > 0)).toBe(true)
+  })
+
   it('uses moving platforms and path guards somewhere on the map', () => {
     expect(ROOM_SPECS.some((s) => (s.movingPlatforms ?? []).length > 0)).toBe(true)
     expect(ROOM_SPECS.some((s) => (s.pathGuards ?? []).length > 0)).toBe(true)
@@ -71,6 +77,9 @@ describe('room specs content', () => {
         expect(p.from.x === p.to.x || p.from.z === p.to.z, `${s.id} platform must move along one axis`).toBe(true)
       }
       for (const g of s.pathGuards ?? []) for (const c of g.path) expect(inGrid(c), `${s.id} guard path`).toBe(true)
+      for (const t of s.tables ?? []) expect(inGrid(t), `${s.id} table`).toBe(true)
+      for (const v of s.vanishing ?? []) expect(inGrid(v), `${s.id} vanishing block`).toBe(true)
+      for (const b of s.balls ?? []) expect(inGrid(b.from) && inGrid(b.to), `${s.id} ball path`).toBe(true)
       expect(inGrid(s.spawn), `${s.id} spawn`).toBe(true)
     }
   })

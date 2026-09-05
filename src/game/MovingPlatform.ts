@@ -5,6 +5,7 @@ import { StepClock, STEP_LENGTH } from '../engine/StepClock'
 
 const FOOTPRINT = 2
 const RIDER_TOLERANCE = 0.05
+const TOP_TOLERANCE = 0.5
 
 interface PlatformCtx extends UpdateContext {
   playerPosition?: THREE.Vector3
@@ -29,10 +30,12 @@ export class MovingPlatform extends Entity {
     this.position.set(from.x, 0, from.z)
   }
 
-  supportAt(x: number, z: number): number | null {
+  // Only an actor near the top is supported, so the floor under a high
+  // platform stays walkable.
+  supportAt(x: number, z: number, actorY: number = this.height): number | null {
     const half = FOOTPRINT / 2
     const inside = Math.abs(x - this.position.x) <= half && Math.abs(z - this.position.z) <= half
-    return inside ? this.height : null
+    return inside && actorY >= this.height - TOP_TOLERANCE ? this.height : null
   }
 
   override reset(): void {

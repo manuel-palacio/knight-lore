@@ -1,12 +1,12 @@
 import { projectToScreen, isoDepth, type IsoConfig } from './IsoProjection'
 import type { Grid } from './Grid'
+import { buildWallLayout, type ExitDirection, type WallBox } from './WallLayout'
 
 // 2D Filmation renderer. Draws the simulation (grid solids + dynamic entities) as
 // monochrome isometric cubes plus character/item sprites, depth-sorted back-to-front
 // (painter's algorithm). One hue per room on a black void floor — the ZX look.
 
 const TILE = 2
-const WALL_HEIGHT = 4 // world units; back walls are two tiles tall
 
 export interface Renderable {
   // World footprint origin (min corner) in grid cells and the column height.
@@ -71,27 +71,11 @@ export class IsoRenderer {
     const shades = toShades(room.tint)
     const items: Renderable[] = []
 
-    // Doorways: punch a gap in the back wall at each north/west exit's middle cell;
-    // every exit also gets a brick arch. South/east exits sit on the open
-    // camera-facing edges, so they get an arch but no wall to cut.
-    const exits = room.exits ?? []
-    const midX = Math.floor(room.grid.width / 2)
-    const midZ = Math.floor(room.grid.depth / 2)
-    const skipNorth = exits.some((e) => e.direction === 'north') ? midX : null
-    const skipWest = exits.some((e) => e.direction === 'west') ? midZ : null
-
-    // Back walls: a frame of tall cubes one cell behind the north (z) and west (x)
-    // edges, so the room reads as enclosed without occluding the camera-facing side.
-    for (let gx = -1; gx < room.grid.width; gx++) {
-      if (gx === skipNorth) continue
-      items.push(this.cube(gx, -1, WALL_HEIGHT, shades))
+    // Back walls and doorway arches, brick by brick (see WallLayout).
+    const exits = (room.exits ?? []).map((e) => e.direction as ExitDirection)
+    for (const b of buildWallLayout(room.grid.width, room.grid.depth, exits, TILE)) {
+      items.push(this.brick(b, shades))
     }
-    for (let gz = 0; gz < room.grid.depth; gz++) {
-      if (gz === skipWest) continue
-      items.push(this.cube(-1, gz, WALL_HEIGHT, shades))
-    }
-
-    for (const e of exits) items.push(this.archItem(e.direction, room.grid, shades))
 
     // Solid floor cells (static blocks, push blocks) as cubes sized by support height.
     for (let gz = 0; gz < room.grid.depth; gz++) {
@@ -117,25 +101,15 @@ export class IsoRenderer {
     for (const it of items) it.draw(ctx, this.cfg)
   }
 
-  private archItem(direction: string, grid: Grid, shades: Shades): Renderable {
-    const w = grid.width * TILE
-    const d = grid.depth * TILE
-    const cx = Math.floor(grid.width / 2) * TILE + TILE / 2
-    const cz = Math.floor(grid.depth / 2) * TILE + TILE / 2
-    let bx = cx
-    let bz = 0
-    if (direction === 'south') bz = d
-    else if (direction === 'west') { bx = 0; bz = cz }
-    else if (direction === 'east') { bx = w; bz = cz }
+  private brick(b: WallBox, shades: Shades): Renderable {
+    const cx = (b.x0 + b.x1) / 2
+    const cz = (b.z0 + b.z1) / 2
     return {
-      gx: bx / TILE,
-      gz: bz / TILE,
-      height: WALL_HEIGHT,
-      depth: isoDepth(bx, 0, bz),
-      draw: (ctx, cfg) => {
-        const p = projectToScreen(bx, 0, bz, cfg)
-        drawArch(ctx, p.sx, p.sy, shades)
-      },
+      gx: b.x0 / TILE,
+      gz: b.z0 / TILE,
+      height: b.y1,
+      depth: isoDepth(cx, b.y0, cz),
+      draw: (ctx, cfg) => drawIsoBox(ctx, cfg, b, shades),
     }
   }
 
@@ -188,7 +162,8 @@ export function spriteDynamic(s: SpriteDraw): Dynamic {
 }
 
 function blitSprite(ctx: CanvasRenderingContext2D, cfg: IsoConfig, s: SpriteDraw): void {
-  const feet = projectToScreen(s.x, s.y, s.z, cfg)
+  const projected = projectToScreen(s.x, s.y, s.z, cfg)
+  const feet = { sx: Math.round(projected.sx), sy: Math.round(projected.sy) }
   const w = s.frameW * s.scale
   const h = s.frameH * s.scale
   if (s.flip) {
@@ -202,8 +177,26 @@ function blitSprite(ctx: CanvasRenderingContext2D, cfg: IsoConfig, s: SpriteDraw
   }
 }
 
-// One iso cube: top diamond + right (east, +x) and left (south, +z) faces, with
-// brick-hatch lines. Corners A=far, B=right, C=near, D=left.
+interface Box3 {
+  x0: number
+  x1: number
+  z0: number
+  z1: number
+  y0: number
+  y1: number
+}
+
+// One iso box: top diamond + right (east, +x) and left (south, +z) faces with a
+// crisp outline. Corners A=far, B=right, C=near, D=left.
+function drawIsoBox(ctx: CanvasRenderingContext2D, cfg: IsoConfig, b: Box3, shades: Shades): void {
+  const c = boxCorners(cfg, b)
+  fillQuad(ctx, [c.Bt, c.Ct, c.Cb, c.Bb], shades.right)
+  fillQuad(ctx, [c.Dt, c.Ct, c.Cb, c.Db], shades.left)
+  fillQuad(ctx, [c.At, c.Bt, c.Ct, c.Dt], shades.top)
+  outlineBox(ctx, c, shades.line, 1)
+}
+
+// A floor block: an iso box with staggered brick courses hatched on its faces.
 function drawIsoCube(
   ctx: CanvasRenderingContext2D,
   cfg: IsoConfig,
@@ -212,41 +205,44 @@ function drawIsoCube(
   height: number,
   shades: Shades,
 ): void {
-  const x0 = gx * TILE
-  const x1 = x0 + TILE
-  const z0 = gz * TILE
-  const z1 = z0 + TILE
-  const top = (wx: number, wz: number) => projectToScreen(wx, height, wz, cfg)
-  const bot = (wx: number, wz: number) => projectToScreen(wx, 0, wz, cfg)
-
-  const At = top(x0, z0)
-  const Bt = top(x1, z0)
-  const Ct = top(x1, z1)
-  const Dt = top(x0, z1)
-  const Bb = bot(x1, z0)
-  const Cb = bot(x1, z1)
-  const Db = bot(x0, z1)
-
+  const b: Box3 = { x0: gx * TILE, x1: (gx + 1) * TILE, z0: gz * TILE, z1: (gz + 1) * TILE, y0: 0, y1: height }
+  const c = boxCorners(cfg, b)
   const rows = Math.max(2, Math.round(height * 2)) // ~2 brick courses per world unit
+  fillQuad(ctx, [c.Bt, c.Ct, c.Cb, c.Bb], shades.right)
+  brickFace(ctx, c.Bt, c.Ct, c.Bb, c.Cb, rows, shades.line)
+  fillQuad(ctx, [c.Dt, c.Ct, c.Cb, c.Db], shades.left)
+  brickFace(ctx, c.Dt, c.Ct, c.Db, c.Cb, rows, shades.line)
+  fillQuad(ctx, [c.At, c.Bt, c.Ct, c.Dt], shades.top)
+  outlineBox(ctx, c, shades.line, 1.5)
+}
 
-  // Right (east) face, then left (south) face — fill, then staggered brickwork.
-  fillQuad(ctx, [Bt, Ct, Cb, Bb], shades.right)
-  brickFace(ctx, Bt, Ct, Bb, Cb, rows, shades.line)
-  fillQuad(ctx, [Dt, Ct, Cb, Db], shades.left)
-  brickFace(ctx, Dt, Ct, Db, Cb, rows, shades.line)
-  // Top diamond
-  fillQuad(ctx, [At, Bt, Ct, Dt], shades.top)
+interface BoxCorners {
+  At: ScreenPt; Bt: ScreenPt; Ct: ScreenPt; Dt: ScreenPt
+  Bb: ScreenPt; Cb: ScreenPt; Db: ScreenPt
+}
 
-  // Crisp silhouette + edges — this is what makes the cube read as solid masonry.
+type ScreenPt = { sx: number; sy: number }
+
+function boxCorners(cfg: IsoConfig, b: Box3): BoxCorners {
+  const top = (wx: number, wz: number) => projectToScreen(wx, b.y1, wz, cfg)
+  const bot = (wx: number, wz: number) => projectToScreen(wx, b.y0, wz, cfg)
+  return {
+    At: top(b.x0, b.z0), Bt: top(b.x1, b.z0), Ct: top(b.x1, b.z1), Dt: top(b.x0, b.z1),
+    Bb: bot(b.x1, b.z0), Cb: bot(b.x1, b.z1), Db: bot(b.x0, b.z1),
+  }
+}
+
+// Crisp silhouette + edges — this is what makes a box read as solid masonry.
+function outlineBox(ctx: CanvasRenderingContext2D, c: BoxCorners, color: string, width: number): void {
   ctx.lineJoin = 'round'
-  ctx.strokeStyle = shades.line
-  ctx.lineWidth = 1.5
-  strokePath(ctx, [At, Bt, Ct, Dt], true)
-  line(ctx, Bt, Bb)
-  line(ctx, Ct, Cb)
-  line(ctx, Dt, Db)
-  line(ctx, Bb, Cb)
-  line(ctx, Cb, Db)
+  ctx.strokeStyle = color
+  ctx.lineWidth = width
+  strokePath(ctx, [c.At, c.Bt, c.Ct, c.Dt], true)
+  line(ctx, c.Bt, c.Bb)
+  line(ctx, c.Ct, c.Cb)
+  line(ctx, c.Dt, c.Db)
+  line(ctx, c.Bb, c.Cb)
+  line(ctx, c.Cb, c.Db)
 }
 
 function facePoint(
@@ -298,60 +294,6 @@ function strokePath(ctx: CanvasRenderingContext2D, pts: { sx: number; sy: number
   ctx.moveTo(pts[0]!.sx, pts[0]!.sy)
   for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i]!.sx, pts[i]!.sy)
   if (close) ctx.closePath()
-  ctx.stroke()
-}
-
-// A stacked-brick doorway: two jamb columns and a voussoir arch ring around a
-// black opening, with mortar joints. Drawn front-facing at the doorway base.
-function drawArch(ctx: CanvasRenderingContext2D, sx: number, sy: number, shades: Shades): void {
-  const w = 19 // outer half-width
-  const t = 8 // ring/jamb thickness
-  const cy = sy - 30 // arc centre (springline)
-  const ringPt = (r: number, theta: number): { sx: number; sy: number } => ({
-    sx: sx + r * Math.cos(theta),
-    sy: cy - r * Math.sin(theta),
-  })
-
-  // Outer silhouette: jambs + outer semicircle.
-  ctx.fillStyle = shades.right
-  ctx.beginPath()
-  ctx.moveTo(sx - w, sy)
-  ctx.lineTo(sx - w, cy)
-  ctx.arc(sx, cy, w, Math.PI, 0, false)
-  ctx.lineTo(sx + w, sy)
-  ctx.closePath()
-  ctx.fill()
-
-  // Black opening.
-  ctx.fillStyle = '#000'
-  ctx.beginPath()
-  ctx.moveTo(sx - w + t, sy)
-  ctx.lineTo(sx - w + t, cy)
-  ctx.arc(sx, cy, w - t, Math.PI, 0, false)
-  ctx.lineTo(sx + w - t, sy)
-  ctx.closePath()
-  ctx.fill()
-
-  ctx.strokeStyle = shades.line
-  ctx.lineWidth = 1
-  // Voussoir joints (radial) around the arch ring.
-  for (let k = 0; k <= 6; k++) {
-    const theta = (k / 6) * Math.PI
-    line(ctx, ringPt(w - t, theta), ringPt(w, theta))
-  }
-  // Jamb courses (horizontal) on both columns.
-  for (let y = sy - 7; y > cy; y -= 8) {
-    line(ctx, { sx: sx - w, sy: y }, { sx: sx - w + t, sy: y })
-    line(ctx, { sx: sx + w - t, sy: y }, { sx: sx + w, sy: y })
-  }
-
-  // Crisp outline of the whole doorway.
-  ctx.lineWidth = 1.5
-  ctx.beginPath()
-  ctx.moveTo(sx - w, sy)
-  ctx.lineTo(sx - w, cy)
-  ctx.arc(sx, cy, w, Math.PI, 0, false)
-  ctx.lineTo(sx + w, sy)
   ctx.stroke()
 }
 

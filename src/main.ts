@@ -250,10 +250,9 @@ async function main(): Promise<void> {
   }
 
   function handlePushAttempt(room: Room): void {
-    // Player's input direction this tick; -1/0/+1 on each axis.
-    const px = (input.isDown('ArrowRight') ? 1 : 0) - (input.isDown('ArrowLeft') ? 1 : 0)
-    const pz = (input.isDown('ArrowDown') ? 1 : 0) - (input.isDown('ArrowUp') ? 1 : 0)
-    if (px === 0 && pz === 0) return // not walking; no push
+    if (!input.isDown('ArrowUp') || player.state !== 'grounded') return // not walking; no push
+    const px = player.facing === 'east' ? 1 : player.facing === 'west' ? -1 : 0
+    const pz = player.facing === 'south' ? 1 : player.facing === 'north' ? -1 : 0
 
     for (const e of room.entities) {
       if (!e.hasCategory(Category.SOLID_DYNAMIC)) continue

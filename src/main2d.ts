@@ -20,21 +20,18 @@ import { Room } from './game/Room'
 import { RoomManager } from './game/RoomManager'
 import { ROOM_BUILDERS, START_ROOM } from './scenes/rooms/index'
 import { IsoRenderer, spriteDynamic, type Dynamic, type SpriteDraw } from './engine/IsoRenderer'
+import { selectCharacterFrame } from './game/CharacterFrame'
 import { projectToScreen, isoDepth } from './engine/IsoProjection'
 
 const PICKUP_RANGE = 1.6
 const PICKUP_HEIGHT = 1.8
 const PUSH_RANGE_MAX = 1.5
 const PUSH_RANGE_MIN = 0.4
-// The sabreman sheet concatenates several facings; frames 5-12 are the clean
-// single-direction stride. Loop only those (mirror handles left/right).
-const HUMAN_SHEET_FRAMES = 26
-const HUMAN_WALK_START = 5
-const HUMAN_WALK_COUNT = 8
-const WOLF_WALK_FRAMES = 5
-const WALK_FPS = 9
+// Character strips are native ZX resolution: three 24x36 cells [stand, A, B]
+// per view. Drawn at 1:1 canvas pixels so the sprite stays crisp.
+const STRIP_FRAMES = 3
 const TRANSFORM_DURATION = 0.9
-const CHAR_SCALE = 0.3
+const CHAR_SCALE = 1
 
 function loadImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -71,8 +68,16 @@ async function main(): Promise<void> {
   const hud = new HUD()
   const renderer = new IsoRenderer(container, 760, 560, 2)
 
-  const human = tintImage(await loadImage('/sprites/sabreman-walk.png'), CHARACTER_TINT)
-  const wolf = tintImage(await loadImage('/sprites/sabrewulf-walk.png'), CHARACTER_TINT)
+  const strips = {
+    human: {
+      front: tintImage(await loadImage('/sprites/sabreman-front.png'), CHARACTER_TINT),
+      back: tintImage(await loadImage('/sprites/sabreman-back.png'), CHARACTER_TINT),
+    },
+    werewolf: {
+      front: tintImage(await loadImage('/sprites/sabrewulf-front.png'), CHARACTER_TINT),
+      back: tintImage(await loadImage('/sprites/sabrewulf-back.png'), CHARACTER_TINT),
+    },
+  }
   const itemImages = new Map<string, HTMLImageElement>()
   for (const id of ['goblet', 'gem', 'wine-bottle', 'crystal-ball']) {
     itemImages.set(id, await loadImage(`/sprites/items/${id}.png`))
@@ -88,10 +93,7 @@ async function main(): Promise<void> {
   let visualForm: 'human' | 'werewolf' = 'human'
   let transformElapsed = TRANSFORM_DURATION
   let transformTarget: 'human' | 'werewolf' = 'human'
-  let walkPhase = 0
-  let facingRight = true
   let charMoving = false
-  let lastPos = { x: player.position.x, z: player.position.z }
 
   function activeRoom(): Room {
     const room = manager.active
@@ -103,7 +105,6 @@ async function main(): Promise<void> {
     player.position.set(room.spawnX, 0, room.spawnZ)
     player.renderPosition.copy(player.position)
     player.state = 'grounded'
-    lastPos = { x: player.position.x, z: player.position.z }
   }
 
   const startRoom = await manager.transitionTo(START_ROOM, 5, 5)
@@ -123,9 +124,10 @@ async function main(): Promise<void> {
   // Dev hooks for verification.
   ;(window as unknown as { __t: () => void }).__t = () => { state.toggleForm(); state.onTransformed(); state.transformTimer = 9999 }
   ;(window as unknown as { __dbg: () => unknown }).__dbg = () => ({
-    walkPhase: Number(walkPhase.toFixed(2)),
-    frame: HUMAN_WALK_START + (Math.floor(walkPhase) % HUMAN_WALK_COUNT),
+    steps: player.stepsTaken,
+    frame: selectCharacterFrame(player.facing, player.stepsTaken, charMoving),
     state: player.state,
+    facing: player.facing,
     pos: { x: Number(player.position.x.toFixed(2)), z: Number(player.position.z.toFixed(2)) },
   })
   state.onTransformWhileCarrying = () => dropCarried()
@@ -219,9 +221,9 @@ async function main(): Promise<void> {
   }
 
   function handlePushAttempt(room: Room): void {
-    const px = (input.isDown('ArrowRight') ? 1 : 0) - (input.isDown('ArrowLeft') ? 1 : 0)
-    const pz = (input.isDown('ArrowDown') ? 1 : 0) - (input.isDown('ArrowUp') ? 1 : 0)
-    if (px === 0 && pz === 0) return
+    if (!input.isDown('ArrowUp') || player.state !== 'grounded') return
+    const px = player.facing === 'east' ? 1 : player.facing === 'west' ? -1 : 0
+    const pz = player.facing === 'south' ? 1 : player.facing === 'north' ? -1 : 0
     for (const e of room.entities) {
       if (!e.hasCategory(Category.SOLID_DYNAMIC)) continue
       const block = e as PushBlock
@@ -254,14 +256,7 @@ async function main(): Promise<void> {
   }
 
   function updateCharacter(dt: number): void {
-    const vx = (player.position.x - lastPos.x) / dt
-    const vz = (player.position.z - lastPos.z) / dt
-    lastPos = { x: player.position.x, z: player.position.z }
-    const moving = Math.hypot(vx, vz) > 0.1
-    charMoving = moving && player.state === 'grounded'
-    if (charMoving) walkPhase += dt * WALK_FPS
-    const screenVx = vx - vz
-    if (Math.abs(screenVx) > 0.05) facingRight = screenVx > 0
+    charMoving = input.isDown('ArrowUp') && player.state === 'grounded'
     if (transformElapsed < TRANSFORM_DURATION) {
       transformElapsed += dt
       if (transformElapsed >= TRANSFORM_DURATION) visualForm = transformTarget
@@ -277,19 +272,16 @@ async function main(): Promise<void> {
         ? transformTarget === 'werewolf'
         : transformTarget !== 'werewolf'
       : visualForm === 'werewolf'
-    const sheet = showWolf ? wolf : human
-    const sheetFrames = showWolf ? WOLF_WALK_FRAMES : HUMAN_SHEET_FRAMES
-    const frameW = sheet.width / sheetFrames
-    const idx = showWolf
-      ? (charMoving ? Math.floor(walkPhase) % WOLF_WALK_FRAMES : 0)
-      : HUMAN_WALK_START + (charMoving ? Math.floor(walkPhase) % HUMAN_WALK_COUNT : 0)
+    const selected = selectCharacterFrame(player.facing, player.stepsTaken, charMoving)
+    const sheet = strips[showWolf ? 'werewolf' : 'human'][selected.view]
+    const frameW = sheet.width / STRIP_FRAMES
     const sprite: SpriteDraw = {
       image: sheet,
-      frameX: idx * frameW,
+      frameX: selected.frame * frameW,
       frameW,
       frameH: sheet.height,
       scale: CHAR_SCALE,
-      flip: !facingRight,
+      flip: selected.flip,
       x: player.renderPosition.x,
       y: player.renderPosition.y,
       z: player.renderPosition.z,
@@ -360,7 +352,7 @@ async function main(): Promise<void> {
     const room = manager.active
     if (!room) return
     room.updateRenderPositions(0.5)
-    player.updateRenderPosition(0.5)
+    player.updateRenderPosition(1)
     renderer.render(room, [...entityDynamics(room), characterDynamic()])
   })
 

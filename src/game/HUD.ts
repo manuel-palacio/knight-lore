@@ -36,11 +36,12 @@ export class HUD {
   private wantsEl: HTMLElement
   private deliveredEl: HTMLElement
   private winEl: HTMLElement
+  private winDetailEl: HTMLElement
   private gameOverEl: HTMLElement
   private gameOverReasonEl: HTMLElement
 
   constructor() {
-    const ids = ['hud-lives', 'hud-form-glyph', 'hud-day', 'hud-carry', 'hud-wants', 'hud-delivered', 'hud-hero', 'win', 'gameover', 'gameover-reason']
+    const ids = ['hud-lives', 'hud-form-glyph', 'hud-day', 'hud-carry', 'hud-wants', 'hud-delivered', 'hud-hero', 'win', 'win-detail', 'gameover', 'gameover-reason']
     const els: Record<string, HTMLElement> = {}
     for (const id of ids) {
       const el = document.getElementById(id)
@@ -63,6 +64,7 @@ export class HUD {
     this.wantsEl = els['hud-wants']!
     this.deliveredEl = els['hud-delivered']!
     this.winEl = els['win']!
+    this.winDetailEl = els['win-detail']!
     this.gameOverEl = els['gameover']!
     this.gameOverReasonEl = els['gameover-reason']!
   }
@@ -104,6 +106,7 @@ export class HUD {
     }
 
     this.winEl.style.display = state.won ? 'flex' : 'none'
+    this.winDetailEl.textContent = `SABREMAN IS HUMAN AGAIN — DAY ${state.dayCount} OF 40`
     this.gameOverEl.style.display = state.gameOver ? 'flex' : 'none'
     const reason = state.gameOverReason === 'days' ? 'THE 40 DAYS HAVE PASSED' : 'OUT OF LIVES'
     this.gameOverReasonEl.textContent = `${reason} — DAY ${state.dayCount}, ${state.cureProgress} OF ${state.cureSequence.length} CHARMS`

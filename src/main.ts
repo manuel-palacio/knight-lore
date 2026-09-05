@@ -140,6 +140,7 @@ async function main(): Promise<void> {
 
   // Dev hooks for verification.
   ;(window as unknown as { __t: () => void }).__t = () => { state.toggleForm(); state.onTransformed(); state.transformTimer = 9999 }
+  ;(window as unknown as { __win: () => void }).__win = () => { state.won = true }
   ;(window as unknown as { __timer: (seconds: number) => void }).__timer = (seconds) => { state.transformTimer = seconds }
   ;(window as unknown as { __room: (id: string) => void }).__room = (id) => {
     transitioning = true

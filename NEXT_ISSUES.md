@@ -1,5 +1,7 @@
 # Knight Lore clone: next issues
 
+Status 2026-09-06: issues 1 to 12 below are done and committed on `feat/2d-filmation-renderer` (see git log). Kept for the acceptance criteria and as the seed for the next list.
+
 State as of 2026-09-05 on branch `feat/2d-filmation-renderer`: the 2D Filmation build (`2d.html`) has tank controls on a fixed step clock, four-facing sprites, the original morph, lattice walls with pointed arches, 13 rooms as data specs, moving platforms, path guards, push weight, and a beeper. 174 tests pass.
 
 Issues are ordered. Each one is small enough for a single session and has acceptance criteria that map to tests. Work them top to bottom unless something below unblocks a decision above.
@@ -18,9 +20,9 @@ Issues are ordered. Each one is small enough for a single session and has accept
 5. Remove the `lint:no-render-pos` script if `renderPosition` goes away with the lerp.
 
 **Acceptance:**
-- [ ] `npm run build` produces one entry point and no Three.js scene code outside `Entity`.
-- [ ] `npx vitest run` still passes with the character rig tests removed.
-- [ ] Repo root has no loose screenshot PNGs. Move the ones worth keeping to `docs/screenshots/`.
+- [x] `npm run build` produces one entry point and no Three.js scene code outside `Entity`.
+- [x] `npx vitest run` still passes with the character rig tests removed.
+- [x] Repo root has no loose screenshot PNGs. Move the ones worth keeping to `docs/screenshots/`.
 
 ---
 
@@ -34,8 +36,8 @@ Issues are ordered. Each one is small enough for a single session and has accept
 3. Re-take the four-room montage and compare against `reference/gif3-walk/f-050.png` side by side.
 
 **Acceptance:**
-- [ ] Unit test in `tests/engine/IsoProjection.test.ts`: one tile projects to 32 px wide, one world unit of height to 16 px.
-- [ ] Playwright screenshot of the start room shows Sabreman roughly one block tall.
+- [x] Unit test in `tests/engine/IsoProjection.test.ts`: one tile projects to 32 px wide, one world unit of height to 16 px.
+- [x] Playwright screenshot of the start room shows Sabreman roughly one block tall.
 
 ---
 
@@ -48,8 +50,8 @@ Issues are ordered. Each one is small enough for a single session and has accept
 2. Give `selectCharacterFrame` a per-form cycle length instead of the fixed `[0,1,2,1]`.
 
 **Acceptance:**
-- [ ] `tests/game/CharacterFrame.test.ts`: wolf cycle covers six frames before repeating; human cycle unchanged.
-- [ ] Strips checked visually at 6x against the extracted poses.
+- [x] `tests/game/CharacterFrame.test.ts`: wolf cycle covers six frames before repeating; human cycle unchanged.
+- [x] Strips checked visually at 6x against the extracted poses.
 
 ---
 
@@ -64,9 +66,9 @@ Issues are ordered. Each one is small enough for a single session and has accept
 4. Place every item somewhere on the map, one per room, far enough from room 001 to matter.
 
 **Acceptance:**
-- [ ] `tests/game/GameState.test.ts`: sequence has N distinct items, wrong item refused, right item advances, win after the last.
-- [ ] `tests/scenes/RoomSpecs.test.ts`: every `ItemId` is placed exactly once across all rooms.
-- [ ] Playwright: HUD shows the wanted item sprite and changes after a delivery.
+- [x] `tests/game/GameState.test.ts`: sequence has N distinct items, wrong item refused, right item advances, win after the last.
+- [x] `tests/scenes/RoomSpecs.test.ts`: every `ItemId` is placed exactly once across all rooms.
+- [x] Playwright: HUD shows the wanted item sprite and changes after a delivery.
 
 ---
 
@@ -81,8 +83,8 @@ Issues are ordered. Each one is small enough for a single session and has accept
 4. Day count increments visibly with a chime.
 
 **Acceptance:**
-- [ ] Unit test: `GameState` exposes day progress in 0..1 and it resets at each transform.
-- [ ] Playwright: forcing `__t()` shows the dim, the morph, and the day counter change.
+- [x] Unit test: `GameState` exposes day progress in 0..1 and it resets at each transform.
+- [x] Playwright: forcing `__t()` shows the dim, the morph, and the day counter change.
 
 ---
 
@@ -96,9 +98,9 @@ Issues are ordered. Each one is small enough for a single session and has accept
 3. Brief invulnerability after respawn so a guard standing on the door does not chain kills.
 
 **Acceptance:**
-- [ ] Unit test: `Room.reset()` returns platforms and guards to their first waypoint.
-- [ ] Unit test: player is invulnerable for N steps after respawn.
-- [ ] Playwright: walking into a guard flashes, respawns at the door, and the lives digit drops by one.
+- [x] Unit test: `Room.reset()` returns platforms and guards to their first waypoint.
+- [x] Unit test: player is invulnerable for N steps after respawn.
+- [x] Playwright: walking into a guard flashes, respawns at the door, and the lives digit drops by one.
 
 ---
 
@@ -111,8 +113,8 @@ Issues are ordered. Each one is small enough for a single session and has accept
 2. Play the `door` sound at the start of the wipe.
 
 **Acceptance:**
-- [ ] Unit test on a small `Transition` state object: input is ignored during the wipe and accepted after.
-- [ ] Playwright: a frame captured mid-transition is fully black.
+- [x] Unit test on a small `Transition` state object: input is ignored during the wipe and accepted after.
+- [x] Playwright: a frame captured mid-transition is fully black.
 
 ---
 
@@ -127,9 +129,9 @@ Issues are ordered. Each one is small enough for a single session and has accept
 4. Sprites: extract the table and ball from `reference/gif3-walk` frames; the vanishing block reuses the platform box drawn dimmed.
 
 **Acceptance:**
-- [ ] One unit test file per entity covering its timing on the step clock.
-- [ ] `RoomSpecs.test.ts` validates the new fields stay inside the grid.
-- [ ] At least one room uses each mechanic.
+- [x] One unit test file per entity covering its timing on the step clock.
+- [x] `RoomSpecs.test.ts` validates the new fields stay inside the grid.
+- [x] At least one room uses each mechanic.
 
 ---
 
@@ -143,8 +145,8 @@ Issues are ordered. Each one is small enough for a single session and has accept
 3. Make `START_ROOM` and the cauldron room match the original's positions.
 
 **Acceptance:**
-- [ ] `RoomSpecs.test.ts` passes with every room in `docs/MAP.md` present and reciprocated.
-- [ ] No room spec has fewer than three placed things.
+- [x] `RoomSpecs.test.ts` passes with every room in `docs/MAP.md` present and reciprocated (23 rooms; growing toward 128 remains open).
+- [x] No room spec has fewer than three placed things.
 
 ---
 
@@ -158,7 +160,7 @@ Issues are ordered. Each one is small enough for a single session and has accept
 3. Completion: the original's "you have cured Sabreman" style message.
 
 **Acceptance:**
-- [ ] Playwright: page loads to the title; any key starts; game over screen appears after the last life; completion appears after the last delivery.
+- [x] Playwright: page loads to the title; any key starts; game over screen appears after the last life; completion appears after the last delivery.
 
 ---
 
@@ -171,8 +173,8 @@ Issues are ordered. Each one is small enough for a single session and has accept
 2. Pause: freeze the step clocks and dim the canvas; P or Start toggles.
 
 **Acceptance:**
-- [ ] Unit test: `Input` reports `isDown('ArrowUp')` when a fake gamepad reports d-pad up.
-- [ ] Playwright: P pauses and the debug position stops changing.
+- [x] Unit test: `Input` reports `isDown('ArrowUp')` when a fake gamepad reports d-pad up.
+- [x] Playwright: P pauses and the debug position stops changing.
 
 ---
 
@@ -185,8 +187,8 @@ Issues are ordered. Each one is small enough for a single session and has accept
 2. Save `GameState` (day, lives, sequence, progress, current room) to `localStorage` on each room change; offer "continue" on the title screen.
 
 **Acceptance:**
-- [ ] Unit test: `GameState.serialize()` and `restore()` round-trip.
-- [ ] Playwright: reload mid-game, choose continue, land in the same room with the same day count.
+- [x] Unit test: `GameState.serialize()` and `restore()` round-trip.
+- [x] Playwright: reload mid-game, choose continue, land in the same room with the same day count.
 
 ---
 
@@ -195,4 +197,5 @@ Issues are ordered. Each one is small enough for a single session and has accept
 - `Entity.updateRenderPosition` lerp is unused in 2D since positions are quantised. Remove `renderPosition` when the 3D build goes.
 - `PatrolEnemy` (continuous two-point patrol) and `PathGuard` overlap. Migrate the legacy rooms to `PathGuard` and delete `PatrolEnemy`.
 - `src/scenes/rooms/Room00*.ts` hand-built rooms could become specs once tables exist (room 001's cauldron platform is the only thing specs cannot express yet).
-- The dev hooks on `window` (`__dbg`, `__t`, `__room`, `__pos`) should be gated behind `import.meta.env.DEV`.
+- [x] The dev hooks on `window` are gated behind `import.meta.env.DEV`.
+- Still open: retire `PatrolEnemy` in favour of `PathGuard`; convert rooms 001 to 005 to specs (needs a cauldron field); grow the map past 23 rooms; the wolf's higher jump and wolf-only monsters from the original.

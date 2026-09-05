@@ -156,28 +156,32 @@ async function main(): Promise<void> {
     if (state.form === 'human') beeper.play('day')
   }
 
-  // Dev hooks for verification.
-  ;(window as unknown as { __t: () => void }).__t = () => { state.toggleForm(); state.onTransformed(); state.transformTimer = 9999 }
-  ;(window as unknown as { __win: () => void }).__win = () => { state.won = true }
-  ;(window as unknown as { __timer: (seconds: number) => void }).__timer = (seconds) => { state.transformTimer = seconds }
-  ;(window as unknown as { __room: (id: string) => void }).__room = (id) => {
-    transitioning = true
-    manager.transitionTo(id, 8, 1).then((room) => { placePlayerAtSpawn(room); transitioning = false })
+  // Dev hooks for verification, absent from production builds.
+  if (import.meta.env.DEV) {
+    const hooks = window as unknown as Record<string, unknown>
+    hooks.__t = () => { state.toggleForm(); state.onTransformed(); state.transformTimer = 9999 }
+    hooks.__win = () => { state.won = true }
+    hooks.__timer = (seconds: number) => { state.transformTimer = seconds }
+    hooks.__room = (id: string) => {
+      transitioning = true
+      manager.transitionTo(id, 8, 1).then((room) => { placePlayerAtSpawn(room); transitioning = false })
+    }
+    hooks.__pos = (x: number, y: number, z: number) => {
+      player.position.set(x, y, z)
+    }
+    hooks.__dbg = () => ({
+      steps: player.stepsTaken,
+      frame: selectCharacterFrame(player.facing, player.stepsTaken, charMoving, player.state !== 'grounded', visualForm),
+      form: visualForm,
+      room: state.currentRoomId,
+      day: state.dayCount,
+      state: player.state,
+      facing: player.facing,
+      pos: { x: Number(player.position.x.toFixed(2)), y: Number(player.position.y.toFixed(2)), z: Number(player.position.z.toFixed(2)) },
+      platforms: activeRoom().entities.filter((e) => e instanceof MovingPlatform).map((e) => ({ x: e.position.x, z: e.position.z })),
+    })
   }
-  ;(window as unknown as { __pos: (x: number, y: number, z: number) => void }).__pos = (x, y, z) => {
-    player.position.set(x, y, z)
-  }
-  ;(window as unknown as { __dbg: () => unknown }).__dbg = () => ({
-    steps: player.stepsTaken,
-    frame: selectCharacterFrame(player.facing, player.stepsTaken, charMoving, player.state !== 'grounded', visualForm),
-    form: visualForm,
-    room: state.currentRoomId,
-    day: state.dayCount,
-    state: player.state,
-    facing: player.facing,
-    pos: { x: Number(player.position.x.toFixed(2)), y: Number(player.position.y.toFixed(2)), z: Number(player.position.z.toFixed(2)) },
-    platforms: activeRoom().entities.filter((e) => e instanceof MovingPlatform).map((e) => ({ x: e.position.x, z: e.position.z })),
-  })
+
   state.onTransformWhileCarrying = () => {
     dropCarried()
     beeper.play('drop')

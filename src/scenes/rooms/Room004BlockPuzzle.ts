@@ -6,7 +6,7 @@ import type { RoomBuilder } from '../../game/RoomManager'
 // Wine bottle on a height-2 platform: unreachable from the floor (jump
 // apex 1.0). Push a 1.0-high slab next to it, climb the slab, jump up.
 export const buildRoom004: RoomBuilder = async (loader, _state) => {
-  const room = await buildRoomShell('room-004', loader, 'green', ['west'], 'dungeon')
+  const room = await buildRoomShell('room-004', loader, 'green', ['west', 'east', 'south', 'north'], 'dungeon')
   addPlatform(room, 5, 5, 2)
   addPickup(room, 'wine-bottle', 5, 5, 2.4)
   addPickup(room, 'life', 6, 1)
@@ -17,6 +17,12 @@ export const buildRoom004: RoomBuilder = async (loader, _state) => {
 
   room.addExit({ direction: 'west', targetRoomId: 'room-003', entryX: 15, entryZ: 8 })
   addExitArch(room, 'west')
+  room.addExit({ direction: 'east', targetRoomId: 'room-011', entryX: 1, entryZ: 8 })
+  addExitArch(room, 'east')
+  room.addExit({ direction: 'south', targetRoomId: 'room-012', entryX: 8, entryZ: 1 })
+  addExitArch(room, 'south')
+  room.addExit({ direction: 'north', targetRoomId: 'room-007', entryX: 8, entryZ: 15 })
+  addExitArch(room, 'north')
   room.setSpawn(tileCenter(0), tileCenter(4))
   return room
 }

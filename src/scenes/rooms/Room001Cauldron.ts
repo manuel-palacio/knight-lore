@@ -8,7 +8,7 @@ import type { RoomBuilder } from '../../game/RoomManager'
 // The quest hub: cauldron on a raised 2×2 platform (height 1 — exactly
 // jumpable), one guard patrolling in front of it.
 export const buildRoom001: RoomBuilder = async (loader, _state) => {
-  const room = await buildRoomShell('room-001', loader, 'yellow', ['north', 'east'], 'castle')
+  const room = await buildRoomShell('room-001', loader, 'yellow', ['north', 'east', 'south', 'west'], 'castle')
 
   for (const [gx, gz] of [[3, 3], [4, 3], [3, 4], [4, 4]] as const) {
     addPlatform(room, gx, gz, 1)
@@ -64,6 +64,10 @@ export const buildRoom001: RoomBuilder = async (loader, _state) => {
   room.addExit({ direction: 'east', targetRoomId: 'room-003', entryX: 1, entryZ: 8 })
   addExitArch(room, 'north')
   addExitArch(room, 'east')
+  room.addExit({ direction: 'south', targetRoomId: 'room-008', entryX: 8, entryZ: 1 })
+  addExitArch(room, 'south')
+  room.addExit({ direction: 'west', targetRoomId: 'room-009', entryX: 15, entryZ: 8 })
+  addExitArch(room, 'west')
   room.setSpawn(tileCenter(4), tileCenter(0))
   return room
 }

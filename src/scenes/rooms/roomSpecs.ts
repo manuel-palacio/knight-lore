@@ -24,6 +24,8 @@ export interface RoomSpec {
   guards?: { from: Cell; to: Cell; speed?: number }[]
   ghosts?: Cell[]
   pickups?: (Cell & { item: ItemId })[]
+  movingPlatforms?: { from: Cell; to: Cell; height: number }[]
+  pathGuards?: { path: Cell[] }[]
 }
 
 const OPPOSITE: Record<Direction, Direction> = { north: 'south', south: 'north', east: 'west', west: 'east' }
@@ -85,6 +87,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     platforms: [{ x: 3, z: 3, height: 1 }, { x: 4, z: 3, height: 1 }, { x: 3, z: 4, height: 2 }, { x: 4, z: 4, height: 2 }],
     spikes: [{ x: 1, z: 6 }, { x: 6, z: 6 }],
     guards: [{ from: { x: 1, z: 1 }, to: { x: 6, z: 1 } }],
+    movingPlatforms: [{ from: { x: 1, z: 2 }, to: { x: 6, z: 2 }, height: 2 }],
   },
   {
     // Pit: two spike rows with offset gaps, a ghost that closes in.
@@ -96,6 +99,7 @@ export const ROOM_SPECS: RoomSpec[] = [
       ...[0, 2, 3, 4, 5, 6, 7].map((x) => ({ x, z: 5 })),
     ],
     ghosts: [{ x: 6, z: 6 }],
+    movingPlatforms: [{ from: { x: 1, z: 4 }, to: { x: 6, z: 4 }, height: 1 }],
   },
   {
     // Store: a two-step stair and a block to drag under the high ledge.
@@ -112,7 +116,10 @@ export const ROOM_SPECS: RoomSpec[] = [
     exits: [{ direction: 'south', target: 'room-003' }, { direction: 'west', target: 'room-002' }, { direction: 'east', target: 'room-007' }],
     spawn: { x: 1, z: 6 },
     platforms: [{ x: 2, z: 2, height: 1 }, { x: 5, z: 2, height: 1 }, { x: 2, z: 5, height: 1 }, { x: 5, z: 5, height: 1 }],
-    guards: [{ from: { x: 1, z: 3 }, to: { x: 6, z: 3 } }, { from: { x: 3, z: 1 }, to: { x: 3, z: 6 }, speed: 1.4 }],
+    pathGuards: [
+      { path: [{ x: 1, z: 1 }, { x: 6, z: 1 }, { x: 6, z: 6 }, { x: 1, z: 6 }] },
+      { path: [{ x: 3, z: 3 }, { x: 4, z: 3 }, { x: 4, z: 4 }, { x: 3, z: 4 }] },
+    ],
   },
   {
     // Armoury: dead end packed with blocks; the high ledge needs two stacked.
@@ -141,5 +148,6 @@ export const ROOM_SPECS: RoomSpec[] = [
     platforms: [{ x: 1, z: 6, height: 1 }, { x: 2, z: 6, height: 2 }, { x: 3, z: 6, height: 3 }, { x: 3, z: 5, height: 2 }],
     pushBlocks: [{ x: 6, z: 2 }],
     spikes: [{ x: 5, z: 4 }, { x: 6, z: 4 }],
+    movingPlatforms: [{ from: { x: 5, z: 6 }, to: { x: 5, z: 2 }, height: 1 }],
   },
 ]

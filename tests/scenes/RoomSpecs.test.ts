@@ -35,6 +35,11 @@ describe('room map', () => {
   it('adds at least eight rooms to the original five', () => {
     expect(ROOM_SPECS.length).toBeGreaterThanOrEqual(8)
   })
+
+  it('uses moving platforms and path guards somewhere on the map', () => {
+    expect(ROOM_SPECS.some((s) => (s.movingPlatforms ?? []).length > 0)).toBe(true)
+    expect(ROOM_SPECS.some((s) => (s.pathGuards ?? []).length > 0)).toBe(true)
+  })
 })
 
 describe('entryFor', () => {
@@ -55,6 +60,11 @@ describe('room specs content', () => {
       for (const p of s.pushBlocks ?? []) expect(inGrid(p), `${s.id} push block`).toBe(true)
       for (const p of s.spikes ?? []) expect(inGrid(p), `${s.id} spike`).toBe(true)
       for (const p of s.pickups ?? []) expect(inGrid(p), `${s.id} pickup`).toBe(true)
+      for (const p of s.movingPlatforms ?? []) {
+        expect(inGrid(p.from) && inGrid(p.to), `${s.id} platform path`).toBe(true)
+        expect(p.from.x === p.to.x || p.from.z === p.to.z, `${s.id} platform must move along one axis`).toBe(true)
+      }
+      for (const g of s.pathGuards ?? []) for (const c of g.path) expect(inGrid(c), `${s.id} guard path`).toBe(true)
       expect(inGrid(s.spawn), `${s.id} spawn`).toBe(true)
     }
   })

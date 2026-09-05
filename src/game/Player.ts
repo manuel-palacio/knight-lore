@@ -4,34 +4,27 @@ import { resolveHorizontal, type AABB } from '../engine/Collision'
 import type { Grid } from '../engine/Grid'
 import type { GameState } from './GameState'
 import * as THREE from 'three'
+import { StepClock, STEP_LENGTH, TICKS_PER_STEP } from '../engine/StepClock'
+import { EPS } from '../engine/epsilons'
+import { FACINGS_CLOCKWISE, FACING_VECTOR, type Facing } from './Facing'
 
-// Filmation-style tank controls. The simulation runs at 60Hz but Sabreman
-// only acts on a coarser step clock: every TICKS_PER_STEP ticks he turns one
-// facing, walks one fixed STEP_LENGTH, or advances one frame of a committed
-// jump arc. Nothing moves between steps, so positions stay on a fixed lattice.
-export const TICKS_PER_STEP = 5
-export const STEP_LENGTH = 0.25
+export { STEP_LENGTH, TICKS_PER_STEP }
+export type { Facing }
+
+// Filmation-style tank controls. Sabreman acts on the shared step clock:
+// each step he turns one facing, walks one STEP_LENGTH, or advances one frame
+// of a committed jump arc. Nothing moves between steps.
 const JUMP_HEIGHT = 1.0
 const JUMP_STEPS = 6
 const FALL_PER_STEP = 0.5
-
-export type Facing = 'north' | 'east' | 'south' | 'west'
-
-// Clockwise as seen on screen in the isometric projection.
-const FACINGS_CLOCKWISE: Facing[] = ['north', 'east', 'south', 'west']
-
-const FACING_VECTOR: Record<Facing, { x: number; z: number }> = {
-  north: { x: 0, z: -1 },
-  east: { x: 1, z: 0 },
-  south: { x: 0, z: 1 },
-  west: { x: -1, z: 0 },
-}
 
 export interface PlayerCtx extends UpdateContext {
   grid: Grid
   state: GameState
   tileSize: number
   input: { isDown: (code: string) => boolean; wasPressed: (code: string) => boolean }
+  // Height of any moving support under a point, or null. Grid support is static.
+  dynamicSupport?: (x: number, z: number) => number | null
   onLanded: () => void
   onJumped: () => void
 }
@@ -42,7 +35,7 @@ export class Player extends Entity {
   stepsTaken = 0
   carrying: string | null = null
 
-  private tickCounter = 0
+  private readonly clock = new StepClock()
   private tappedKeys = new Set<string>()
   private jumpStep = 0
   private jumpStartY = 0
@@ -58,8 +51,7 @@ export class Player extends Entity {
     const ctx = ctxRaw as PlayerCtx
     this.latchJumpRequest(ctx)
     this.latchTaps(ctx)
-    this.tickCounter++
-    if (this.tickCounter % TICKS_PER_STEP !== 0) return
+    if (!this.clock.tick()) return
     this.step(ctx)
     this.tappedKeys.clear()
   }
@@ -136,6 +128,7 @@ export class Player extends Entity {
     const dir = FACING_VECTOR[this.facing]
     const targetX = this.position.x + dir.x * STEP_LENGTH
     const targetZ = this.position.z + dir.z * STEP_LENGTH
+    if (this.dynamicSupportAt(ctx, targetX, targetZ) > this.position.y + EPS.STEP) return
     const resolved = resolveHorizontal(
       { x: this.position.x, z: this.position.z },
       { x: targetX, z: targetZ },
@@ -148,6 +141,10 @@ export class Player extends Entity {
     this.position.z = resolved.z
   }
 
+  private dynamicSupportAt(ctx: PlayerCtx, x: number, z: number): number {
+    return ctx.dynamicSupport?.(x, z) ?? -Infinity
+  }
+
   private aabb(x: number, z: number): AABB {
     const hw = this.extents.x / 2
     const hd = this.extents.z / 2
@@ -157,7 +154,7 @@ export class Player extends Entity {
   private supportAt(ctx: PlayerCtx): number {
     const cx = Math.floor(this.position.x / ctx.tileSize)
     const cz = Math.floor(this.position.z / ctx.tileSize)
-    return ctx.grid.supportHeight(cx, cz)
+    return Math.max(ctx.grid.supportHeight(cx, cz), this.dynamicSupportAt(ctx, this.position.x, this.position.z))
   }
 
   tryPickup(item: { id: string; position: THREE.Vector3 }, state: GameState, onSuccess: () => void): void {

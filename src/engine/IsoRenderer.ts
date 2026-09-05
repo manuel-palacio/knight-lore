@@ -155,6 +155,13 @@ export interface SpriteDraw {
 }
 
 // Build a Dynamic that blits a sprite frame anchored at its feet (world point).
+// A depth-sorted solid box (moving platform) in the room's shades.
+export function boxDynamic(b: Box3): Dynamic {
+  const cx = (b.x0 + b.x1) / 2
+  const cz = (b.z0 + b.z1) / 2
+  return { x: cx, y: b.y0, z: cz, draw: (ctx, cfg, shades) => drawIsoBox(ctx, cfg, b, shades) }
+}
+
 export function spriteDynamic(s: SpriteDraw): Dynamic {
   return { x: s.x, y: s.y, z: s.z, draw: (ctx, cfg) => blitSprite(ctx, cfg, s) }
 }
@@ -175,7 +182,7 @@ function blitSprite(ctx: CanvasRenderingContext2D, cfg: IsoConfig, s: SpriteDraw
   }
 }
 
-interface Box3 {
+export interface Box3 {
   x0: number
   x1: number
   z0: number

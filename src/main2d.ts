@@ -15,11 +15,13 @@ import { Cauldron } from './game/Cauldron'
 import { Spike } from './game/SpikeGrid'
 import { PatrolEnemy } from './game/PatrolEnemy'
 import { GhostEnemy } from './game/GhostEnemy'
+import { MovingPlatform } from './game/MovingPlatform'
+import { PathGuard } from './game/PathGuard'
 import { Category } from './engine/categories'
 import { Room } from './game/Room'
 import { RoomManager } from './game/RoomManager'
 import { ROOM_BUILDERS, START_ROOM } from './scenes/rooms/index'
-import { IsoRenderer, spriteDynamic, type Dynamic, type SpriteDraw } from './engine/IsoRenderer'
+import { IsoRenderer, spriteDynamic, boxDynamic, type Dynamic, type SpriteDraw } from './engine/IsoRenderer'
 import { selectCharacterFrame } from './game/CharacterFrame'
 import { PushGauge } from './game/PushGauge'
 import { Beeper } from './engine/Beeper'
@@ -141,12 +143,17 @@ async function main(): Promise<void> {
     transitioning = true
     manager.transitionTo(id, 5, 5).then((room) => { placePlayerAtSpawn(room); transitioning = false })
   }
+  ;(window as unknown as { __pos: (x: number, y: number, z: number) => void }).__pos = (x, y, z) => {
+    player.position.set(x, y, z)
+    player.renderPosition.copy(player.position)
+  }
   ;(window as unknown as { __dbg: () => unknown }).__dbg = () => ({
     steps: player.stepsTaken,
     frame: selectCharacterFrame(player.facing, player.stepsTaken, charMoving, player.state !== 'grounded'),
     state: player.state,
     facing: player.facing,
-    pos: { x: Number(player.position.x.toFixed(2)), z: Number(player.position.z.toFixed(2)) },
+    pos: { x: Number(player.position.x.toFixed(2)), y: Number(player.position.y.toFixed(2)), z: Number(player.position.z.toFixed(2)) },
+    platforms: activeRoom().entities.filter((e) => e instanceof MovingPlatform).map((e) => ({ x: e.position.x, z: e.position.z })),
   })
   state.onTransformWhileCarrying = () => dropCarried()
   state.onLifeLost = () => placePlayerAtSpawn(activeRoom())
@@ -270,6 +277,16 @@ async function main(): Promise<void> {
     pushGauge.release()
   }
 
+  function dynamicSupportAt(room: Room, x: number, z: number): number | null {
+    let best: number | null = null
+    for (const e of room.entities) {
+      if (!(e instanceof MovingPlatform)) continue
+      const h = e.supportAt(x, z)
+      if (h !== null && (best === null || h > best)) best = h
+    }
+    return best
+  }
+
   function resolveActorOverlap(room: Room): void {
     for (const e of room.entities) {
       if (!e.active || !e.hasCategory(Category.ACTOR_BODY)) continue
@@ -363,6 +380,12 @@ async function main(): Promise<void> {
         out.push(setPieceSprite(setPieces.ghost, e.renderPosition.x, e.renderPosition.y, e.renderPosition.z))
       } else if (e instanceof PatrolEnemy) {
         out.push(setPieceSprite(setPieces.guard, e.renderPosition.x, 0, e.renderPosition.z))
+      } else if (e instanceof PathGuard) {
+        const flip = e.facing === 'south' || e.facing === 'west'
+        out.push(setPieceSprite(setPieces.guard, e.position.x, 0, e.position.z, flip))
+      } else if (e instanceof MovingPlatform) {
+        const half = e.extents.x / 2
+        out.push(boxDynamic({ x0: e.position.x - half, x1: e.position.x + half, z0: e.position.z - half, z1: e.position.z + half, y0: 0, y1: e.height }))
       }
     }
     return out
@@ -383,6 +406,7 @@ async function main(): Promise<void> {
       grid: room.grid,
       tileSize: room.tileSize,
       playerPosition: player.position,
+      dynamicSupport: (x: number, z: number) => dynamicSupportAt(room, x, z),
       onLanded: () => beeper.play('land'),
       onJumped: () => beeper.play('jump'),
     }
@@ -420,8 +444,8 @@ async function main(): Promise<void> {
 
 // --- Set-piece drawing ---
 
-function setPieceSprite(image: HTMLCanvasElement, x: number, y: number, z: number): Dynamic {
-  return spriteDynamic({ image, frameX: 0, frameW: image.width, frameH: image.height, scale: 1, flip: false, x, y, z })
+function setPieceSprite(image: HTMLCanvasElement, x: number, y: number, z: number, flip = false): Dynamic {
+  return spriteDynamic({ image, frameX: 0, frameW: image.width, frameH: image.height, scale: 1, flip, x, y, z })
 }
 
 // A bed of thin needles across the tile, like the original's spike pits:

@@ -194,6 +194,40 @@ describe('Player jump', () => {
   })
 })
 
+describe('Player on dynamic supports', () => {
+  const lift = (x: number, z: number, top: number) => (px: number, pz: number) =>
+    Math.abs(px - x) <= 1 && Math.abs(pz - z) <= 1 ? top : null
+
+  it('lands on a dynamic support instead of falling to the floor', () => {
+    const { grid, state, player } = setupRoom()
+    player.position.set(4, 3, 4)
+    player.state = 'airborne'
+    const c = { ...ctx(grid, state), dynamicSupport: lift(4, 4, 1) }
+    for (let i = 0; i < 200 && (player.state as string) !== 'grounded'; i++) tick(player, c)
+    expect(player.state as string).toBe('grounded')
+    expect(player.position.y).toBe(1)
+  })
+
+  it('is blocked walking into a dynamic support higher than a step', () => {
+    const { grid, state, player } = setupRoom()
+    const c = { ...ctx(grid, state, { up: true }), dynamicSupport: lift(4, 6, 1) }
+    step(player, c, 8)
+    expect(player.position.z).toBeLessThan(5)
+  })
+
+  it('falls when the dynamic support moves away', () => {
+    const { grid, state, player } = setupRoom()
+    player.position.set(4, 1, 4)
+    let gone = false
+    const c = { ...ctx(grid, state), dynamicSupport: (px: number, pz: number) => (gone ? null : lift(4, 4, 1)(px, pz)) }
+    step(player, c)
+    expect(player.state as string).toBe('grounded')
+    gone = true
+    step(player, c)
+    expect(player.state).toBe('airborne')
+  })
+})
+
 describe('Player pickup', () => {
   it('werewolf form rejects pickup attempt', () => {
     const { state, player } = setupRoom()

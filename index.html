@@ -30,6 +30,10 @@
       .lives-num { font-weight: bold; font-size: 18px; }
       .day-label { letter-spacing: 1px; }
       .sun-glyph { color: #ffd95a; font-size: 20px; } .moon-glyph { color: #cce4ff; font-size: 20px; }
+      .day-glyph { display: inline-block; width: 20px; transition: transform 0.5s linear; }
+      .day-track { display: inline-block; width: 72px; border-bottom: 1px solid #6a4a20; }
+      @keyframes slot-flash { 0%, 100% { background: rgba(0,0,0,0.5); } 50% { background: #ff7050; } }
+      .slot-flash { animation: slot-flash 0.2s linear 3; }
       .item-slot { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 1px solid #6a4a20; background: rgba(0,0,0,0.5); font-size: 20px; }
       .carry-slot { border-color: #ffd95a; box-shadow: 0 0 6px rgba(255, 217, 90, 0.4); }
       .wants-slot { border-color: #ff7050; box-shadow: 0 0 8px rgba(255, 112, 80, 0.6); animation: pulse 1.5s ease-in-out infinite; }
@@ -63,7 +67,7 @@
         <div class="hud-cell hud-center">
           <span class="delivered-row" id="hud-delivered"></span>
           <span class="day-label">DAY:<span id="hud-day">01</span></span>
-          <span id="hud-form-glyph" class="sun-glyph">☀</span>
+          <span class="day-track"><span id="hud-form-glyph" class="sun-glyph">☀</span></span>
         </div>
         <div class="hud-cell hud-right">
           <span class="hud-wants-label">CAULDRON WANTS</span>

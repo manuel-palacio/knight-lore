@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { GameState, ALL_ITEMS } from '../../src/game/GameState'
+import { GameState, ALL_ITEMS, HUMAN_DURATION, DUSK_WARNING } from '../../src/game/GameState'
 import { Door } from '../../src/game/Door'
 
 describe('GameState', () => {
@@ -77,6 +77,23 @@ describe('GameState', () => {
     expect(s.dayCount).toBe(41)
     expect(s.gameOver).toBe(true)
     expect(s.gameOverReason).toBe('days')
+  })
+
+  it('reports day progress from 0 at dawn to 1 at dusk and resets on transform', () => {
+    const s = new GameState()
+    expect(s.dayProgress).toBe(0)
+    s.tickTransform(HUMAN_DURATION / 2)
+    expect(s.dayProgress).toBeCloseTo(0.5, 5)
+    s.tickTransform(HUMAN_DURATION / 2 + 0.001)
+    expect(s.form).toBe('werewolf')
+    expect(s.dayProgress).toBeCloseTo(0, 2)
+  })
+
+  it('flags dusk during the last seconds before a transform', () => {
+    const s = new GameState()
+    expect(s.isDusk).toBe(false)
+    s.tickTransform(HUMAN_DURATION - DUSK_WARNING + 0.01)
+    expect(s.isDusk).toBe(true)
   })
 
   it('draws a cure sequence of every item in a seeded random order', () => {

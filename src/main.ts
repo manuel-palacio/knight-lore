@@ -126,10 +126,12 @@ async function main(): Promise<void> {
     transformElapsed = 0
     transformTarget = state.form
     beeper.play('transform')
+    if (state.form === 'human') beeper.play('day')
   }
 
   // Dev hooks for verification.
   ;(window as unknown as { __t: () => void }).__t = () => { state.toggleForm(); state.onTransformed(); state.transformTimer = 9999 }
+  ;(window as unknown as { __timer: (seconds: number) => void }).__timer = (seconds) => { state.transformTimer = seconds }
   ;(window as unknown as { __room: (id: string) => void }).__room = (id) => {
     transitioning = true
     manager.transitionTo(id, 5, 5).then((room) => { placePlayerAtSpawn(room); transitioning = false })
@@ -146,7 +148,11 @@ async function main(): Promise<void> {
     pos: { x: Number(player.position.x.toFixed(2)), y: Number(player.position.y.toFixed(2)), z: Number(player.position.z.toFixed(2)) },
     platforms: activeRoom().entities.filter((e) => e instanceof MovingPlatform).map((e) => ({ x: e.position.x, z: e.position.z })),
   })
-  state.onTransformWhileCarrying = () => dropCarried()
+  state.onTransformWhileCarrying = () => {
+    dropCarried()
+    beeper.play('drop')
+    hud.flashCarrySlot()
+  }
   state.onLifeLost = () => placePlayerAtSpawn(activeRoom())
 
   function dropCarried(): void {
@@ -154,7 +160,6 @@ async function main(): Promise<void> {
     carriedPickup.collected = false
     carriedPickup.active = true
     carriedPickup.position.set(player.position.x, 0.4, player.position.z)
-    carriedPickup.position.copy(carriedPickup.position)
     carriedPickup = null
     player.carrying = null
   }
@@ -429,7 +434,17 @@ async function main(): Promise<void> {
     const room = manager.active
     if (!room) return
     renderer.render(room, [...entityDynamics(room), characterDynamic()])
+    if (state.isDusk && !morphing()) drawDusk()
   })
+
+  // The last seconds before a transform: the room flickers dark, as a warning.
+  function drawDusk(): void {
+    const ctx = renderer.canvas.getContext('2d')
+    if (!ctx) return
+    const flicker = Math.floor(performance.now() / 120) % 2 === 0
+    ctx.fillStyle = flicker ? 'rgba(0,0,0,0.55)' : 'rgba(0,0,0,0.35)'
+    ctx.fillRect(0, 0, renderer.canvas.width, renderer.canvas.height)
+  }
 
   loop.start()
 }

@@ -7,6 +7,7 @@ import { iconUrl } from './HudIcons'
 // moon in the centre, big pulsing "CAULDRON WANTS" slot on the right.
 // Item slots use inline SVG pixel-art icons (see HudIcons.ts).
 const ITEM_IDS: readonly string[] = ALL_ITEMS
+const DIAL_TRAVEL_PX = 48
 
 // Item slots show the real in-game item sprite, so the wanted item is
 // recognisable on the floor of a room.
@@ -66,6 +67,11 @@ export class HUD {
     this.gameOverReasonEl = els['gameover-reason']!
   }
 
+  flashCarrySlot(): void {
+    this.carryEl.classList.add('slot-flash')
+    setTimeout(() => this.carryEl.classList.remove('slot-flash'), 600)
+  }
+
   render(state: GameState, carrying: string | null): void {
     this.livesEl.textContent = String(state.lives).padStart(2, '0')
 
@@ -79,6 +85,8 @@ export class HUD {
     sm.style.imageRendering = 'pixelated'
     this.formGlyph.appendChild(sm)
     this.formGlyph.className = `day-glyph ${state.form === 'human' ? 'sun-glyph' : 'moon-glyph'}`
+    // The sun or moon sweeps along its track as the spell runs out.
+    this.formGlyph.style.transform = `translateX(${Math.round(state.dayProgress * DIAL_TRAVEL_PX)}px)`
 
     this.dayEl.textContent = ' ' + String(Math.min(state.dayCount, 40)).padStart(2, '0')
 

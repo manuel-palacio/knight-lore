@@ -6,6 +6,7 @@ export const HUMAN_DURATION = 20
 export const WEREWOLF_DURATION = 20
 
 export const TOTAL_DAYS = 40
+export const DUSK_WARNING = 2
 export const STARTING_LIVES = 5
 // Every charm in the game. The cauldron asks for all of them, one at a time,
 // in an order drawn at the start of each game like the original.
@@ -72,6 +73,16 @@ export class GameState {
         }
       }
     }
+  }
+
+  // 0 at the start of the current form's spell, 1 when it is about to flip.
+  get dayProgress(): number {
+    const duration = this.form === 'human' ? HUMAN_DURATION : WEREWOLF_DURATION
+    return Math.min(1, Math.max(0, 1 - this.transformTimer / duration))
+  }
+
+  get isDusk(): boolean {
+    return this.transformTimer <= DUSK_WARNING
   }
 
   get wantedItem(): string | null {

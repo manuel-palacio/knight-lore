@@ -7,6 +7,7 @@ import type { RoomBuilder } from '../../game/RoomManager'
 export const buildRoom003: RoomBuilder = async (loader, _state) => {
   const room = await buildRoomShell('room-003', loader, 'blue', ['west', 'east', 'south'], 'tower')
   addPickup(room, 'gem', 1, 1)
+  addPickup(room, 'boot', 6, 6)
   addPatrolEnemy(room, { x: 3, z: 5 }, { x: 13, z: 5 })
   addPatrolEnemy(room, { x: 9, z: 3 }, { x: 9, z: 13 })
 

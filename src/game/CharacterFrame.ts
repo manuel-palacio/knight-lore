@@ -13,8 +13,10 @@ export interface CharacterFrame {
 
 const WALK_CYCLE = [0, 1, 2, 1]
 
-export function selectCharacterFrame(facing: Facing, stepsTaken: number, walking: boolean): CharacterFrame {
-  const frame = walking ? WALK_CYCLE[stepsTaken % WALK_CYCLE.length] : 0
+const AIRBORNE_FRAME = 1
+
+export function selectCharacterFrame(facing: Facing, stepsTaken: number, walking: boolean, airborne = false): CharacterFrame {
+  const frame = airborne ? AIRBORNE_FRAME : walking ? WALK_CYCLE[stepsTaken % WALK_CYCLE.length] : 0
   switch (facing) {
     case 'east': return { view: 'front', frame, flip: false }
     case 'south': return { view: 'front', frame, flip: true }

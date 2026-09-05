@@ -30,7 +30,8 @@ const PUSH_RANGE_MIN = 0.4
 // Character strips are native ZX resolution: three 24x36 cells [stand, A, B]
 // per view. Drawn at 1:1 canvas pixels so the sprite stays crisp.
 const STRIP_FRAMES = 3
-const TRANSFORM_DURATION = 0.9
+const TRANSFORM_FRAMES = 11
+const TRANSFORM_DURATION = 2.2 // 11 morph stages at the original's ~0.2s each
 const CHAR_SCALE = 1
 
 function loadImage(url: string): Promise<HTMLImageElement> {
@@ -68,6 +69,7 @@ async function main(): Promise<void> {
   const hud = new HUD()
   const renderer = new IsoRenderer(container, 760, 560, 2)
 
+  const transformStrip = tintImage(await loadImage('/sprites/sabreman-transform.png'), CHARACTER_TINT)
   const strips = {
     human: {
       front: tintImage(await loadImage('/sprites/sabreman-front.png'), CHARACTER_TINT),
@@ -77,6 +79,11 @@ async function main(): Promise<void> {
       front: tintImage(await loadImage('/sprites/sabrewulf-front.png'), CHARACTER_TINT),
       back: tintImage(await loadImage('/sprites/sabrewulf-back.png'), CHARACTER_TINT),
     },
+  }
+  const setPieces = {
+    cauldron: tintImage(await loadImage('/sprites/cauldron.png'), CHARACTER_TINT),
+    ghost: tintImage(await loadImage('/sprites/ghost.png'), CHARACTER_TINT),
+    guard: tintImage(await loadImage('/sprites/guard.png'), CHARACTER_TINT),
   }
   const itemImages = new Map<string, HTMLImageElement>()
   for (const id of ['goblet', 'gem', 'wine-bottle', 'crystal-ball']) {
@@ -123,9 +130,13 @@ async function main(): Promise<void> {
 
   // Dev hooks for verification.
   ;(window as unknown as { __t: () => void }).__t = () => { state.toggleForm(); state.onTransformed(); state.transformTimer = 9999 }
+  ;(window as unknown as { __room: (id: string) => void }).__room = (id) => {
+    transitioning = true
+    manager.transitionTo(id, 5, 5).then((room) => { placePlayerAtSpawn(room); transitioning = false })
+  }
   ;(window as unknown as { __dbg: () => unknown }).__dbg = () => ({
     steps: player.stepsTaken,
-    frame: selectCharacterFrame(player.facing, player.stepsTaken, charMoving),
+    frame: selectCharacterFrame(player.facing, player.stepsTaken, charMoving, player.state !== 'grounded'),
     state: player.state,
     facing: player.facing,
     pos: { x: Number(player.position.x.toFixed(2)), z: Number(player.position.z.toFixed(2)) },
@@ -196,6 +207,7 @@ async function main(): Promise<void> {
       .transitionTo(exit.targetRoomId, exit.entryX, exit.entryZ)
       .then((room) => {
         placePlayerAtSpawn(room)
+        player.facing = exit.direction
         transitioning = false
       })
       .catch((err) => {
@@ -263,17 +275,33 @@ async function main(): Promise<void> {
     }
   }
 
+  function morphing(): boolean {
+    return transformElapsed < TRANSFORM_DURATION
+  }
+
+  // The morph strip was captured facing west; mirror it for the east-ish facings.
+  function transformSprite(): SpriteDraw {
+    const progress = transformElapsed / TRANSFORM_DURATION
+    const stage = Math.min(TRANSFORM_FRAMES - 1, Math.floor(progress * TRANSFORM_FRAMES))
+    const frame = transformTarget === 'werewolf' ? stage : TRANSFORM_FRAMES - 1 - stage
+    const frameW = transformStrip.width / TRANSFORM_FRAMES
+    return {
+      image: transformStrip,
+      frameX: frame * frameW,
+      frameW,
+      frameH: transformStrip.height,
+      scale: CHAR_SCALE,
+      flip: player.facing === 'north' || player.facing === 'east',
+      x: player.renderPosition.x,
+      y: player.renderPosition.y,
+      z: player.renderPosition.z,
+    }
+  }
+
   function characterDynamic(): Dynamic {
-    // During the transform window, flicker between the two forms (a clean,
-    // asset-free morph until authentic transform frames are wired in).
-    const morphing = transformElapsed < TRANSFORM_DURATION
-    const showWolf = morphing
-      ? Math.floor(transformElapsed * 24) % 2 === 0
-        ? transformTarget === 'werewolf'
-        : transformTarget !== 'werewolf'
-      : visualForm === 'werewolf'
-    const selected = selectCharacterFrame(player.facing, player.stepsTaken, charMoving)
-    const sheet = strips[showWolf ? 'werewolf' : 'human'][selected.view]
+    if (morphing()) return spriteDynamic(transformSprite())
+    const selected = selectCharacterFrame(player.facing, player.stepsTaken, charMoving, player.state !== 'grounded')
+    const sheet = strips[visualForm][selected.view]
     const frameW = sheet.width / STRIP_FRAMES
     const sprite: SpriteDraw = {
       image: sheet,
@@ -312,11 +340,13 @@ async function main(): Promise<void> {
       } else if (e instanceof Cauldron) {
         // Rests on a platform: lift to its real height and sort in front of it.
         const depth = isoDepth(e.position.x, e.position.y, e.position.z) + 6
-        out.push(proceduralDynamic(e.position.x, e.position.y, e.position.z, drawCauldron, depth))
+        out.push({ ...setPieceSprite(setPieces.cauldron, e.position.x, e.position.y, e.position.z), depth })
       } else if (e instanceof Spike) {
-        out.push(proceduralDynamic(e.position.x, 0, e.position.z, drawSpikes))
-      } else if (e instanceof PatrolEnemy || e instanceof GhostEnemy) {
-        out.push(proceduralDynamic(e.position.x, 0, e.position.z, drawEnemy))
+        out.push(spikeDynamic(e.position.x, e.position.z))
+      } else if (e instanceof GhostEnemy) {
+        out.push(setPieceSprite(setPieces.ghost, e.renderPosition.x, e.renderPosition.y, e.renderPosition.z))
+      } else if (e instanceof PatrolEnemy) {
+        out.push(setPieceSprite(setPieces.guard, e.renderPosition.x, 0, e.renderPosition.z))
       }
     }
     return out
@@ -331,8 +361,16 @@ async function main(): Promise<void> {
     }
     if (transitioning) return
     const room = activeRoom()
-    const ctx = { input, state, grid: room.grid, tileSize: room.tileSize, onLanded: () => {}, onJumped: () => {} }
-    player.update(dt, ctx)
+    const ctx = {
+      input,
+      state,
+      grid: room.grid,
+      tileSize: room.tileSize,
+      playerPosition: player.position,
+      onLanded: () => {},
+      onJumped: () => {},
+    }
+    if (!morphing()) player.update(dt, ctx)
     room.update(dt, ctx)
     handlePushAttempt(room)
     resolveActorOverlap(room)
@@ -359,76 +397,41 @@ async function main(): Promise<void> {
   loop.start()
 }
 
-// --- Procedural entity drawing (room-tinted iso shapes) ---
+// --- Set-piece drawing ---
 
-type ProcDraw = (ctx: CanvasRenderingContext2D, sx: number, sy: number, shades: { top: string; right: string; left: string; line: string }) => void
+function setPieceSprite(image: HTMLCanvasElement, x: number, y: number, z: number): Dynamic {
+  return spriteDynamic({ image, frameX: 0, frameW: image.width, frameH: image.height, scale: 1, flip: false, x, y, z })
+}
 
-function proceduralDynamic(x: number, y: number, z: number, draw: ProcDraw, depth?: number): Dynamic {
+// A bed of thin needles across the tile, like the original's spike pits:
+// 1px verticals of varied height on a fixed pseudo-random spread per tile.
+const NEEDLES = 32
+
+function spikeDynamic(x: number, z: number): Dynamic {
   return {
     x,
-    y,
+    y: 0,
     z,
-    depth,
     draw: (ctx, cfg, shades) => {
-      const p = projectToScreen(x, y, z, cfg)
-      draw(ctx, p.sx, p.sy, shades)
+      ctx.strokeStyle = shades.top
+      ctx.lineWidth = 1
+      let seed = Math.floor(x * 7 + z * 13)
+      const next = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff)
+      const half = cfg.tile / 2
+      for (let i = 0; i < NEEDLES; i++) {
+        const px = x - half + 0.15 * cfg.tile + next() * 0.7 * cfg.tile
+        const pz = z - half + 0.15 * cfg.tile + next() * 0.7 * cfg.tile
+        const base = projectToScreen(px, 0, pz, cfg)
+        const height = 6 + Math.floor(next() * 12)
+        const sx = Math.round(base.sx) + 0.5
+        const sy = Math.round(base.sy)
+        ctx.beginPath()
+        ctx.moveTo(sx, sy)
+        ctx.lineTo(sx, sy - height)
+        ctx.stroke()
+      }
     },
   }
 }
-
-function drawCauldron(ctx: CanvasRenderingContext2D, sx: number, sy: number, shades: ProcShades): void {
-  // Rounded pot body
-  ctx.fillStyle = shades.left
-  ctx.beginPath()
-  ctx.ellipse(sx, sy - 13, 17, 13, 0, 0, Math.PI * 2)
-  ctx.fill()
-  // Bright rim
-  ctx.fillStyle = shades.top
-  ctx.beginPath()
-  ctx.ellipse(sx, sy - 24, 17, 7, 0, 0, Math.PI * 2)
-  ctx.fill()
-  // Dark brew
-  ctx.fillStyle = '#000'
-  ctx.beginPath()
-  ctx.ellipse(sx, sy - 24, 12, 4, 0, 0, Math.PI * 2)
-  ctx.fill()
-  // Steam spikes
-  ctx.fillStyle = shades.top
-  for (const dx of [-8, 0, 8]) {
-    ctx.beginPath()
-    ctx.moveTo(sx + dx - 3, sy - 26)
-    ctx.lineTo(sx + dx, sy - 40)
-    ctx.lineTo(sx + dx + 3, sy - 26)
-    ctx.closePath()
-    ctx.fill()
-  }
-}
-
-function drawSpikes(ctx: CanvasRenderingContext2D, sx: number, sy: number, shades: ProcShades): void {
-  ctx.fillStyle = shades.top
-  for (let i = -1; i <= 1; i++) {
-    const x = sx + i * 8
-    ctx.beginPath()
-    ctx.moveTo(x - 4, sy)
-    ctx.lineTo(x, sy - 14)
-    ctx.lineTo(x + 4, sy)
-    ctx.closePath()
-    ctx.fill()
-  }
-}
-
-function drawEnemy(ctx: CanvasRenderingContext2D, sx: number, sy: number, shades: ProcShades): void {
-  ctx.fillStyle = shades.top
-  ctx.beginPath()
-  ctx.ellipse(sx, sy - 16, 12, 16, 0, 0, Math.PI * 2)
-  ctx.fill()
-  ctx.fillStyle = '#000'
-  ctx.beginPath()
-  ctx.arc(sx - 4, sy - 20, 2, 0, Math.PI * 2)
-  ctx.arc(sx + 4, sy - 20, 2, 0, Math.PI * 2)
-  ctx.fill()
-}
-
-interface ProcShades { top: string; right: string; left: string; line: string }
 
 main().catch((err) => console.error(err))

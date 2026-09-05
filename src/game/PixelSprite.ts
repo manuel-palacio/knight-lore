@@ -74,7 +74,8 @@ export class PixelSprite {
   }
 
   dispose(): void {
-    ;(this.sprite.material as THREE.Material).dispose()
+    const material = this.sprite.material as THREE.Material
+    material.dispose()
     this.tex.dispose()
   }
 }

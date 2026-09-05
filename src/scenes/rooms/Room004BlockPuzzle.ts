@@ -9,6 +9,7 @@ export const buildRoom004: RoomBuilder = async (loader, _state) => {
   const room = await buildRoomShell('room-004', loader, 'green', ['west'], 'dungeon')
   addPlatform(room, 5, 5, 2)
   addPickup(room, 'wine-bottle', 5, 5, 2.4)
+  addPickup(room, 'life', 6, 1)
   addPushBlock(room, 2, 5)
   addPushBlock(room, 3, 2)
   room.add(new Spike(6, 6, room.tileSize))

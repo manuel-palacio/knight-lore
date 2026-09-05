@@ -84,7 +84,8 @@ export class CharacterVisual {
     // the whole body always shows. (Knight Lore's tile occlusion isn't our goal
     // here — never losing the player is.)
     for (const s of [this.humanSprite.sprite, this.wolfSprite.sprite, this.transformSprite.sprite]) {
-      ;(s.material as THREE.SpriteMaterial).depthTest = false
+      const material = s.material as THREE.SpriteMaterial
+      material.depthTest = false
       s.renderOrder = 10
     }
   }

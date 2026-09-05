@@ -23,6 +23,11 @@ describe('selectCharacterFrame', () => {
     expect(frames).toEqual([0, 1, 2, 1, 0])
   })
 
+  it('shows stride A while airborne, whatever the step count', () => {
+    expect(selectCharacterFrame('east', 0, false, true).frame).toBe(1)
+    expect(selectCharacterFrame('west', 3, true, true).frame).toBe(1)
+  })
+
   it('shows the standing frame when not walking regardless of step count', () => {
     expect(selectCharacterFrame('east', 3, false).frame).toBe(0)
   })

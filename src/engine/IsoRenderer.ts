@@ -29,10 +29,8 @@ export class IsoRenderer {
   readonly canvas: HTMLCanvasElement
   private readonly ctx: CanvasRenderingContext2D
   private cfg: IsoConfig
-  private readonly pixelScale: number
 
   constructor(container: HTMLElement, width: number, height: number, pixelScale = 2) {
-    this.pixelScale = pixelScale
     this.canvas = document.createElement('canvas')
     this.canvas.width = width
     this.canvas.height = height

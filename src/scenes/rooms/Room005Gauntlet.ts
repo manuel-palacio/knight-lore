@@ -10,6 +10,7 @@ import type { RoomBuilder } from '../../game/RoomManager'
 export const buildRoom005: RoomBuilder = async (loader, _state) => {
   const room = await buildRoomShell('room-005', loader, 'purple', ['north'], 'hazard')
   addPickup(room, 'crystal-ball', 6, 6)
+  addPickup(room, 'teacup', 1, 6)
   placeSpikes(room, [1, 2, 3, 5, 6].map((x) => ({ x, z: 3 })))
   placeSpikes(room, [2, 3, 4, 5, 6].map((x) => ({ x, z: 5 })))
 

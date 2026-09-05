@@ -77,7 +77,8 @@ export class Renderer {
   // Switch the active room's primary colour. Called by RoomManager on
   // every transition.
   setTint(color: number): void {
-    ;(this.monoPass.uniforms['uTint']!.value as THREE.Color).set(color)
+    const tint = this.monoPass.uniforms['uTint']!.value as THREE.Color
+    tint.set(color)
   }
 
   private handleResize = (): void => {

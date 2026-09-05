@@ -99,6 +99,7 @@ async function main(): Promise<void> {
   const pushGauge = new PushGauge(PUSH_STEPS_PER_TILE)
   const beeper = new Beeper()
   const wipe = new Transition(WIPE_SECONDS)
+  let paused = false
   let lastStepCount = 0
   let carriedPickup: Pickup | null = null
   let transitioning = false
@@ -419,6 +420,8 @@ async function main(): Promise<void> {
   const loop = new GameLoop()
   loop.onUpdate((dt) => {
     input.update()
+    if (input.wasPressed('KeyP')) paused = !paused
+    if (paused) return
     if (state.gameOver || state.won) {
       hud.render(state, player.carrying)
       return
@@ -465,12 +468,24 @@ async function main(): Promise<void> {
       return
     }
     renderer.render(room, [...entityDynamics(room), characterDynamic()])
+    if (paused) drawPaused()
     if (state.isDusk && !morphing()) drawDusk()
     if (flashFrames > 0) {
       flashFrames--
       drawFlash()
     }
   })
+
+  function drawPaused(): void {
+    const ctx = renderer.canvas.getContext('2d')
+    if (!ctx) return
+    ctx.fillStyle = 'rgba(0,0,0,0.6)'
+    ctx.fillRect(0, 0, renderer.canvas.width, renderer.canvas.height)
+    ctx.fillStyle = '#ffefc4'
+    ctx.font = '16px "Courier New", monospace'
+    ctx.textAlign = 'center'
+    ctx.fillText('PAUSED', renderer.canvas.width / 2, renderer.canvas.height / 2)
+  }
 
   function drawFlash(): void {
     const ctx = renderer.canvas.getContext('2d')

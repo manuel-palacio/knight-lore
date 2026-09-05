@@ -23,6 +23,17 @@ describe('selectCharacterFrame', () => {
     expect(frames).toEqual([0, 1, 2, 1, 0])
   })
 
+  it('walks the wolf through the original six-step cycle over four poses', () => {
+    const frames = [0, 1, 2, 3, 4, 5, 6].map((step) => selectCharacterFrame('east', step, true, false, 'werewolf').frame)
+    expect(frames).toEqual([1, 2, 1, 0, 3, 0, 1])
+    expect(new Set(frames).size).toBe(4)
+  })
+
+  it('keeps the human on the three-pose cycle when a form is given', () => {
+    const frames = [0, 1, 2, 3].map((step) => selectCharacterFrame('east', step, true, false, 'human').frame)
+    expect(frames).toEqual([0, 1, 2, 1])
+  })
+
   it('shows stride A while airborne, whatever the step count', () => {
     expect(selectCharacterFrame('east', 0, false, true).frame).toBe(1)
     expect(selectCharacterFrame('west', 3, true, true).frame).toBe(1)

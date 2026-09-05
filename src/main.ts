@@ -17,7 +17,7 @@ import { Room } from './game/Room'
 import { RoomManager } from './game/RoomManager'
 import { ROOM_BUILDERS, START_ROOM } from './scenes/rooms/index'
 import { IsoRenderer, spriteDynamic, boxDynamic, type Dynamic, type SpriteDraw } from './engine/IsoRenderer'
-import { selectCharacterFrame } from './game/CharacterFrame'
+import { selectCharacterFrame, STRIP_CELLS } from './game/CharacterFrame'
 import { PushGauge } from './game/PushGauge'
 import { Beeper } from './engine/Beeper'
 import { projectToScreen, isoDepth } from './engine/IsoProjection'
@@ -27,9 +27,8 @@ const PICKUP_HEIGHT = 1.8
 const PUSH_RANGE_MAX = 1.5
 const PUSH_RANGE_MIN = 0.4
 const PUSH_STEPS_PER_TILE = 4
-// Character strips are native ZX resolution: three 24x36 cells [stand, A, B]
-// per view. Drawn at 1:1 canvas pixels so the sprite stays crisp.
-const STRIP_FRAMES = 3
+// Character strips are native ZX resolution, 24x36 cells per pose, drawn at
+// 1:1 canvas pixels so the sprite stays crisp. Cells per form: STRIP_CELLS.
 const TRANSFORM_FRAMES = 11
 const TRANSFORM_DURATION = 2.2 // 11 morph stages at the original's ~0.2s each
 const CHAR_SCALE = 1
@@ -140,7 +139,8 @@ async function main(): Promise<void> {
   }
   ;(window as unknown as { __dbg: () => unknown }).__dbg = () => ({
     steps: player.stepsTaken,
-    frame: selectCharacterFrame(player.facing, player.stepsTaken, charMoving, player.state !== 'grounded'),
+    frame: selectCharacterFrame(player.facing, player.stepsTaken, charMoving, player.state !== 'grounded', visualForm),
+    form: visualForm,
     state: player.state,
     facing: player.facing,
     pos: { x: Number(player.position.x.toFixed(2)), y: Number(player.position.y.toFixed(2)), z: Number(player.position.z.toFixed(2)) },
@@ -324,9 +324,9 @@ async function main(): Promise<void> {
 
   function characterDynamic(): Dynamic {
     if (morphing()) return spriteDynamic(transformSprite())
-    const selected = selectCharacterFrame(player.facing, player.stepsTaken, charMoving, player.state !== 'grounded')
+    const selected = selectCharacterFrame(player.facing, player.stepsTaken, charMoving, player.state !== 'grounded', visualForm)
     const sheet = strips[visualForm][selected.view]
-    const frameW = sheet.width / STRIP_FRAMES
+    const frameW = sheet.width / STRIP_CELLS[visualForm]
     const sprite: SpriteDraw = {
       image: sheet,
       frameX: selected.frame * frameW,

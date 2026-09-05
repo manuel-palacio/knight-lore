@@ -42,6 +42,14 @@ describe('room map', () => {
     expect([...placed].sort()).toEqual([...ALL_ITEMS].sort())
   })
 
+  it('gives every room at least three placed things', () => {
+    for (const s of ROOM_SPECS) {
+      const count = ['platforms', 'pushBlocks', 'spikes', 'guards', 'ghosts', 'pickups', 'movingPlatforms', 'pathGuards', 'tables', 'vanishing', 'balls']
+        .reduce((sum, key) => sum + (((s as unknown as Record<string, unknown[] | undefined>)[key]) ?? []).length, 0)
+      expect(count, s.id).toBeGreaterThanOrEqual(3)
+    }
+  })
+
   it('uses tables, vanishing blocks, and bouncing balls somewhere on the map', () => {
     expect(ROOM_SPECS.some((s) => (s.tables ?? []).length > 0)).toBe(true)
     expect(ROOM_SPECS.some((s) => (s.vanishing ?? []).length > 0)).toBe(true)

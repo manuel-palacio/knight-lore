@@ -43,8 +43,9 @@ export function buildWallLayout(width: number, depth: number, exits: ExitDirecti
   const midZ = Math.floor(depth / 2) * tile + tile / 2
   const northPlane: WallPlane = { length: w, toWorld: (a, c) => ({ x: a, z: -THICK + c }) }
   const westPlane: WallPlane = { length: d, toWorld: (a, c) => ({ x: -THICK + c, z: a }) }
-  const southPlane: WallPlane = { length: w, toWorld: (a, c) => ({ x: a, z: d + c }) }
-  const eastPlane: WallPlane = { length: d, toWorld: (a, c) => ({ x: w + c, z: a }) }
+  // Front arches stand just inside the open edge so nothing pokes past the floor.
+  const southPlane: WallPlane = { length: w, toWorld: (a, c) => ({ x: a, z: d - ARCH_THICK + c }) }
+  const eastPlane: WallPlane = { length: d, toWorld: (a, c) => ({ x: w - ARCH_THICK + c, z: a }) }
 
   const boxes: WallBox[] = []
   const seed = width * 73 + depth * 131 + exits.length * 17

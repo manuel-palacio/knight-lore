@@ -59,10 +59,16 @@ describe('buildWallLayout', () => {
     }
   })
 
-  it('stands south and east arches on the open front edges', () => {
+  it('stands south and east arches just inside the open front edges', () => {
     const south = buildWallLayout(W, D, ['south'], TILE).filter((b) => b.kind === 'arch')
-    for (const b of south) expect(b.z0).toBeGreaterThanOrEqual(D * TILE)
+    for (const b of south) {
+      expect(b.z1).toBeLessThanOrEqual(D * TILE)
+      expect(b.z0).toBeGreaterThanOrEqual(D * TILE - 1)
+    }
     const east = buildWallLayout(W, D, ['east'], TILE).filter((b) => b.kind === 'arch')
-    for (const b of east) expect(b.x0).toBeGreaterThanOrEqual(W * TILE)
+    for (const b of east) {
+      expect(b.x1).toBeLessThanOrEqual(W * TILE)
+      expect(b.x0).toBeGreaterThanOrEqual(W * TILE - 1)
+    }
   })
 })

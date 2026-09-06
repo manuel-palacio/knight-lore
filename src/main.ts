@@ -37,6 +37,7 @@ const PUSH_RANGE_MAX = 1.5
 const PUSH_RANGE_MIN = 0.4
 const PUSH_STEPS_PER_TILE = 4
 const DEATH_FLASH_FRAMES = 2
+const GHOST_DRAW_HEIGHT = 0.3
 const WIPE_SECONDS = 0.25
 // Character strips are native ZX resolution, 24x36 cells per pose, drawn at
 // 1:1 canvas pixels so the sprite stays crisp. Cells per form: STRIP_CELLS.
@@ -93,6 +94,7 @@ async function main(): Promise<void> {
       back: tintImage(await loadImage('/sprites/sabrewulf-back.png'), CHARACTER_TINT),
     },
   }
+  spikesImage = await loadImage('/sprites/rip/spikes.png')
   // Set pieces ripped from the original's memory (public/sprites/rip/index.json).
   const setPieces = {
     cauldron: tintImage(await loadImage('/sprites/rip/cauldron.png'), CHARACTER_TINT),
@@ -445,9 +447,9 @@ async function main(): Promise<void> {
         const depth = isoDepth(e.position.x, e.position.y, e.position.z) + 6
         out.push({ ...setPieceSprite(setPieces.cauldron, e.position.x, e.position.y, e.position.z), depth })
       } else if (e instanceof Spike) {
-        out.push(spikeDynamic(e.position.x, e.position.z))
+        out.push(spikeBedDynamic(e.position.x, e.position.z))
       } else if (e instanceof GhostEnemy) {
-        out.push(stripFrame(setPieces.ghost, 4, Math.floor(performance.now() / 150) % 4, e.position.x, e.position.y, e.position.z))
+        out.push(stripFrame(setPieces.ghost, 4, Math.floor(performance.now() / 150) % 4, e.position.x, GHOST_DRAW_HEIGHT, e.position.z))
       } else if (e instanceof PatrolEnemy) {
         out.push(stripFrame(setPieces.guard, 2, Math.floor(performance.now() / 160) % 2, e.position.x, 0, e.position.z))
       } else if (e instanceof PathGuard) {
@@ -599,35 +601,30 @@ function setPieceSprite(image: HTMLCanvasElement, x: number, y: number, z: numbe
   return spriteDynamic({ image, frameX: 0, frameW: image.width, frameH: image.height, scale: 1, flip, x, y, z })
 }
 
-// A bed of thin needles across the tile, like the original's spike pits:
-// 1px verticals of varied height on a fixed pseudo-random spread per tile.
-const NEEDLES = 32
+// The original's spike bed: a slab of teeth drawn in the room hue, anchored
+// at the tile's near corner like a block top.
+const spikeTinted = new Map<number, HTMLCanvasElement>()
+let spikesImage: HTMLImageElement
 
-function spikeDynamic(x: number, z: number): Dynamic {
+function spikeBedDynamic(x: number, z: number): Dynamic {
   return {
     x,
     y: 0,
     z,
     draw: (ctx, cfg, shades) => {
-      ctx.strokeStyle = shades.top
-      ctx.lineWidth = 1
-      let seed = Math.floor(x * 7 + z * 13)
-      const next = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff)
-      const half = cfg.tile / 2
-      for (let i = 0; i < NEEDLES; i++) {
-        const px = x - half + 0.15 * cfg.tile + next() * 0.7 * cfg.tile
-        const pz = z - half + 0.15 * cfg.tile + next() * 0.7 * cfg.tile
-        const base = projectToScreen(px, 0, pz, cfg)
-        const height = 6 + Math.floor(next() * 12)
-        const sx = Math.round(base.sx) + 0.5
-        const sy = Math.round(base.sy)
-        ctx.beginPath()
-        ctx.moveTo(sx, sy)
-        ctx.lineTo(sx, sy - height)
-        ctx.stroke()
+      const key = shades.top.length
+      let img = spikeTinted.get(key)
+      if (!img) {
+        img = tintImage(spikesImage, shades.top)
+        spikeTinted.set(key, img)
       }
+      const p = projectToScreen(x, 0, z + cfg.tile / 2, cfg)
+      ctx.drawImage(img, Math.round(p.sx - img.width / 2), Math.round(p.sy - img.height))
     },
   }
 }
+
+// A bed of thin needles across the tile, like the original's spike pits:
+// 1px verticals of varied height on a fixed pseudo-random spread per tile.
 
 main().catch((err) => console.error(err))

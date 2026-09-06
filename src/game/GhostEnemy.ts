@@ -12,8 +12,8 @@ interface GhostCtx extends UpdateContext {
   playerPosition: THREE.Vector3
 }
 
-// Pursues the player in a straight line, ignoring the collision grid —
-// it's a ghost. (Also deletes the need for any pathfinding.)
+// Hovers where it was placed while Sabreman is human; once he is the wolf it
+// drifts straight at him through anything, faster than he can walk.
 export class GhostEnemy extends Entity {
   private readonly home: { x: number; z: number }
 
@@ -31,6 +31,7 @@ export class GhostEnemy extends Entity {
 
   update(dt: number, ctxRaw: UpdateContext): void {
     const ctx = ctxRaw as GhostCtx
+    if (ctx.state.form !== 'werewolf') return
     const dx = ctx.playerPosition.x - this.position.x
     const dz = ctx.playerPosition.z - this.position.z
     const dist = Math.hypot(dx, dz)

@@ -34,8 +34,7 @@ export class IsoRenderer {
     this.canvas = document.createElement('canvas')
     this.canvas.width = width
     this.canvas.height = height
-    this.canvas.style.width = `${width * pixelScale}px`
-    this.canvas.style.height = `${height * pixelScale}px`
+    this.canvas.style.maxWidth = `${width * pixelScale}px`
     this.canvas.style.imageRendering = 'pixelated'
     container.appendChild(this.canvas)
     const ctx = this.canvas.getContext('2d')

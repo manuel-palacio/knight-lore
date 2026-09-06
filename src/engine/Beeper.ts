@@ -11,7 +11,7 @@ export type SoundName = 'step' | 'jump' | 'land' | 'pickup' | 'drop' | 'deliver'
 const note = (frequency: number, duration: number): Note => ({ frequency, duration })
 
 export const SOUNDS: Record<SoundName, Note[]> = {
-  step: [note(180, 0.02)],
+  step: [note(900, 0.012)],
   jump: [note(300, 0.04), note(450, 0.04), note(600, 0.05)],
   land: [note(220, 0.05)],
   pickup: [note(660, 0.05), note(880, 0.05), note(1320, 0.08)],
@@ -37,7 +37,12 @@ export class Beeper {
       const gain = ctx.createGain()
       osc.type = 'square'
       osc.frequency.value = n.frequency
-      gain.gain.value = 0.06
+      // Short attack and release so notes start and stop without a click.
+      const level = name === 'step' ? 0.025 : 0.06
+      gain.gain.setValueAtTime(0, at)
+      gain.gain.linearRampToValueAtTime(level, at + 0.003)
+      gain.gain.setValueAtTime(level, at + n.duration - 0.004)
+      gain.gain.linearRampToValueAtTime(0, at + n.duration)
       osc.connect(gain).connect(ctx.destination)
       osc.start(at)
       osc.stop(at + n.duration)

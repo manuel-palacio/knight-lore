@@ -7,7 +7,8 @@
     <style>
       body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; }
       #app { width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; }
-      #app canvas { background: #000; }
+      /* The 256x192 screen scaled to fit the window, whole pixels where possible. */
+      #app canvas { background: #000; width: min(100vw, calc(100vh * 4 / 3)); height: auto; image-rendering: pixelated; }
 
       .overlay { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.7); color: #ffefc4; font-size: 48px; text-align: center; z-index: 20; }
       #intro { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.88); color: #ffefc4; font-family: 'Courier New', monospace; z-index: 30; }

@@ -198,4 +198,6 @@ Issues are ordered. Each one is small enough for a single session and has accept
 - `PatrolEnemy` (continuous two-point patrol) and `PathGuard` overlap. Migrate the legacy rooms to `PathGuard` and delete `PatrolEnemy`.
 - `src/scenes/rooms/Room00*.ts` hand-built rooms could become specs once tables exist (room 001's cauldron platform is the only thing specs cannot express yet).
 - [x] The dev hooks on `window` are gated behind `import.meta.env.DEV`.
-- Still open: retire `PatrolEnemy` in favour of `PathGuard`; convert rooms 001 to 005 to specs (needs a cauldron field); grow the map past 23 rooms; the wolf's higher jump and wolf-only monsters from the original.
+- Done 2026-09-06: rooms 001-005 converted; the map is now read from `map.png` (see `docs/MAP.md`).
+- Still open: detectors for spikes, tables, items, and enemies on the map so mapped rooms are complete; generate specs for all 85 placed rooms; find the original's start room; retire `PatrolEnemy`; the wolf's higher jump and wolf-only monsters.
+- Memory rip: `KnightLore2.z80` builds with `tap2sna.py` from pobtastic's `knightlore.t2s` (SkoolKit fetches the tape itself). Graphics live around 0x7000-0xA800 as interleaved mask/pixel byte pairs; the sprite header format still has to be worked out, since that repository's Knight Lore disassembly is a stub.

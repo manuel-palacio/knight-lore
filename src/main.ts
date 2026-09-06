@@ -93,12 +93,13 @@ async function main(): Promise<void> {
       back: tintImage(await loadImage('/sprites/sabrewulf-back.png'), CHARACTER_TINT),
     },
   }
+  // Set pieces ripped from the original's memory (public/sprites/rip/index.json).
   const setPieces = {
-    cauldron: tintImage(await loadImage('/sprites/cauldron.png'), CHARACTER_TINT),
-    ghost: tintImage(await loadImage('/sprites/ghost.png'), CHARACTER_TINT),
-    guard: tintImage(await loadImage('/sprites/guard.png'), CHARACTER_TINT),
+    cauldron: tintImage(await loadImage('/sprites/rip/cauldron.png'), CHARACTER_TINT),
+    ghost: tintImage(await loadImage('/sprites/rip/ghost.png'), CHARACTER_TINT),
+    guard: tintImage(await loadImage('/sprites/rip/guard.png'), CHARACTER_TINT),
     wizard: tintImage(await loadImage('/sprites/wizard.png'), CHARACTER_TINT),
-    ball: tintImage(await loadImage('/sprites/ball.png'), CHARACTER_TINT),
+    ball: tintImage(await loadImage('/sprites/rip/ball.png'), CHARACTER_TINT),
     flame: tintImage(await loadImage('/sprites/flame.png'), CHARACTER_TINT),
   }
   const hudLayers = {
@@ -446,12 +447,12 @@ async function main(): Promise<void> {
       } else if (e instanceof Spike) {
         out.push(spikeDynamic(e.position.x, e.position.z))
       } else if (e instanceof GhostEnemy) {
-        out.push(setPieceSprite(setPieces.ghost, e.position.x, e.position.y, e.position.z))
+        out.push(stripFrame(setPieces.ghost, 4, Math.floor(performance.now() / 150) % 4, e.position.x, e.position.y, e.position.z))
       } else if (e instanceof PatrolEnemy) {
-        out.push(setPieceSprite(setPieces.guard, e.position.x, 0, e.position.z))
+        out.push(stripFrame(setPieces.guard, 2, Math.floor(performance.now() / 160) % 2, e.position.x, 0, e.position.z))
       } else if (e instanceof PathGuard) {
         const flip = e.facing === 'south' || e.facing === 'west'
-        out.push(setPieceSprite(setPieces.guard, e.position.x, 0, e.position.z, flip))
+        out.push(stripFrame(setPieces.guard, 2, e.stepsTaken % 2, e.position.x, 0, e.position.z, flip))
       } else if (e instanceof MovingPlatform) {
         const half = e.extents.x / 2
         out.push(boxDynamic({ x0: e.position.x - half, x1: e.position.x + half, z0: e.position.z - half, z1: e.position.z + half, y0: 0, y1: e.height }))
@@ -460,7 +461,7 @@ async function main(): Promise<void> {
       } else if (e instanceof VanishingBlock) {
         if (e.present) out.push(vanishingDynamic(e))
       } else if (e instanceof BouncingBall) {
-        out.push(setPieceSprite(setPieces.ball, e.position.x, e.position.y, e.position.z))
+        out.push(stripFrame(setPieces.ball, 2, e.position.y > 0.5 ? 1 : 0, e.position.x, e.position.y, e.position.z))
       } else if (e instanceof Wizard) {
         out.push(setPieceSprite(setPieces.wizard, e.position.x, 0, e.position.z))
       } else if (e instanceof Flame) {
@@ -587,6 +588,11 @@ function vanishingDynamic(v: VanishingBlock): Dynamic {
   const crumbling = v.stepsUntilVanish >= 0 && v.stepsUntilVanish <= 3
   if (!crumbling) return box
   return { ...box, draw: (ctx, cfg, shades) => { if (Math.floor(performance.now() / 80) % 2 === 0) box.draw(ctx, cfg, shades) } }
+}
+
+function stripFrame(image: HTMLCanvasElement, cells: number, frame: number, x: number, y: number, z: number, flip = false): Dynamic {
+  const frameW = image.width / cells
+  return spriteDynamic({ image, frameX: frame * frameW, frameW, frameH: image.height, scale: 1, flip, x, y, z })
 }
 
 function setPieceSprite(image: HTMLCanvasElement, x: number, y: number, z: number, flip = false): Dynamic {

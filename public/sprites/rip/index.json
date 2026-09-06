@@ -1,0 +1,256 @@
+{
+ "sabreman-a": {
+  "cells": 4,
+  "cellWidth": 24,
+  "cellHeight": 24,
+  "addresses": [
+   "0x8f42",
+   "0x8fd4",
+   "0x8cee",
+   "0x8eb0"
+  ]
+ },
+ "sabreman-b": {
+  "cells": 4,
+  "cellWidth": 24,
+  "cellHeight": 25,
+  "addresses": [
+   "0x9066",
+   "0x8d80",
+   "0x9196",
+   "0x90fe"
+  ]
+ },
+ "sabreman-c": {
+  "cells": 4,
+  "cellWidth": 24,
+  "cellHeight": 25,
+  "addresses": [
+   "0x953e",
+   "0x95d0",
+   "0x9668",
+   "0x8e18"
+  ]
+ },
+ "wolf-a": {
+  "cells": 4,
+  "cellWidth": 24,
+  "cellHeight": 29,
+  "addresses": [
+   "0xa3c4",
+   "0xa474",
+   "0xa524",
+   "0xa5d4"
+  ]
+ },
+ "wolf-b": {
+  "cells": 4,
+  "cellWidth": 24,
+  "cellHeight": 30,
+  "addresses": [
+   "0xa684",
+   "0xa73a",
+   "0xa7f0",
+   "0xa8a6"
+  ]
+ },
+ "wolf-c": {
+  "cells": 4,
+  "cellWidth": 24,
+  "cellHeight": 30,
+  "addresses": [
+   "0xa95c",
+   "0xaa0c",
+   "0xaabc",
+   "0xab72"
+  ]
+ },
+ "creature1-a": {
+  "cells": 4,
+  "cellWidth": 24,
+  "cellHeight": 16,
+  "addresses": [
+   "0x93b6",
+   "0x9418",
+   "0x947a",
+   "0x94dc"
+  ]
+ },
+ "creature1-b": {
+  "cells": 4,
+  "cellWidth": 24,
+  "cellHeight": 16,
+  "addresses": [
+   "0x922e",
+   "0x9290",
+   "0x92f2",
+   "0x9354"
+  ]
+ },
+ "creature2-a": {
+  "cells": 4,
+  "cellWidth": 24,
+  "cellHeight": 16,
+  "addresses": [
+   "0xa0b4",
+   "0xa116",
+   "0xa178",
+   "0xa1da"
+  ]
+ },
+ "creature2-b": {
+  "cells": 4,
+  "cellWidth": 24,
+  "cellHeight": 16,
+  "addresses": [
+   "0xa23c",
+   "0xa29e",
+   "0xa300",
+   "0xa362"
+  ]
+ },
+ "guard": {
+  "cells": 2,
+  "cellWidth": 24,
+  "cellHeight": 23,
+  "addresses": [
+   "0x75b0",
+   "0x763c"
+  ]
+ },
+ "ball": {
+  "cells": 2,
+  "cellWidth": 24,
+  "cellHeight": 19,
+  "addresses": [
+   "0x76c8",
+   "0x773c"
+  ]
+ },
+ "flame": {
+  "cells": 1,
+  "cellWidth": 32,
+  "cellHeight": 29,
+  "addresses": [
+   "0x77aa"
+  ]
+ },
+ "spikes": {
+  "cells": 1,
+  "cellWidth": 32,
+  "cellHeight": 28,
+  "addresses": [
+   "0x7404"
+  ]
+ },
+ "sparkle": {
+  "cells": 1,
+  "cellWidth": 32,
+  "cellHeight": 25,
+  "addresses": [
+   "0x74e6"
+  ]
+ },
+ "cauldron": {
+  "cells": 1,
+  "cellWidth": 32,
+  "cellHeight": 33,
+  "addresses": [
+   "0x9d54"
+  ]
+ },
+ "cauldron-base": {
+  "cells": 1,
+  "cellWidth": 32,
+  "cellHeight": 11,
+  "addresses": [
+   "0x9e5e"
+  ]
+ },
+ "table": {
+  "cells": 1,
+  "cellWidth": 32,
+  "cellHeight": 29,
+  "addresses": [
+   "0x8b0a"
+  ]
+ },
+ "table-legs": {
+  "cells": 1,
+  "cellWidth": 32,
+  "cellHeight": 31,
+  "addresses": [
+   "0x8bf4"
+  ]
+ },
+ "cage": {
+  "cells": 1,
+  "cellWidth": 24,
+  "cellHeight": 42,
+  "addresses": [
+   "0x8a0c"
+  ]
+ },
+ "items": {
+  "cells": 7,
+  "cellWidth": 24,
+  "cellHeight": 24,
+  "addresses": [
+   "0x84a0",
+   "0x8514",
+   "0x7f30",
+   "0x859a",
+   "0x8626",
+   "0x8694",
+   "0x8726"
+  ]
+ },
+ "stars": {
+  "cells": 6,
+  "cellWidth": 24,
+  "cellHeight": 24,
+  "addresses": [
+   "0x8164",
+   "0x81de",
+   "0x825e",
+   "0x82ea",
+   "0x837c",
+   "0x840e"
+  ]
+ },
+ "sun-moon": {
+  "cells": 2,
+  "cellWidth": 16,
+  "cellHeight": 16,
+  "addresses": [
+   "0x87a6",
+   "0x87e8"
+  ]
+ },
+ "wall-pieces": {
+  "cells": 8,
+  "cellWidth": 24,
+  "cellHeight": 52,
+  "addresses": [
+   "0x9700",
+   "0x97c2",
+   "0x9884",
+   "0x9946",
+   "0x9a08",
+   "0x9aca",
+   "0x9c04",
+   "0x9c92"
+  ]
+ },
+ "ghost": {
+  "cells": 4,
+  "cellWidth": 24,
+  "cellHeight": 20,
+  "addresses": [
+   "0x882a",
+   "0x88a4",
+   "0x8918",
+   "0x8992"
+  ]
+ }
+}

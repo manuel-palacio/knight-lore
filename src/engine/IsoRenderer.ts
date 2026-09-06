@@ -34,7 +34,8 @@ export class IsoRenderer {
     this.canvas = document.createElement('canvas')
     this.canvas.width = width
     this.canvas.height = height
-    this.canvas.style.maxWidth = `${width * pixelScale}px`
+    this.fitToWindow(pixelScale)
+    window.addEventListener('resize', () => this.fitToWindow(pixelScale))
     this.canvas.style.imageRendering = 'pixelated'
     container.appendChild(this.canvas)
     const ctx = this.canvas.getContext('2d')
@@ -43,6 +44,19 @@ export class IsoRenderer {
     this.ctx.imageSmoothingEnabled = false
 
     this.cfg = filmationConfig(width, height)
+  }
+
+  // Scale the 256x192 screen to the window: whole multiples up to the given
+  // scale when they fit, otherwise the largest size that keeps 4:3 inside.
+  private fitToWindow(maxScale: number): void {
+    const availW = window.innerWidth
+    const availH = window.innerHeight
+    const w = this.canvas.width
+    const h = this.canvas.height
+    const whole = Math.floor(Math.min(availW / w, availH / h))
+    const scale = whole >= 1 ? Math.min(whole, maxScale) : Math.min(availW / w, availH / h)
+    this.canvas.style.width = `${Math.floor(w * scale)}px`
+    this.canvas.style.height = `${Math.floor(h * scale)}px`
   }
 
   get config(): IsoConfig {

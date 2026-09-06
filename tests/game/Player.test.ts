@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { Grid } from '../../src/engine/Grid'
-import { Player, STEP_LENGTH, TICKS_PER_STEP, INVULNERABLE_STEPS } from '../../src/game/Player'
+import { Player, STEP_LENGTH, TICKS_PER_STEP, INVULNERABLE_STEPS, WOLF_JUMP_HEIGHT } from '../../src/game/Player'
 import { GameState } from '../../src/game/GameState'
 import { SIMULATION_DT } from '../../src/engine/GameLoop'
 
@@ -224,6 +224,22 @@ describe('Player on dynamic supports', () => {
     gone = true
     step(player, c)
     expect(player.state).toBe('airborne')
+  })
+})
+
+describe('Wolf form', () => {
+  it('jumps higher than the man', () => {
+    const peak = (form: 'human' | 'werewolf') => {
+      const { grid, state, player } = setupRoom()
+      if (form === 'werewolf') state.toggleForm()
+      tick(player, ctx(grid, state, { jump: true }))
+      const c = ctx(grid, state)
+      let top = 0
+      for (let i = 0; i < 200 && (player.state as string) !== 'grounded'; i++) { tick(player, c); top = Math.max(top, player.position.y) }
+      return top
+    }
+    expect(peak('werewolf')).toBeGreaterThan(peak('human'))
+    expect(peak('werewolf')).toBeCloseTo(WOLF_JUMP_HEIGHT, 5)
   })
 })
 

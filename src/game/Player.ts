@@ -15,6 +15,8 @@ export type { Facing }
 // each step he turns one facing, walks one STEP_LENGTH, or advances one frame
 // of a committed jump arc. Nothing moves between steps.
 const JUMP_HEIGHT = 1.0
+// The wolf springs higher than the man, which some rooms rely on.
+export const WOLF_JUMP_HEIGHT = 1.5
 const JUMP_STEPS = 6
 const FALL_PER_STEP = 0.5
 // Steps of grace after a respawn so a guard camping the door cannot chain kills.
@@ -42,6 +44,7 @@ export class Player extends Entity {
   private tappedKeys = new Set<string>()
   private jumpStep = 0
   private jumpStartY = 0
+  private jumpHeight = JUMP_HEIGHT
   private jumpMovesForward = false
 
   constructor() {
@@ -86,6 +89,7 @@ export class Player extends Entity {
 
   private latchJumpRequest(ctx: PlayerCtx): void {
     if (this.state !== 'grounded' || !ctx.input.wasPressed('Space')) return
+    this.jumpHeight = ctx.state.form === 'werewolf' ? WOLF_JUMP_HEIGHT : JUMP_HEIGHT
     this.jumpMovesForward = ctx.input.isDown('ArrowUp')
     this.state = 'jumping'
     this.jumpStep = 0
@@ -122,7 +126,7 @@ export class Player extends Entity {
       this.position.y = this.jumpStartY
       return
     }
-    this.position.y = this.jumpStartY + Math.sin((this.jumpStep / JUMP_STEPS) * Math.PI) * JUMP_HEIGHT
+    this.position.y = this.jumpStartY + Math.sin((this.jumpStep / JUMP_STEPS) * Math.PI) * this.jumpHeight
   }
 
   private tryLand(ctx: PlayerCtx): void {

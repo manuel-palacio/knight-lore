@@ -2,7 +2,8 @@ import type { Facing } from './Facing'
 
 // Filmation draws two views and mirrors them: a "front" strip (toward the
 // camera, drawn facing east) and a "back" strip (away, drawn facing west).
-// Both strips hold the original's four walk frames, played A B C D C B.
+// Sabreman's strip is [stand, A, B] and ping-pongs; the wolf's four poses
+// run the original's six-step lope.
 export type CharacterView = 'front' | 'back'
 export type CharacterForm = 'human' | 'werewolf'
 
@@ -13,11 +14,11 @@ export interface CharacterFrame {
 }
 
 const WALK_CYCLE: Record<CharacterForm, number[]> = {
-  human: [0, 1, 2, 3, 2, 1],
-  werewolf: [0, 1, 2, 3, 2, 1],
+  human: [0, 1, 2, 1],
+  werewolf: [1, 2, 1, 0, 3, 0],
 }
 
-export const STRIP_CELLS: Record<CharacterForm, number> = { human: 4, werewolf: 4 }
+export const STRIP_CELLS: Record<CharacterForm, number> = { human: 3, werewolf: 4 }
 
 const AIRBORNE_FRAME = 1
 

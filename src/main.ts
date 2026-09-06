@@ -110,7 +110,7 @@ async function main(): Promise<void> {
   }
   const monsterSources = {
     ghost: await loadImage('/sprites/rip/ghost.png'),
-    guard: await loadImage('/sprites/rip/guard.png'),
+    guard: await loadImage('/sprites/guard.png'),
     ball: await loadImage('/sprites/rip/ball.png'),
   }
   const monsterTints = new Map<string, HTMLCanvasElement>()
@@ -471,10 +471,10 @@ async function main(): Promise<void> {
       } else if (e instanceof GhostEnemy) {
         out.push(stripFrame(monster('ghost', room.tint), 4, Math.floor(performance.now() / 150) % 4, e.position.x, GHOST_DRAW_HEIGHT, e.position.z))
       } else if (e instanceof PatrolEnemy) {
-        out.push(stripFrame(monster('guard', room.tint), 2, Math.floor(performance.now() / 160) % 2, e.position.x, 0, e.position.z))
+        out.push(stripFrame(monster('guard', room.tint), 1, 0, e.position.x, 0, e.position.z))
       } else if (e instanceof PathGuard) {
         const flip = e.facing === 'south' || e.facing === 'west'
-        out.push(stripFrame(monster('guard', room.tint), 2, e.stepsTaken % 2, e.position.x, 0, e.position.z, flip))
+        out.push(stripFrame(monster('guard', room.tint), 1, 0, e.position.x, 0, e.position.z, flip))
       } else if (e instanceof MovingPlatform) {
         const half = e.extents.x / 2
         out.push(boxDynamic({ x0: e.position.x - half, x1: e.position.x + half, z0: e.position.z - half, z1: e.position.z + half, y0: 0, y1: e.height }))

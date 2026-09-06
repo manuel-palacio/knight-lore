@@ -118,6 +118,16 @@ describe('room specs content', () => {
     }
   })
 
+  it('keeps spikes at least a cell away from every doorway', () => {
+    const doorCell = { north: { x: 4, z: 0 }, south: { x: 4, z: 7 }, west: { x: 0, z: 4 }, east: { x: 7, z: 4 } }
+    for (const s of ROOM_SPECS) {
+      for (const e of s.exits) {
+        const d = doorCell[e.direction]
+        for (const sp of s.spikes ?? []) expect(Math.abs(sp.x - d.x) <= 1 && Math.abs(sp.z - d.z) <= 1, `${s.id} spike at ${sp.x},${sp.z} by the ${e.direction} door`).toBe(false)
+      }
+    }
+  })
+
   it('keeps the doorway cells clear so every exit can be reached', () => {
     const doorCell = { north: { x: 4, z: 0 }, south: { x: 4, z: 7 }, west: { x: 0, z: 4 }, east: { x: 7, z: 4 } }
     for (const s of ROOM_SPECS) {

@@ -4,6 +4,7 @@ import { LEGACY_ROOM_LINKS } from '../../src/scenes/rooms/roomSpecs'
 import { ALL_ITEMS } from '../../src/game/GameState'
 
 const GRID = 8
+const inGrid = (c: { x: number; z: number }) => c.x >= 0 && c.x < GRID && c.z >= 0 && c.z < GRID
 
 function allLinks(): { id: string; exits: { direction: RoomSpec['exits'][number]['direction']; target: string }[] }[] {
   return [
@@ -50,6 +51,15 @@ describe('room map', () => {
     }
   })
 
+  it('has exactly one cauldron room, with the wizard beside the cauldron', () => {
+    const withCauldron = ROOM_SPECS.filter((s) => s.cauldron)
+    expect(withCauldron).toHaveLength(1)
+    const room = withCauldron[0]!
+    expect(room.id).toBe('room-001')
+    expect(room.wizard).toBeDefined()
+    expect(inGrid(room.cauldron!) && inGrid(room.wizard!)).toBe(true)
+  })
+
   it('uses tables, vanishing blocks, and bouncing balls somewhere on the map', () => {
     expect(ROOM_SPECS.some((s) => (s.tables ?? []).length > 0)).toBe(true)
     expect(ROOM_SPECS.some((s) => (s.vanishing ?? []).length > 0)).toBe(true)
@@ -72,8 +82,6 @@ describe('entryFor', () => {
 })
 
 describe('room specs content', () => {
-  const inGrid = (c: { x: number; z: number }) => c.x >= 0 && c.x < GRID && c.z >= 0 && c.z < GRID
-
   it('keeps every placed cell inside the grid', () => {
     for (const s of ROOM_SPECS) {
       for (const p of s.platforms ?? []) expect(inGrid(p), `${s.id} platform`).toBe(true)

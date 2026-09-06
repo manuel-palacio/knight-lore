@@ -108,6 +108,16 @@ describe('room specs content', () => {
     }
   })
 
+  it('keeps guard and ball paths away from the doorways, so entering a room is never a death', () => {
+    const doorCell = { north: { x: 4, z: 0 }, south: { x: 4, z: 7 }, west: { x: 0, z: 4 }, east: { x: 7, z: 4 } }
+    const near = (a: { x: number; z: number }, b: { x: number; z: number }) => Math.abs(a.x - b.x) <= 1 && Math.abs(a.z - b.z) <= 1
+    for (const s of ROOM_SPECS) {
+      const doors = s.exits.map((e) => doorCell[e.direction])
+      const points = [...(s.pathGuards ?? []).flatMap((g) => g.path), ...(s.balls ?? []).flatMap((b) => [b.from, b.to]), ...(s.guards ?? []).flatMap((g) => [g.from, g.to])]
+      for (const p of points) for (const d of doors) expect(near(p, d), `${s.id} path point ${p.x},${p.z} sits on the ${JSON.stringify(d)} door`).toBe(false)
+    }
+  })
+
   it('keeps the doorway cells clear so every exit can be reached', () => {
     const doorCell = { north: { x: 4, z: 0 }, south: { x: 4, z: 7 }, west: { x: 0, z: 4 }, east: { x: 7, z: 4 } }
     for (const s of ROOM_SPECS) {

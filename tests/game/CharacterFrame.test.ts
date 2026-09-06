@@ -18,20 +18,14 @@ describe('selectCharacterFrame', () => {
     expect(selectCharacterFrame('north', 0, false)).toEqual({ view: 'back', frame: 0, flip: true })
   })
 
-  it('cycles stand, stride A, stride B, stride A while walking', () => {
-    const frames = [0, 1, 2, 3, 4].map((step) => selectCharacterFrame('east', step, true).frame)
-    expect(frames).toEqual([0, 1, 2, 1, 0])
+  it('cycles the four original frames A B C D C B while walking', () => {
+    const frames = [0, 1, 2, 3, 4, 5, 6].map((step) => selectCharacterFrame('east', step, true).frame)
+    expect(frames).toEqual([0, 1, 2, 3, 2, 1, 0])
   })
 
-  it('walks the wolf through the original six-step cycle over four poses', () => {
+  it('walks the wolf through the same four-frame cycle', () => {
     const frames = [0, 1, 2, 3, 4, 5, 6].map((step) => selectCharacterFrame('east', step, true, false, 'werewolf').frame)
-    expect(frames).toEqual([1, 2, 1, 0, 3, 0, 1])
-    expect(new Set(frames).size).toBe(4)
-  })
-
-  it('keeps the human on the three-pose cycle when a form is given', () => {
-    const frames = [0, 1, 2, 3].map((step) => selectCharacterFrame('east', step, true, false, 'human').frame)
-    expect(frames).toEqual([0, 1, 2, 1])
+    expect(frames).toEqual([0, 1, 2, 3, 2, 1, 0])
   })
 
   it('shows stride A while airborne, whatever the step count', () => {

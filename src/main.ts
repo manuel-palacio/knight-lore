@@ -58,6 +58,7 @@ function loadImage(url: string): Promise<HTMLImageElement> {
 // bright silhouette — the ZX monochrome character look, regardless of the
 // source capture's colour (the wolf was extracted from a green recording).
 const CHARACTER_TINT = '#f3e6c0'
+const RED_TINT = '#ff4040'
 const SCREEN_W = 256
 const SCREEN_H = 192
 const PIXEL_SCALE = 4
@@ -65,11 +66,15 @@ function tintImage(img: HTMLImageElement, color: string): HTMLCanvasElement {
   const c = document.createElement('canvas')
   c.width = img.width
   c.height = img.height
-  const x = c.getContext('2d')!
+  const x = c.getContext('2d')
+  if (!x) throw new Error('2D context unavailable')
   x.drawImage(img, 0, 0)
-  x.globalCompositeOperation = 'source-in'
+  // Multiply keeps the sprite's black interior (its mask) black and colours the lit pixels.
+  x.globalCompositeOperation = 'multiply'
   x.fillStyle = color
   x.fillRect(0, 0, c.width, c.height)
+  x.globalCompositeOperation = 'destination-in'
+  x.drawImage(img, 0, 0)
   return c
 }
 
@@ -96,13 +101,27 @@ async function main(): Promise<void> {
   }
   spikesImage = await loadImage('/sprites/rip/spikes.png')
   // Set pieces ripped from the original's memory (public/sprites/rip/index.json).
+  // Colours as the original: Sabreman and charms white, the wizard and fire
+  // red, the monsters in the room's own hue (tinted per room on first use).
   const setPieces = {
-    cauldron: tintImage(await loadImage('/sprites/rip/cauldron.png'), CHARACTER_TINT),
-    ghost: tintImage(await loadImage('/sprites/rip/ghost.png'), CHARACTER_TINT),
-    guard: tintImage(await loadImage('/sprites/rip/guard.png'), CHARACTER_TINT),
-    wizard: tintImage(await loadImage('/sprites/wizard.png'), CHARACTER_TINT),
-    ball: tintImage(await loadImage('/sprites/rip/ball.png'), CHARACTER_TINT),
-    flame: tintImage(await loadImage('/sprites/flame.png'), CHARACTER_TINT),
+    cauldron: tintImage(await loadImage('/sprites/rip/cauldron.png'), '#ffffff'),
+    wizard: tintImage(await loadImage('/sprites/wizard.png'), RED_TINT),
+    flame: tintImage(await loadImage('/sprites/flame.png'), RED_TINT),
+  }
+  const monsterSources = {
+    ghost: await loadImage('/sprites/rip/ghost.png'),
+    guard: await loadImage('/sprites/rip/guard.png'),
+    ball: await loadImage('/sprites/rip/ball.png'),
+  }
+  const monsterTints = new Map<string, HTMLCanvasElement>()
+  const monster = (kind: keyof typeof monsterSources, hue: number): HTMLCanvasElement => {
+    const key = `${kind}:${hue}`
+    let img = monsterTints.get(key)
+    if (!img) {
+      img = tintImage(monsterSources[kind], `#${hue.toString(16).padStart(6, '0')}`)
+      monsterTints.set(key, img)
+    }
+    return img
   }
   const hudLayers = {
     frame: await loadImage('/sprites/hud-frame.png'),
@@ -295,6 +314,7 @@ async function main(): Promise<void> {
       .transitionTo(exit.targetRoomId, exit.entryX, exit.entryZ)
       .then((room) => {
         entryFacing = exit.direction
+        room.reset()
         placePlayerAtSpawn(room)
         wipe.loaded()
         transitioning = false
@@ -449,12 +469,12 @@ async function main(): Promise<void> {
       } else if (e instanceof Spike) {
         out.push(spikeBedDynamic(e.position.x, e.position.z))
       } else if (e instanceof GhostEnemy) {
-        out.push(stripFrame(setPieces.ghost, 4, Math.floor(performance.now() / 150) % 4, e.position.x, GHOST_DRAW_HEIGHT, e.position.z))
+        out.push(stripFrame(monster('ghost', room.tint), 4, Math.floor(performance.now() / 150) % 4, e.position.x, GHOST_DRAW_HEIGHT, e.position.z))
       } else if (e instanceof PatrolEnemy) {
-        out.push(stripFrame(setPieces.guard, 2, Math.floor(performance.now() / 160) % 2, e.position.x, 0, e.position.z))
+        out.push(stripFrame(monster('guard', room.tint), 2, Math.floor(performance.now() / 160) % 2, e.position.x, 0, e.position.z))
       } else if (e instanceof PathGuard) {
         const flip = e.facing === 'south' || e.facing === 'west'
-        out.push(stripFrame(setPieces.guard, 2, e.stepsTaken % 2, e.position.x, 0, e.position.z, flip))
+        out.push(stripFrame(monster('guard', room.tint), 2, e.stepsTaken % 2, e.position.x, 0, e.position.z, flip))
       } else if (e instanceof MovingPlatform) {
         const half = e.extents.x / 2
         out.push(boxDynamic({ x0: e.position.x - half, x1: e.position.x + half, z0: e.position.z - half, z1: e.position.z + half, y0: 0, y1: e.height }))
@@ -463,7 +483,7 @@ async function main(): Promise<void> {
       } else if (e instanceof VanishingBlock) {
         if (e.present) out.push(vanishingDynamic(e))
       } else if (e instanceof BouncingBall) {
-        out.push(stripFrame(setPieces.ball, 2, e.position.y > 0.5 ? 1 : 0, e.position.x, e.position.y, e.position.z))
+        out.push(stripFrame(monster('ball', room.tint), 2, e.position.y > 0.5 ? 1 : 0, e.position.x, e.position.y, e.position.z))
       } else if (e instanceof Wizard) {
         out.push(setPieceSprite(setPieces.wizard, e.position.x, 0, e.position.z))
       } else if (e instanceof Flame) {
@@ -603,7 +623,7 @@ function setPieceSprite(image: HTMLCanvasElement, x: number, y: number, z: numbe
 
 // The original's spike bed: a slab of teeth drawn in the room hue, anchored
 // at the tile's near corner like a block top.
-const spikeTinted = new Map<number, HTMLCanvasElement>()
+const spikeTinted = new Map<string, HTMLCanvasElement>()
 let spikesImage: HTMLImageElement
 
 function spikeBedDynamic(x: number, z: number): Dynamic {
@@ -612,7 +632,7 @@ function spikeBedDynamic(x: number, z: number): Dynamic {
     y: 0,
     z,
     draw: (ctx, cfg, shades) => {
-      const key = shades.top.length
+      const key = shades.top
       let img = spikeTinted.get(key)
       if (!img) {
         img = tintImage(spikesImage, shades.top)

@@ -20,7 +20,7 @@ export const WOLF_JUMP_HEIGHT = 1.5
 const JUMP_STEPS = 6
 const FALL_PER_STEP = 0.5
 // Steps of grace after a respawn so a guard camping the door cannot chain kills.
-export const INVULNERABLE_STEPS = 12
+export const INVULNERABLE_STEPS = 24
 
 export interface PlayerCtx extends UpdateContext {
   grid: Grid

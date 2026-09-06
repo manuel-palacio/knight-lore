@@ -202,15 +202,35 @@ function drawIsoCube(
   height: number,
   shades: Shades,
 ): void {
+  // The original's block: solid top, solid left face, checker-hatched right face.
   const b: Box3 = { x0: gx * TILE, x1: (gx + 1) * TILE, z0: gz * TILE, z1: (gz + 1) * TILE, y0: 0, y1: height }
   const c = boxCorners(cfg, b)
-  const rows = Math.max(2, Math.round(height * 2)) // ~2 brick courses per world unit
-  fillQuad(ctx, [c.Bt, c.Ct, c.Cb, c.Bb], shades.right)
-  brickFace(ctx, c.Bt, c.Ct, c.Bb, c.Cb, rows, shades.line)
+  fillQuad(ctx, [c.Bt, c.Ct, c.Cb, c.Bb], checker(ctx, shades.top))
   fillQuad(ctx, [c.Dt, c.Ct, c.Cb, c.Db], shades.left)
-  brickFace(ctx, c.Dt, c.Ct, c.Db, c.Cb, rows, shades.line)
   fillQuad(ctx, [c.At, c.Bt, c.Ct, c.Dt], shades.top)
-  outlineBox(ctx, c, shades.line, 1.5)
+  outlineBox(ctx, c, '#000', 1)
+}
+
+const checkers = new Map<string, CanvasPattern>()
+
+// One-pixel checkerboard of the hue on black, the Spectrum's dithered face.
+function checker(ctx: CanvasRenderingContext2D, color: string): CanvasPattern | string {
+  const cached = checkers.get(color)
+  if (cached) return cached
+  const tile = document.createElement('canvas')
+  tile.width = 2
+  tile.height = 2
+  const t = tile.getContext('2d')
+  if (!t) return color
+  t.fillStyle = '#000'
+  t.fillRect(0, 0, 2, 2)
+  t.fillStyle = color
+  t.fillRect(0, 0, 1, 1)
+  t.fillRect(1, 1, 1, 1)
+  const pattern = ctx.createPattern(tile, 'repeat')
+  if (!pattern) return color
+  checkers.set(color, pattern)
+  return pattern
 }
 
 interface BoxCorners {
@@ -242,42 +262,7 @@ function outlineBox(ctx: CanvasRenderingContext2D, c: BoxCorners, color: string,
   line(ctx, c.Cb, c.Db)
 }
 
-function facePoint(
-  tA: { sx: number; sy: number },
-  tB: { sx: number; sy: number },
-  bA: { sx: number; sy: number },
-  bB: { sx: number; sy: number },
-  u: number,
-  t: number,
-): { sx: number; sy: number } {
-  return lerp(lerp(tA, tB, u), lerp(bA, bB, u), t)
-}
 
-// Staggered brick courses on a quad face (tA-tB top edge, bA-bB bottom edge).
-function brickFace(
-  ctx: CanvasRenderingContext2D,
-  tA: { sx: number; sy: number },
-  tB: { sx: number; sy: number },
-  bA: { sx: number; sy: number },
-  bB: { sx: number; sy: number },
-  rows: number,
-  color: string,
-): void {
-  ctx.strokeStyle = color
-  ctx.lineWidth = 1
-  const cols = 2
-  for (let i = 1; i < rows; i++) {
-    line(ctx, lerp(tA, bA, i / rows), lerp(tB, bB, i / rows)) // course line
-  }
-  for (let i = 0; i < rows; i++) {
-    const off = (i % 2) * 0.5
-    for (let j = 0; j <= cols; j++) {
-      const u = (j + off) / cols
-      if (u <= 0 || u >= 1) continue
-      line(ctx, facePoint(tA, tB, bA, bB, u, i / rows), facePoint(tA, tB, bA, bB, u, (i + 1) / rows))
-    }
-  }
-}
 
 function line(ctx: CanvasRenderingContext2D, a: { sx: number; sy: number }, b: { sx: number; sy: number }): void {
   ctx.beginPath()
@@ -294,7 +279,7 @@ function strokePath(ctx: CanvasRenderingContext2D, pts: { sx: number; sy: number
   ctx.stroke()
 }
 
-function fillQuad(ctx: CanvasRenderingContext2D, pts: { sx: number; sy: number }[], color: string): void {
+function fillQuad(ctx: CanvasRenderingContext2D, pts: { sx: number; sy: number }[], color: string | CanvasPattern): void {
   ctx.beginPath()
   ctx.moveTo(pts[0]!.sx, pts[0]!.sy)
   for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i]!.sx, pts[i]!.sy)
@@ -303,9 +288,6 @@ function fillQuad(ctx: CanvasRenderingContext2D, pts: { sx: number; sy: number }
   ctx.fill()
 }
 
-function lerp(a: { sx: number; sy: number }, b: { sx: number; sy: number }, t: number): { sx: number; sy: number } {
-  return { sx: a.sx + (b.sx - a.sx) * t, sy: a.sy + (b.sy - a.sy) * t }
-}
 
 // Three brightness steps of the room hue (top brightest), plus a darker line.
 function toShades(tint: number): Shades {

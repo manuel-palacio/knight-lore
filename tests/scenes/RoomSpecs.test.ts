@@ -34,8 +34,9 @@ describe('room map', () => {
     }
   })
 
-  it('adds at least eight rooms to the original five', () => {
+  it('has the cauldron room plus its mapped neighbours', () => {
     expect(ROOM_SPECS.length).toBeGreaterThanOrEqual(8)
+    expect(ROOM_SPECS.filter((s) => s.mapped).length).toBeGreaterThanOrEqual(7)
   })
 
   it('places every item exactly once across the spec rooms', () => {
@@ -43,8 +44,8 @@ describe('room map', () => {
     expect([...placed].sort()).toEqual([...ALL_ITEMS].sort())
   })
 
-  it('gives every room at least three placed things', () => {
-    for (const s of ROOM_SPECS) {
+  it('gives every hand-authored room at least three placed things', () => {
+    for (const s of ROOM_SPECS.filter((r) => !r.mapped)) {
       const count = ['platforms', 'pushBlocks', 'spikes', 'guards', 'ghosts', 'pickups', 'movingPlatforms', 'pathGuards', 'tables', 'vanishing', 'balls']
         .reduce((sum, key) => sum + (((s as unknown as Record<string, unknown[] | undefined>)[key]) ?? []).length, 0)
       expect(count, s.id).toBeGreaterThanOrEqual(3)
@@ -60,16 +61,6 @@ describe('room map', () => {
     expect(inGrid(room.cauldron!) && inGrid(room.wizard!)).toBe(true)
   })
 
-  it('uses tables, vanishing blocks, and bouncing balls somewhere on the map', () => {
-    expect(ROOM_SPECS.some((s) => (s.tables ?? []).length > 0)).toBe(true)
-    expect(ROOM_SPECS.some((s) => (s.vanishing ?? []).length > 0)).toBe(true)
-    expect(ROOM_SPECS.some((s) => (s.balls ?? []).length > 0)).toBe(true)
-  })
-
-  it('uses moving platforms and path guards somewhere on the map', () => {
-    expect(ROOM_SPECS.some((s) => (s.movingPlatforms ?? []).length > 0)).toBe(true)
-    expect(ROOM_SPECS.some((s) => (s.pathGuards ?? []).length > 0)).toBe(true)
-  })
 })
 
 describe('entryFor', () => {

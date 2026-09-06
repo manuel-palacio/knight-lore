@@ -30,6 +30,8 @@ export interface RoomSpec {
   balls?: { from: Cell; to: Cell }[]
   cauldron?: Cell & { height: number }
   wizard?: Cell
+  // Layout read off map.png by the detector: blocks and doors only so far.
+  mapped?: boolean
 }
 
 const OPPOSITE: Record<Direction, Direction> = { north: 'south', south: 'north', east: 'west', west: 'east' }
@@ -50,24 +52,8 @@ export function entryFor(direction: Direction): { x: number; z: number } {
 
 // Exits of the five hand-built rooms, kept here so the map test can check
 // that every doorway on the whole map leads somewhere and back.
-export const LEGACY_ROOM_LINKS: { id: string; exits: { direction: Direction; target: string }[] }[] = [
-  { id: 'room-002', exits: [
-    { direction: 'south', target: 'room-001' }, { direction: 'west', target: 'room-006' },
-    { direction: 'east', target: 'room-010' }, { direction: 'north', target: 'room-022' },
-  ] },
-  { id: 'room-003', exits: [
-    { direction: 'west', target: 'room-001' }, { direction: 'east', target: 'room-004' },
-    { direction: 'south', target: 'room-005' }, { direction: 'north', target: 'room-010' },
-  ] },
-  { id: 'room-004', exits: [
-    { direction: 'west', target: 'room-003' }, { direction: 'east', target: 'room-011' },
-    { direction: 'south', target: 'room-012' }, { direction: 'north', target: 'room-007' },
-  ] },
-  { id: 'room-005', exits: [
-    { direction: 'north', target: 'room-003' }, { direction: 'south', target: 'room-013' },
-    { direction: 'east', target: 'room-012' }, { direction: 'west', target: 'room-008' },
-  ] },
-]
+// The five hand-built rooms are gone; every room is a spec now.
+export const LEGACY_ROOM_LINKS: { id: string; exits: { direction: Direction; target: string }[] }[] = []
 
 export const ROOM_SPECS: RoomSpec[] = [
   {
@@ -75,10 +61,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     // on its block, Melkhior up-right of it, a diagonal pair of blocks behind
     // (one carries a flame), a block to the west, a diagonal pair in front.
     id: 'room-001', tint: 'yellow',
-    exits: [
-      { direction: 'north', target: 'room-002' }, { direction: 'east', target: 'room-003' },
-      { direction: 'south', target: 'room-008' }, { direction: 'west', target: 'room-009' },
-    ],
+    exits: [{ direction: 'east', target: 'map-1-0' }, { direction: 'north', target: 'map-0--1' }, { direction: 'south', target: 'map-0-1' }, { direction: 'west', target: 'map--1-0' }],
     spawn: { x: 4, z: 1 },
     platforms: [
       { x: 4, z: 4, height: 1 },
@@ -90,189 +73,91 @@ export const ROOM_SPECS: RoomSpec[] = [
     wizard: { x: 4, z: 2 },
   },
   {
-    // Cellar: two ledges to hop between, blocks to shove into the spike corner.
-    pickups: [{ x: 6, z: 6, item: 'boot' }],
-    id: 'room-006', tint: 'purple',
-    exits: [{ direction: 'east', target: 'room-002' }, { direction: 'south', target: 'room-009' }, { direction: 'west', target: 'room-014' }],
-    spawn: { x: 1, z: 1 },
-    platforms: [{ x: 2, z: 2, height: 1 }, { x: 5, z: 2, height: 1 }],
-    pushBlocks: [{ x: 3, z: 5 }, { x: 5, z: 5 }],
-    spikes: [{ x: 1, z: 6 }, { x: 2, z: 6 }],
-    guards: [{ from: { x: 1, z: 7 }, to: { x: 6, z: 7 } }],
-  },
-  {
-    // Gate: a big central block with a guard sweeping the back row.
-    pickups: [{ x: 6, z: 1, item: 'goblet' }],
-    id: 'room-007', tint: 'red',
-    exits: [{ direction: 'south', target: 'room-004' }, { direction: 'west', target: 'room-010' }, { direction: 'east', target: 'room-017' }],
-    spawn: { x: 1, z: 4 },
-    platforms: [{ x: 3, z: 3, height: 1 }, { x: 4, z: 3, height: 1 }, { x: 3, z: 4, height: 2 }, { x: 4, z: 4, height: 2 }],
-    spikes: [{ x: 1, z: 6 }, { x: 6, z: 6 }],
-    guards: [{ from: { x: 1, z: 1 }, to: { x: 6, z: 1 } }],
-    movingPlatforms: [{ from: { x: 1, z: 2 }, to: { x: 6, z: 2 }, height: 2 }],
-  },
-  {
-    // Pit: two spike rows with offset gaps, a ghost that closes in.
-    pickups: [{ x: 1, z: 7, item: 'poison' }],
-    id: 'room-008', tint: 'red',
-    exits: [{ direction: 'north', target: 'room-001' }, { direction: 'east', target: 'room-005' }, { direction: 'west', target: 'room-016' }, { direction: 'south', target: 'room-019' }],
+    // Read off map.png at grid (-1,-2) relative to the cauldron room.
+    id: 'map--1--2', tint: 'purple', mapped: true,
+    exits: [{ direction: 'south', target: 'map--1--1' }],
     spawn: { x: 4, z: 1 },
-    spikes: [
-      ...[0, 1, 2, 3, 5, 6, 7].map((x) => ({ x, z: 3 })),
-      ...[0, 2, 3, 4, 5, 6, 7].map((x) => ({ x, z: 5 })),
-    ],
-    ghosts: [{ x: 6, z: 6 }],
-    movingPlatforms: [{ from: { x: 1, z: 4 }, to: { x: 6, z: 4 }, height: 1 }],
+    platforms: [],
+    pickups: [{ x: 2, z: 2, item: 'goblet' }],
   },
   {
-    // Store: a two-step stair and a block to drag under the high ledge.
-    pickups: [{ x: 6, z: 6, item: 'gem' }],
-    id: 'room-009', tint: 'yellow',
-    exits: [{ direction: 'north', target: 'room-006' }, { direction: 'east', target: 'room-001' }, { direction: 'west', target: 'room-015' }, { direction: 'south', target: 'room-016' }],
-    spawn: { x: 6, z: 1 },
-    platforms: [{ x: 2, z: 3, height: 1 }, { x: 3, z: 3, height: 2 }, { x: 5, z: 5, height: 1 }],
-    tables: [{ x: 5, z: 3, height: 1.5 }, { x: 6, z: 3, height: 1.5 }],
-    pushBlocks: [{ x: 1, z: 6 }],
-    guards: [{ from: { x: 1, z: 2 }, to: { x: 6, z: 2 } }],
-  },
-  {
-    // Gallery: four pillars for cover from two crossing guards.
-    pickups: [{ x: 4, z: 4, item: 'teacup' }],
-    id: 'room-010', tint: 'green',
-    exits: [{ direction: 'south', target: 'room-003' }, { direction: 'west', target: 'room-002' }, { direction: 'east', target: 'room-007' }, { direction: 'north', target: 'room-023' }],
-    spawn: { x: 1, z: 6 },
-    platforms: [{ x: 2, z: 2, height: 1 }, { x: 5, z: 2, height: 1 }, { x: 2, z: 5, height: 1 }, { x: 5, z: 5, height: 1 }],
-    pathGuards: [
-      { path: [{ x: 1, z: 1 }, { x: 6, z: 1 }, { x: 6, z: 6 }, { x: 1, z: 6 }] },
-    ],
-    balls: [{ from: { x: 1, z: 3 }, to: { x: 6, z: 3 } }],
-  },
-  {
-    // Armoury: dead end packed with blocks; the high ledge needs two stacked.
-    pickups: [{ x: 6, z: 1, item: 'wine-bottle', y: 2.4 }],
-    id: 'room-011', tint: 'blue',
-    exits: [{ direction: 'west', target: 'room-004' }, { direction: 'north', target: 'room-017' }, { direction: 'south', target: 'room-018' }],
-    spawn: { x: 1, z: 4 },
-    pushBlocks: [{ x: 2, z: 2 }, { x: 4, z: 2 }, { x: 2, z: 5 }, { x: 5, z: 5 }, { x: 3, z: 3 }],
-    platforms: [{ x: 6, z: 1, height: 2 }],
-    spikes: [{ x: 5, z: 6 }, { x: 6, z: 6 }],
-  },
-  {
-    // Crypt: spikes in the far corner, a ghost and a guard on the near row.
-    pickups: [{ x: 6, z: 1, item: 'life' }],
-    id: 'room-012', tint: 'purple',
-    exits: [{ direction: 'north', target: 'room-004' }, { direction: 'west', target: 'room-005' }, { direction: 'east', target: 'room-018' }, { direction: 'south', target: 'room-020' }],
-    spawn: { x: 3, z: 4 },
-    spikes: [{ x: 1, z: 1 }, { x: 2, z: 1 }, { x: 1, z: 2 }],
-    platforms: [{ x: 5, z: 2, height: 1 }, { x: 6, z: 2, height: 1 }],
-    ghosts: [{ x: 6, z: 6 }],
-    guards: [{ from: { x: 1, z: 6 }, to: { x: 6, z: 6 } }],
-  },
-  {
-    // Well: a dead-end staircase to climb, spikes guarding the block.
-    pickups: [{ x: 3, z: 6, item: 'crystal-ball', y: 3.4 }],
-    id: 'room-013', tint: 'blue',
-    exits: [{ direction: 'north', target: 'room-005' }, { direction: 'west', target: 'room-019' }, { direction: 'east', target: 'room-020' }, { direction: 'south', target: 'room-021' }],
+    // Read off map.png at grid (-1,-1) relative to the cauldron room.
+    id: 'map--1--1', tint: 'green', mapped: true,
+    exits: [{ direction: 'north', target: 'map--1--2' }, { direction: 'south', target: 'map--1-0' }],
     spawn: { x: 4, z: 1 },
-    platforms: [{ x: 1, z: 6, height: 1 }, { x: 3, z: 6, height: 3 }, { x: 3, z: 5, height: 2 }],
-    vanishing: [{ x: 2, z: 6, height: 2 }, { x: 1, z: 4, height: 1 }],
-    pushBlocks: [{ x: 6, z: 2 }],
-    spikes: [{ x: 5, z: 4 }, { x: 6, z: 4 }],
-    movingPlatforms: [{ from: { x: 5, z: 6 }, to: { x: 5, z: 2 }, height: 1 }],
+    platforms: [],
+    pickups: [{ x: 2, z: 2, item: 'gem' }],
   },
   {
-    // Buttery: tables to hop across, a ball under them.
-    id: 'room-014', tint: 'yellow',
-    exits: [{ direction: 'east', target: 'room-006' }, { direction: 'south', target: 'room-015' }],
-    spawn: { x: 1, z: 1 },
-    tables: [{ x: 2, z: 3, height: 1.5 }, { x: 4, z: 3, height: 1.5 }, { x: 6, z: 3, height: 1.5 }],
-    balls: [{ from: { x: 1, z: 5 }, to: { x: 6, z: 5 } }],
-    spikes: [{ x: 6, z: 6 }],
-  },
-  {
-    // Oubliette: a guard loop around a crumbling walkway.
-    id: 'room-015', tint: 'purple',
-    exits: [{ direction: 'east', target: 'room-009' }, { direction: 'north', target: 'room-014' }],
-    spawn: { x: 6, z: 6 },
-    vanishing: [{ x: 2, z: 2, height: 1 }, { x: 3, z: 2, height: 1 }, { x: 4, z: 2, height: 1 }],
-    platforms: [{ x: 1, z: 2, height: 1 }, { x: 5, z: 2, height: 1 }],
-    pathGuards: [{ path: [{ x: 1, z: 5 }, { x: 6, z: 5 }, { x: 6, z: 6 }, { x: 1, z: 6 }] }],
-  },
-  {
-    // Vault: push blocks hemmed in by spikes, a ghost drifting in.
-    id: 'room-016', tint: 'blue',
-    exits: [{ direction: 'north', target: 'room-009' }, { direction: 'east', target: 'room-008' }],
+    // Read off map.png at grid (0,-1) relative to the cauldron room.
+    id: 'map-0--1', tint: 'purple', mapped: true,
+    exits: [{ direction: 'south', target: 'room-001' }],
     spawn: { x: 4, z: 1 },
-    pushBlocks: [{ x: 2, z: 3 }, { x: 5, z: 3 }],
-    spikes: [{ x: 1, z: 5 }, { x: 2, z: 5 }, { x: 5, z: 5 }, { x: 6, z: 5 }],
-    ghosts: [{ x: 6, z: 6 }],
-    platforms: [{ x: 3, z: 6, height: 1 }],
+    platforms: [{ x: 3, z: 3, height: 2 }, { x: 3, z: 4, height: 3 }, { x: 3, z: 5, height: 3 }, { x: 4, z: 4, height: 3 }, { x: 4, z: 5, height: 3 }],
+    pickups: [{ x: 2, z: 2, item: 'wine-bottle' }],
   },
   {
-    // Rampart: a high moving platform over a bed of spikes.
-    id: 'room-017', tint: 'red',
-    exits: [{ direction: 'west', target: 'room-007' }, { direction: 'south', target: 'room-011' }],
-    spawn: { x: 1, z: 1 },
-    spikes: [2, 3, 4, 5].map((x) => ({ x, z: 4 })),
-    movingPlatforms: [{ from: { x: 1, z: 3 }, to: { x: 6, z: 3 }, height: 1 }],
-    platforms: [{ x: 1, z: 6, height: 1 }, { x: 6, z: 6, height: 1 }],
-    guards: [{ from: { x: 1, z: 2 }, to: { x: 6, z: 2 } }],
-  },
-  {
-    // Kennel: two balls crossing, a table to wait on.
-    id: 'room-018', tint: 'green',
-    exits: [{ direction: 'north', target: 'room-011' }, { direction: 'west', target: 'room-012' }],
+    // Read off map.png at grid (-1,0) relative to the cauldron room.
+    id: 'map--1-0', tint: 'blue', mapped: true,
+    exits: [{ direction: 'east', target: 'room-001' }, { direction: 'north', target: 'map--1--1' }, { direction: 'south', target: 'map--1-1' }],
     spawn: { x: 4, z: 1 },
-    balls: [{ from: { x: 1, z: 3 }, to: { x: 6, z: 3 } }, { from: { x: 6, z: 5 }, to: { x: 1, z: 5 } }],
-    tables: [{ x: 3, z: 4, height: 1.5 }],
-    spikes: [{ x: 6, z: 6 }, { x: 1, z: 6 }],
+    platforms: [],
+    pickups: [{ x: 2, z: 2, item: 'crystal-ball' }],
   },
   {
-    // Undercroft: crumbling bridge over spikes with a ghost behind.
-    id: 'room-019', tint: 'purple',
-    exits: [{ direction: 'north', target: 'room-008' }, { direction: 'east', target: 'room-013' }],
+    // Read off map.png at grid (1,0) relative to the cauldron room.
+    id: 'map-1-0', tint: 'blue', mapped: true,
+    exits: [{ direction: 'west', target: 'room-001' }],
     spawn: { x: 4, z: 1 },
-    spikes: [1, 2, 3, 4, 5, 6].map((x) => ({ x, z: 5 })),
-    vanishing: [{ x: 2, z: 5, height: 1 }, { x: 4, z: 5, height: 1 }],
-    platforms: [{ x: 1, z: 6, height: 1 }],
-    ghosts: [{ x: 6, z: 7 }],
+    platforms: [],
+    pickups: [{ x: 2, z: 2, item: 'boot' }],
   },
   {
-    // Tower foot: a stair and a loop guard on the landing.
-    id: 'room-020', tint: 'blue',
-    exits: [{ direction: 'north', target: 'room-012' }, { direction: 'west', target: 'room-013' }],
+    // Read off map.png at grid (-1,1) relative to the cauldron room.
+    id: 'map--1-1', tint: 'purple', mapped: true,
+    exits: [{ direction: 'east', target: 'map-0-1' }, { direction: 'north', target: 'map--1-0' }, { direction: 'south', target: 'map--1-2' }],
     spawn: { x: 4, z: 1 },
-    platforms: [{ x: 6, z: 6, height: 1 }, { x: 5, z: 6, height: 2 }, { x: 4, z: 6, height: 3 }],
-    pathGuards: [{ path: [{ x: 1, z: 3 }, { x: 5, z: 3 }, { x: 5, z: 4 }, { x: 1, z: 4 }] }],
-    pushBlocks: [{ x: 2, z: 6 }],
+    platforms: [],
+    pickups: [{ x: 2, z: 2, item: 'teacup' }],
   },
   {
-    // Well bottom: dead end guarded by balls, one block to climb out.
-    id: 'room-021', tint: 'green',
-    exits: [{ direction: 'north', target: 'room-013' }],
+    // Read off map.png at grid (0,1) relative to the cauldron room.
+    id: 'map-0-1', tint: 'green', mapped: true,
+    exits: [{ direction: 'east', target: 'map-1-1' }, { direction: 'north', target: 'room-001' }, { direction: 'west', target: 'map--1-1' }],
     spawn: { x: 4, z: 1 },
-    balls: [{ from: { x: 1, z: 4 }, to: { x: 6, z: 4 } }],
-    platforms: [{ x: 3, z: 6, height: 1 }, { x: 4, z: 6, height: 1 }],
-    spikes: [{ x: 1, z: 6 }, { x: 6, z: 6 }],
-    pushBlocks: [{ x: 6, z: 2 }],
+    platforms: [],
+    pickups: [{ x: 2, z: 2, item: 'poison' }],
   },
   {
-    // Gatehouse: guards crossing under tables.
-    id: 'room-022', tint: 'yellow',
-    exits: [{ direction: 'south', target: 'room-002' }, { direction: 'east', target: 'room-023' }],
-    spawn: { x: 1, z: 6 },
-    tables: [{ x: 2, z: 2, height: 1.5 }, { x: 5, z: 2, height: 1.5 }],
-    pathGuards: [{ path: [{ x: 1, z: 3 }, { x: 6, z: 3 }] }],
-    guards: [{ from: { x: 6, z: 5 }, to: { x: 1, z: 5 } }],
+    // Read off map.png at grid (1,1) relative to the cauldron room.
+    id: 'map-1-1', tint: 'purple', mapped: true,
+    exits: [{ direction: 'east', target: 'map-2-1' }, { direction: 'west', target: 'map-0-1' }],
+    spawn: { x: 4, z: 1 },
+    platforms: [{ x: 2, z: 4, height: 1 }, { x: 3, z: 4, height: 2 }, { x: 5, z: 3, height: 1 }, { x: 5, z: 4, height: 1 }],
+    pickups: [{ x: 2, z: 2, item: 'life' }],
   },
   {
-    // Battlements: platform ride between two ledges, spikes below.
-    id: 'room-023', tint: 'red',
-    exits: [{ direction: 'south', target: 'room-010' }, { direction: 'west', target: 'room-022' }],
-    spawn: { x: 1, z: 6 },
-    platforms: [{ x: 1, z: 2, height: 2 }, { x: 6, z: 2, height: 2 }],
-    movingPlatforms: [{ from: { x: 2, z: 2 }, to: { x: 5, z: 2 }, height: 2 }],
-    spikes: [2, 3, 4, 5].map((x) => ({ x, z: 2 })),
-    vanishing: [{ x: 1, z: 4, height: 1 }],
+    // Read off map.png at grid (2,1) relative to the cauldron room.
+    id: 'map-2-1', tint: 'blue', mapped: true,
+    exits: [{ direction: 'south', target: 'map-2-2' }, { direction: 'west', target: 'map-1-1' }],
+    spawn: { x: 4, z: 1 },
+    platforms: [{ x: 0, z: 1, height: 2 }, { x: 0, z: 2, height: 1 }],
+    pickups: [],
+  },
+  {
+    // Read off map.png at grid (-1,2) relative to the cauldron room.
+    id: 'map--1-2', tint: 'green', mapped: true,
+    exits: [{ direction: 'north', target: 'map--1-1' }],
+    spawn: { x: 4, z: 1 },
+    platforms: [],
+    pickups: [],
+  },
+  {
+    // Read off map.png at grid (2,2) relative to the cauldron room.
+    id: 'map-2-2', tint: 'yellow', mapped: true,
+    exits: [{ direction: 'north', target: 'map-2-1' }],
+    spawn: { x: 4, z: 1 },
+    platforms: [],
+    pickups: [],
   },
 ]

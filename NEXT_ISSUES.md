@@ -1,8 +1,87 @@
 # Knight Lore clone: next issues
 
-Status 2026-09-06: issues 1 to 12 below are done and committed on `feat/2d-filmation-renderer` (see git log). Kept for the acceptance criteria and as the seed for the next list.
+Status 2026-09-06, evening. The game is playable start to finish on `main`: the original's empty green start room, 29 connected rooms plus the cauldron, eight charms on the floor in reachable rooms, death and respawn, day and night, saving, and the win. It is thin next to the original: close charms, approximate rooms, little danger. The five issues below are what "top notch" needs, in order of weight. The twelve older issues further down are done and kept for their acceptance criteria.
 
-State as of 2026-09-05 on branch `feat/2d-filmation-renderer`: the 2D Filmation build (`2d.html`) has tank controls on a fixed step clock, four-facing sprites, the original morph, lattice walls with pointed arches, 13 rooms as data specs, moving platforms, path guards, push weight, and a beeper. 174 tests pass.
+---
+
+## A. The full castle with real puzzles
+
+**Why:** 29 of 128 rooms, and the mapped ones hold blocks, spikes, and a monster or two rather than the original's puzzles. This is most of the remaining work and where the difficulty lives.
+
+**Steps:**
+1. Second arch template (and a third if needed) so the detector places the rooms it currently misses; re-run `arches.py` → `mapmodel.py` → `genrooms.py` → `extras.py` → `spikes.py` → `integrate.py` (scratch scripts, recreate from `docs/MAP.md` and the memory notes).
+2. Table detector, and moving-platform placement where the map shows a platform track.
+3. Per-room review against the map crop: an overlay image per room, fix heights the block detector got wrong, delete phantom blocks under sprites.
+4. Replace the connector rooms with the real ones once their arches are detected.
+
+**Acceptance:**
+- [ ] `RoomSpecs.test.ts` passes with at least 100 rooms and every door reciprocated.
+- [ ] A montage script renders every room next to its map crop and a reviewer signs each off.
+- [ ] No connector rooms remain.
+
+---
+
+## B. Character animation from the original
+
+**Why:** Sabreman and the wolf are still strips from footage with a computed mask; the guard is a stand-in creature. The rip has the torsos and the original draws legs as separate sprites that are not yet located.
+
+**Steps:**
+1. Find the leg sprites: search memory for 3-byte-wide records of 6 to 10 rows near the body sprites, or trace the draw routine that follows the 0x7150 table with SkoolKit.
+2. Compose torso plus legs per frame into the strips, all four views for both forms.
+3. Same for the tall hooded guard; then retire `PatrolEnemy` and the footage-derived strips.
+
+**Acceptance:**
+- [ ] `tests/game/CharacterFrame.test.ts` covers the composed frame layout.
+- [ ] Facing captures in all four directions for man, wolf, and guard match the longplay.
+
+---
+
+## C. Fourteen charms, spread out
+
+**Why:** The original asks for 14; we have 8, most one room from the start. The day limit means nothing while charms are close.
+
+**Steps:**
+1. Six more charm sprites (the rip holds seven; the map and longplay show the rest).
+2. Place charms by distance from the cauldron using the map's positions, never in the start room.
+3. HUD delivered row and win text for 14.
+
+**Acceptance:**
+- [ ] `GameState.test.ts`: sequence of 14 distinct charms.
+- [ ] `RoomSpecs.test.ts`: every charm placed once, none within two rooms of the cauldron.
+
+---
+
+## D. Feel details
+
+**Why:** Small things the original does that we do not: the transformation seizure that leaves Sabreman vulnerable, portcullis gates, the cauldron spirit at night, the exit-through-wall death animation, enemy speeds matched to the longplay.
+
+**Steps:**
+1. Seizure: lock input and flash for the morph, hazards active meanwhile.
+2. Portcullis entity from the rip's `cage` sprite: blocks a doorway until its trigger.
+3. Cauldron spirit: a ghost that spawns at the cauldron at night.
+4. Time enemy and ball speeds against `reference/longplay.mp4` frames.
+
+**Acceptance:**
+- [ ] One unit test per new entity on the step clock.
+- [ ] Playwright: morph while carrying shows the seizure and drops the charm.
+
+---
+
+## E. Playtest pass
+
+**Why:** Nobody has played it end to end. Construction guarantees connectivity, not fun or fairness.
+
+**Steps:**
+1. Play from the start to the win, note every room that is wrong, unfair, or empty.
+2. Turn each note into a spec fix or a new issue.
+
+**Acceptance:**
+- [ ] A written playtest log in `docs/PLAYTEST.md` with every room visited.
+- [ ] Every logged blocker fixed or filed.
+
+---
+
+# Done: the first twelve issues
 
 Issues are ordered. Each one is small enough for a single session and has acceptance criteria that map to tests. Work them top to bottom unless something below unblocks a decision above.
 

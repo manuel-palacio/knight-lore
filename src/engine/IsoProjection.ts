@@ -17,7 +17,7 @@ export interface IsoConfig {
 // (31px) stands one block tall. The room's far corner sits ROOM_ORIGIN_Y down
 // so back walls reach the top edge and the near corner tucks under the HUD,
 // as on the original 256x192 screen.
-export const ROOM_ORIGIN_Y = 30
+export const ROOM_ORIGIN_Y = 26
 
 export function filmationConfig(width: number, _height: number): IsoConfig {
   return { tile: 2, tileW: 32, tileH: 16, heightScale: 16, originX: width / 2, originY: ROOM_ORIGIN_Y }

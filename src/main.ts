@@ -455,7 +455,7 @@ async function main(): Promise<void> {
             frameX: 0,
             frameW: img.width,
             frameH: img.height,
-            scale: 0.5,
+            scale: 1,
             flip: false,
             x: e.position.x,
             y: e.position.y + e.bobOffset,

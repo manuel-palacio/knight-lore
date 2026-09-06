@@ -16,3 +16,5 @@ poly/
 .playwright-mcp/
 playtest-*.png
 room-*.png
+reference/*.mp4
+reference/*.mov

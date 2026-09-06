@@ -14,10 +14,13 @@ export interface IsoConfig {
 
 // The original's proportions: a block 32px wide, 16px tall on screen, and one
 // world unit of height 16px, so a 2-unit block is a 32x32 cube and Sabreman
-// (31px) stands one block tall. Origin sits so an 8x8 room is centred with
-// headroom for the back walls.
-export function filmationConfig(width: number, height: number): IsoConfig {
-  return { tile: 2, tileW: 32, tileH: 16, heightScale: 16, originX: width / 2, originY: height * 0.32 }
+// (31px) stands one block tall. The room's far corner sits ROOM_ORIGIN_Y down
+// so back walls reach the top edge and the near corner tucks under the HUD,
+// as on the original 256x192 screen.
+export const ROOM_ORIGIN_Y = 30
+
+export function filmationConfig(width: number, _height: number): IsoConfig {
+  return { tile: 2, tileW: 32, tileH: 16, heightScale: 16, originX: width / 2, originY: ROOM_ORIGIN_Y }
 }
 
 export interface ScreenPoint {

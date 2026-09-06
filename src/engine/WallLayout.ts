@@ -5,11 +5,11 @@ import { mulberry32 } from './Random'
 // solid corner columns joined by a sparse, see-through lattice of floating
 // slabs, and tall pointed brick arches for doorways.
 
-export const WALL_HEIGHT = 4
+export const WALL_HEIGHT = 2.5
 const COURSE = 0.5
 const BRICK = 1
 const THICK = 0.25
-const JAMB_HEIGHT = 2.5
+const JAMB_HEIGHT = 2
 const JAMB_WIDTH = 1
 const ARCH_THICK = 0.5
 const VOUSSOIR = 0.75

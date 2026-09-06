@@ -1,8 +1,10 @@
 // Knight Lore: the Filmation simulation drawn by IsoRenderer onto a canvas.
 import { Input } from './engine/Input'
 import { GameLoop } from './engine/GameLoop'
-import { GameState, type SavedGame } from './game/GameState'
-import { HUD } from './game/HUD'
+import { GameState, ALL_ITEMS, type SavedGame } from './game/GameState'
+import { CanvasHud, HUD_HEIGHT } from './game/CanvasHud'
+import { Overlays } from './game/Overlays'
+import { Wizard } from './game/Wizard'
 import { Player, type Facing } from './game/Player'
 import { Pickup } from './game/Pickup'
 import { PushBlock } from './game/PushBlock'
@@ -53,6 +55,9 @@ function loadImage(url: string): Promise<HTMLImageElement> {
 // bright silhouette — the ZX monochrome character look, regardless of the
 // source capture's colour (the wolf was extracted from a green recording).
 const CHARACTER_TINT = '#f3e6c0'
+const SCREEN_W = 256
+const SCREEN_H = 192
+const PIXEL_SCALE = 4
 function tintImage(img: HTMLImageElement, color: string): HTMLCanvasElement {
   const c = document.createElement('canvas')
   c.width = img.width
@@ -72,8 +77,8 @@ async function main(): Promise<void> {
   const input = new Input()
   const saved = loadSave()
   const state = new GameState()
-  const hud = new HUD()
-  const renderer = new IsoRenderer(container, 760, 560, 2)
+  const overlays = new Overlays()
+  const renderer = new IsoRenderer(container, SCREEN_W, SCREEN_H, PIXEL_SCALE)
 
   const transformStrip = tintImage(await loadImage('/sprites/sabreman-transform.png'), CHARACTER_TINT)
   const strips = {
@@ -90,11 +95,29 @@ async function main(): Promise<void> {
     cauldron: tintImage(await loadImage('/sprites/cauldron.png'), CHARACTER_TINT),
     ghost: tintImage(await loadImage('/sprites/ghost.png'), CHARACTER_TINT),
     guard: tintImage(await loadImage('/sprites/guard.png'), CHARACTER_TINT),
+    wizard: tintImage(await loadImage('/sprites/wizard.png'), CHARACTER_TINT),
+    ball: tintImage(await loadImage('/sprites/ball.png'), CHARACTER_TINT),
+  }
+  const hudLayers = {
+    frame: await loadImage('/sprites/hud-frame.png'),
+    scroll: tintImage(await loadImage('/sprites/hud-scroll.png'), '#ff3030'),
+    day: tintImage(await loadImage('/sprites/hud-day.png'), '#40ff40'),
+    hero: tintImage(await loadImage('/sprites/hud-hero.png'), '#ffffff'),
+  }
+  const tintedFrames = new Map<number, HTMLCanvasElement>()
+  const tintFrame = (hue: number): HTMLCanvasElement => {
+    let frame = tintedFrames.get(hue)
+    if (!frame) {
+      frame = tintImage(hudLayers.frame, `#${hue.toString(16).padStart(6, '0')}`)
+      tintedFrames.set(hue, frame)
+    }
+    return frame
   }
   const itemImages = new Map<string, HTMLImageElement>()
-  for (const id of ['goblet', 'gem', 'wine-bottle', 'crystal-ball']) {
+  for (const id of ALL_ITEMS) {
     itemImages.set(id, await loadImage(`/sprites/items/${id}.png`))
   }
+  const hud = new CanvasHud({ scroll: hudLayers.scroll, day: hudLayers.day, hero: hudLayers.hero, items: itemImages }, tintFrame)
 
   const manager = new RoomManager(ROOM_BUILDERS, state)
   const player = new Player()
@@ -174,6 +197,8 @@ async function main(): Promise<void> {
       frame: selectCharacterFrame(player.facing, player.stepsTaken, charMoving, player.state !== 'grounded', visualForm),
       form: visualForm,
       room: state.currentRoomId,
+    wanted: state.wantedItem,
+    itemImages: itemImages.size,
       day: state.dayCount,
       state: player.state,
       facing: player.facing,
@@ -185,7 +210,6 @@ async function main(): Promise<void> {
   state.onTransformWhileCarrying = () => {
     dropCarried()
     beeper.play('drop')
-    hud.flashCarrySlot()
   }
   // Death: white flash, the room's movers go back to their starts, and
   // Sabreman reappears at the door he came in through.
@@ -433,7 +457,9 @@ async function main(): Promise<void> {
       } else if (e instanceof VanishingBlock) {
         if (e.present) out.push(vanishingDynamic(e))
       } else if (e instanceof BouncingBall) {
-        out.push(ballDynamic(e))
+        out.push(setPieceSprite(setPieces.ball, e.position.x, e.position.y, e.position.z))
+      } else if (e instanceof Wizard) {
+        out.push(setPieceSprite(setPieces.wizard, e.position.x, 0, e.position.z))
       }
     }
     return out
@@ -445,7 +471,7 @@ async function main(): Promise<void> {
     if (input.wasPressed('KeyP')) paused = !paused
     if (paused) return
     if (state.gameOver || state.won) {
-      hud.render(state, player.carrying)
+      overlays.render(state)
       return
     }
     wipe.tick(dt)
@@ -479,7 +505,7 @@ async function main(): Promise<void> {
     exitPass()
     state.tickTransform(dt)
     updateCharacter(dt)
-    hud.render(state, player.carrying)
+    overlays.render(state)
   })
 
   loop.onRender(() => {
@@ -490,6 +516,8 @@ async function main(): Promise<void> {
       return
     }
     renderer.render(room, [...entityDynamics(room), characterDynamic()])
+    const ctx = renderer.canvas.getContext('2d')
+    if (ctx) hud.draw(ctx, SCREEN_H - HUD_HEIGHT, state, player.carrying, room.tint)
     if (paused) drawPaused()
     if (state.isDusk && !morphing()) drawDusk()
     if (flashFrames > 0) {
@@ -553,26 +581,6 @@ function vanishingDynamic(v: VanishingBlock): Dynamic {
   const crumbling = v.stepsUntilVanish >= 0 && v.stepsUntilVanish <= 3
   if (!crumbling) return box
   return { ...box, draw: (ctx, cfg, shades) => { if (Math.floor(performance.now() / 80) % 2 === 0) box.draw(ctx, cfg, shades) } }
-}
-
-const BALL_RADIUS_PX = 6
-
-function ballDynamic(b: BouncingBall): Dynamic {
-  return {
-    x: b.position.x,
-    y: b.position.y,
-    z: b.position.z,
-    draw: (ctx, cfg, shades) => {
-      const p = projectToScreen(b.position.x, b.position.y + 0.4, b.position.z, cfg)
-      ctx.fillStyle = shades.top
-      ctx.beginPath()
-      ctx.arc(Math.round(p.sx), Math.round(p.sy), BALL_RADIUS_PX, 0, Math.PI * 2)
-      ctx.fill()
-      ctx.strokeStyle = shades.line
-      ctx.lineWidth = 1
-      ctx.stroke()
-    },
-  }
 }
 
 function setPieceSprite(image: HTMLCanvasElement, x: number, y: number, z: number, flip = false): Dynamic {

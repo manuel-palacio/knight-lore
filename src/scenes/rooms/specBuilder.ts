@@ -6,6 +6,8 @@ import { PathGuard } from '../../game/PathGuard'
 import { Table } from '../../game/Table'
 import { VanishingBlock } from '../../game/VanishingBlock'
 import { BouncingBall } from '../../game/BouncingBall'
+import { Cauldron } from '../../game/Cauldron'
+import { Wizard } from '../../game/Wizard'
 import { addPickup } from './items'
 import { entryFor, type RoomSpec } from './roomSpecs'
 import type { RoomBuilder } from '../../game/RoomManager'
@@ -28,6 +30,12 @@ export function buildRoomFromSpec(spec: RoomSpec): RoomBuilder {
     for (const t of spec.tables ?? []) room.add(new Table(t.x, t.z, t.height, room.tileSize))
     for (const v of spec.vanishing ?? []) room.add(new VanishingBlock(v.x, v.z, v.height, room.tileSize))
     for (const b of spec.balls ?? []) room.add(new BouncingBall(cellCentre(b.from), cellCentre(b.to)))
+    if (spec.cauldron) {
+      const cauldron = new Cauldron()
+      cauldron.position.set(tileCenter(spec.cauldron.x), spec.cauldron.height, tileCenter(spec.cauldron.z))
+      room.add(cauldron)
+    }
+    if (spec.wizard) room.add(new Wizard(tileCenter(spec.wizard.x), tileCenter(spec.wizard.z)))
     for (const e of spec.exits) {
       const entry = entryFor(e.direction)
       room.addExit({ direction: e.direction, targetRoomId: e.target, entryX: entry.x, entryZ: entry.z })

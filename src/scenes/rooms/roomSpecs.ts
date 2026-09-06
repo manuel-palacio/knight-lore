@@ -28,6 +28,8 @@ export interface RoomSpec {
   tables?: (Cell & { height: number })[]
   vanishing?: (Cell & { height: number })[]
   balls?: { from: Cell; to: Cell }[]
+  cauldron?: Cell & { height: number }
+  wizard?: Cell
 }
 
 const OPPOSITE: Record<Direction, Direction> = { north: 'south', south: 'north', east: 'west', west: 'east' }
@@ -49,10 +51,6 @@ export function entryFor(direction: Direction): { x: number; z: number } {
 // Exits of the five hand-built rooms, kept here so the map test can check
 // that every doorway on the whole map leads somewhere and back.
 export const LEGACY_ROOM_LINKS: { id: string; exits: { direction: Direction; target: string }[] }[] = [
-  { id: 'room-001', exits: [
-    { direction: 'north', target: 'room-002' }, { direction: 'east', target: 'room-003' },
-    { direction: 'south', target: 'room-008' }, { direction: 'west', target: 'room-009' },
-  ] },
   { id: 'room-002', exits: [
     { direction: 'south', target: 'room-001' }, { direction: 'west', target: 'room-006' },
     { direction: 'east', target: 'room-010' }, { direction: 'north', target: 'room-022' },
@@ -72,6 +70,25 @@ export const LEGACY_ROOM_LINKS: { id: string; exits: { direction: Direction; tar
 ]
 
 export const ROOM_SPECS: RoomSpec[] = [
+  {
+    // The wizard's room, read from the original map: cauldron on a block in
+    // the middle, Melkhior beside it, a pair of blocks behind, one to the
+    // west, two in front.
+    id: 'room-001', tint: 'yellow',
+    exits: [
+      { direction: 'north', target: 'room-002' }, { direction: 'east', target: 'room-003' },
+      { direction: 'south', target: 'room-008' }, { direction: 'west', target: 'room-009' },
+    ],
+    spawn: { x: 4, z: 1 },
+    platforms: [
+      { x: 3, z: 3, height: 1 },
+      { x: 2, z: 1, height: 1 }, { x: 3, z: 1, height: 1 },
+      { x: 1, z: 3, height: 1 },
+      { x: 2, z: 5, height: 1 }, { x: 3, z: 5, height: 1 },
+    ],
+    cauldron: { x: 3, z: 3, height: 1 },
+    wizard: { x: 5, z: 3 },
+  },
   {
     // Cellar: two ledges to hop between, blocks to shove into the spike corner.
     pickups: [{ x: 6, z: 6, item: 'boot' }],

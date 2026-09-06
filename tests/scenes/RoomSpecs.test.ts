@@ -87,6 +87,7 @@ describe('room specs content', () => {
       for (const t of s.tables ?? []) expect(inGrid(t), `${s.id} table`).toBe(true)
       for (const v of s.vanishing ?? []) expect(inGrid(v), `${s.id} vanishing block`).toBe(true)
       for (const b of s.balls ?? []) expect(inGrid(b.from) && inGrid(b.to), `${s.id} ball path`).toBe(true)
+      for (const f of s.flames ?? []) expect(inGrid(f), `${s.id} flame`).toBe(true)
       expect(inGrid(s.spawn), `${s.id} spawn`).toBe(true)
     }
   })

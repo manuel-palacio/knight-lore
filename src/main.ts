@@ -5,6 +5,7 @@ import { GameState, ALL_ITEMS, type SavedGame } from './game/GameState'
 import { CanvasHud, HUD_HEIGHT } from './game/CanvasHud'
 import { Overlays } from './game/Overlays'
 import { Wizard } from './game/Wizard'
+import { Flame } from './game/Flame'
 import { Player, type Facing } from './game/Player'
 import { Pickup } from './game/Pickup'
 import { PushBlock } from './game/PushBlock'
@@ -97,6 +98,7 @@ async function main(): Promise<void> {
     guard: tintImage(await loadImage('/sprites/guard.png'), CHARACTER_TINT),
     wizard: tintImage(await loadImage('/sprites/wizard.png'), CHARACTER_TINT),
     ball: tintImage(await loadImage('/sprites/ball.png'), CHARACTER_TINT),
+    flame: tintImage(await loadImage('/sprites/flame.png'), CHARACTER_TINT),
   }
   const hudLayers = {
     frame: await loadImage('/sprites/hud-frame.png'),
@@ -460,6 +462,9 @@ async function main(): Promise<void> {
         out.push(setPieceSprite(setPieces.ball, e.position.x, e.position.y, e.position.z))
       } else if (e instanceof Wizard) {
         out.push(setPieceSprite(setPieces.wizard, e.position.x, 0, e.position.z))
+      } else if (e instanceof Flame) {
+        const frameW = setPieces.flame.width / 3
+        out.push(spriteDynamic({ image: setPieces.flame, frameX: e.frame * frameW, frameW, frameH: setPieces.flame.height, scale: 1, flip: false, x: e.position.x, y: e.position.y, z: e.position.z }))
       }
     }
     return out

@@ -8,6 +8,7 @@ import { VanishingBlock } from '../../game/VanishingBlock'
 import { BouncingBall } from '../../game/BouncingBall'
 import { Cauldron } from '../../game/Cauldron'
 import { Wizard } from '../../game/Wizard'
+import { Flame } from '../../game/Flame'
 import { addPickup } from './items'
 import { entryFor, type RoomSpec } from './roomSpecs'
 import type { RoomBuilder } from '../../game/RoomManager'
@@ -36,6 +37,7 @@ export function buildRoomFromSpec(spec: RoomSpec): RoomBuilder {
       room.add(cauldron)
     }
     if (spec.wizard) room.add(new Wizard(tileCenter(spec.wizard.x), tileCenter(spec.wizard.z)))
+    for (const f of spec.flames ?? []) room.add(new Flame(tileCenter(f.x), f.height, tileCenter(f.z)))
     for (const e of spec.exits) {
       const entry = entryFor(e.direction)
       room.addExit({ direction: e.direction, targetRoomId: e.target, entryX: entry.x, entryZ: entry.z })

@@ -30,6 +30,7 @@ export interface RoomSpec {
   balls?: { from: Cell; to: Cell }[]
   cauldron?: Cell & { height: number }
   wizard?: Cell
+  flames?: (Cell & { height: number })[]
   // Layout read off map.png by the detector: blocks and doors only so far.
   mapped?: boolean
 }
@@ -61,7 +62,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     // on its block, Melkhior up-right of it, a diagonal pair of blocks behind
     // (one carries a flame), a block to the west, a diagonal pair in front.
     id: 'room-001', tint: 'yellow',
-    exits: [{ direction: 'east', target: 'map-1-0' }, { direction: 'north', target: 'map-0--1' }, { direction: 'south', target: 'map-0-1' }, { direction: 'west', target: 'map--1-0' }],
+    exits: [{ direction: 'north', target: 'map-0--1' }, { direction: 'south', target: 'map-0-1' }, { direction: 'east', target: 'map-1-0' }, { direction: 'west', target: 'map--1-0' }],
     spawn: { x: 4, z: 1 },
     platforms: [
       { x: 4, z: 4, height: 1 },
@@ -73,91 +74,129 @@ export const ROOM_SPECS: RoomSpec[] = [
     wizard: { x: 4, z: 2 },
   },
   {
-    // Read off map.png at grid (-1,-2) relative to the cauldron room.
-    id: 'map--1--2', tint: 'purple', mapped: true,
-    exits: [{ direction: 'south', target: 'map--1--1' }],
-    spawn: { x: 4, z: 1 },
-    platforms: [],
-    pickups: [{ x: 2, z: 2, item: 'goblet' }],
-  },
-  {
-    // Read off map.png at grid (-1,-1) relative to the cauldron room.
-    id: 'map--1--1', tint: 'green', mapped: true,
-    exits: [{ direction: 'north', target: 'map--1--2' }, { direction: 'south', target: 'map--1-0' }],
-    spawn: { x: 4, z: 1 },
-    platforms: [],
-    pickups: [{ x: 2, z: 2, item: 'gem' }],
-  },
-  {
-    // Read off map.png at grid (0,-1) relative to the cauldron room.
     id: 'map-0--1', tint: 'purple', mapped: true,
     exits: [{ direction: 'south', target: 'room-001' }],
     spawn: { x: 4, z: 1 },
     platforms: [{ x: 3, z: 3, height: 2 }, { x: 3, z: 4, height: 3 }, { x: 3, z: 5, height: 3 }, { x: 4, z: 4, height: 3 }, { x: 4, z: 5, height: 3 }],
-    pickups: [{ x: 2, z: 2, item: 'wine-bottle' }],
+    spikes: [{ x: 2, z: 4 }, { x: 3, z: 0 }, { x: 4, z: 3 }, { x: 5, z: 3 }, { x: 5, z: 4 }],
   },
   {
-    // Read off map.png at grid (-1,0) relative to the cauldron room.
     id: 'map--1-0', tint: 'blue', mapped: true,
-    exits: [{ direction: 'east', target: 'room-001' }, { direction: 'north', target: 'map--1--1' }, { direction: 'south', target: 'map--1-1' }],
-    spawn: { x: 4, z: 1 },
+    exits: [{ direction: 'north', target: 'map--1--1' }, { direction: 'south', target: 'map--1-1' }, { direction: 'east', target: 'room-001' }, { direction: 'west', target: 'map--2-0' }],
+    spawn: { x: 4, z: 2 },
     platforms: [],
-    pickups: [{ x: 2, z: 2, item: 'crystal-ball' }],
+    spikes: [{ x: 1, z: 1 }, { x: 1, z: 3 }, { x: 1, z: 4 }, { x: 2, z: 3 }, { x: 3, z: 1 }, { x: 3, z: 4 }, { x: 4, z: 1 }, { x: 4, z: 4 }, { x: 5, z: 2 }],
+    ghosts: [{ x: 3, z: 3 }],
   },
   {
-    // Read off map.png at grid (1,0) relative to the cauldron room.
     id: 'map-1-0', tint: 'blue', mapped: true,
     exits: [{ direction: 'west', target: 'room-001' }],
     spawn: { x: 4, z: 1 },
     platforms: [],
-    pickups: [{ x: 2, z: 2, item: 'boot' }],
+    spikes: [{ x: 0, z: 3 }],
+    flames: [{ x: 3, z: 2, height: 0 }],
   },
   {
-    // Read off map.png at grid (-1,1) relative to the cauldron room.
-    id: 'map--1-1', tint: 'purple', mapped: true,
-    exits: [{ direction: 'east', target: 'map-0-1' }, { direction: 'north', target: 'map--1-0' }, { direction: 'south', target: 'map--1-2' }],
-    spawn: { x: 4, z: 1 },
-    platforms: [],
-    pickups: [{ x: 2, z: 2, item: 'teacup' }],
-  },
-  {
-    // Read off map.png at grid (0,1) relative to the cauldron room.
     id: 'map-0-1', tint: 'green', mapped: true,
-    exits: [{ direction: 'east', target: 'map-1-1' }, { direction: 'north', target: 'room-001' }, { direction: 'west', target: 'map--1-1' }],
+    exits: [{ direction: 'north', target: 'room-001' }, { direction: 'east', target: 'map-1-1' }, { direction: 'west', target: 'map--1-1' }],
     spawn: { x: 4, z: 1 },
     platforms: [],
-    pickups: [{ x: 2, z: 2, item: 'poison' }],
+    spikes: [{ x: 0, z: 0 }, { x: 1, z: 3 }, { x: 1, z: 5 }, { x: 2, z: 1 }, { x: 3, z: 3 }, { x: 3, z: 5 }, { x: 4, z: 2 }, { x: 5, z: 1 }, { x: 5, z: 4 }, { x: 5, z: 6 }],
+    pathGuards: [{ path: [{ x: 4, z: 5 }, { x: 7, z: 5 }] }],
   },
   {
-    // Read off map.png at grid (1,1) relative to the cauldron room.
+    id: 'map--1--1', tint: 'green', mapped: true,
+    exits: [{ direction: 'north', target: 'map--1--2' }, { direction: 'south', target: 'map--1-0' }],
+    spawn: { x: 4, z: 1 },
+    platforms: [],
+    spikes: [{ x: 1, z: 3 }, { x: 3, z: 0 }],
+  },
+  {
+    id: 'map--2-0', tint: 'purple', mapped: true,
+    exits: [{ direction: 'south', target: 'map--2-1' }, { direction: 'east', target: 'map--1-0' }],
+    spawn: { x: 4, z: 1 },
+    platforms: [{ x: 6, z: 7, height: 1 }],
+    spikes: [{ x: 2, z: 4 }, { x: 3, z: 6 }],
+    ghosts: [{ x: 7, z: 7 }],
+  },
+  {
+    id: 'map--1-1', tint: 'purple', mapped: true,
+    exits: [{ direction: 'north', target: 'map--1-0' }, { direction: 'south', target: 'map--1-2' }, { direction: 'east', target: 'map-0-1' }, { direction: 'west', target: 'map--2-1' }],
+    spawn: { x: 4, z: 1 },
+    platforms: [],
+  },
+  {
     id: 'map-1-1', tint: 'purple', mapped: true,
     exits: [{ direction: 'east', target: 'map-2-1' }, { direction: 'west', target: 'map-0-1' }],
-    spawn: { x: 4, z: 1 },
+    spawn: { x: 4, z: 3 },
     platforms: [{ x: 2, z: 4, height: 1 }, { x: 3, z: 4, height: 2 }, { x: 5, z: 3, height: 1 }, { x: 5, z: 4, height: 1 }],
-    pickups: [{ x: 2, z: 2, item: 'life' }],
+    spikes: [{ x: 2, z: 2 }, { x: 3, z: 2 }, { x: 3, z: 3 }, { x: 3, z: 5 }, { x: 4, z: 1 }, { x: 4, z: 2 }, { x: 4, z: 4 }, { x: 5, z: 5 }],
+    balls: [{ from: { x: 0, z: 0 }, to: { x: 4, z: 0 } }],
   },
   {
-    // Read off map.png at grid (2,1) relative to the cauldron room.
+    id: 'map--1--2', tint: 'purple', mapped: true,
+    exits: [{ direction: 'north', target: 'map--1--3' }, { direction: 'south', target: 'map--1--1' }],
+    spawn: { x: 4, z: 1 },
+    platforms: [],
+    pickups: [{ x: 3, z: 3, item: 'boot' }],
+  },
+  {
+    id: 'map--2-1', tint: 'yellow', mapped: true,
+    exits: [{ direction: 'north', target: 'map--2-0' }, { direction: 'east', target: 'map--1-1' }],
+    spawn: { x: 4, z: 1 },
+    platforms: [],
+    spikes: [{ x: 2, z: 7 }, { x: 3, z: 6 }],
+    pickups: [{ x: 3, z: 3, item: 'teacup' }],
+  },
+  {
     id: 'map-2-1', tint: 'blue', mapped: true,
     exits: [{ direction: 'south', target: 'map-2-2' }, { direction: 'west', target: 'map-1-1' }],
     spawn: { x: 4, z: 1 },
     platforms: [{ x: 0, z: 1, height: 2 }, { x: 0, z: 2, height: 1 }],
-    pickups: [],
+    spikes: [{ x: 6, z: 2 }, { x: 7, z: 1 }, { x: 7, z: 3 }],
+    pickups: [{ x: 3, z: 3, item: 'poison' }],
   },
   {
-    // Read off map.png at grid (-1,2) relative to the cauldron room.
     id: 'map--1-2', tint: 'green', mapped: true,
     exits: [{ direction: 'north', target: 'map--1-1' }],
-    spawn: { x: 4, z: 1 },
+    spawn: { x: 4, z: 2 },
     platforms: [],
-    pickups: [],
+    spikes: [{ x: 1, z: 1 }, { x: 2, z: 1 }, { x: 2, z: 4 }, { x: 3, z: 0 }, { x: 4, z: 1 }, { x: 5, z: 4 }],
+    pathGuards: [{ path: [{ x: 1, z: 3 }, { x: 5, z: 3 }] }],
+    pickups: [{ x: 3, z: 3, item: 'life' }],
   },
   {
-    // Read off map.png at grid (2,2) relative to the cauldron room.
+    id: 'map--1--3', tint: 'green', mapped: true,
+    exits: [{ direction: 'north', target: 'map--1--4' }, { direction: 'south', target: 'map--1--2' }],
+    spawn: { x: 4, z: 1 },
+    platforms: [{ x: 3, z: 1, height: 1 }],
+    spikes: [{ x: 3, z: 0 }],
+    ghosts: [{ x: 5, z: 1 }, { x: 3, z: 5 }],
+    pickups: [{ x: 3, z: 3, item: 'wine-bottle' }],
+  },
+  {
     id: 'map-2-2', tint: 'yellow', mapped: true,
-    exits: [{ direction: 'north', target: 'map-2-1' }],
+    exits: [{ direction: 'north', target: 'map-2-1' }, { direction: 'east', target: 'map-3-2' }],
     spawn: { x: 4, z: 1 },
     platforms: [],
-    pickups: [],
+    pickups: [{ x: 3, z: 3, item: 'crystal-ball' }],
+  },
+  {
+    id: 'map--1--4', tint: 'blue', mapped: true,
+    exits: [{ direction: 'south', target: 'map--1--3' }],
+    spawn: { x: 4, z: 1 },
+    platforms: [],
+    spikes: [{ x: 7, z: 2 }],
+    flames: [{ x: 7, z: 0, height: 0 }],
+    pickups: [{ x: 3, z: 3, item: 'goblet' }],
+  },
+  {
+    id: 'map-3-2', tint: 'green', mapped: true,
+    exits: [{ direction: 'west', target: 'map-2-2' }],
+    spawn: { x: 4, z: 1 },
+    platforms: [{ x: 4, z: 3, height: 2 }, { x: 4, z: 4, height: 2 }],
+    spikes: [{ x: 0, z: 3 }],
+    flames: [{ x: 3, z: 0, height: 0 }],
+    pickups: [{ x: 3, z: 3, item: 'gem' }],
   },
 ]

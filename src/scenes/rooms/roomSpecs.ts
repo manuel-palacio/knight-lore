@@ -71,9 +71,9 @@ export const LEGACY_ROOM_LINKS: { id: string; exits: { direction: Direction; tar
 
 export const ROOM_SPECS: RoomSpec[] = [
   {
-    // The wizard's room, read from the original map: cauldron on a block in
-    // the middle, Melkhior beside it, a pair of blocks behind, one to the
-    // west, two in front.
+    // The wizard's room, read off map.png with the lattice detector: cauldron
+    // on its block, Melkhior up-right of it, a diagonal pair of blocks behind
+    // (one carries a flame), a block to the west, a diagonal pair in front.
     id: 'room-001', tint: 'yellow',
     exits: [
       { direction: 'north', target: 'room-002' }, { direction: 'east', target: 'room-003' },
@@ -81,13 +81,13 @@ export const ROOM_SPECS: RoomSpec[] = [
     ],
     spawn: { x: 4, z: 1 },
     platforms: [
-      { x: 3, z: 3, height: 1 },
-      { x: 2, z: 1, height: 1 }, { x: 3, z: 1, height: 1 },
-      { x: 1, z: 3, height: 1 },
-      { x: 2, z: 5, height: 1 }, { x: 3, z: 5, height: 1 },
+      { x: 4, z: 4, height: 1 },
+      { x: 1, z: 2, height: 1 }, { x: 2, z: 1, height: 1 },
+      { x: 1, z: 5, height: 1 },
+      { x: 5, z: 6, height: 1 }, { x: 6, z: 5, height: 1 },
     ],
-    cauldron: { x: 3, z: 3, height: 1 },
-    wizard: { x: 5, z: 3 },
+    cauldron: { x: 4, z: 4, height: 1 },
+    wizard: { x: 4, z: 2 },
   },
   {
     // Cellar: two ledges to hop between, blocks to shove into the spike corner.

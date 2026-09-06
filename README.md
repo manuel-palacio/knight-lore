@@ -54,8 +54,8 @@ src/game       entities (player, guards, ghosts, platforms, ...), game state, HU
 src/scenes     room specs and the spec builder
 public/sprites sprite strips, ripped originals under rip/, charms under items/
 tests          vitest suites mirroring src
-docs           map, gameplay notes, art direction, physics notes, screenshots
-reference      recordings and frames used for extraction (large files are git-ignored)
+docs           map, gameplay notes, physics notes
+reference      local only (git-ignored): recordings, the memory snapshot, frames used for extraction
 ```
 
 ## Status and next steps

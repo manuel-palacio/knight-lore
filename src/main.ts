@@ -14,6 +14,7 @@ import { Cauldron } from './game/Cauldron'
 import { Spike } from './game/SpikeGrid'
 import { PatrolEnemy } from './game/PatrolEnemy'
 import { GhostEnemy } from './game/GhostEnemy'
+import { CauldronSpirit } from './game/CauldronSpirit'
 import { MovingPlatform } from './game/MovingPlatform'
 import { PathGuard } from './game/PathGuard'
 import { Table } from './game/Table'
@@ -493,6 +494,7 @@ async function main(): Promise<void> {
       } else if (e instanceof Spike) {
         out.push(spikeBedDynamic(e.position.x, e.position.z))
       } else if (e instanceof GhostEnemy) {
+        if (e instanceof CauldronSpirit && !e.risen) continue
         out.push(stripFrame(monster('ghost', room.tint), 4, Math.floor(performance.now() / 150) % 4, e.position.x, GHOST_DRAW_HEIGHT, e.position.z))
       } else if (e instanceof PatrolEnemy) {
         out.push(stripFrame(monster('guardLeft', room.tint), 4, Math.floor(performance.now() / 120) % 4, e.position.x, 0, e.position.z))

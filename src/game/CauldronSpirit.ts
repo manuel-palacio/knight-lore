@@ -3,22 +3,23 @@ import type { UpdateContext } from './Entity'
 import type { GameState } from './GameState'
 
 // The cauldron room is no place for the wolf: at nightfall a spirit rises
-// out of the cauldron and hunts him like a ghost. By day there is nothing
-// there, and at dawn the spirit sinks back in.
+// out of the cauldron and hunts him like a ghost. By day it is sunk in the
+// cauldron, unseen, and like every ghost it ignores the man.
 export class CauldronSpirit extends GhostEnemy {
-  constructor(x: number, z: number) {
-    super(x, z)
-    this.active = false
+  private isRisen = false
+
+  get risen(): boolean {
+    return this.isRisen
   }
 
   override update(dt: number, ctx: UpdateContext): void {
     const night = (ctx as { state: GameState }).state.form === 'werewolf'
     if (!night) {
-      if (this.active) this.reset()
-      this.active = false
+      if (this.isRisen) this.reset()
+      this.isRisen = false
       return
     }
-    this.active = true
+    this.isRisen = true
     super.update(dt, ctx)
   }
 }

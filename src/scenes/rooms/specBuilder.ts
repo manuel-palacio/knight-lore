@@ -7,6 +7,7 @@ import { Table } from '../../game/Table'
 import { VanishingBlock } from '../../game/VanishingBlock'
 import { BouncingBall } from '../../game/BouncingBall'
 import { Cauldron } from '../../game/Cauldron'
+import { CauldronSpirit } from '../../game/CauldronSpirit'
 import { Wizard } from '../../game/Wizard'
 import { Flame } from '../../game/Flame'
 import { addPickup } from './items'
@@ -37,6 +38,7 @@ export function buildRoomFromSpec(spec: RoomSpec): RoomBuilder {
       const cauldron = new Cauldron()
       cauldron.position.set(tileCenter(spec.cauldron.x), spec.cauldron.height, tileCenter(spec.cauldron.z))
       room.add(cauldron)
+      room.add(new CauldronSpirit(tileCenter(spec.cauldron.x), tileCenter(spec.cauldron.z)))
     }
     if (spec.wizard) room.add(new Wizard(tileCenter(spec.wizard.x), tileCenter(spec.wizard.z)))
     for (const f of spec.flames ?? []) room.add(new Flame(tileCenter(f.x), f.height, tileCenter(f.z)))

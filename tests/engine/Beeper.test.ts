@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { SOUNDS, type SoundName } from '../../src/engine/Beeper'
+import { Beeper, SOUNDS, type SoundName } from '../../src/engine/Beeper'
 
 const EXPECTED: SoundName[] = ['step', 'jump', 'land', 'pickup', 'drop', 'deliver', 'transform', 'hurt', 'door', 'win', 'wrong', 'day']
 
@@ -18,5 +18,22 @@ describe('beeper sound table', () => {
   it('keeps the footstep tick short so it never overlaps the next step', () => {
     const total = SOUNDS.step.reduce((sum, n) => sum + n.duration, 0)
     expect(total).toBeLessThan(1 / 12)
+  })
+})
+
+describe('Beeper mute', () => {
+  it('toggles, and while muted plays nothing, not even opening the audio device', () => {
+    let opened = 0
+    const original = (globalThis as Record<string, unknown>).AudioContext
+    ;(globalThis as Record<string, unknown>).AudioContext = class { constructor() { opened++ } }
+    try {
+      const beeper = new Beeper()
+      expect(beeper.toggleMute()).toBe(true)
+      beeper.play('door')
+      expect(opened).toBe(0)
+      expect(beeper.toggleMute()).toBe(false)
+    } finally {
+      ;(globalThis as Record<string, unknown>).AudioContext = original
+    }
   })
 })

@@ -524,6 +524,7 @@ async function main(): Promise<void> {
   loop.onUpdate((dt) => {
     input.update()
     if (input.wasPressed('KeyP')) paused = !paused
+    if (input.wasPressed('KeyM')) beeper.toggleMute()
     if (paused) return
     if (state.gameOver || state.won) {
       overlays.render(state)

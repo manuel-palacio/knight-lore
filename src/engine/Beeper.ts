@@ -27,8 +27,16 @@ export const SOUNDS: Record<SoundName, Note[]> = {
 
 export class Beeper {
   private context: AudioContext | null = null
+  private muted = false
+
+  // Returns whether the beeper is now muted.
+  toggleMute(): boolean {
+    this.muted = !this.muted
+    return this.muted
+  }
 
   play(name: SoundName): void {
+    if (this.muted) return
     const ctx = this.ensureContext()
     if (!ctx) return
     let at = ctx.currentTime

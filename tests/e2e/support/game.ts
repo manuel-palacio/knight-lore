@@ -5,6 +5,7 @@ import { expect, type Page } from '@playwright/test'
 
 export interface Debug {
   room: string
+  form: string
   facing: string
   state: string
   pos: { x: number; y: number; z: number }

@@ -256,7 +256,8 @@ async function main(): Promise<void> {
 
   function dropCarried(): void {
     if (!carriedPickup) return
-    carriedPickup.dropAt(player.position.x, 0.4, player.position.z)
+    carriedPickup.dropAt(player.position.x, player.position.y + 0.4, player.position.z)
+    activeRoom().add(carriedPickup)
     carriedPickup = null
     player.carrying = null
   }
@@ -272,6 +273,7 @@ async function main(): Promise<void> {
       player.tryPickup({ id: e.id, position: e.position }, state, () => {
         beeper.play('pickup')
         e.collect()
+        room.remove(e)
         carriedPickup = e
       })
       return

@@ -129,6 +129,9 @@ export const ROOM_SPECS: RoomSpec[] = [
     exits: [{ direction: 'north', target: 'map--1-0' }, { direction: 'south', target: 'map--1-2' }, { direction: 'east', target: 'map-0-1' }, { direction: 'west', target: 'map--2-1' }],
     spawn: { x: 4, z: 1 },
     platforms: [],
+    // Empty on the map read; a crossroads the player crosses often, so spike
+    // beds in the diagonals leave the four cross paths open.
+    spikes: [{ x: 1, z: 1 }, { x: 2, z: 2 }, { x: 5, z: 2 }, { x: 6, z: 1 }, { x: 1, z: 6 }, { x: 2, z: 5 }, { x: 5, z: 5 }, { x: 6, z: 6 }],
   },
   {
     id: 'map-1-1', tint: 'purple', mapped: true,

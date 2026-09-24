@@ -31,4 +31,8 @@ Charms were bunched one to three rooms from the start, all on the start side of 
 
 ### Empty rooms
 
-The start room (intended: the original's is empty) and map--1-1 hold nothing: the map detector did not read their contents. Candidates for the next content pass.
+The start room is empty as in the original. map--1-1, a four-way crossroads the map read left bare, has spike beds in its diagonals so the cross paths stay open.
+
+### Cauldron room at night
+
+Nothing stopped the wolf loitering by the cauldron. A spirit now rises from it at nightfall and hunts the wolf (`CauldronSpirit`). It takes 3 s to rise, longer than the 2.2 s seizure, so a man caught delivering at dusk gets a moment to run.

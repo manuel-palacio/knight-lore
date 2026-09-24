@@ -28,8 +28,8 @@ test('the game can be won from the start room with the keyboard', async ({ page 
     if (state.won) break
     expect(state.lives, 'ran out of lives').toBeGreaterThan(0)
     const wanted = state.wanted!
-    if (state.room === CAULDRON_ROOM && state.form === 'werewolf') {
-      await retrying(() => stepToward(page, state, specOf(CAULDRON_ROOM).exits[0]!.target))
+    if (state.form === 'werewolf' && hauntedAtNight(state.room)) {
+      await retrying(() => stepToward(page, state, safeNeighbourOf(state.room)))
       continue
     }
     if (state.carrying === wanted) {
@@ -69,8 +69,9 @@ async function retrying(leg: () => Promise<void>): Promise<void> {
 
 async function stepToward(page: Page, state: Debug, goal: string): Promise<void> {
   const exit = nextExit(state.room, goal)
-  // A spirit rises from the cauldron at night: the wolf waits outside.
-  if (exit.target === CAULDRON_ROOM) await waitForDaylight(page)
+  // Ghosts, and the spirit in the cauldron, hunt only the wolf: at night he
+  // waits outside their rooms for the morning.
+  if (hauntedAtNight(exit.target)) await waitForDaylight(page)
   const spec = specOf(state.room)
   await walkPath(page, findFloorPath(spec, cellOf(state), DOOR_CELL[exit.direction]))
   await face(page, exit.direction)
@@ -100,7 +101,7 @@ async function deliver(page: Page): Promise<void> {
 }
 
 async function waitForDaylight(page: Page): Promise<void> {
-  await expect.poll(async () => (await debug(page)).form, { timeout: 45_000, intervals: [250] }).toBe('human')
+  await expect.poll(async () => (await debug(page)).form, { timeout: 60_000, intervals: [250] }).toBe('human')
   await expect.poll(async () => (await debug(page)).state, { timeout: 5_000 }).toBe('grounded')
 }
 
@@ -113,6 +114,16 @@ function specOf(id: string): RoomSpec {
   const spec = ROOM_SPECS.find((s) => s.id === id)
   if (!spec) throw new Error(`no spec ${id}`)
   return spec
+}
+
+function hauntedAtNight(roomId: string): boolean {
+  const spec = specOf(roomId)
+  return Boolean(spec.cauldron) || (spec.ghosts?.length ?? 0) > 0
+}
+
+function safeNeighbourOf(roomId: string): string {
+  const safe = specOf(roomId).exits.find((e) => !hauntedAtNight(e.target))
+  return (safe ?? specOf(roomId).exits[0]!).target
 }
 
 function nearest(from: string, rooms: string[]): string {

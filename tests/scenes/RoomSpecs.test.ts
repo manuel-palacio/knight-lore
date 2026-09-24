@@ -2,9 +2,25 @@ import { describe, it, expect } from 'vitest'
 import { ROOM_SPECS, entryFor, oppositeOf, type RoomSpec } from '../../src/scenes/rooms/roomSpecs'
 import { LEGACY_ROOM_LINKS } from '../../src/scenes/rooms/roomSpecs'
 import { ALL_ITEMS } from '../../src/game/GameState'
+import { START_ROOM } from '../../src/scenes/rooms/index'
 
 const GRID = 8
 const inGrid = (c: { x: number; z: number }) => c.x >= 0 && c.x < GRID && c.z >= 0 && c.z < GRID
+
+function roomDistancesFrom(origin: string): Map<string, number> {
+  const byId = new Map(ROOM_SPECS.map((s) => [s.id, s]))
+  const distance = new Map([[origin, 0]])
+  const queue = [origin]
+  while (queue.length > 0) {
+    const id = queue.shift()!
+    for (const e of byId.get(id)!.exits) {
+      if (distance.has(e.target)) continue
+      distance.set(e.target, distance.get(id)! + 1)
+      queue.push(e.target)
+    }
+  }
+  return distance
+}
 
 function allLinks(): { id: string; exits: { direction: RoomSpec['exits'][number]['direction']; target: string }[] }[] {
   return [
@@ -42,6 +58,20 @@ describe('room map', () => {
   it('places every item exactly once across the spec rooms', () => {
     const placed = ROOM_SPECS.flatMap((s) => (s.pickups ?? []).map((p) => p.item))
     expect([...placed].sort()).toEqual([...ALL_ITEMS].sort())
+  })
+
+  it('keeps every charm more than two rooms from the cauldron', () => {
+    const fromCauldron = roomDistancesFrom('room-001')
+    for (const s of ROOM_SPECS.filter((r) => r.pickups?.length)) {
+      expect(fromCauldron.get(s.id), `${s.id} is too close to the cauldron`).toBeGreaterThan(2)
+    }
+  })
+
+  it('keeps every charm out of the start room and the rooms beside it', () => {
+    const fromStart = roomDistancesFrom(START_ROOM)
+    for (const s of ROOM_SPECS.filter((r) => r.pickups?.length)) {
+      expect(fromStart.get(s.id), `${s.id} is too close to the start`).toBeGreaterThan(1)
+    }
   })
 
   it('gives every hand-authored room at least three placed things', () => {
@@ -96,6 +126,14 @@ describe('room specs content', () => {
     for (const s of ROOM_SPECS) {
       const solids = [...(s.platforms ?? []), ...(s.pushBlocks ?? []), ...(s.spikes ?? [])]
       expect(solids.some((c) => c.x === s.spawn.x && c.z === s.spawn.z), s.id).toBe(false)
+    }
+  })
+
+  it('never puts a pickup on a spike', () => {
+    for (const s of ROOM_SPECS) {
+      for (const p of s.pickups ?? []) {
+        expect((s.spikes ?? []).some((c) => c.x === p.x && c.z === p.z), `${s.id} ${p.item}`).toBe(false)
+      }
     }
   })
 

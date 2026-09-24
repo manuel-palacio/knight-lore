@@ -126,6 +126,10 @@ export class GameState {
     return this.transformTimer <= DUSK_WARNING
   }
 
+  isDelivered(item: string): boolean {
+    return this.cureSequence.slice(0, this.cureProgress).some((delivered) => delivered === item)
+  }
+
   get wantedItem(): string | null {
     return this.cureSequence[this.cureProgress] ?? null
   }

@@ -160,3 +160,13 @@ describe('GameState', () => {
   })
 })
 
+
+describe('GameState.isDelivered', () => {
+  it('is true only for charms the cauldron has already taken', () => {
+    const state = new GameState(7)
+    const [first, second] = state.cureSequence
+    state.deliverCureItem(first!)
+    expect(state.isDelivered(first!)).toBe(true)
+    expect(state.isDelivered(second!)).toBe(false)
+  })
+})

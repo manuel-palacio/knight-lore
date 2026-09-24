@@ -15,6 +15,7 @@ export interface Debug {
   lives: number
   day: number
   won: boolean
+  timer: number
   pickups: { id: string; x: number; y: number; z: number }[]
   cauldron: { x: number; y: number; z: number } | null
 }

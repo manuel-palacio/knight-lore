@@ -12,6 +12,9 @@ const CAULDRON_ROOM = 'room-001'
 const BESIDE_CAULDRON: Cell = { x: 4, z: 5 }
 const DELIVERY_REACH = 1.6
 const MAX_ATTEMPTS_PER_LEG = 4
+// Seconds of daylight a crossing needs, with the seizure to spare: a room
+// takes three to five seconds to walk, turns included.
+const DAYLIGHT_TO_CROSS = 12
 
 test.skip(!process.env.PLAYTHROUGH, 'set PLAYTHROUGH=1 to play a whole game')
 
@@ -75,6 +78,8 @@ async function stepToward(page: Page, goal: string): Promise<void> {
   if (state.form === 'werewolf' && hauntedAtNight(exit.target)) {
     if (hauntedAtNight(state.room)) exit = nextExit(state.room, safeNeighbourOf(state.room))
     else await waitForDaylight(page)
+  } else if (hauntedAtNight(exit.target) && !hauntedAtNight(state.room) && state.timer < DAYLIGHT_TO_CROSS) {
+    await waitForNextMorning(page)
   }
   const spec = specOf(state.room)
   await walkPath(page, findFloorPath(spec, cellOf(state), DOOR_CELL[exit.direction]))
@@ -102,6 +107,11 @@ async function deliver(page: Page): Promise<void> {
   const delivered = state.delivered
   await page.keyboard.press('KeyE')
   await expect.poll(async () => (await debug(page)).delivered).toBe(delivered + 1)
+}
+
+async function waitForNextMorning(page: Page): Promise<void> {
+  await expect.poll(async () => (await debug(page)).form, { timeout: 30_000, intervals: [250] }).toBe('werewolf')
+  await waitForDaylight(page)
 }
 
 async function waitForDaylight(page: Page): Promise<void> {

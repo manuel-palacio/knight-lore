@@ -178,7 +178,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     exits: [{ direction: 'north', target: 'map--1--4' }, { direction: 'south', target: 'map--1--2' }],
     spawn: { x: 4, z: 1 },
     platforms: [{ x: 3, z: 1, height: 1 }],
-    ghosts: [{ x: 5, z: 1 }, { x: 3, z: 5 }],
+    ghosts: [{ x: 5, z: 2 }, { x: 3, z: 5 }],
     pickups: [{ x: 6, z: 6, item: 'gem' }],
   },
   {

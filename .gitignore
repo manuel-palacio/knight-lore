@@ -22,3 +22,4 @@ reference/*.z80
 reference/
 test-results/
 playwright-report/
+.claude/worktrees/

@@ -1,5 +1,7 @@
 # Knight Lore clone: next issues
 
+Status 2026-09-25. C and E are done, D is half done (seizure, cauldron spirit); see `docs/PLAYTEST.md` for what the playtest pass found and fixed. Playwright now covers the game end to end: `npm run test:e2e` (every room walked to each door and charm) and `npm run test:playthrough` (a whole game won with the keyboard).
+
 Status 2026-09-06, evening. The game is playable start to finish on `main`: the original's empty green start room, 29 connected rooms plus the cauldron, eight charms on the floor in reachable rooms, death and respawn, day and night, saving, and the win. It is thin next to the original: close charms, approximate rooms, little danger. The five issues below are what "top notch" needs, in order of weight. The twelve older issues further down are done and kept for their acceptance criteria.
 
 ---
@@ -46,8 +48,8 @@ Status 2026-09-06, evening. The game is playable start to finish on `main`: the 
 3. HUD delivered row and win text for 14.
 
 **Acceptance:**
-- [ ] `GameState.test.ts`: sequence of 14 distinct charms.
-- [ ] `RoomSpecs.test.ts`: every charm placed once, none within two rooms of the cauldron.
+- [x] `GameState.test.ts`: sequence of 14 charms. Done as the original: seven kinds, each asked for twice ("draws a cure of fourteen charms…"), so no new sprites were needed; the extra life left the cure and is taken at once.
+- [x] `RoomSpecs.test.ts`: every kind placed twice ("places every kind of charm twice…"), none within two rooms of the cauldron ("keeps every charm more than two rooms from the cauldron") or beside the start.
 
 ---
 
@@ -62,8 +64,8 @@ Status 2026-09-06, evening. The game is playable start to finish on `main`: the 
 4. Time enemy and ball speeds against `reference/longplay.mp4` frames.
 
 **Acceptance:**
-- [ ] One unit test per new entity on the step clock.
-- [ ] Playwright: morph while carrying shows the seizure and drops the charm.
+- [ ] One unit test per new entity on the step clock. Cauldron spirit: `tests/game/CauldronSpirit.test.ts`. Portcullis not built.
+- [x] Playwright: morph while carrying shows the seizure and drops the charm (`tests/e2e/transform.spec.ts`).
 
 ---
 
@@ -76,8 +78,8 @@ Status 2026-09-06, evening. The game is playable start to finish on `main`: the 
 2. Turn each note into a spec fix or a new issue.
 
 **Acceptance:**
-- [ ] A written playtest log in `docs/PLAYTEST.md` with every room visited.
-- [ ] Every logged blocker fixed or filed.
+- [x] A written playtest log in `docs/PLAYTEST.md` with every room visited (`tests/e2e/reachability.spec.ts` walks all 30).
+- [x] Every logged blocker fixed or filed.
 
 ---
 

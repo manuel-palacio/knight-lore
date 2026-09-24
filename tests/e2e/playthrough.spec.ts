@@ -79,8 +79,9 @@ async function stepToward(page: Page, goal: string): Promise<void> {
   if (state.form === 'werewolf' && hauntedAtNight(exit.target)) {
     if (hauntedAtNight(state.room)) exit = nextExit(state.room, safeNeighbourOf(state.room))
     else await waitForDaylight(page)
-  } else if (hauntedAtNight(exit.target) && !hauntedAtNight(state.room) && state.timer < daylightNeededIn(exit.target)) {
-    await waitForNextMorning(page)
+  } else if (hauntedAtNight(exit.target) && state.timer < daylightNeededIn(exit.target)) {
+    if (hauntedAtNight(state.room)) exit = nextExit(state.room, safeNeighbourOf(state.room))
+    else await waitForNextMorning(page)
   }
   const spec = specOf(state.room)
   await walkPath(page, findFloorPath(spec, cellOf(state), DOOR_CELL[exit.direction]))

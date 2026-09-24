@@ -43,3 +43,4 @@ Nothing stopped the wolf loitering by the cauldron. A spirit now rises from it a
 - Night falls mid-leg often enough that anything scripted (and any player) must expect the two-second seizure at any moment.
 - Run 9 reached day 12 with 8 charms delivered and found a softlock: a room was built without its charm whenever the other copy of that kind had been delivered first (the builder counted deliveries per kind). With every kind asked for twice, the game could not be won. Rooms now remember whose charm was used up (`GameState.emptiedRooms`), which also keeps a taken extra life from coming back after continue.
 - The guard in map--1-2 takes a life from the bot on the way out with the poison: a timing puzzle, left as is.
+- **Run 10 won**: fourteen charms delivered on day 20 of 40 with four lives left, 30 minutes of real time, keyboard only. The game is winnable as a player plays it.

@@ -8,12 +8,15 @@ const BOB_AMPLITUDE = 0.06
 
 export class Pickup extends Entity {
   readonly id: string
+  // The room the charm was placed in when the castle was built.
+  readonly homeRoomId: string
   collected = false
   private bobPhase = 0
 
-  constructor(id: string) {
+  constructor(id: string, homeRoomId: string) {
     super()
     this.id = id
+    this.homeRoomId = homeRoomId
     this.categories = [Category.PICKUP_TRIGGER]
     this.extents.set(0.6, 0.6, 0.6)
   }

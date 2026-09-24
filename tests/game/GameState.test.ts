@@ -163,13 +163,17 @@ describe('GameState', () => {
 })
 
 
-describe('GameState.deliveredCount', () => {
-  it('counts how many of a kind of charm the cauldron has taken', () => {
+describe('GameState.emptiedRooms', () => {
+  it('survives a save and continue', () => {
     const state = new GameState(7)
-    const first = state.cureSequence[0]!
-    expect(state.deliveredCount(first)).toBe(0)
-    state.deliverCureItem(first)
-    expect(state.deliveredCount(first)).toBe(1)
+    state.emptiedRooms.push('map--1--4')
+    expect(GameState.restore(state.serialize()).emptiedRooms).toEqual(['map--1--4'])
+  })
+
+  it('starts empty when continuing a save written before it existed', () => {
+    const older = new GameState(7).serialize()
+    delete older.emptiedRooms
+    expect(GameState.restore(older).emptiedRooms).toEqual([])
   })
 })
 

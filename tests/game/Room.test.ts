@@ -17,7 +17,7 @@ describe('Room', () => {
 
   it('remove() detaches the entity', () => {
     const room = new Room('r', 8, 8)
-    const p = new Pickup('gem')
+    const p = new Pickup('gem', 'test-room')
     room.add(p)
     expect(room.entities).toContain(p)
     room.remove(p)

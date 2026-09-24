@@ -12,7 +12,7 @@ function makeManager() {
       buildsA++
       const r = new Room('room-a', 8, 8)
       r.addExit({ direction: 'south', targetRoomId: 'room-b', entryX: 8, entryZ: 1 })
-      r.add(new Pickup('gem'))
+      r.add(new Pickup('gem', 'test-room'))
       return r
     }],
     ['room-b', async () => new Room('room-b', 8, 8)],

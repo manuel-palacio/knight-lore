@@ -41,13 +41,6 @@ export function oppositeOf(direction: Direction): Direction {
   return OPPOSITE[direction]
 }
 
-// Each kind of charm lies in two rooms; this is 0 for the first room in spec
-// order that holds it and 1 for the second.
-export function copyNumberOf(roomId: string, item: string): number {
-  const holders = ROOM_SPECS.filter((s) => s.pickups?.some((p) => p.item === item)).map((s) => s.id)
-  return Math.max(0, holders.indexOf(roomId))
-}
-
 // Walking out through a door lands you just inside the opposite edge.
 export function entryFor(direction: Direction): { x: number; z: number } {
   switch (direction) {

@@ -32,6 +32,8 @@ export interface SavedGame {
   dayCount: number
   cureProgress: number
   cureSequence: Charm[]
+  // Rooms whose charm was delivered or whose extra life was taken; missing in older saves.
+  emptiedRooms?: string[]
 }
 
 // Saves from earlier versions drew a different cure; continuing one would
@@ -55,6 +57,9 @@ export class GameState {
   gameOverReason: GameOverReason | null = null
   cureProgress = 0
   readonly cureSequence: Charm[]
+  // Rooms whose pickup is used up (charm delivered, extra life taken): they
+  // are built without it. A room holds at most one pickup.
+  readonly emptiedRooms: string[] = []
 
   constructor(seed: number = Math.floor(Math.random() * 0x7fffffff)) {
     this.cureSequence = shuffled([...CHARMS, ...CHARMS], seed)
@@ -69,6 +74,7 @@ export class GameState {
       dayCount: this.dayCount,
       cureProgress: this.cureProgress,
       cureSequence: [...this.cureSequence],
+      emptiedRooms: [...this.emptiedRooms],
     }
   }
 
@@ -87,6 +93,7 @@ export class GameState {
     this.dayCount = saved.dayCount
     this.cureProgress = saved.cureProgress
     this.cureSequence.splice(0, this.cureSequence.length, ...saved.cureSequence)
+    this.emptiedRooms.splice(0, this.emptiedRooms.length, ...(saved.emptiedRooms ?? []))
   }
 
   onTransformed: () => void = () => {}
@@ -138,10 +145,6 @@ export class GameState {
 
   get isDusk(): boolean {
     return this.transformTimer <= DUSK_WARNING
-  }
-
-  deliveredCount(item: string): number {
-    return this.cureSequence.slice(0, this.cureProgress).filter((delivered) => delivered === item).length
   }
 
   get wantedItem(): string | null {

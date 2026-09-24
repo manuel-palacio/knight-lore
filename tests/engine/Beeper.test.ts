@@ -24,8 +24,9 @@ describe('beeper sound table', () => {
 describe('Beeper mute', () => {
   it('toggles, and while muted plays nothing, not even opening the audio device', () => {
     let opened = 0
-    const original = (globalThis as Record<string, unknown>).AudioContext
-    ;(globalThis as Record<string, unknown>).AudioContext = class { constructor() { opened++ } }
+    const globals = globalThis as Record<string, unknown>
+    const original = globals.AudioContext
+    globals.AudioContext = class { constructor() { opened++ } }
     try {
       const beeper = new Beeper()
       expect(beeper.toggleMute()).toBe(true)
@@ -33,7 +34,7 @@ describe('Beeper mute', () => {
       expect(opened).toBe(0)
       expect(beeper.toggleMute()).toBe(false)
     } finally {
-      ;(globalThis as Record<string, unknown>).AudioContext = original
+      globals.AudioContext = original
     }
   })
 })

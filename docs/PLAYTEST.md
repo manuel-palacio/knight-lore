@@ -41,3 +41,5 @@ Nothing stopped the wolf loitering by the cauldron. A spirit now rises from it a
 
 - A wolf who idles in a ghost room loses every life in about fifteen seconds: each death respawns him at the door with two seconds' grace and the ghost back at its post. A player who moves on is safe (the wolf outruns a ghost), so this is left as is, but it is the harshest thing in the game. If playtesters trip on it, give the respawn grace until the wolf first moves.
 - Night falls mid-leg often enough that anything scripted (and any player) must expect the two-second seizure at any moment.
+- Run 9 reached day 12 with 8 charms delivered and found a softlock: a room was built without its charm whenever the other copy of that kind had been delivered first (the builder counted deliveries per kind). With every kind asked for twice, the game could not be won. Rooms now remember whose charm was used up (`GameState.emptiedRooms`), which also keeps a taken extra life from coming back after continue.
+- The guard in map--1-2 takes a life from the bot on the way out with the poison: a timing puzzle, left as is.

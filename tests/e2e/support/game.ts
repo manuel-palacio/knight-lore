@@ -13,6 +13,8 @@ export interface Debug {
   carrying: string | null
   delivered: number
   lives: number
+  day: number
+  won: boolean
   pickups: { id: string; x: number; y: number; z: number }[]
   cauldron: { x: number; y: number; z: number } | null
 }
@@ -83,23 +85,21 @@ export async function walkUntil(page: Page, arrived: (state: Debug) => boolean):
   }
 }
 
-// Walks cell to cell along a path of orthogonal neighbours, one straight run
-// per change of direction, stopping on each corner cell's centre.
+// Walks cell to cell along a path of orthogonal neighbours: first onto the
+// centre of the cell it starts in, then one straight run per corner.
 export async function walkPath(page: Page, path: Cell[]): Promise<void> {
-  for (const corner of cornersOf(path).slice(1)) {
-    const here = (await debug(page)).pos
-    const dx = tileCentre(corner.x) - here.x
-    const dz = tileCentre(corner.z) - here.z
-    if (Math.abs(dx) > Math.abs(dz)) {
-      const target = tileCentre(corner.x)
-      await face(page, dx > 0 ? 'east' : 'west')
-      await walkUntil(page, (s) => (dx > 0 ? s.pos.x >= target - STEP_TOLERANCE : s.pos.x <= target + STEP_TOLERANCE))
-    } else {
-      const target = tileCentre(corner.z)
-      await face(page, dz > 0 ? 'south' : 'north')
-      await walkUntil(page, (s) => (dz > 0 ? s.pos.z >= target - STEP_TOLERANCE : s.pos.z <= target + STEP_TOLERANCE))
-    }
+  for (const corner of cornersOf(path)) {
+    await walkAxisTo(page, 'x', tileCentre(corner.x))
+    await walkAxisTo(page, 'z', tileCentre(corner.z))
   }
+}
+
+async function walkAxisTo(page: Page, axis: 'x' | 'z', target: number): Promise<void> {
+  const delta = target - (await debug(page)).pos[axis]
+  if (Math.abs(delta) <= STEP_TOLERANCE) return
+  const forward = delta > 0
+  await face(page, axis === 'x' ? (forward ? 'east' : 'west') : (forward ? 'south' : 'north'))
+  await walkUntil(page, (s) => (forward ? s.pos[axis] >= target - STEP_TOLERANCE : s.pos[axis] <= target + STEP_TOLERANCE))
 }
 
 function cornersOf(path: Cell[]): Cell[] {

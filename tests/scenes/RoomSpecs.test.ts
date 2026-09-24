@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { ROOM_SPECS, entryFor, oppositeOf, type RoomSpec } from '../../src/scenes/rooms/roomSpecs'
 import { LEGACY_ROOM_LINKS } from '../../src/scenes/rooms/roomSpecs'
-import { ALL_ITEMS } from '../../src/game/GameState'
+import { CHARMS } from '../../src/game/GameState'
 import { START_ROOM } from '../../src/scenes/rooms/index'
 
 const GRID = 8
@@ -55,9 +55,14 @@ describe('room map', () => {
     expect(ROOM_SPECS.filter((s) => s.mapped).length).toBeGreaterThanOrEqual(7)
   })
 
-  it('places every item exactly once across the spec rooms', () => {
+  it('places every kind of charm twice and at least one extra life', () => {
     const placed = ROOM_SPECS.flatMap((s) => (s.pickups ?? []).map((p) => p.item))
-    expect([...placed].sort()).toEqual([...ALL_ITEMS].sort())
+    for (const charm of CHARMS) expect(placed.filter((i) => i === charm), charm).toHaveLength(2)
+    expect(placed.filter((i) => i === 'life').length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('puts at most one pickup in a room', () => {
+    for (const s of ROOM_SPECS) expect((s.pickups ?? []).length, s.id).toBeLessThanOrEqual(1)
   })
 
   it('keeps every charm more than two rooms from the cauldron', () => {

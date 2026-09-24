@@ -2,15 +2,22 @@ import { shuffled } from '../engine/Random'
 
 export type Form = 'human' | 'werewolf'
 
-export const HUMAN_DURATION = 20
-export const WEREWOLF_DURATION = 20
+// A day is long enough to carry a charm from the far branches to the cauldron
+// (about ten rooms); nights are shorter because the wolf can neither pick up
+// nor deliver. Forty days come to about an hour of play.
+export const HUMAN_DURATION = 60
+export const WEREWOLF_DURATION = 30
 
 export const TOTAL_DAYS = 40
-export const DUSK_WARNING = 2
+export const DUSK_WARNING = 5
 export const STARTING_LIVES = 5
-// Every charm in the game. The cauldron asks for all of them, one at a time,
-// in an order drawn at the start of each game like the original.
-export const ALL_ITEMS = ['goblet', 'gem', 'wine-bottle', 'crystal-ball', 'boot', 'teacup', 'poison', 'life'] as const
+// The seven kinds of charm. The cauldron asks for fourteen, each kind twice,
+// one at a time, in an order drawn at the start of each game like the original.
+export const CHARMS = ['goblet', 'gem', 'wine-bottle', 'crystal-ball', 'boot', 'teacup', 'poison'] as const
+export type Charm = (typeof CHARMS)[number]
+export const CURE_LENGTH = CHARMS.length * 2
+// Everything that can lie on the floor: the charms and the extra life.
+export const ALL_ITEMS = [...CHARMS, 'life'] as const
 export type ItemId = (typeof ALL_ITEMS)[number]
 
 export type GameOverReason = 'days' | 'lives'
@@ -24,7 +31,14 @@ export interface SavedGame {
   lives: number
   dayCount: number
   cureProgress: number
-  cureSequence: ItemId[]
+  cureSequence: Charm[]
+}
+
+// Saves from earlier versions drew a different cure; continuing one would
+// ask for charms the castle no longer holds.
+export function isCompatibleSave(saved: { cureSequence: readonly string[] }): boolean {
+  const charms: readonly string[] = CHARMS
+  return saved.cureSequence.length === CURE_LENGTH && saved.cureSequence.every((item) => charms.includes(item))
 }
 
 export class GameState {
@@ -40,10 +54,10 @@ export class GameState {
   gameOver = false
   gameOverReason: GameOverReason | null = null
   cureProgress = 0
-  readonly cureSequence: ItemId[]
+  readonly cureSequence: Charm[]
 
   constructor(seed: number = Math.floor(Math.random() * 0x7fffffff)) {
-    this.cureSequence = shuffled(ALL_ITEMS, seed)
+    this.cureSequence = shuffled([...CHARMS, ...CHARMS], seed)
   }
 
   serialize(): SavedGame {
@@ -126,12 +140,16 @@ export class GameState {
     return this.transformTimer <= DUSK_WARNING
   }
 
-  isDelivered(item: string): boolean {
-    return this.cureSequence.slice(0, this.cureProgress).some((delivered) => delivered === item)
+  deliveredCount(item: string): number {
+    return this.cureSequence.slice(0, this.cureProgress).filter((delivered) => delivered === item).length
   }
 
   get wantedItem(): string | null {
     return this.cureSequence[this.cureProgress] ?? null
+  }
+
+  gainLife(): void {
+    this.lives += 1
   }
 
   loseLife(): void {

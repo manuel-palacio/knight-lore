@@ -1,4 +1,4 @@
-import type { SavedGame } from '../game/GameState'
+import { isCompatibleSave, type SavedGame } from '../game/GameState'
 
 // One save slot in localStorage. Every access is guarded: storage can be
 // missing, full, or blocked, and the game must run the same without it.
@@ -7,7 +7,9 @@ const KEY = 'knight-lore.save'
 export function loadSave(): SavedGame | null {
   try {
     const raw = localStorage.getItem(KEY)
-    return raw ? (JSON.parse(raw) as SavedGame) : null
+    if (!raw) return null
+    const saved = JSON.parse(raw) as SavedGame
+    return isCompatibleSave(saved) ? saved : null
   } catch {
     return null
   }

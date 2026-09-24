@@ -16,7 +16,7 @@ describe('Werewolf transformation', () => {
     const s = new GameState()
     let count = 0
     s.onTransformed = () => { count++ }
-    for (let i = 0; i < 1200; i++) s.tickTransform(1 / 60)
+    for (let i = 0; i < HUMAN_DURATION * 60 + 10; i++) s.tickTransform(1 / 60)
     expect(s.form).toBe('werewolf')
     expect(count).toBe(1)
   })

@@ -10,7 +10,7 @@ import { Cauldron } from '../../game/Cauldron'
 import { Wizard } from '../../game/Wizard'
 import { Flame } from '../../game/Flame'
 import { addPickup } from './items'
-import { entryFor, type RoomSpec } from './roomSpecs'
+import { copyNumberOf, entryFor, type RoomSpec } from './roomSpecs'
 import type { RoomBuilder } from '../../game/RoomManager'
 
 export function buildRoomFromSpec(spec: RoomSpec): RoomBuilder {
@@ -23,7 +23,9 @@ export function buildRoomFromSpec(spec: RoomSpec): RoomBuilder {
       addPatrolEnemy(room, { x: tileCenter(g.from.x), z: tileCenter(g.from.z) }, { x: tileCenter(g.to.x), z: tileCenter(g.to.z) }, g.speed)
     }
     for (const g of spec.ghosts ?? []) room.add(new GhostEnemy(tileCenter(g.x), tileCenter(g.z)))
-    for (const p of spec.pickups ?? []) if (!state.isDelivered(p.item)) addPickup(room, p.item, p.x, p.z, p.y)
+    for (const p of spec.pickups ?? []) {
+      if (state.deliveredCount(p.item) <= copyNumberOf(spec.id, p.item)) addPickup(room, p.item, p.x, p.z, p.y)
+    }
     for (const m of spec.movingPlatforms ?? []) {
       room.add(new MovingPlatform(cellCentre(m.from), cellCentre(m.to), m.height))
     }

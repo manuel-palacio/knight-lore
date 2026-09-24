@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { GameState, ALL_ITEMS, HUMAN_DURATION, DUSK_WARNING } from '../../src/game/GameState'
+import { GameState, CHARMS, CURE_LENGTH, HUMAN_DURATION, WEREWOLF_DURATION, DUSK_WARNING, isCompatibleSave } from '../../src/game/GameState'
 
 describe('GameState', () => {
   it('starts as human with full timer and empty inventory', () => {
     const s = new GameState()
     expect(s.form).toBe('human')
-    expect(s.transformTimer).toBe(20)
+    expect(s.transformTimer).toBe(HUMAN_DURATION)
     expect(s.inventory).toEqual([])
     expect(s.won).toBe(false)
   })
@@ -30,7 +30,7 @@ describe('GameState', () => {
     const s = new GameState()
     s.toggleForm()
     expect(s.form).toBe('werewolf')
-    expect(s.transformTimer).toBe(20)
+    expect(s.transformTimer).toBe(WEREWOLF_DURATION)
   })
 
   it('starts with 5 lives, day 1, no game over', () => {
@@ -61,17 +61,17 @@ describe('GameState', () => {
 
   it('day advances when form returns to human (one full cycle)', () => {
     const s = new GameState()
-    s.tickTransform(20.1) // human -> werewolf
+    s.tickTransform(HUMAN_DURATION + 0.1) // human -> werewolf
     expect(s.dayCount).toBe(1)
-    s.tickTransform(20.1) // werewolf -> human: day completed
+    s.tickTransform(WEREWOLF_DURATION + 0.1) // werewolf -> human: day completed
     expect(s.dayCount).toBe(2)
   })
 
   it('game over after day 40 expires', () => {
     const s = new GameState()
     for (let day = 0; day < 40; day++) {
-      s.tickTransform(20.1)
-      s.tickTransform(20.1)
+      s.tickTransform(HUMAN_DURATION + 0.1)
+      s.tickTransform(WEREWOLF_DURATION + 0.1)
     }
     expect(s.dayCount).toBe(41)
     expect(s.gameOver).toBe(true)
@@ -115,12 +115,14 @@ describe('GameState', () => {
     expect(restored.inventory).toEqual([])
   })
 
-  it('draws a cure sequence of every item in a seeded random order', () => {
+  it('draws a cure of fourteen charms, each of the seven kinds twice, in a seeded random order', () => {
     const a = new GameState(7)
     const b = new GameState(7)
     const c = new GameState(8)
-    expect(a.cureSequence).toHaveLength(ALL_ITEMS.length)
-    expect(new Set(a.cureSequence).size).toBe(ALL_ITEMS.length)
+    expect(CURE_LENGTH).toBe(14)
+    expect(a.cureSequence).toHaveLength(CURE_LENGTH)
+    for (const charm of CHARMS) expect(a.cureSequence.filter((i) => i === charm), charm).toHaveLength(2)
+    expect(a.cureSequence).not.toContain('life')
     expect(a.cureSequence).toEqual(b.cureSequence)
     expect(c.cureSequence).not.toEqual(a.cureSequence)
   })
@@ -161,12 +163,32 @@ describe('GameState', () => {
 })
 
 
-describe('GameState.isDelivered', () => {
-  it('is true only for charms the cauldron has already taken', () => {
+describe('GameState.deliveredCount', () => {
+  it('counts how many of a kind of charm the cauldron has taken', () => {
     const state = new GameState(7)
-    const [first, second] = state.cureSequence
-    state.deliverCureItem(first!)
-    expect(state.isDelivered(first!)).toBe(true)
-    expect(state.isDelivered(second!)).toBe(false)
+    const first = state.cureSequence[0]!
+    expect(state.deliveredCount(first)).toBe(0)
+    state.deliverCureItem(first)
+    expect(state.deliveredCount(first)).toBe(1)
+  })
+})
+
+describe('GameState.gainLife', () => {
+  it('adds a life', () => {
+    const state = new GameState(7)
+    const before = state.lives
+    state.gainLife()
+    expect(state.lives).toBe(before + 1)
+  })
+})
+
+describe('isCompatibleSave', () => {
+  it('accepts a save written by this version', () => {
+    expect(isCompatibleSave(new GameState(3).serialize())).toBe(true)
+  })
+
+  it('rejects a save from the eight-charm version, whose cure asked for the extra life', () => {
+    const old = { ...new GameState(3).serialize(), cureSequence: ['goblet', 'gem', 'wine-bottle', 'crystal-ball', 'boot', 'teacup', 'poison', 'life'] }
+    expect(isCompatibleSave(old)).toBe(false)
   })
 })

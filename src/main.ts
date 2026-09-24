@@ -233,6 +233,7 @@ async function main(): Promise<void> {
       carrying: player.carrying,
       delivered: state.cureProgress,
       lives: state.lives,
+      won: state.won,
       pickups: activeRoom().entities
         .filter((e): e is Pickup => e instanceof Pickup && !e.collected)
         .map((e) => ({ id: e.id, x: e.position.x, y: e.position.y, z: e.position.z })),
@@ -270,6 +271,10 @@ async function main(): Promise<void> {
         Math.hypot(e.position.x - player.position.x, e.position.z - player.position.z) < PICKUP_RANGE &&
         Math.abs(e.position.y - player.position.y) < PICKUP_HEIGHT
       if (!near) continue
+      if (e.id === 'life') {
+        takeExtraLife(room, e)
+        return
+      }
       player.tryPickup({ id: e.id, position: e.position }, state, () => {
         beeper.play('pickup')
         e.collect()
@@ -278,6 +283,13 @@ async function main(): Promise<void> {
       })
       return
     }
+  }
+
+  function takeExtraLife(room: Room, life: Pickup): void {
+    state.gainLife()
+    life.collect()
+    room.remove(life)
+    beeper.play('pickup')
   }
 
   function tryDeliverPass(room: Room): boolean {

@@ -32,3 +32,19 @@ test('a charm dropped at nightfall stays in the room where it fell', async ({ pa
   await enterRoom(page, charmRoom.id)
   expect((await debug(page)).pickups.map((p) => p.id)).not.toContain(charm)
 })
+
+test('the extra life is taken at once, not carried, and does not come back', async ({ page }) => {
+  await startGame(page)
+  const lifeRoom = ROOM_SPECS.find((s) => s.pickups?.some((p) => p.item === 'life'))!
+  const room = await enterRoom(page, lifeRoom.id)
+  await holdDaylight(page)
+  const life = room.pickups.find((p) => p.id === 'life')!
+  await standAt(page, life)
+  await page.keyboard.press('KeyE')
+  await expect.poll(async () => (await debug(page)).lives).toBe(6)
+  expect((await debug(page)).carrying).toBeNull()
+
+  await enterRoom(page, lifeRoom.exits[0]!.target)
+  const back = await enterRoom(page, lifeRoom.id)
+  expect(back.pickups.map((p) => p.id)).not.toContain('life')
+})

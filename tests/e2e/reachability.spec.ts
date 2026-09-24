@@ -20,11 +20,17 @@ for (const spec of ROOM_SPECS) {
       await holdDaylight(page)
     }
 
+    let lives = (await debug(page)).lives
     for (const charm of spec.pickups ?? []) {
       await enter()
       await walkPath(page, findFloorPath(spec, entryDoor, charm))
       await page.keyboard.press('KeyE')
-      await expect.poll(async () => (await debug(page)).carrying, { message: `${charm.item} picked up` }).toBe(charm.item)
+      if (charm.item === 'life') {
+        lives += 1
+        await expect.poll(async () => (await debug(page)).lives, { message: 'extra life taken' }).toBe(lives)
+      } else {
+        await expect.poll(async () => (await debug(page)).carrying, { message: `${charm.item} picked up` }).toBe(charm.item)
+      }
     }
 
     for (const exit of spec.exits.slice(spec.exits.length > 1 ? 1 : 0)) {
@@ -34,6 +40,6 @@ for (const spec of ROOM_SPECS) {
       await walkUntil(page, (state) => state.room === exit.target)
     }
 
-    expect((await debug(page)).lives, 'lives lost on the way').toBe(5)
+    expect((await debug(page)).lives, 'lives lost on the way').toBe(lives)
   })
 }

@@ -41,6 +41,13 @@ export function oppositeOf(direction: Direction): Direction {
   return OPPOSITE[direction]
 }
 
+// Each kind of charm lies in two rooms; this is 0 for the first room in spec
+// order that holds it and 1 for the second.
+export function copyNumberOf(roomId: string, item: string): number {
+  const holders = ROOM_SPECS.filter((s) => s.pickups?.some((p) => p.item === item)).map((s) => s.id)
+  return Math.max(0, holders.indexOf(roomId))
+}
+
 // Walking out through a door lands you just inside the opposite edge.
 export function entryFor(direction: Direction): { x: number; z: number } {
   switch (direction) {
@@ -136,6 +143,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     exits: [{ direction: 'north', target: 'map--1--3' }, { direction: 'south', target: 'map--1--1' }],
     spawn: { x: 4, z: 1 },
     platforms: [],
+    pickups: [{ x: 2, z: 5, item: 'goblet' }],
   },
   {
     id: 'map--2-1', tint: 'yellow', mapped: true,
@@ -143,6 +151,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     spawn: { x: 4, z: 1 },
     platforms: [],
     spikes: [{ x: 2, z: 7 }, { x: 3, z: 6 }],
+    pickups: [{ x: 2, z: 2, item: 'crystal-ball' }],
   },
   {
     id: 'map-2-1', tint: 'blue', mapped: true,
@@ -150,6 +159,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     spawn: { x: 4, z: 1 },
     platforms: [{ x: 0, z: 1, height: 2 }, { x: 0, z: 2, height: 1 }],
     spikes: [{ x: 6, z: 2 }, { x: 7, z: 1 }, { x: 7, z: 3 }],
+    pickups: [{ x: 5, z: 5, item: 'wine-bottle' }],
   },
   {
     id: 'map--1-2', tint: 'green', mapped: true,
@@ -166,6 +176,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     spawn: { x: 4, z: 1 },
     platforms: [{ x: 3, z: 1, height: 1 }],
     ghosts: [{ x: 5, z: 1 }, { x: 3, z: 5 }],
+    pickups: [{ x: 6, z: 6, item: 'gem' }],
   },
   {
     id: 'map--3-1', tint: 'purple', mapped: true,
@@ -173,6 +184,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     spawn: { x: 4, z: 1 },
     platforms: [],
     spikes: [{ x: 2, z: 7 }],
+    pickups: [{ x: 4, z: 5, item: 'teacup' }],
   },
   {
     id: 'map-2-2', tint: 'yellow', mapped: true,
@@ -211,6 +223,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     exits: [{ direction: 'east', target: 'map--3-1' }, { direction: 'south', target: 'map--4-2' }],
     spawn: { x: 4, z: 1 },
     platforms: [],
+    pickups: [{ x: 2, z: 5, item: 'boot' }],
   },
   {
     id: 'map--4-2', tint: 'yellow', mapped: true,
@@ -225,6 +238,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     spawn: { x: 4, z: 1 },
     platforms: [{ x: 3, z: 4, height: 1 }, { x: 4, z: 3, height: 3 }, { x: 4, z: 4, height: 3 }],
     spikes: [{ x: 4, z: 2 }],
+    pickups: [{ x: 6, z: 6, item: 'poison' }],
   },
   {
     id: 'map--4-3', tint: 'blue', mapped: true,

@@ -20,3 +20,5 @@ reference/*.mp4
 reference/*.mov
 reference/*.z80
 reference/
+test-results/
+playwright-report/

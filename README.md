@@ -26,6 +26,7 @@ A gamepad works too: d-pad turns and walks, A jumps, B acts, Start pauses.
 
 ```
 npm test          # vitest
+npm run test:e2e  # playwright against the dev server
 npm run lint
 npm run build     # tsc + vite build into dist/
 ```
@@ -53,7 +54,7 @@ src/engine     step clock, projection, renderer, wall layout, collision, input, 
 src/game       entities (player, guards, ghosts, platforms, ...), game state, HUD, character frames
 src/scenes     room specs and the spec builder
 public/sprites sprite strips, ripped originals under rip/, charms under items/
-tests          vitest suites mirroring src
+tests          vitest suites mirroring src; tests/e2e holds the playwright specs
 docs           map, gameplay notes, physics notes
 reference      local only (git-ignored): recordings, the memory snapshot, frames used for extraction
 ```

@@ -230,6 +230,14 @@ async function main(): Promise<void> {
       facing: player.facing,
       pos: { x: Number(player.position.x.toFixed(2)), y: Number(player.position.y.toFixed(2)), z: Number(player.position.z.toFixed(2)) },
       platforms: activeRoom().entities.filter((e) => e instanceof MovingPlatform).map((e) => ({ x: e.position.x, z: e.position.z })),
+      carrying: player.carrying,
+      delivered: state.cureProgress,
+      pickups: activeRoom().entities
+        .filter((e): e is Pickup => e instanceof Pickup && !e.collected)
+        .map((e) => ({ id: e.id, x: e.position.x, y: e.position.y, z: e.position.z })),
+      cauldron: activeRoom().entities
+        .filter((e) => e instanceof Cauldron)
+        .map((e) => ({ x: e.position.x, y: e.position.y, z: e.position.z }))[0] ?? null,
     })
   }
 

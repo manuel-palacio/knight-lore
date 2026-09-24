@@ -29,12 +29,12 @@ test('the game can be won from the start room with the keyboard', async ({ page 
     expect(state.lives, 'ran out of lives').toBeGreaterThan(0)
     const wanted = state.wanted!
     if (state.form === 'werewolf' && hauntedAtNight(state.room)) {
-      await retrying(() => stepToward(page, state, safeNeighbourOf(state.room)))
+      await retrying(() => stepToward(page, safeNeighbourOf(state.room)))
       continue
     }
     if (state.carrying === wanted) {
       if (state.room === CAULDRON_ROOM) await deliver(page)
-      else await retrying(() => stepToward(page, state, CAULDRON_ROOM))
+      else await retrying(() => stepToward(page, CAULDRON_ROOM))
       const after = await debug(page)
       if (after.carrying === null && after.delivered === state.delivered) {
         const droppedIn = after.pickups.some((p) => p.id === wanted) ? after.room : state.room
@@ -49,7 +49,7 @@ test('the game can be won from the start room with the keyboard', async ({ page 
       rooms.splice(rooms.indexOf(state.room), 1)
       continue
     }
-    await retrying(() => stepToward(page, state, nearest(state.room, whereabouts.get(wanted)!)))
+    await retrying(() => stepToward(page, nearest(state.room, whereabouts.get(wanted)!)))
   }
 
   const end = await debug(page)
@@ -67,11 +67,15 @@ async function retrying(leg: () => Promise<void>): Promise<void> {
   }
 }
 
-async function stepToward(page: Page, state: Debug, goal: string): Promise<void> {
-  const exit = nextExit(state.room, goal)
+async function stepToward(page: Page, goal: string): Promise<void> {
+  const state = await debug(page)
+  let exit = nextExit(state.room, goal)
   // Ghosts, and the spirit in the cauldron, hunt only the wolf: at night he
-  // waits outside their rooms for the morning.
-  if (hauntedAtNight(exit.target)) await waitForDaylight(page)
+  // waits for the morning outside their rooms, never in one.
+  if (state.form === 'werewolf' && hauntedAtNight(exit.target)) {
+    if (hauntedAtNight(state.room)) exit = nextExit(state.room, safeNeighbourOf(state.room))
+    else await waitForDaylight(page)
+  }
   const spec = specOf(state.room)
   await walkPath(page, findFloorPath(spec, cellOf(state), DOOR_CELL[exit.direction]))
   await face(page, exit.direction)

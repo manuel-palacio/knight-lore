@@ -68,8 +68,11 @@ export async function standAt(page: Page, at: { x: number; y: number; z: number 
   await page.evaluate(({ x, y, z }) => (window as unknown as Hooks).__pos(x, y, z), at)
 }
 
+// Taps that land while a door's wipe is still playing are dropped, so a
+// room entered straight after walking out of another may ignore the first
+// few; keep tapping until Sabreman faces the right way.
 export async function face(page: Page, facing: string): Promise<void> {
-  for (let turns = 0; turns < 4 && (await debug(page)).facing !== facing; turns++) {
+  for (let turns = 0; turns < 8 && (await debug(page)).facing !== facing; turns++) {
     await page.keyboard.press('ArrowLeft')
     await page.waitForTimeout(150)
   }

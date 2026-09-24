@@ -68,12 +68,16 @@ export async function standAt(page: Page, at: { x: number; y: number; z: number 
   await page.evaluate(({ x, y, z }) => (window as unknown as Hooks).__pos(x, y, z), at)
 }
 
+// Turns are locked while the transformation plays, so keep turning until
+// the facing is right rather than for a fixed number of presses.
 export async function face(page: Page, facing: string): Promise<void> {
-  for (let turns = 0; turns < 4 && (await debug(page)).facing !== facing; turns++) {
-    await page.keyboard.press('ArrowLeft')
-    await page.waitForTimeout(150)
-  }
-  expect((await debug(page)).facing).toBe(facing)
+  await expect
+    .poll(async () => {
+      const current = (await debug(page)).facing
+      if (current !== facing) await page.keyboard.press('ArrowLeft')
+      return current
+    }, { timeout: 5_000, intervals: [150] })
+    .toBe(facing)
 }
 
 export async function walkUntil(page: Page, arrived: (state: Debug) => boolean): Promise<void> {

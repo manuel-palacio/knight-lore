@@ -44,10 +44,10 @@ export function oppositeOf(direction: Direction): Direction {
 // Walking out through a door lands you just inside the opposite edge.
 export function entryFor(direction: Direction): { x: number; z: number } {
   switch (direction) {
-    case 'south': return { x: 8, z: 1 }
-    case 'north': return { x: 8, z: 15 }
-    case 'east': return { x: 1, z: 8 }
-    case 'west': return { x: 15, z: 8 }
+    case 'south': return { x: 9, z: 1 }
+    case 'north': return { x: 9, z: 15 }
+    case 'east': return { x: 1, z: 9 }
+    case 'west': return { x: 15, z: 9 }
   }
 }
 

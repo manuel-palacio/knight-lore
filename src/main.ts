@@ -192,7 +192,7 @@ async function main(): Promise<void> {
   function resumeSavedGame(save: SavedGame): void {
     state.apply(save)
     transitioning = true
-    manager.transitionTo(save.currentRoomId, 8, 1).then((room) => {
+    manager.transitionTo(save.currentRoomId, 9, 1).then((room) => {
       placePlayerAtSpawn(room)
       transitioning = false
     })
@@ -211,9 +211,9 @@ async function main(): Promise<void> {
     hooks.__t = () => { state.toggleForm(); state.onTransformed(); state.transformTimer = 9999 }
     hooks.__win = () => { state.won = true }
     hooks.__timer = (seconds: number) => { state.transformTimer = seconds }
-    hooks.__room = (id: string) => {
+    hooks.__room = (id: string, entryX = 9, entryZ = 1) => {
       transitioning = true
-      manager.transitionTo(id, 8, 1).then((room) => { placePlayerAtSpawn(room); transitioning = false })
+      manager.transitionTo(id, entryX, entryZ).then((room) => { placePlayerAtSpawn(room); transitioning = false })
     }
     hooks.__pos = (x: number, y: number, z: number) => {
       player.position.set(x, y, z)
@@ -232,6 +232,7 @@ async function main(): Promise<void> {
       platforms: activeRoom().entities.filter((e) => e instanceof MovingPlatform).map((e) => ({ x: e.position.x, z: e.position.z })),
       carrying: player.carrying,
       delivered: state.cureProgress,
+      lives: state.lives,
       pickups: activeRoom().entities
         .filter((e): e is Pickup => e instanceof Pickup && !e.collected)
         .map((e) => ({ id: e.id, x: e.position.x, y: e.position.y, z: e.position.z })),

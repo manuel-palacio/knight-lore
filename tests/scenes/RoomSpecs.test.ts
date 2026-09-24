@@ -94,11 +94,11 @@ describe('room map', () => {
 })
 
 describe('entryFor', () => {
-  it('drops the player just inside the edge opposite to the door walked through', () => {
-    expect(entryFor('south')).toEqual({ x: 8, z: 1 })
-    expect(entryFor('north')).toEqual({ x: 8, z: 15 })
-    expect(entryFor('east')).toEqual({ x: 1, z: 8 })
-    expect(entryFor('west')).toEqual({ x: 15, z: 8 })
+  it('drops the player just inside the edge opposite to the door walked through, on the door axis', () => {
+    expect(entryFor('south')).toEqual({ x: 9, z: 1 })
+    expect(entryFor('north')).toEqual({ x: 9, z: 15 })
+    expect(entryFor('east')).toEqual({ x: 1, z: 9 })
+    expect(entryFor('west')).toEqual({ x: 15, z: 9 })
   })
 })
 

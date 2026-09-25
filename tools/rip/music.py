@@ -19,8 +19,11 @@ OUT = 'src/engine/tunes.ts'
 CLOCK_HZ = 3_500_000
 NOTE_TABLE = 0xB332
 REST_T_STATES = 17163 * 26
-# Where the game hands the player a tune, and what it plays it for.
-TUNES = {'game_start': 0xB239}
+# Where the game hands the player a tune, and what it plays it for: the
+# new-game setup at 0xAF7D (it also sets five lives), the results screen at
+# 0xBA29 that ends every game, and the cure message at 0xBAAB that comes
+# before it when the potion is brewed.
+TUNES = {'game_start': 0xB20E, 'game_over': 0xB218, 'cure': 0xB239}
 
 
 def half_period_t_states(b, c):

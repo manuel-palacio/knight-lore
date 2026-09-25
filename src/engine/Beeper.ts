@@ -1,20 +1,21 @@
 // ZX-style beeper: square-wave blips from a note table, no samples. The
 // AudioContext is created lazily because browsers require a user gesture.
 
-import { GAME_START_TUNE } from './tunes'
+import { CURE_TUNE, GAME_OVER_TUNE, GAME_START_TUNE } from './tunes'
 
 export interface Note {
   frequency: number
   duration: number
 }
 
-export type SoundName = 'tick' | 'ticky' | 'gameStart' | 'jump' | 'land' | 'pickup' | 'drop' | 'deliver' | 'transform' | 'hurt' | 'door' | 'win' | 'wrong' | 'day'
+export type SoundName = 'tick' | 'ticky' | 'gameStart' | 'gameOver' | 'jump' | 'land' | 'pickup' | 'drop' | 'deliver' | 'transform' | 'hurt' | 'door' | 'win' | 'wrong' | 'day'
 
 const note = (frequency: number, duration: number): Note => ({ frequency, duration })
 
 export const SOUNDS: Record<SoundName, Note[]> = {
   tick: [note(1400, 0.018)],
   gameStart: GAME_START_TUNE,
+  gameOver: GAME_OVER_TUNE,
   ticky: [note(1400, 0.016), note(1100, 0.02)],
   jump: [note(300, 0.04), note(450, 0.04), note(600, 0.05)],
   land: [note(220, 0.05)],
@@ -26,7 +27,7 @@ export const SOUNDS: Record<SoundName, Note[]> = {
   door: [note(392, 0.05), note(523, 0.07)],
   wrong: [note(220, 0.06), note(180, 0.1)],
   day: [note(784, 0.08), note(1047, 0.16)],
-  win: [note(523, 0.12), note(659, 0.12), note(784, 0.12), note(1047, 0.12), note(784, 0.12), note(1047, 0.3)],
+  win: CURE_TUNE,
 }
 
 // Sabreman's walk: tick, ticky, ticky over each six-step cycle of the walk

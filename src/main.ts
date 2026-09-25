@@ -258,6 +258,15 @@ async function main(): Promise<void> {
     placePlayerAtSpawn(activeRoom())
   }
 
+  // The original's results-screen tune, once, when the last life or the last
+  // day is gone. A win has its own tune, played at the delivery.
+  let gameOverTunePlayed = false
+  function playGameOverTuneOnce(): void {
+    if (!state.gameOver || gameOverTunePlayed) return
+    gameOverTunePlayed = true
+    beeper.play('gameOver')
+  }
+
   function dropCarried(): void {
     if (!carriedPickup) return
     carriedPickup.dropAt(player.position.x, player.position.y + 0.4, player.position.z)
@@ -524,6 +533,7 @@ async function main(): Promise<void> {
     if (input.wasPressed('KeyM')) beeper.toggleMute()
     if (paused) return
     if (state.gameOver || state.won) {
+      playGameOverTuneOnce()
       overlays.render(state)
       return
     }

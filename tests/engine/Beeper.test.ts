@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { Beeper, SOUNDS, footstepSound, type SoundName } from '../../src/engine/Beeper'
 
-const EXPECTED: SoundName[] = ['tick', 'ticky', 'gameStart', 'jump', 'land', 'pickup', 'drop', 'deliver', 'transform', 'hurt', 'door', 'win', 'wrong', 'day']
+const EXPECTED: SoundName[] = ['tick', 'ticky', 'gameStart', 'gameOver', 'jump', 'land', 'pickup', 'drop', 'deliver', 'transform', 'hurt', 'door', 'win', 'wrong', 'day']
 
 describe('beeper sound table', () => {
   it('defines every game sound as at least one audible note', () => {
@@ -55,13 +55,26 @@ describe('footstepSound', () => {
   })
 })
 
-describe('gameStart tune', () => {
-  it('is the original start tune: 25 notes over about four seconds, in the beeper range', () => {
-    const tune = SOUNDS.gameStart
-    expect(tune).toHaveLength(25)
-    const total = tune.reduce((sum, n) => sum + n.duration, 0)
-    expect(total).toBeGreaterThan(3.5)
-    expect(total).toBeLessThan(5)
-    for (const n of tune) expect(n.frequency === 0 || (n.frequency > 100 && n.frequency < 2000)).toBe(true)
+describe('the original tunes', () => {
+  const seconds = (name: SoundName) => SOUNDS[name].reduce((sum, n) => sum + n.duration, 0)
+
+  it('starts a game with the 9-note start tune', () => {
+    expect(SOUNDS.gameStart).toHaveLength(9)
+    expect(seconds('gameStart')).toBeCloseTo(2.5, 0)
+  })
+
+  it('ends a game with the 32-note results tune', () => {
+    expect(SOUNDS.gameOver).toHaveLength(32)
+    expect(seconds('gameOver')).toBeCloseTo(5, 0)
+  })
+
+  it('greets the brewed cure with the 25-note tune', () => {
+    expect(SOUNDS.win).toHaveLength(25)
+  })
+
+  it('keeps every note in the beeper range', () => {
+    for (const name of ['gameStart', 'gameOver', 'win'] as const) {
+      for (const n of SOUNDS[name]) expect(n.frequency === 0 || (n.frequency > 100 && n.frequency < 2000), name).toBe(true)
+    }
   })
 })

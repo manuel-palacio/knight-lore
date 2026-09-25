@@ -3,6 +3,7 @@ import { ROOM_SPECS, entryFor, oppositeOf, type RoomSpec } from '../../src/scene
 import { LEGACY_ROOM_LINKS } from '../../src/scenes/rooms/roomSpecs'
 import { CHARMS } from '../../src/game/GameState'
 import { START_ROOM } from '../../src/scenes/rooms/index'
+import { findFloorPath, patrolledCells } from '../e2e/support/roomPath'
 
 const GRID = 8
 const inGrid = (c: { x: number; z: number }) => c.x >= 0 && c.x < GRID && c.z >= 0 && c.z < GRID
@@ -177,6 +178,20 @@ describe('room specs content', () => {
       for (const e of s.exits) {
         const d = doorCell[e.direction]
         for (const sp of s.spikes ?? []) expect(Math.abs(sp.x - d.x) <= 1 && Math.abs(sp.z - d.z) <= 1, `${s.id} spike at ${sp.x},${sp.z} by the ${e.direction} door`).toBe(false)
+      }
+    }
+  })
+
+  it('leaves a lane clear of every guard and ball between each pair of doors and the charm', () => {
+    const doorCell = { north: { x: 4, z: 0 }, south: { x: 4, z: 7 }, west: { x: 0, z: 4 }, east: { x: 7, z: 4 } }
+    for (const s of ROOM_SPECS) {
+      const patrolled = patrolledCells(s)
+      const places = [...s.exits.map((e) => doorCell[e.direction]), ...(s.pickups ?? [])]
+      for (const from of places) {
+        for (const to of places.filter((p) => p !== from)) {
+          const crossed = findFloorPath(s, from, to).filter((c) => patrolled.has(`${c.x},${c.z}`))
+          expect(crossed, `${s.id} ${from.x},${from.z} -> ${to.x},${to.z}`).toEqual([])
+        }
       }
     }
   })

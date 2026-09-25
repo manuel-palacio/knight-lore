@@ -140,7 +140,8 @@ describe('GameState', () => {
 
   it('rejects wrong item, empty hands, and werewolf deliveries', () => {
     const s = new GameState()
-    const [wanted, other] = s.cureSequence
+    const wanted = s.cureSequence[0]
+    const other = s.cureSequence.find((charm) => charm !== wanted)
     s.addItem(other!)
     expect(s.deliverCureItem(other!)).toBe(false)
     expect(s.deliverCureItem(null)).toBe(false)

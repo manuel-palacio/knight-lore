@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { Beeper, SOUNDS, footstepSound, type SoundName } from '../../src/engine/Beeper'
 
-const EXPECTED: SoundName[] = ['tick', 'ticky', 'jump', 'land', 'pickup', 'drop', 'deliver', 'transform', 'hurt', 'door', 'win', 'wrong', 'day']
+const EXPECTED: SoundName[] = ['tick', 'ticky', 'gameStart', 'jump', 'land', 'pickup', 'drop', 'deliver', 'transform', 'hurt', 'door', 'win', 'wrong', 'day']
 
 describe('beeper sound table', () => {
   it('defines every game sound as at least one audible note', () => {
@@ -52,5 +52,16 @@ describe('footstepSound', () => {
     expect(SOUNDS.tick).toHaveLength(1)
     expect(SOUNDS.ticky).toHaveLength(2)
     for (const n of [...SOUNDS.tick, ...SOUNDS.ticky]) expect(n.duration).toBeGreaterThanOrEqual(0.015)
+  })
+})
+
+describe('gameStart tune', () => {
+  it('is the original start tune: 25 notes over about four seconds, in the beeper range', () => {
+    const tune = SOUNDS.gameStart
+    expect(tune).toHaveLength(25)
+    const total = tune.reduce((sum, n) => sum + n.duration, 0)
+    expect(total).toBeGreaterThan(3.5)
+    expect(total).toBeLessThan(5)
+    for (const n of tune) expect(n.frequency === 0 || (n.frequency > 100 && n.frequency < 2000)).toBe(true)
   })
 })

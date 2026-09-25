@@ -184,6 +184,7 @@ async function main(): Promise<void> {
   window.addEventListener('keydown', (e) => {
     if (intro && intro.style.display !== 'none') {
       intro.style.display = 'none'
+      beeper.play('gameStart')
       if (e.code === 'KeyC' && saved) resumeSavedGame(saved)
       else clearSave()
     }

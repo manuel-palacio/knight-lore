@@ -1,17 +1,20 @@
 // ZX-style beeper: square-wave blips from a note table, no samples. The
 // AudioContext is created lazily because browsers require a user gesture.
 
+import { GAME_START_TUNE } from './tunes'
+
 export interface Note {
   frequency: number
   duration: number
 }
 
-export type SoundName = 'tick' | 'ticky' | 'jump' | 'land' | 'pickup' | 'drop' | 'deliver' | 'transform' | 'hurt' | 'door' | 'win' | 'wrong' | 'day'
+export type SoundName = 'tick' | 'ticky' | 'gameStart' | 'jump' | 'land' | 'pickup' | 'drop' | 'deliver' | 'transform' | 'hurt' | 'door' | 'win' | 'wrong' | 'day'
 
 const note = (frequency: number, duration: number): Note => ({ frequency, duration })
 
 export const SOUNDS: Record<SoundName, Note[]> = {
   tick: [note(1400, 0.018)],
+  gameStart: GAME_START_TUNE,
   ticky: [note(1400, 0.016), note(1100, 0.02)],
   jump: [note(300, 0.04), note(450, 0.04), note(600, 0.05)],
   land: [note(220, 0.05)],
@@ -50,6 +53,10 @@ export class Beeper {
     if (!ctx) return
     let at = ctx.currentTime
     for (const n of SOUNDS[name]) {
+      if (n.frequency === 0) {
+        at += n.duration
+        continue
+      }
       const osc = ctx.createOscillator()
       const gain = ctx.createGain()
       osc.type = 'square'

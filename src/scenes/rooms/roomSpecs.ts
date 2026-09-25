@@ -385,7 +385,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     exits: [{ direction: 'south', target: 'map--4-6' }, { direction: 'north', target: 'map--4-4' }],
     spawn: { x: 4, z: 1 },
     platforms: [],
-    spikes: [{ x: 1, z: 4 }, { x: 2, z: 4 }, { x: 3, z: 4 }, { x: 4, z: 4 }],
+    spikes: [{ x: 0, z: 4 }, { x: 1, z: 4 }, { x: 2, z: 4 }, { x: 3, z: 4 }, { x: 4, z: 4 }, { x: 5, z: 4 }, { x: 6, z: 4 }, { x: 7, z: 4 }],
   },
   {
     id: 'map--5-4', tint: 'yellow', mapped: true,

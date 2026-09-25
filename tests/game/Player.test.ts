@@ -173,6 +173,15 @@ describe('Player jump', () => {
     expect(player.position.z).toBeGreaterThan(4 + STEP_LENGTH)
   })
 
+  it('walking jump clears more than a tile, so a one-tile spike bed can be jumped', () => {
+    const { grid, state, player } = setupRoom()
+    const start = player.position.z
+    tick(player, ctx(grid, state, { up: true, jump: true }))
+    const c = ctx(grid, state)
+    for (let i = 0; i < 200 && player.state !== 'grounded'; i++) tick(player, c)
+    expect(player.position.z - start).toBeGreaterThan(TILE)
+  })
+
   it('cannot steer or turn while airborne', () => {
     const { grid, state, player } = setupRoom()
     tick(player, ctx(grid, state, { jump: true }))

@@ -6,7 +6,7 @@ import { CanvasHud, HUD_HEIGHT } from './game/CanvasHud'
 import { Overlays } from './game/Overlays'
 import { Wizard } from './game/Wizard'
 import { Flame } from './game/Flame'
-import { hazardHunts } from './game/Hazards'
+import { hazardHunts, touchesHazard } from './game/Hazards'
 import { Player, type Facing } from './game/Player'
 import { Pickup } from './game/Pickup'
 import { PushBlock } from './game/PushBlock'
@@ -311,19 +311,11 @@ async function main(): Promise<void> {
     return true
   }
 
-  function touchesHazard(h: { position: { x: number; y: number; z: number }; extents: { x: number; y: number; z: number } }): boolean {
-    return (
-      Math.abs(player.position.x - h.position.x) < (player.extents.x + h.extents.x) / 2 &&
-      Math.abs(player.position.z - h.position.z) < (player.extents.z + h.extents.z) / 2 &&
-      player.position.y - h.position.y < h.extents.y
-    )
-  }
-
   function hazardPass(room: Room): void {
     if (player.isInvulnerable) return
     for (const e of room.entities) {
       if (!e.active || !e.hasCategory(Category.HAZARD) || !hazardHunts(e, state.form)) continue
-      if (touchesHazard(e)) {
+      if (touchesHazard(player, e)) {
         state.loseLife()
         beeper.play('hurt')
         return

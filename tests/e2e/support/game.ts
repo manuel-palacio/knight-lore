@@ -1,4 +1,5 @@
 import { expect, type Page } from '@playwright/test'
+import { isJump } from './roomPath'
 
 // Drives the dev build through its window hooks (__dbg, __room, __pos,
 // __timer) and the real keyboard. Only `vite` dev exposes the hooks.
@@ -35,6 +36,7 @@ type Hooks = {
 const TILE = 2
 const NO_NIGHTFALL = 99_999
 const STEP_TOLERANCE = 0.4
+const TAKE_OFF_SLACK = 0.1
 
 export function tileCentre(cell: number): number {
   return cell * TILE + TILE / 2
@@ -91,11 +93,42 @@ export async function walkUntil(page: Page, arrived: (state: Debug) => boolean):
 }
 
 // Walks cell to cell along a path of orthogonal neighbours: first onto the
-// centre of the cell it starts in, then one straight run per corner.
+// centre of the cell it starts in, then one straight run per corner. Where
+// the path skips a cell (a spike row, see roomPath.ts) it jumps it from the
+// tile before.
 export async function walkPath(page: Page, path: Cell[]): Promise<void> {
-  for (const corner of cornersOf(path)) {
+  let start = 0
+  for (let i = 1; i <= path.length; i++) {
+    if (i < path.length && !isJump(path[i - 1]!, path[i]!)) continue
+    await walkRun(page, path.slice(start, i))
+    if (i < path.length) await jumpTo(page, path[i - 1]!, path[i]!)
+    start = i
+  }
+}
+
+async function walkRun(page: Page, run: Cell[]): Promise<void> {
+  for (const corner of cornersOf(run)) {
     await walkAxisTo(page, 'x', tileCentre(corner.x))
     await walkAxisTo(page, 'z', tileCentre(corner.z))
+  }
+}
+
+// A jump is committed: hold forward, press jump, and let go once landed. It
+// carries 3 units, so take off no further back than the middle of the tile
+// before the spikes, or the landing falls on them.
+async function jumpTo(page: Page, from: Cell, to: Cell): Promise<void> {
+  const axis = to.x !== from.x ? 'x' : 'z'
+  const sign = Math.sign(to[axis] - from[axis])
+  await face(page, axis === 'x' ? (sign > 0 ? 'east' : 'west') : (sign > 0 ? 'south' : 'north'))
+  const takeOff = tileCentre(from[axis]) - sign * TAKE_OFF_SLACK
+  if (sign * ((await debug(page)).pos[axis] - takeOff) < 0) await walkUntil(page, (s) => sign * (s.pos[axis] - takeOff) >= 0)
+  await page.keyboard.down('ArrowUp')
+  await page.keyboard.press('Space')
+  try {
+    await expect.poll(async () => (await debug(page)).state, { intervals: [20] }).not.toBe('grounded')
+    await expect.poll(async () => (await debug(page)).state, { intervals: [20] }).toBe('grounded')
+  } finally {
+    await page.keyboard.up('ArrowUp')
   }
 }
 

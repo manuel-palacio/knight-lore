@@ -2,7 +2,9 @@ import { Entity, type UpdateContext } from './Entity'
 import { Category } from '../engine/categories'
 import type { Room } from './Room'
 
-const TEETH_HEIGHT = 0.7
+// Low enough that every frame of a jump arc clears it: a jump from anywhere on
+// the tile before a spike bed carries over it; walking or landing on it hurts.
+const TEETH_HEIGHT = 0.45
 
 // One tile of spikes. Drawn by the renderer as a bed of needles.
 export class Spike extends Entity {

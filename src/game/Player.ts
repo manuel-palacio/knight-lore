@@ -19,6 +19,9 @@ const JUMP_HEIGHT = 1.0
 export const WOLF_JUMP_HEIGHT = 1.5
 const JUMP_STEPS = 6
 const FALL_PER_STEP = 0.5
+// A jump carries twice a walking stride per step: six steps cover 3 units, a
+// tile and a half, so a one-tile spike bed can be jumped from the tile before.
+const JUMP_STRIDES_PER_STEP = 2
 // Steps of grace after a respawn so a guard camping the door cannot chain kills.
 export const INVULNERABLE_STEPS = 24
 
@@ -113,7 +116,7 @@ export class Player extends Entity {
   }
 
   private stepAirborne(ctx: PlayerCtx): void {
-    if (this.jumpMovesForward) this.walkForward(ctx)
+    if (this.jumpMovesForward) for (let i = 0; i < JUMP_STRIDES_PER_STEP; i++) this.walkForward(ctx)
     if (this.state === 'jumping') this.advanceJumpArc()
     else this.position.y -= FALL_PER_STEP
     this.tryLand(ctx)

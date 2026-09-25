@@ -11,23 +11,35 @@ const key = (c: Cell) => `${c.x},${c.z}`
 // except blocks, spikes, tables, flames and the cauldron. It keeps to the
 // clear lane off every guard's and ball's line (tools/map/emit.py checks
 // each room has one) and crosses a line only when it starts or ends on one.
+// Only when walking cannot get there does it jump a single row of spikes:
+// the path then skips the spike cell, from the tile before it to the one after.
 export function findFloorPath(spec: RoomSpec, from: Cell, to: Cell): Cell[] {
   const blocked = blockedCells(spec)
   const offPatrols = new Set([...blocked, ...patrolledCells(spec)])
   offPatrols.delete(key(from))
   offPatrols.delete(key(to))
-  const path = searchPath(offPatrols, from, to) ?? searchPath(blocked, from, to)
+  const noJumps = new Set<string>()
+  const spikes = new Set((spec.spikes ?? []).map(key))
+  const path = searchPath(offPatrols, noJumps, from, to)
+    ?? searchPath(blocked, noJumps, from, to)
+    ?? searchPath(offPatrols, spikes, from, to)
+    ?? searchPath(blocked, spikes, from, to)
   if (!path) throw new Error(`${spec.id}: no floor path ${key(from)} -> ${key(to)}`)
   return path
 }
 
-function searchPath(blocked: Set<string>, from: Cell, to: Cell): Cell[] | undefined {
+// True where two consecutive path cells are two apart: a jump over the cell between.
+export function isJump(from: Cell, to: Cell): boolean {
+  return Math.abs(to.x - from.x) + Math.abs(to.z - from.z) === 2
+}
+
+function searchPath(blocked: Set<string>, jumpable: Set<string>, from: Cell, to: Cell): Cell[] | undefined {
   const cameFrom = new Map<string, Cell | null>([[key(from), null]])
   const queue = [from]
   while (queue.length > 0) {
     const cell = queue.shift()!
     if (cell.x === to.x && cell.z === to.z) return rebuild(cameFrom, cell)
-    for (const next of neighbours(cell)) {
+    for (const next of [...neighbours(cell), ...jumps(cell, jumpable)]) {
       if (cameFrom.has(key(next)) || blocked.has(key(next))) continue
       cameFrom.set(key(next), cell)
       queue.push(next)
@@ -65,10 +77,22 @@ function blockedCells(spec: RoomSpec): Set<string> {
   return new Set(cells.map(key))
 }
 
+function jumps(c: Cell, jumpable: Set<string>): Cell[] {
+  const directions = [[1, 0], [-1, 0], [0, 1], [0, -1]]
+  return directions
+    .filter(([dx, dz]) => jumpable.has(key({ x: c.x + dx!, z: c.z + dz! })))
+    .map(([dx, dz]) => ({ x: c.x + 2 * dx!, z: c.z + 2 * dz! }))
+    .filter(inGrid)
+}
+
+function inGrid(c: Cell): boolean {
+  return c.x >= 0 && c.z >= 0 && c.x < GRID && c.z < GRID
+}
+
 function neighbours(c: Cell): Cell[] {
   return [
     { x: c.x + 1, z: c.z }, { x: c.x - 1, z: c.z }, { x: c.x, z: c.z + 1 }, { x: c.x, z: c.z - 1 },
-  ].filter((n) => n.x >= 0 && n.z >= 0 && n.x < GRID && n.z < GRID)
+  ].filter(inGrid)
 }
 
 function rebuild(cameFrom: Map<string, Cell | null>, end: Cell): Cell[] {

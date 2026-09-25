@@ -38,3 +38,27 @@ describe('findFloorPath', () => {
     expect(findFloorPath(spec, { x: 4, z: 1 }, { x: 4, z: 3 })).toEqual([{ x: 4, z: 1 }, { x: 4, z: 2 }, { x: 4, z: 3 }])
   })
 })
+
+describe('findFloorPath over spike rows', () => {
+  const barrier = room({ spikes: [0, 1, 2, 3, 4, 5, 6, 7].map((x) => ({ x, z: 4 })) })
+
+  it('jumps a spike row that spans the room: the path skips over the spike cell', () => {
+    const path = findFloorPath(barrier, { x: 4, z: 0 }, { x: 4, z: 7 })
+    expect(path).toContainEqual({ x: 4, z: 3 })
+    expect(path).toContainEqual({ x: 4, z: 5 })
+    expect(path.some((c) => c.z === 4)).toBe(false)
+  })
+
+  it('walks round a spike row when it can, rather than jump', () => {
+    const gap = room({ spikes: [0, 1, 2, 3, 4].map((x) => ({ x, z: 4 })) })
+    const path = findFloorPath(gap, { x: 4, z: 0 }, { x: 4, z: 7 })
+    path.slice(1).forEach((c, i) => expect(Math.abs(c.x - path[i]!.x) + Math.abs(c.z - path[i]!.z)).toBe(1))
+  })
+
+  it('never jumps a block or two spike rows at once', () => {
+    const wall = room({ platforms: [0, 1, 2, 3, 4, 5, 6, 7].map((x) => ({ x, z: 4, height: 1 })) })
+    expect(() => findFloorPath(wall, { x: 4, z: 0 }, { x: 4, z: 7 })).toThrow()
+    const deep = room({ spikes: [0, 1, 2, 3, 4, 5, 6, 7].flatMap((x) => [{ x, z: 4 }, { x, z: 5 }]) })
+    expect(() => findFloorPath(deep, { x: 4, z: 0 }, { x: 4, z: 7 })).toThrow()
+  })
+})

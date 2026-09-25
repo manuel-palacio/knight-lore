@@ -2,39 +2,45 @@ import { describe, it, expect } from 'vitest'
 import { buildRoomFromSpec } from '../../src/scenes/rooms/specBuilder'
 import { GameState } from '../../src/game/GameState'
 import { Pickup } from '../../src/game/Pickup'
-import { ROOM_SPECS, type RoomSpec } from '../../src/scenes/rooms/roomSpecs'
+import type { RoomSpec } from '../../src/scenes/rooms/roomSpecs'
 
-const charmRoom: RoomSpec = {
-  id: 'test-room', tint: 'green',
+const firstBootRoom: RoomSpec = {
+  id: 'first-boot-room', tint: 'green',
   exits: [],
   spawn: { x: 4, z: 1 },
   pickups: [{ x: 3, z: 3, item: 'boot' }],
 }
 
-function pickupsIn(entities: unknown[]): string[] {
-  return entities.filter((e): e is Pickup => e instanceof Pickup).map((p) => p.id)
+function pickupsIn(entities: unknown[]): Pickup[] {
+  return entities.filter((e): e is Pickup => e instanceof Pickup)
 }
 
+const lifeRoom: RoomSpec = { ...firstBootRoom, id: 'life-room', pickups: [{ x: 3, z: 3, item: 'life' }] }
+
 describe('buildRoomFromSpec', () => {
-  it('places the charms of a room', async () => {
-    const room = await buildRoomFromSpec(charmRoom)(new GameState(1))
-    expect(pickupsIn(room.entities)).toEqual(['boot'])
+  it('leaves out an extra life already taken', async () => {
+    const state = new GameState(1)
+    state.emptiedRooms.push('life-room')
+    expect(pickupsIn((await buildRoomFromSpec(lifeRoom)(state)).entities)).toEqual([])
   })
 
-  it('leaves out charms already delivered to the cauldron, so a continued game does not bring them back', async () => {
-    const state = new GameState(1)
-    const rest = state.cureSequence.filter((i) => i !== 'boot')
-    state.apply({ ...state.serialize(), cureSequence: ['boot', 'boot', ...rest], cureProgress: 2 })
-    const room = await buildRoomFromSpec(charmRoom)(state)
-    expect(pickupsIn(room.entities)).toEqual([])
+  it('places the charm of a room, remembering the room as its home', async () => {
+    const [boot] = pickupsIn((await buildRoomFromSpec(firstBootRoom)(new GameState(1))).entities)
+    expect(boot?.id).toBe('boot')
+    expect(boot?.homeRoomId).toBe('first-boot-room')
   })
 
-  it('with one of a kind delivered, leaves the first copy out and keeps the second', async () => {
-    const [first, second] = ROOM_SPECS.filter((r) => r.pickups?.some((p) => p.item === 'boot'))
+  it('leaves out a charm already delivered from this room, so a continued game does not bring it back', async () => {
     const state = new GameState(1)
+    state.emptiedRooms.push('first-boot-room')
+    expect(pickupsIn((await buildRoomFromSpec(firstBootRoom)(state)).entities)).toEqual([])
+  })
+
+  it('keeps its charm when the other copy of the kind was the one delivered', async () => {
+    const state = new GameState(1)
+    state.emptiedRooms.push('second-boot-room')
     const rest = state.cureSequence.filter((i) => i !== 'boot')
     state.apply({ ...state.serialize(), cureSequence: ['boot', ...rest.slice(0, 6), 'boot', ...rest.slice(6)], cureProgress: 1 })
-    expect(pickupsIn((await buildRoomFromSpec(first!)(state)).entities)).toEqual([])
-    expect(pickupsIn((await buildRoomFromSpec(second!)(state)).entities)).toEqual(['boot'])
+    expect(pickupsIn((await buildRoomFromSpec(firstBootRoom)(state)).entities).map((p) => p.id)).toEqual(['boot'])
   })
 })

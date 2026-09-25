@@ -161,6 +161,16 @@ describe('room specs content', () => {
     }
   })
 
+  it('keeps ghosts at least a cell away from every doorway, so a wolf entering at night is not caught on the threshold', () => {
+    const doorCell = { north: { x: 4, z: 0 }, south: { x: 4, z: 7 }, west: { x: 0, z: 4 }, east: { x: 7, z: 4 } }
+    for (const s of ROOM_SPECS) {
+      for (const e of s.exits) {
+        const d = doorCell[e.direction]
+        for (const g of s.ghosts ?? []) expect(Math.abs(g.x - d.x) <= 1 && Math.abs(g.z - d.z) <= 1, `${s.id} ghost at ${g.x},${g.z} by the ${e.direction} door`).toBe(false)
+      }
+    }
+  })
+
   it('keeps spikes at least a cell away from every doorway', () => {
     const doorCell = { north: { x: 4, z: 0 }, south: { x: 4, z: 7 }, west: { x: 0, z: 4 }, east: { x: 7, z: 4 } }
     for (const s of ROOM_SPECS) {

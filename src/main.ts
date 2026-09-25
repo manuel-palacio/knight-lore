@@ -235,6 +235,7 @@ async function main(): Promise<void> {
       delivered: state.cureProgress,
       lives: state.lives,
       won: state.won,
+      timer: state.transformTimer,
       pickups: activeRoom().entities
         .filter((e): e is Pickup => e instanceof Pickup && !e.collected)
         .map((e) => ({ id: e.id, x: e.position.x, y: e.position.y, z: e.position.z })),
@@ -288,6 +289,7 @@ async function main(): Promise<void> {
 
   function takeExtraLife(room: Room, life: Pickup): void {
     state.gainLife()
+    state.emptiedRooms.push(life.homeRoomId)
     life.collect()
     room.remove(life)
     beeper.play('pickup')
@@ -297,10 +299,12 @@ async function main(): Promise<void> {
     if (!input.wasPressed('KeyE')) return false
     const cauldron = room.entities.find((e): e is Cauldron => e instanceof Cauldron)
     if (!cauldron || !cauldron.isInRange(player.position)) return false
+    const home = carriedPickup?.homeRoomId
     if (!state.deliverCureItem(player.carrying)) {
       if (player.carrying) beeper.play('wrong')
       return false
     }
+    if (home) state.emptiedRooms.push(home)
     beeper.play(state.won ? 'win' : 'deliver')
     carriedPickup = null
     player.carrying = null

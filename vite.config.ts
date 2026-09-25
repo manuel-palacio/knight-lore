@@ -9,5 +9,7 @@ export default defineConfig({
   server: {
     port: 5173,
     open: true,
+    // Agent worktrees live under .claude/; their edits must not reload the game.
+    watch: { ignored: ['**/.claude/**'] },
   },
 })

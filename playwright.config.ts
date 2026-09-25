@@ -14,5 +14,7 @@ export default defineConfig({
     command: `npx vite --port ${PORT} --strictPort`,
     url: `http://localhost:${PORT}`,
     reuseExistingServer: !process.env.CI,
+    // Vite opens a browser tab on start unless told there is none.
+    env: { BROWSER: 'none' },
   },
 })

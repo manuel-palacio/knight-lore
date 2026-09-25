@@ -12,6 +12,10 @@ const CAULDRON_ROOM = 'room-001'
 const BESIDE_CAULDRON: Cell = { x: 4, z: 5 }
 const DELIVERY_REACH = 1.6
 const MAX_ATTEMPTS_PER_LEG = 4
+// Seconds of daylight a crossing needs, with the seizure to spare: a room
+// takes three to five seconds to walk, turns included.
+const DAYLIGHT_TO_CROSS = 12
+const DAYLIGHT_TO_DELIVER = 20
 
 test.skip(!process.env.PLAYTHROUGH, 'set PLAYTHROUGH=1 to play a whole game')
 
@@ -29,12 +33,12 @@ test('the game can be won from the start room with the keyboard', async ({ page 
     expect(state.lives, 'ran out of lives').toBeGreaterThan(0)
     const wanted = state.wanted!
     if (state.form === 'werewolf' && hauntedAtNight(state.room)) {
-      await retrying(() => stepToward(page, state, safeNeighbourOf(state.room)))
+      await retrying(() => stepToward(page, safeNeighbourOf(state.room)))
       continue
     }
     if (state.carrying === wanted) {
       if (state.room === CAULDRON_ROOM) await deliver(page)
-      else await retrying(() => stepToward(page, state, CAULDRON_ROOM))
+      else await retrying(() => stepToward(page, CAULDRON_ROOM))
       const after = await debug(page)
       if (after.carrying === null && after.delivered === state.delivered) {
         const droppedIn = after.pickups.some((p) => p.id === wanted) ? after.room : state.room
@@ -49,7 +53,7 @@ test('the game can be won from the start room with the keyboard', async ({ page 
       rooms.splice(rooms.indexOf(state.room), 1)
       continue
     }
-    await retrying(() => stepToward(page, state, nearest(state.room, whereabouts.get(wanted)!)))
+    await retrying(() => stepToward(page, nearest(state.room, whereabouts.get(wanted)!)))
   }
 
   const end = await debug(page)
@@ -67,23 +71,40 @@ async function retrying(leg: () => Promise<void>): Promise<void> {
   }
 }
 
-async function stepToward(page: Page, state: Debug, goal: string): Promise<void> {
-  const exit = nextExit(state.room, goal)
+async function stepToward(page: Page, goal: string): Promise<void> {
+  const state = await debug(page)
+  let exit = nextExit(state.room, goal)
   // Ghosts, and the spirit in the cauldron, hunt only the wolf: at night he
-  // waits outside their rooms for the morning.
-  if (hauntedAtNight(exit.target)) await waitForDaylight(page)
+  // waits for the morning outside their rooms, never in one.
+  if (state.form === 'werewolf' && hauntedAtNight(exit.target)) {
+    if (hauntedAtNight(state.room)) exit = nextExit(state.room, safeNeighbourOf(state.room))
+    else await waitForDaylight(page)
+  } else if (hauntedAtNight(exit.target) && state.timer < daylightNeededIn(exit.target)) {
+    if (hauntedAtNight(state.room)) exit = nextExit(state.room, safeNeighbourOf(state.room))
+    else await waitForNextMorning(page)
+  }
   const spec = specOf(state.room)
   await walkPath(page, findFloorPath(spec, cellOf(state), DOOR_CELL[exit.direction]))
   await face(page, exit.direction)
   await walkUntil(page, (s) => s.room === exit.target)
 }
 
-async function pickUp(page: Page, charm: { id: string; x: number; z: number }): Promise<void> {
+// Night falls whenever it likes. Where a wolf would be hunted, give up the
+// errand and let the main loop walk him out; elsewhere, wait for the morning.
+async function nightfallStopsErrand(page: Page): Promise<boolean> {
+  const state = await debug(page)
+  if (state.form === 'human') return false
+  if (hauntedAtNight(state.room)) return true
   await waitForDaylight(page)
+  return false
+}
+
+async function pickUp(page: Page, charm: { id: string; x: number; z: number }): Promise<void> {
+  if (await nightfallStopsErrand(page)) return
   const state = await debug(page)
   const target = { x: Math.floor(charm.x / 2), z: Math.floor(charm.z / 2) }
   await walkPath(page, findFloorPath(specOf(state.room), cellOf(state), target))
-  await waitForDaylight(page)
+  if (await nightfallStopsErrand(page)) return
   await page.keyboard.press('KeyE')
   await expect.poll(async () => (await debug(page)).carrying).toBe(charm.id)
 }
@@ -94,10 +115,15 @@ async function deliver(page: Page): Promise<void> {
   await walkPath(page, findFloorPath(specOf(state.room), cellOf(state), BESIDE_CAULDRON))
   await face(page, 'north')
   await walkUntil(page, (s) => s.pos.z <= cauldron.z + DELIVERY_REACH)
-  await waitForDaylight(page)
+  if (await nightfallStopsErrand(page)) return
   const delivered = state.delivered
   await page.keyboard.press('KeyE')
   await expect.poll(async () => (await debug(page)).delivered).toBe(delivered + 1)
+}
+
+async function waitForNextMorning(page: Page): Promise<void> {
+  await expect.poll(async () => (await debug(page)).form, { timeout: 30_000, intervals: [250] }).toBe('werewolf')
+  await waitForDaylight(page)
 }
 
 async function waitForDaylight(page: Page): Promise<void> {
@@ -114,6 +140,10 @@ function specOf(id: string): RoomSpec {
   const spec = ROOM_SPECS.find((s) => s.id === id)
   if (!spec) throw new Error(`no spec ${id}`)
   return spec
+}
+
+function daylightNeededIn(roomId: string): number {
+  return roomId === CAULDRON_ROOM ? DAYLIGHT_TO_DELIVER : DAYLIGHT_TO_CROSS
 }
 
 function hauntedAtNight(roomId: string): boolean {

@@ -1,8 +1,9 @@
 """Turn the map reading (rooms.json) into the ROOM_SPECS entries of
 src/scenes/rooms/roomSpecs.ts, applying the game's rules on the way:
 
-- spike cells within a cell of a doorway are dropped (the game keeps
-  doorways safe to walk into); every drop is reported on stderr;
+- spike cells within a cell of a doorway are dropped and ghosts there are
+  moved further in (the game keeps doorways safe to walk into); every
+  change is reported on stderr;
 - every door and pickup must be reachable over floor cells from the first
   door, as tests/e2e/reachability.spec.ts walks it; a room that fails is
   reported and emitted anyway, so the failure is seen, not hidden.
@@ -11,9 +12,7 @@ Charms are game design, not map reading: CHARM_ROOMS says which room holds
 which charm (each kind twice, away from the cauldron and the start), and the
 charm goes on the free floor cell nearest the middle of the room. Of each
 pair, one room is nearer both the cauldron and the start room than the
-other; rooms are emitted nearest the cauldron first, so that nearer copy is
-the one the game shows first (copyNumberOf) and the one a player, or the
-playthrough bot, reaches first.
+other; rooms are emitted nearest the cauldron first.
 
 usage: emit.py > entries.ts"""
 import json
@@ -104,6 +103,22 @@ def check_reachable(room_id, exits, blocked, pickup):
             print(f'{room_id}: {t} cannot be reached over the floor', file=sys.stderr)
 
 
+INWARD = {'north': (0, 1), 'south': (0, -1), 'west': (1, 0), 'east': (-1, 0)}
+
+
+def ghost_clear_of_doors(room_id, ghost, exits):
+    """A ghost posted within a cell of a doorway is moved further in, so a
+    wolf entering at night is not caught on the threshold."""
+    x, z = ghost
+    for d in exits:
+        dx, dz = DOOR_CELL[d]
+        while abs(x - dx) <= 1 and abs(z - dz) <= 1:
+            x, z = x + INWARD[d][0], z + INWARD[d][1]
+    if (x, z) != tuple(ghost):
+        print(f'{room_id}: ghost at {tuple(ghost)} moved to {(x, z)}, clear of a doorway', file=sys.stderr)
+    return [x, z]
+
+
 def spec_text(room_id, room, spikes, blocked, pickup):
     tint = TINT.get(room.get('colour'), 'yellow')
     exits = ', '.join(f"{{ direction: '{d}', target: '{t}' }}" for d, t in room['exits'].items())
@@ -117,7 +132,8 @@ def spec_text(room_id, room, spikes, blocked, pickup):
         if room.get(key):
             lines.append(f"    {key}: [{', '.join(block_text(c) for c in room[key])}],")
     if room.get('ghosts'):
-        lines.append(f"    ghosts: [{', '.join(cell_text(c) for c in room['ghosts'])}],")
+        ghosts = [ghost_clear_of_doors(room_id, g, room['exits']) for g in room['ghosts']]
+        lines.append(f"    ghosts: [{', '.join(cell_text(c) for c in ghosts)}],")
     if pickup:
         lines.append(f"    pickups: [{{ x: {pickup['x']}, z: {pickup['z']}, item: '{pickup['item']}' }}],")
     if room_id == 'room-001':

@@ -4,7 +4,7 @@ import { Room } from '../../src/game/Room'
 
 describe('Pickup', () => {
   it('deactivates immediately on collect', () => {
-    const pickup = new Pickup('goblet')
+    const pickup = new Pickup('goblet', 'test-room')
     pickup.collect()
     expect(pickup.active).toBe(false)
     expect(pickup.collected).toBe(true)
@@ -12,7 +12,7 @@ describe('Pickup', () => {
 
   it('bobs its drawn height around the simulation height while uncollected', () => {
     const room = new Room('test', 8, 8)
-    const pickup = new Pickup('goblet')
+    const pickup = new Pickup('goblet', 'test-room')
     pickup.position.set(4, 0.4, 4)
     room.add(pickup)
     expect(pickup.bobOffset).toBe(0)
@@ -24,7 +24,7 @@ describe('Pickup', () => {
 
   it('stops bobbing once carried because inactive entities are not updated', () => {
     const room = new Room('test', 8, 8)
-    const pickup = new Pickup('goblet')
+    const pickup = new Pickup('goblet', 'test-room')
     room.add(pickup)
     pickup.collect()
     for (let i = 0; i < 60; i++) room.update(1 / 60, {})

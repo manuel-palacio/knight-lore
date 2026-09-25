@@ -1,6 +1,8 @@
 """Crop one room off map.png, magnified, with its floor lattice drawn in and,
-optionally, a reading of the room (blocks as wire cubes, spikes as crosses)
-drawn over the map so the two can be compared.
+optionally, a reading of the room (blocks as wire cubes, spikes as crosses,
+guard loops and ball lines as white and yellow lines through their cells,
+ghosts and flames as rings on their cells) drawn over the map so the two
+can be compared.
 
 usage: crop.py ROOM_ID OUT.png [plain | draft [DY]]
   (no mode)  the reading in rooms.json over the map
@@ -52,7 +54,27 @@ def crop_room(img, room, show_reading=True):
         for x, z in room.get('spikes', []):
             draw.line([at(x, z), at(x + 1, z + 1)], fill=(255, 40, 40, 255), width=3)
             draw.line([at(x + 1, z), at(x, z + 1)], fill=(255, 40, 40, 255), width=3)
+        draw_dangers(draw, at, room)
     return crop
+
+
+def draw_dangers(draw, at, room):
+    def centre(c, h=0):
+        return at(c[0] + 0.5, c[1] + 0.5, HEIGHT * h)
+
+    for path in room.get('pathGuards', []):
+        draw.line([centre(c) for c in path + path[:1]], fill=(255, 255, 255, 255), width=4)
+    for line in room.get('balls', []):
+        draw.line([centre(c) for c in line], fill=(255, 255, 0, 255), width=4)
+    for x, z in room.get('ghosts', []):
+        ring(draw, centre((x, z)), (0, 255, 255, 255))
+    for x, z, h in room.get('flames', []):
+        ring(draw, centre((x, z), h), (255, 160, 0, 255))
+
+
+def ring(draw, point, colour):
+    px, py = point
+    draw.ellipse([px - 18, py - 9, px + 18, py + 9], outline=colour, width=3)
 
 
 def cell(at, x, z, y=0.0):

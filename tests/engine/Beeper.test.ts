@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { Beeper, SOUNDS, type SoundName } from '../../src/engine/Beeper'
+import { Beeper, SOUNDS, footstepSound, type SoundName } from '../../src/engine/Beeper'
 
-const EXPECTED: SoundName[] = ['step', 'jump', 'land', 'pickup', 'drop', 'deliver', 'transform', 'hurt', 'door', 'win', 'wrong', 'day']
+const EXPECTED: SoundName[] = ['tick', 'ticky', 'jump', 'land', 'pickup', 'drop', 'deliver', 'transform', 'hurt', 'door', 'win', 'wrong', 'day']
 
 describe('beeper sound table', () => {
   it('defines every game sound as at least one audible note', () => {
@@ -15,9 +15,11 @@ describe('beeper sound table', () => {
     }
   })
 
-  it('keeps the footstep tick short so it never overlaps the next step', () => {
-    const total = SOUNDS.step.reduce((sum, n) => sum + n.duration, 0)
-    expect(total).toBeLessThan(1 / 12)
+  it('keeps each footstep short so it never overlaps the next step', () => {
+    for (const name of ['tick', 'ticky'] as const) {
+      const total = SOUNDS[name].reduce((sum, n) => sum + n.duration, 0)
+      expect(total, name).toBeLessThan(1 / 12)
+    }
   })
 })
 
@@ -36,5 +38,19 @@ describe('Beeper mute', () => {
     } finally {
       globals.AudioContext = original
     }
+  })
+})
+
+describe('footstepSound', () => {
+  it('goes tick, ticky, ticky over each six-step walk cycle', () => {
+    const cycle = [0, 1, 2, 3, 4, 5].map(footstepSound)
+    expect(cycle).toEqual(['tick', null, 'ticky', null, 'ticky', null])
+    expect(footstepSound(6)).toBe('tick')
+  })
+
+  it('makes the ticky a double click and both loud enough to hear', () => {
+    expect(SOUNDS.tick).toHaveLength(1)
+    expect(SOUNDS.ticky).toHaveLength(2)
+    for (const n of [...SOUNDS.tick, ...SOUNDS.ticky]) expect(n.duration).toBeGreaterThanOrEqual(0.015)
   })
 })

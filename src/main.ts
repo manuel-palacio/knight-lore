@@ -29,7 +29,7 @@ import { selectCharacterFrame, STRIP_CELLS } from './game/CharacterFrame'
 import { PushGauge } from './game/PushGauge'
 import { Transition } from './game/Transition'
 import { loadSave, writeSave, clearSave } from './engine/SaveSlot'
-import { Beeper } from './engine/Beeper'
+import { Beeper, footstepSound } from './engine/Beeper'
 import { projectToScreen, isoDepth } from './engine/IsoProjection'
 
 const PICKUP_RANGE = 1.6
@@ -543,7 +543,8 @@ async function main(): Promise<void> {
     const stepped = player.stepsTaken !== lastStepCount
     if (stepped) {
       lastStepCount = player.stepsTaken
-      beeper.play('step')
+      const footstep = footstepSound(player.stepsTaken)
+      if (footstep) beeper.play(footstep)
     }
     room.update(dt, ctx)
     handlePushAttempt(room, stepped)

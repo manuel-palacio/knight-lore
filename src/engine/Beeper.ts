@@ -6,12 +6,13 @@ export interface Note {
   duration: number
 }
 
-export type SoundName = 'step' | 'jump' | 'land' | 'pickup' | 'drop' | 'deliver' | 'transform' | 'hurt' | 'door' | 'win' | 'wrong' | 'day'
+export type SoundName = 'tick' | 'ticky' | 'jump' | 'land' | 'pickup' | 'drop' | 'deliver' | 'transform' | 'hurt' | 'door' | 'win' | 'wrong' | 'day'
 
 const note = (frequency: number, duration: number): Note => ({ frequency, duration })
 
 export const SOUNDS: Record<SoundName, Note[]> = {
-  step: [note(900, 0.012)],
+  tick: [note(1400, 0.018)],
+  ticky: [note(1400, 0.016), note(1100, 0.02)],
   jump: [note(300, 0.04), note(450, 0.04), note(600, 0.05)],
   land: [note(220, 0.05)],
   pickup: [note(660, 0.05), note(880, 0.05), note(1320, 0.08)],
@@ -23,6 +24,14 @@ export const SOUNDS: Record<SoundName, Note[]> = {
   wrong: [note(220, 0.06), note(180, 0.1)],
   day: [note(784, 0.08), note(1047, 0.16)],
   win: [note(523, 0.12), note(659, 0.12), note(784, 0.12), note(1047, 0.12), note(784, 0.12), note(1047, 0.3)],
+}
+
+// Sabreman's walk: tick, ticky, ticky over each six-step cycle of the walk
+// animation (half a second), silent on the steps between.
+const FOOTSTEPS: (SoundName | null)[] = ['tick', null, 'ticky', null, 'ticky', null]
+
+export function footstepSound(stepsTaken: number): SoundName | null {
+  return FOOTSTEPS[stepsTaken % FOOTSTEPS.length] ?? null
 }
 
 export class Beeper {
@@ -46,7 +55,7 @@ export class Beeper {
       osc.type = 'square'
       osc.frequency.value = n.frequency
       // Short attack and release so notes start and stop without a click.
-      const level = name === 'step' ? 0.025 : 0.06
+      const level = name === 'tick' || name === 'ticky' ? 0.05 : 0.06
       gain.gain.setValueAtTime(0, at)
       gain.gain.linearRampToValueAtTime(level, at + 0.003)
       gain.gain.setValueAtTime(level, at + n.duration - 0.004)

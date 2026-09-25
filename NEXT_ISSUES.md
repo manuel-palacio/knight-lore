@@ -1,6 +1,6 @@
 # Knight Lore clone: next issues
 
-Status 2026-09-25. C and E are done, D is half done (seizure, cauldron spirit); see `docs/PLAYTEST.md` for what the playtest pass found and fixed. Playwright now covers the game end to end: `npm run test:e2e` (every room walked to each door and charm) and `npm run test:playthrough` (a whole game won with the keyboard).
+Status 2026-09-25. The game has been won end to end by the keyboard playthrough. A is two-thirds done (62 rooms), C and E are done, D is half done (seizure, cauldron spirit); see `docs/PLAYTEST.md` for what the playtest pass found and fixed. Playwright now covers the game end to end: `npm run test:e2e` (every room walked to each door and charm) and `npm run test:playthrough` (a whole game won with the keyboard).
 
 Status 2026-09-06, evening. The game is playable start to finish on `main`: the original's empty green start room, 29 connected rooms plus the cauldron, eight charms on the floor in reachable rooms, death and respawn, day and night, saving, and the win. It is thin next to the original: close charms, approximate rooms, little danger. The five issues below are what "top notch" needs, in order of weight. The twelve older issues further down are done and kept for their acceptance criteria.
 
@@ -16,10 +16,12 @@ Status 2026-09-06, evening. The game is playable start to finish on `main`: the 
 3. Per-room review against the map crop: an overlay image per room, fix heights the block detector got wrong, delete phantom blocks under sprites.
 4. Replace the connector rooms with the real ones once their arches are detected.
 
+**Status 2026-09-25:** 62 connected rooms, read and checked by eye with the tools in `tools/map/` (see `docs/MAP.md`, which lists the rooms still missing: the garden rooms, whose doors are hedge gaps the arch matcher cannot see, and four groups joined to the castle only through them).
+
 **Acceptance:**
-- [ ] `RoomSpecs.test.ts` passes with at least 100 rooms and every door reciprocated.
-- [ ] A montage script renders every room next to its map crop and a reviewer signs each off.
-- [ ] No connector rooms remain.
+- [ ] `RoomSpecs.test.ts` passes with at least 100 rooms and every door reciprocated. 62 so far; the rest need a garden-door detector.
+- [x] A montage script renders every room next to its map crop and a reviewer signs each off (`tools/map/crop.py`; every room was checked against its overlay).
+- [x] No connector rooms remain.
 
 ---
 

@@ -29,6 +29,8 @@ Status 2026-09-06, evening. The game is playable start to finish on `main`: the 
 
 **Why:** Sabreman and the wolf are still strips from footage with a computed mask; the guard is a stand-in creature. The rip has the torsos and the original draws legs as separate sprites that are not yet located.
 
+**Found 2026-09-25 (`tools/rip/`):** the legs are the four-frame strips at 0x922e/0x93b6 (man, trousers and boots) and 0xa0b4/0xa23c (wolf, claws), which the first rip filed as `creature1-*`/`creature2-*`. The guard is the hood (0x75b0 front, 0x763c back) over the man's legs 16 px down, measured on map.png; `tools/rip/guards.py` composes its strips, and guards no longer walk as bare boots. Sabreman's and the wolf's torso-to-leg offsets are not measured yet (the same 16 px leaves a gap under Sabreman and hides the wolf's legs); the footage strips stay until they are. Also in the table, not yet used: the wizard front/back (0x79a6, 0x7a92), four full-body poses at 0xac28–0xae98 (seizure or death), a gargoyle (0x7894), garden trunks (0x7fb0, 0x80a2).
+
 **Steps:**
 1. Find the leg sprites: search memory for 3-byte-wide records of 6 to 10 rows near the body sprites, or trace the draw routine that follows the 0x7150 table with SkoolKit.
 2. Compose torso plus legs per frame into the strips, all four views for both forms.

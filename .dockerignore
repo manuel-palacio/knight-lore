@@ -1,0 +1,14 @@
+node_modules
+dist
+reference
+test-results
+playwright-report
+.claude
+.playwright-mcp
+tools
+poly
+*.png
+!public/**
+*.mov
+*.mp4
+.git

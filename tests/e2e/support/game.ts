@@ -131,14 +131,22 @@ export async function walkPath(page: Page, path: Step[], patrolled: Set<string> 
   }
 }
 
-// A guard or a ball walks as fast as Sabreman, so its line is crossed once
-// every one of them is well away from the cell he steps onto.
-const PATROL_CLEARANCE = 4
+// A guard or a ball moves as fast as Sabreman, so its line is crossed
+// behind it: once every one of them is a little way off and going away (or
+// standing still), never while one is coming back.
+const PATROL_CLEARANCE = 3
+const LOOK_AGAIN_MS = 120
 
 async function waitForPatrolsClear(page: Page, cell: Cell): Promise<void> {
   const x = tileCentre(cell.x)
   const z = tileCentre(cell.z)
-  await expect.poll(async () => (await debug(page)).monsters.every((m) => Math.hypot(m.x - x, m.z - z) >= PATROL_CLEARANCE), { timeout: 30_000, intervals: [30] }).toBe(true)
+  const distances = async () => (await debug(page)).monsters.map((m) => Math.hypot(m.x - x, m.z - z))
+  await expect.poll(async () => {
+    const before = await distances()
+    await page.waitForTimeout(LOOK_AGAIN_MS)
+    const after = await distances()
+    return after.every((d, i) => d >= PATROL_CLEARANCE && d >= before[i]!)
+  }, { timeout: 30_000, intervals: [20] }).toBe(true)
 }
 
 // A portcullis is crossed only once it has risen all the way: it stays up

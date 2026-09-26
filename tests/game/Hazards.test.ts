@@ -3,6 +3,7 @@ import { hazardHunts, touchesHazard } from '../../src/game/Hazards'
 import { GhostEnemy } from '../../src/game/GhostEnemy'
 import { PathGuard } from '../../src/game/PathGuard'
 import { Spike } from '../../src/game/SpikeGrid'
+import { Portcullis } from '../../src/game/Portcullis'
 
 describe('hazardHunts', () => {
   it('ghosts leave the man alone and hunt the wolf', () => {
@@ -39,5 +40,13 @@ describe('touchesHazard', () => {
   it('other hazards hurt on any overlap of the bodies', () => {
     const guard = new PathGuard([{ x: 5, z: 5 }, { x: 9, z: 5 }])
     expect(touchesHazard(body(guard.position.x + 0.7, 0, guard.position.z), guard)).toBe(true)
+  })
+
+  it('a falling portcullis hurts only once its bottom edge comes down to Sabreman', () => {
+    const gate = new Portcullis({ x: 0, z: 2 }, { x: 7, z: 2 }, 2)
+    gate.position.y = 2.4
+    expect(touchesHazard(body(5, 0, 5), gate)).toBe(false)
+    gate.position.y = 1.0
+    expect(touchesHazard(body(5, 0, 5), gate)).toBe(true)
   })
 })

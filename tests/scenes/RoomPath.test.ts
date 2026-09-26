@@ -62,3 +62,19 @@ describe('findFloorPath over spike rows', () => {
     expect(() => findFloorPath(deep, { x: 4, z: 0 }, { x: 4, z: 7 })).toThrow()
   })
 })
+
+describe('findFloorPath round portcullises', () => {
+  const key = (c: { x: number; z: number }) => `${c.x},${c.z}`
+
+  it('walks round a cage of gates rather than through it', () => {
+    const cage = room({ portcullises: [{ from: { x: 3, z: 2 }, to: { x: 4, z: 2 } }, { from: { x: 3, z: 5 }, to: { x: 4, z: 5 } }] })
+    const path = findFloorPath(cage, { x: 4, z: 0 }, { x: 4, z: 7 })
+    expect(path.some((c) => ['3,2', '4,2', '3,5', '4,5'].includes(key(c)))).toBe(false)
+  })
+
+  it('goes through a gate that spans the room, since there is no other way', () => {
+    const gate = room({ portcullises: [{ from: { x: 0, z: 5 }, to: { x: 7, z: 5 } }] })
+    const path = findFloorPath(gate, { x: 4, z: 0 }, { x: 4, z: 7 })
+    expect(path.filter((c) => c.z === 5)).toHaveLength(1)
+  })
+})

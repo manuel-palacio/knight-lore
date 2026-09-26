@@ -6,6 +6,7 @@ import { CanvasHud, HUD_HEIGHT } from './game/CanvasHud'
 import { Overlays } from './game/Overlays'
 import { Wizard } from './game/Wizard'
 import { Flame } from './game/Flame'
+import { Portcullis } from './game/Portcullis'
 import { hazardHunts, touchesHazard } from './game/Hazards'
 import { Player, type Facing } from './game/Player'
 import { Pickup } from './game/Pickup'
@@ -111,6 +112,7 @@ async function main(): Promise<void> {
   }
   const monsterSources = {
     ghost: await loadImage('/sprites/rip/ghost.png'),
+    grille: await loadImage('/sprites/rip/cage.png'),
     guardLeft: await loadImage('/sprites/rip/guard-left.png'),
     guardRight: await loadImage('/sprites/rip/guard-right.png'),
     ball: await loadImage('/sprites/rip/ball.png'),
@@ -269,6 +271,9 @@ async function main(): Promise<void> {
       pos: { x: Number(player.position.x.toFixed(2)), y: Number(player.position.y.toFixed(2)), z: Number(player.position.z.toFixed(2)) },
       platforms: activeRoom().entities.filter((e) => e instanceof MovingPlatform).map((e) => ({ x: e.position.x, z: e.position.z })),
       carrying: player.carrying,
+      gates: activeRoom().entities
+        .filter((e): e is Portcullis => e instanceof Portcullis)
+        .map((e) => ({ cells: e.cells, state: e.state, blocking: e.blocking })),
       delivered: state.cureProgress,
       lives: state.lives,
       won: state.won,
@@ -449,6 +454,7 @@ async function main(): Promise<void> {
   function resolveActorOverlap(room: Room): void {
     for (const e of room.entities) {
       if (!e.active || !e.hasCategory(Category.ACTOR_BODY)) continue
+      if (e instanceof Portcullis && !e.blocking) continue
       const dx = player.position.x - e.position.x
       const dz = player.position.z - e.position.z
       const overlapX = (player.extents.x + e.extents.x) / 2 - Math.abs(dx)
@@ -554,6 +560,13 @@ async function main(): Promise<void> {
         out.push(stripFrame(monster('ball', room.tint), 2, e.position.y > 0.5 ? 1 : 0, e.position.x, e.position.y, e.position.z))
       } else if (e instanceof Wizard) {
         out.push(setPieceSprite(setPieces.wizard, e.position.x, 0, e.position.z))
+      } else if (e instanceof Portcullis) {
+        // One grille per cell of its line, mirrored when the line runs north-south.
+        const acrossZ = e.cells[0]!.x === e.cells.at(-1)!.x && e.cells.length > 1
+        const grille = monster('grille', room.tint)
+        for (const c of e.cells) {
+          out.push(setPieceSprite(grille, c.x * room.tileSize + room.tileSize / 2, e.bottom, c.z * room.tileSize + room.tileSize / 2, acrossZ))
+        }
       } else if (e instanceof Flame) {
         const frameW = setPieces.flame.width / 3
         out.push(spriteDynamic({ image: setPieces.flame, frameX: e.frame * frameW, frameW, frameH: setPieces.flame.height, scale: 1, flip: false, x: e.position.x, y: e.position.y, z: e.position.z }))

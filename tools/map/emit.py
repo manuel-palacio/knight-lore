@@ -181,6 +181,9 @@ def spec_text(room_id, room, blocked, pickup):
     for key in ('tables', 'flames'):
         if room.get(key):
             lines.append(f"    {key}: [{', '.join(block_text(c) for c in room[key])}],")
+    if room.get('portcullises'):
+        gates = ', '.join(f'{{ from: {cell_text(a)}, to: {cell_text(b)} }}' for a, b in room['portcullises'])
+        lines.append(f'    portcullises: [{gates}],')
     if room['ghosts']:
         lines.append(f"    ghosts: [{', '.join(cell_text(c) for c in room['ghosts'])}],")
     if room['pathGuards']:

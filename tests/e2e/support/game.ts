@@ -17,6 +17,7 @@ export interface Debug {
   day: number
   won: boolean
   timer: number
+  gates: { cells: Cell[]; state: string; blocking: boolean }[]
   pickups: { id: string; x: number; y: number; z: number }[]
   cauldron: { x: number; y: number; z: number } | null
 }
@@ -96,13 +97,27 @@ export async function walkUntil(page: Page, arrived: (state: Debug) => boolean):
 // the path skips a cell (a spike row, see roomPath.ts) it jumps it from the
 // tile before.
 export async function walkPath(page: Page, path: Cell[]): Promise<void> {
+  const gates = (await debug(page)).gates
+  const gateAt = (c: Cell) => gates.findIndex((g) => g.cells.some((gc) => gc.x === c.x && gc.z === c.z))
   let start = 0
   for (let i = 1; i <= path.length; i++) {
-    if (i < path.length && !isJump(path[i - 1]!, path[i]!)) continue
+    const intoGate = i < path.length && gateAt(path[i]!) >= 0 && gateAt(path[i - 1]!) < 0
+    if (i < path.length && !isJump(path[i - 1]!, path[i]!) && !intoGate) continue
     await walkRun(page, path.slice(start, i))
+    if (intoGate) {
+      await waitForGateOpen(page, gateAt(path[i]!))
+      start = i - 1
+      continue
+    }
     if (i < path.length) await jumpTo(page, path[i - 1]!, path[i]!)
     start = i
   }
+}
+
+// A portcullis is crossed only once it has risen all the way: it stays up
+// long enough to walk under, and a gate still rising may fall on the way.
+async function waitForGateOpen(page: Page, gate: number): Promise<void> {
+  await expect.poll(async () => (await debug(page)).gates[gate]!.state, { timeout: 30_000, intervals: [50] }).toBe('open')
 }
 
 async function walkRun(page: Page, run: Cell[]): Promise<void> {

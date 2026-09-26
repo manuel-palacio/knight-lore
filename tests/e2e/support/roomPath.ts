@@ -13,16 +13,21 @@ const key = (c: Cell) => `${c.x},${c.z}`
 // each room has one) and crosses a line only when it starts or ends on one.
 // Only when walking cannot get there does it jump a single row of spikes:
 // the path then skips the spike cell, from the tile before it to the one after.
+// A portcullis is walked round when it can be, and crossed only when it must.
 export function findFloorPath(spec: RoomSpec, from: Cell, to: Cell): Cell[] {
   const blocked = blockedCells(spec)
   const offPatrols = new Set([...blocked, ...patrolledCells(spec)])
   offPatrols.delete(key(from))
   offPatrols.delete(key(to))
+  const gates = gateCells(spec)
+  const shut = (cells: Set<string>) => new Set([...cells, ...gates])
   const noJumps = new Set<string>()
   const spikes = new Set((spec.spikes ?? []).map(key))
-  const path = searchPath(offPatrols, noJumps, from, to)
+  const path = searchPath(shut(offPatrols), noJumps, from, to)
+    ?? searchPath(shut(blocked), noJumps, from, to)
+    ?? searchPath(shut(offPatrols), spikes, from, to)
+    ?? searchPath(shut(blocked), spikes, from, to)
     ?? searchPath(blocked, noJumps, from, to)
-    ?? searchPath(offPatrols, spikes, from, to)
     ?? searchPath(blocked, spikes, from, to)
   if (!path) throw new Error(`${spec.id}: no floor path ${key(from)} -> ${key(to)}`)
   return path
@@ -65,6 +70,20 @@ export function patrolledCells(spec: RoomSpec): Set<string> {
         cells.add(key(at))
       }
     })
+  }
+  return cells
+}
+
+export function gateCells(spec: RoomSpec): Set<string> {
+  const cells = new Set<string>()
+  for (const gate of spec.portcullises ?? []) {
+    const at = { ...gate.from }
+    cells.add(key(at))
+    while (at.x !== gate.to.x || at.z !== gate.to.z) {
+      at.x += Math.sign(gate.to.x - at.x)
+      at.z += Math.sign(gate.to.z - at.z)
+      cells.add(key(at))
+    }
   }
   return cells
 }

@@ -10,6 +10,7 @@ import { Cauldron } from '../../game/Cauldron'
 import { CauldronSpirit } from '../../game/CauldronSpirit'
 import { Wizard } from '../../game/Wizard'
 import { Flame } from '../../game/Flame'
+import { Portcullis } from '../../game/Portcullis'
 import { addPickup } from './items'
 import { entryFor, type RoomSpec } from './roomSpecs'
 import type { RoomBuilder } from '../../game/RoomManager'
@@ -31,6 +32,7 @@ export function buildRoomFromSpec(spec: RoomSpec): RoomBuilder {
       room.add(new MovingPlatform(cellCentre(m.from), cellCentre(m.to), m.height))
     }
     for (const g of spec.pathGuards ?? []) room.add(new PathGuard(g.path.map(cellCentre)))
+    for (const p of spec.portcullises ?? []) room.add(new Portcullis(p.from, p.to, room.tileSize))
     for (const t of spec.tables ?? []) room.add(new Table(t.x, t.z, t.height, room.tileSize))
     for (const v of spec.vanishing ?? []) room.add(new VanishingBlock(v.x, v.z, v.height, room.tileSize))
     for (const b of spec.balls ?? []) room.add(new BouncingBall(cellCentre(b.from), cellCentre(b.to)))

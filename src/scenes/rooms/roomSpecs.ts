@@ -31,6 +31,8 @@ export interface RoomSpec {
   cauldron?: Cell & { height: number }
   wizard?: Cell
   flames?: (Cell & { height: number })[]
+  // Grilles that rise and fall across a line of cells (see Portcullis).
+  portcullises?: { from: Cell; to: Cell }[]
   // Read off map.png (tools/map): doors, blocks, spike beds, some furniture.
   mapped?: boolean
 }
@@ -71,8 +73,9 @@ export const ROOM_SPECS: RoomSpec[] = [
     id: 'map--1-0', tint: 'blue', mapped: true,
     exits: [{ direction: 'east', target: 'room-001' }, { direction: 'south', target: 'map--1-1' }, { direction: 'north', target: 'map--1--1' }, { direction: 'west', target: 'map--2-0' }],
     spawn: { x: 4, z: 1 },
-    platforms: [{ x: 3, z: 2, height: 2 }, { x: 4, z: 2, height: 2 }, { x: 2, z: 3, height: 2 }, { x: 2, z: 4, height: 2 }, { x: 5, z: 3, height: 2 }, { x: 5, z: 4, height: 2 }, { x: 3, z: 5, height: 2 }, { x: 4, z: 5, height: 2 }],
+    platforms: [],
     spikes: [{ x: 2, z: 2 }, { x: 2, z: 5 }, { x: 5, z: 2 }, { x: 5, z: 5 }],
+    portcullises: [{ from: { x: 3, z: 2 }, to: { x: 4, z: 2 } }, { from: { x: 3, z: 5 }, to: { x: 4, z: 5 } }, { from: { x: 2, z: 3 }, to: { x: 2, z: 4 } }, { from: { x: 5, z: 3 }, to: { x: 5, z: 4 } }],
   },
   {
     id: 'map-0--1', tint: 'purple', mapped: true,
@@ -141,6 +144,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     exits: [{ direction: 'south', target: 'map--1--1' }, { direction: 'north', target: 'map--1--3' }],
     spawn: { x: 4, z: 1 },
     platforms: [],
+    portcullises: [{ from: { x: 0, z: 5 }, to: { x: 7, z: 5 } }],
   },
   {
     id: 'map--1-2', tint: 'green', mapped: true,
@@ -222,8 +226,9 @@ export const ROOM_SPECS: RoomSpec[] = [
     id: 'map-4-0', tint: 'green', mapped: true,
     exits: [{ direction: 'west', target: 'map-3-0' }, { direction: 'east', target: 'map-5-0' }],
     spawn: { x: 4, z: 1 },
-    platforms: [{ x: 2, z: 3, height: 2 }, { x: 2, z: 4, height: 2 }, { x: 5, z: 3, height: 2 }, { x: 5, z: 4, height: 2 }],
+    platforms: [],
     spikes: [{ x: 2, z: 2 }, { x: 2, z: 5 }, { x: 5, z: 2 }, { x: 5, z: 5 }],
+    portcullises: [{ from: { x: 2, z: 3 }, to: { x: 2, z: 4 } }, { from: { x: 5, z: 3 }, to: { x: 5, z: 4 } }],
     pathGuards: [{ path: [{ x: 3, z: 3 }, { x: 4, z: 3 }, { x: 4, z: 4 }, { x: 3, z: 4 }] }],
   },
   {

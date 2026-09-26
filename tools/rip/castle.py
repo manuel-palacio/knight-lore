@@ -9,9 +9,9 @@ back. A room is 8 by 8 cells, or 4 across on one axis (its size byte; the
 narrow axis keeps cells 2-5). Each object type maps onto the game's
 entities; blocks stacked in a cell become one column as tall as the highest.
 
-The charms are the game's, not the table's: each kind twice, in rooms far
-from the cauldron and from the start rooms, on the free floor cell nearest
-the middle. Anything the generator has to drop or move is reported.
+The charms are the game's, not the table's: each kind twice, three to eight
+rooms from the cauldron and away from the start rooms, on the free floor
+cell nearest the middle that can be walked to. Anything the generator has to drop or move is reported.
 
 usage (from the repo root): python3 tools/rip/castle.py"""
 import os
@@ -36,6 +36,7 @@ STEP = {'south': 16, 'east': 1, 'north': -16, 'west': -1}
 OPPOSITE = {'south': 'north', 'north': 'south', 'east': 'west', 'west': 'east'}
 TINT = {3: 'purple', 4: 'green', 5: 'cyan', 6: 'yellow'}
 CHARMS = ['goblet', 'gem', 'wine-bottle', 'crystal-ball', 'boot', 'teacup', 'poison']
+NEAR_ENOUGH = 8
 
 BLOCK_TYPES = {0, 3, 4, 11}
 SPIKES, TABLE, GHOST, SPARKLE = 5, 7, 9, 25
@@ -412,6 +413,11 @@ def place_charms(builds, exits, starts):
         if CAULDRON not in walkable_rooms(builds, exits, start):
             raise SystemExit(f'the cauldron cannot be reached on foot from {name_of(start)}')
     candidates = [r for r in builds if r in on_foot and r != CAULDRON and r not in near_start and from_cauldron.get(r, 0) > 2 and reachable_cells(builds[r])]
+    # A day's walk: far enough from the cauldron to matter, near enough that a
+    # charm can be fetched and brought back within a day or so.
+    near_enough = [r for r in candidates if from_cauldron[r] <= NEAR_ENOUGH]
+    if len(near_enough) >= 16:
+        candidates = near_enough
     candidates.sort(key=lambda r: (-from_cauldron[r], r))
     items = [c for c in CHARMS for _ in range(2)] + ['life', 'life']
     # Spread: take every n-th of the far-first ordering so charms are not bunched.

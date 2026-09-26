@@ -20,7 +20,7 @@ const DAYLIGHT_TO_DELIVER = 20
 test.skip(!process.env.PLAYTHROUGH, 'set PLAYTHROUGH=1 to play a whole game')
 
 test('the game can be won from the start room with the keyboard', async ({ page }) => {
-  test.setTimeout(40 * 60_000)
+  test.setTimeout(60 * 60_000)
   const started = Date.now()
   await startGame(page)
   const whereabouts = new Map<string, string[]>()

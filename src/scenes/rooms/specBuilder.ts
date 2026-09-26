@@ -11,13 +11,22 @@ import { CauldronSpirit } from '../../game/CauldronSpirit'
 import { Wizard } from '../../game/Wizard'
 import { Flame } from '../../game/Flame'
 import { Portcullis } from '../../game/Portcullis'
+import { SpikedBall } from '../../game/SpikedBall'
+import { FloatingBlock } from '../../game/FloatingBlock'
 import { addPickup } from './items'
-import { entryFor, type RoomSpec } from './roomSpecs'
+import { FULL_SIZE, entryFor, type RoomSpec } from './roomSpecs'
 import type { RoomBuilder } from '../../game/RoomManager'
 
-export function buildRoomFromSpec(spec: RoomSpec): RoomBuilder {
+export interface RoomSize {
+  width: number
+  depth: number
+}
+
+// sizeOf gives another room's size, so a door drops Sabreman on the door
+// axis of the room it leads to.
+export function buildRoomFromSpec(spec: RoomSpec, sizeOf: (id: string) => RoomSize = fullSize): RoomBuilder {
   return async (state) => {
-    const room = buildRoomShell(spec.id, spec.tint)
+    const room = buildRoomShell(spec.id, spec.tint, spec.width ?? FULL_SIZE, spec.depth ?? FULL_SIZE)
     for (const p of spec.platforms ?? []) addPlatform(room, p.x, p.z, p.height)
     for (const b of spec.pushBlocks ?? []) addPushBlock(room, b.x, b.z)
     placeSpikes(room, spec.spikes ?? [])
@@ -33,6 +42,8 @@ export function buildRoomFromSpec(spec: RoomSpec): RoomBuilder {
     }
     for (const g of spec.pathGuards ?? []) room.add(new PathGuard(g.path.map(cellCentre)))
     for (const p of spec.portcullises ?? []) room.add(new Portcullis(p.from, p.to, room.tileSize))
+    for (const b of spec.spikedBalls ?? []) room.add(new SpikedBall(b, b.height, b.bobs ?? false, room.tileSize))
+    for (const b of spec.floatingBlocks ?? []) room.add(new FloatingBlock(b.x, b.z, b.bottom, room.tileSize))
     for (const t of spec.tables ?? []) room.add(new Table(t.x, t.z, t.height, room.tileSize))
     for (const v of spec.vanishing ?? []) room.add(new VanishingBlock(v.x, v.z, v.height, room.tileSize))
     for (const b of spec.balls ?? []) room.add(new BouncingBall(cellCentre(b.from), cellCentre(b.to)))
@@ -45,7 +56,8 @@ export function buildRoomFromSpec(spec: RoomSpec): RoomBuilder {
     if (spec.wizard) room.add(new Wizard(tileCenter(spec.wizard.x), tileCenter(spec.wizard.z)))
     for (const f of spec.flames ?? []) room.add(new Flame(tileCenter(f.x), f.height, tileCenter(f.z)))
     for (const e of spec.exits) {
-      const entry = entryFor(e.direction)
+      const target = sizeOf(e.target)
+      const entry = entryFor(e.direction, target.width, target.depth)
       room.addExit({ direction: e.direction, targetRoomId: e.target, entryX: entry.x, entryZ: entry.z })
     }
     room.setSpawn(tileCenter(spec.spawn.x), tileCenter(spec.spawn.z))
@@ -55,4 +67,8 @@ export function buildRoomFromSpec(spec: RoomSpec): RoomBuilder {
 
 function cellCentre(cell: { x: number; z: number }): { x: number; z: number } {
   return { x: tileCenter(cell.x), z: tileCenter(cell.z) }
+}
+
+function fullSize(): RoomSize {
+  return { width: FULL_SIZE, depth: FULL_SIZE }
 }

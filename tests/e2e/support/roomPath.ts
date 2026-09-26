@@ -1,36 +1,47 @@
-import type { Direction, RoomSpec } from '../../../src/scenes/rooms/roomSpecs'
+import { doorCell, type Direction, type RoomSpec } from '../../../src/scenes/rooms/roomSpecs'
 import type { Cell } from './game'
 
-const GRID = 8
-export const DOOR_CELL: Record<Direction, Cell> = {
-  north: { x: 4, z: 0 }, south: { x: 4, z: 7 }, west: { x: 0, z: 4 }, east: { x: 7, z: 4 },
+// A cell of a path, and the height Sabreman stands at there: 0 on the floor,
+// a block's top when he is on one.
+export interface Step extends Cell {
+  y: number
 }
-const key = (c: Cell) => `${c.x},${c.z}`
 
-// Breadth-first path over the floor cells a walker can stand on: everything
-// except blocks, spikes, tables, flames and the cauldron. It keeps to the
-// clear lane off every guard's and ball's line (tools/map/emit.py checks
-// each room has one) and crosses a line only when it starts or ends on one.
-// Only when walking cannot get there does it jump a single row of spikes:
-// the path then skips the spike cell, from the tile before it to the one after.
-// A portcullis is walked round when it can be, and crossed only when it must.
-export function findFloorPath(spec: RoomSpec, from: Cell, to: Cell): Cell[] {
-  const blocked = blockedCells(spec)
-  const offPatrols = new Set([...blocked, ...patrolledCells(spec)])
-  offPatrols.delete(key(from))
-  offPatrols.delete(key(to))
+// The cell just inside a doorway of this room, whatever its size.
+export function doorOf(spec: RoomSpec, direction: Direction): Cell {
+  return doorCell(direction, spec.width ?? 8, spec.depth ?? 8)
+}
+
+const key = (c: Cell) => `${c.x},${c.z}`
+const stateKey = (s: Step) => `${s.x},${s.z},${s.y}`
+// How high the man can jump onto a block, and the room he needs to walk under one.
+const CLIMB = 1
+const HEADROOM = 2
+
+// Breadth-first path over what a walker can stand on: the floor, and block
+// tops he can climb to (one block up at a time) or drop from. It keeps to the
+// lane off every guard's and ball's line when there is one, then crosses
+// patrols, then jumps single rows of floor spikes (the path skips the spike
+// cell), and passes a portcullis only when nothing else will do.
+export function findFloorPath(spec: RoomSpec, from: Cell, to: Cell): Step[] {
+  const room = new RoomSurfaces(spec)
+  const patrols = patrolledCells(spec)
+  patrols.delete(key(from))
+  patrols.delete(key(to))
   const gates = gateCells(spec)
-  const shut = (cells: Set<string>) => new Set([...cells, ...gates])
-  const noJumps = new Set<string>()
-  const spikes = new Set((spec.spikes ?? []).map(key))
-  const path = searchPath(shut(offPatrols), noJumps, from, to)
-    ?? searchPath(shut(blocked), noJumps, from, to)
-    ?? searchPath(shut(offPatrols), spikes, from, to)
-    ?? searchPath(shut(blocked), spikes, from, to)
-    ?? searchPath(blocked, noJumps, from, to)
-    ?? searchPath(blocked, spikes, from, to)
-  if (!path) throw new Error(`${spec.id}: no floor path ${key(from)} -> ${key(to)}`)
-  return path
+  const tries = [
+    { avoid: new Set([...patrols, ...gates]), jumpSpikes: false },
+    { avoid: gates, jumpSpikes: false },
+    { avoid: new Set([...patrols, ...gates]), jumpSpikes: true },
+    { avoid: gates, jumpSpikes: true },
+    { avoid: new Set<string>(), jumpSpikes: false },
+    { avoid: new Set<string>(), jumpSpikes: true },
+  ]
+  for (const attempt of tries) {
+    const path = search(room, attempt.avoid, attempt.jumpSpikes, { ...from, y: room.heightAt(from) }, to)
+    if (path) return path
+  }
+  throw new Error(`${spec.id}: no floor path ${key(from)} -> ${key(to)}`)
 }
 
 // True where two consecutive path cells are two apart: a jump over the cell between.
@@ -38,19 +49,110 @@ export function isJump(from: Cell, to: Cell): boolean {
   return Math.abs(to.x - from.x) + Math.abs(to.z - from.z) === 2
 }
 
-function searchPath(blocked: Set<string>, jumpable: Set<string>, from: Cell, to: Cell): Cell[] | undefined {
-  const cameFrom = new Map<string, Cell | null>([[key(from), null]])
+// True where the next step is up onto a higher block: a climbing jump.
+export function isClimb(from: Step, to: Step): boolean {
+  return to.y > from.y
+}
+
+function search(room: RoomSurfaces, avoid: Set<string>, jumpSpikes: boolean, from: Step, to: Cell): Step[] | undefined {
+  const cameFrom = new Map<string, Step | null>([[stateKey(from), null]])
   const queue = [from]
   while (queue.length > 0) {
-    const cell = queue.shift()!
-    if (cell.x === to.x && cell.z === to.z) return rebuild(cameFrom, cell)
-    for (const next of [...neighbours(cell), ...jumps(cell, jumpable)]) {
-      if (cameFrom.has(key(next)) || blocked.has(key(next))) continue
-      cameFrom.set(key(next), cell)
+    const at = queue.shift()!
+    if (at.x === to.x && at.z === to.z) return rebuild(cameFrom, at)
+    for (const next of [...room.moves(at), ...(jumpSpikes ? room.spikeJumps(at) : [])]) {
+      if (cameFrom.has(stateKey(next)) || avoid.has(key(next))) continue
+      cameFrom.set(stateKey(next), at)
       queue.push(next)
     }
   }
   return undefined
+}
+
+// Where a walker can stand in each cell of a room, and what stops him.
+class RoomSurfaces {
+  private readonly width: number
+  private readonly depth: number
+  private readonly columns = new Map<string, number>()
+  private readonly hanging = new Map<string, number[]>()
+  private readonly floorBlocked = new Set<string>()
+  private readonly floorSpikes = new Set<string>()
+  private readonly hazardHeights = new Map<string, number[]>()
+
+  constructor(spec: RoomSpec) {
+    this.width = spec.width ?? 8
+    this.depth = spec.depth ?? 8
+    for (const p of spec.platforms ?? []) this.columns.set(key(p), p.height)
+    for (const p of spec.pushBlocks ?? []) this.columns.set(key(p), 1)
+    for (const b of spec.floatingBlocks ?? []) this.hang(b, b.bottom)
+    // A collapsing block holds long enough to cross; a table is stood on, not under.
+    for (const v of spec.vanishing ?? []) this.hang(v, v.height - 1)
+    for (const t of spec.tables ?? []) {
+      this.floorBlocked.add(key(t))
+      this.hang(t, t.height - 1)
+    }
+    if (spec.cauldron) this.floorBlocked.add(key(spec.cauldron))
+    for (const s of spec.spikes ?? []) {
+      if (s.height) this.addHazard(s, s.height)
+      else this.floorSpikes.add(key(s))
+    }
+    for (const f of spec.flames ?? []) this.addHazard(f, f.height)
+    for (const b of spec.spikedBalls ?? []) this.addHazard(b, b.height)
+  }
+
+  heightAt(c: Cell): number {
+    return this.columns.get(key(c)) ?? 0
+  }
+
+  // Walk or drop to a neighbour at any height he can stand at there, or
+  // climb onto a block no more than a jump above him.
+  moves(at: Step): Step[] {
+    return this.neighbours(at).flatMap((n) => this.standings(n).filter((y) => y <= at.y + CLIMB).map((y) => ({ ...n, y })))
+  }
+
+  // A jump over one cell of floor spikes, to the floor beyond, when nothing
+  // hangs in the air above them for the jump to run into.
+  spikeJumps(at: Step): Step[] {
+    if (at.y !== 0) return []
+    const clearSpikes = (c: Cell) => this.floorSpikes.has(key(c)) && !this.hazardHeights.has(key(c))
+    return [[1, 0], [-1, 0], [0, 1], [0, -1]]
+      .filter(([dx, dz]) => clearSpikes({ x: at.x + dx!, z: at.z + dz! }))
+      .map(([dx, dz]) => ({ x: at.x + 2 * dx!, z: at.z + 2 * dz!, y: 0 }))
+      .filter((n) => this.inRoom(n) && this.standings(n).includes(0))
+  }
+
+  // The heights he can stand at in a cell: its column top (or the floor, if
+  // nothing hangs too low over it), and the top of any block hanging there,
+  // less those a hazard occupies.
+  private standings(c: Cell): number[] {
+    const column = this.columns.get(key(c))
+    const hanging = this.hanging.get(key(c)) ?? []
+    const base = column ?? 0
+    const floorOk = column !== undefined || (!this.floorBlocked.has(key(c)) && !this.floorSpikes.has(key(c)))
+    const heights: number[] = []
+    if (floorOk && hanging.every((bottom) => bottom >= base + HEADROOM || bottom < base)) heights.push(base)
+    for (const bottom of hanging) if (bottom >= base) heights.push(bottom + 1)
+    const hazards = this.hazardHeights.get(key(c)) ?? []
+    return heights.filter((y) => !hazards.some((h) => h >= y && h < y + HEADROOM))
+  }
+
+  private hang(c: Cell, bottom: number): void {
+    this.hanging.set(key(c), [...(this.hanging.get(key(c)) ?? []), bottom])
+  }
+
+  private addHazard(c: Cell, height: number): void {
+    this.hazardHeights.set(key(c), [...(this.hazardHeights.get(key(c)) ?? []), height])
+  }
+
+  private inRoom(c: Cell): boolean {
+    return c.x >= 0 && c.z >= 0 && c.x < this.width && c.z < this.depth
+  }
+
+  private neighbours(c: Cell): Cell[] {
+    return [
+      { x: c.x + 1, z: c.z }, { x: c.x - 1, z: c.z }, { x: c.x, z: c.z + 1 }, { x: c.x, z: c.z - 1 },
+    ].filter((n) => this.inRoom(n))
+  }
 }
 
 // The cells a guard or a ball passes through: each leg of its loop stepped
@@ -62,13 +164,7 @@ export function patrolledCells(spec: RoomSpec): Set<string> {
   for (const route of routes) {
     route.forEach((start, i) => {
       const end = route[(i + 1) % route.length]!
-      const at = { ...start }
-      cells.add(key(at))
-      while (at.x !== end.x || at.z !== end.z) {
-        at.x += Math.sign(end.x - at.x)
-        at.z += Math.sign(end.z - at.z)
-        cells.add(key(at))
-      }
+      for (const c of cellsBetween(start, end)) cells.add(key(c))
     })
   }
   return cells
@@ -76,50 +172,27 @@ export function patrolledCells(spec: RoomSpec): Set<string> {
 
 export function gateCells(spec: RoomSpec): Set<string> {
   const cells = new Set<string>()
-  for (const gate of spec.portcullises ?? []) {
-    const at = { ...gate.from }
-    cells.add(key(at))
-    while (at.x !== gate.to.x || at.z !== gate.to.z) {
-      at.x += Math.sign(gate.to.x - at.x)
-      at.z += Math.sign(gate.to.z - at.z)
-      cells.add(key(at))
-    }
+  for (const gate of spec.portcullises ?? []) for (const c of cellsBetween(gate.from, gate.to)) cells.add(key(c))
+  return cells
+}
+
+function cellsBetween(from: Cell, to: Cell): Cell[] {
+  const at = { ...from }
+  const cells = [{ ...at }]
+  while (at.x !== to.x || at.z !== to.z) {
+    at.x += Math.sign(to.x - at.x)
+    at.z += Math.sign(to.z - at.z)
+    cells.push({ ...at })
   }
   return cells
 }
 
-function blockedCells(spec: RoomSpec): Set<string> {
-  const cells = [
-    ...(spec.platforms ?? []), ...(spec.pushBlocks ?? []), ...(spec.spikes ?? []),
-    ...(spec.tables ?? []), ...(spec.flames ?? []), ...(spec.cauldron ? [spec.cauldron] : []),
-  ]
-  return new Set(cells.map(key))
-}
-
-function jumps(c: Cell, jumpable: Set<string>): Cell[] {
-  const directions = [[1, 0], [-1, 0], [0, 1], [0, -1]]
-  return directions
-    .filter(([dx, dz]) => jumpable.has(key({ x: c.x + dx!, z: c.z + dz! })))
-    .map(([dx, dz]) => ({ x: c.x + 2 * dx!, z: c.z + 2 * dz! }))
-    .filter(inGrid)
-}
-
-function inGrid(c: Cell): boolean {
-  return c.x >= 0 && c.z >= 0 && c.x < GRID && c.z < GRID
-}
-
-function neighbours(c: Cell): Cell[] {
-  return [
-    { x: c.x + 1, z: c.z }, { x: c.x - 1, z: c.z }, { x: c.x, z: c.z + 1 }, { x: c.x, z: c.z - 1 },
-  ].filter(inGrid)
-}
-
-function rebuild(cameFrom: Map<string, Cell | null>, end: Cell): Cell[] {
+function rebuild(cameFrom: Map<string, Step | null>, end: Step): Step[] {
   const path = [end]
-  let previous = cameFrom.get(key(end))
+  let previous = cameFrom.get(stateKey(end))
   while (previous) {
     path.unshift(previous)
-    previous = cameFrom.get(key(previous))
+    previous = cameFrom.get(stateKey(previous))
   }
   return path
 }

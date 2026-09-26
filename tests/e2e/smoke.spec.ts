@@ -1,12 +1,10 @@
 import { test, expect } from '@playwright/test'
-import { ROOM_SPECS } from '../../src/scenes/rooms/roomSpecs'
-import { debug, enterRoom, face, standAt, startGame, walkUntil } from './support/game'
+import { ROOM_SPECS, START_ROOMS } from '../../src/scenes/rooms/roomSpecs'
+import { debug, enterRoom, face, standAt, startGame, walkPath, walkUntil } from './support/game'
+import { doorOf, findFloorPath } from './support/roomPath'
 
 // End-to-end smoke: the game loads, starts, lets you walk between rooms, and
 // runs the cure loop once.
-
-// Doorways sit on the middle tile of an edge: tile 4 of 8, two units wide.
-const SOUTH_DOOR_X = 8.8
 
 function roomHolding(item: string): string {
   const spec = ROOM_SPECS.find((s) => s.pickups?.some((p) => p.item === item))
@@ -17,16 +15,19 @@ function roomHolding(item: string): string {
 test('title screen shows and a key starts the game', async ({ page }) => {
   await startGame(page)
   const state = await debug(page)
-  expect(state.room).toBe('map--4-4')
+  expect(START_ROOMS).toContain(state.room)
   expect(state.wanted).not.toBeNull()
 })
 
-test('walking forward through the south door enters the next room', async ({ page }) => {
+test('walking out through a door of the start room enters the next room', async ({ page }) => {
   await startGame(page)
-  await face(page, 'east')
-  await walkUntil(page, (state) => state.pos.x >= SOUTH_DOOR_X)
-  await face(page, 'south')
-  await walkUntil(page, (state) => state.room === 'map--4-5')
+  const startRoom = (await debug(page)).room
+  const spec = ROOM_SPECS.find((s) => s.id === startRoom)!
+  const exit = spec.exits[0]!
+  const here = (await debug(page)).pos
+  await walkPath(page, findFloorPath(spec, { x: Math.floor(here.x / 2), z: Math.floor(here.z / 2) }, doorOf(spec, exit.direction)))
+  await face(page, exit.direction)
+  await walkUntil(page, (state) => state.room === exit.target)
 })
 
 test('the wanted charm can be picked up and delivered to the cauldron', async ({ page }) => {

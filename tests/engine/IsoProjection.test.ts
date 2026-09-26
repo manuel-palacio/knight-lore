@@ -3,6 +3,8 @@ import {
   projectToScreen,
   screenToWorldGround,
   isoDepth,
+  roomScreenOffset,
+  filmationConfig,
   type IsoConfig,
 } from '../../src/engine/IsoProjection'
 
@@ -68,5 +70,17 @@ describe('filmationConfig', () => {
     expect(east.sy - origin.sy).toBe(8)
     expect(east.sx - south.sx).toBe(32)
     expect(origin.sy - up.sy).toBe(16)
+  })
+})
+
+describe('roomScreenOffset', () => {
+  it('leaves a full 8x8 room where it is', () => {
+    expect(roomScreenOffset(8, 8, filmationConfig(256, 192))).toEqual({ dx: 0, dy: 0 })
+  })
+
+  it('moves a room narrow in x two tiles along x, so it stands in the middle as in the original', () => {
+    const cfg = filmationConfig(256, 192)
+    expect(roomScreenOffset(4, 8, cfg)).toEqual({ dx: 2 * cfg.tileW / 2, dy: 2 * cfg.tileH / 2 })
+    expect(roomScreenOffset(8, 4, cfg)).toEqual({ dx: -2 * cfg.tileW / 2, dy: 2 * cfg.tileH / 2 })
   })
 })

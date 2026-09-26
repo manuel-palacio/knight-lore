@@ -5,8 +5,10 @@ import { StepClock } from '../engine/StepClock'
 
 // The original's collapsing block (handler at 0xB6A2): it crumbles a few
 // steps after someone stands on it and stays gone until the room is entered
-// again. Like a table, it only supports from above.
-export const VANISH_AFTER_STEPS = 8
+// again. Like a table, it only supports from above. It holds for a second,
+// long enough to walk across it (eight steps) and turn: the original's rows
+// of these over spike pits are walked, not only hopped.
+export const VANISH_AFTER_STEPS = 12
 const TOP_TOLERANCE = 0.5
 const RIDER_TOLERANCE = 0.05
 

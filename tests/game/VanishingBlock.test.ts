@@ -47,3 +47,9 @@ describe('VanishingBlock', () => {
     expect(b.present).toBe(true)
   })
 })
+
+describe('VanishingBlock timing', () => {
+  it('holds long enough to walk across it (eight steps) and turn once', () => {
+    expect(VANISH_AFTER_STEPS).toBeGreaterThan(8 + 1)
+  })
+})

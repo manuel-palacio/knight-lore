@@ -8,7 +8,7 @@ for (const form of ['human', 'werewolf'] as const) {
   test(`the ${form === 'human' ? 'man' : 'wolf'} in all four facings`, async ({ page }) => {
     await page.setViewportSize({ width: 1100, height: 850 })
     await startGame(page)
-    await enterRoom(page, 'map--4-4')
+    await enterRoom(page, 'map--4--4')
     await holdDaylight(page)
     if (form === 'werewolf') {
       await page.evaluate(() => (window as unknown as { __t: () => void }).__t())

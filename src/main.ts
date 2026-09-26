@@ -7,6 +7,8 @@ import { Overlays } from './game/Overlays'
 import { Wizard } from './game/Wizard'
 import { Flame } from './game/Flame'
 import { Portcullis } from './game/Portcullis'
+import { SpikedBall } from './game/SpikedBall'
+import { FloatingBlock } from './game/FloatingBlock'
 import { hazardHunts, touchesHazard } from './game/Hazards'
 import { Player, type Facing } from './game/Player'
 import { Pickup } from './game/Pickup'
@@ -24,7 +26,7 @@ import { BouncingBall } from './game/BouncingBall'
 import { Category } from './engine/categories'
 import { Room } from './game/Room'
 import { RoomManager } from './game/RoomManager'
-import { ROOM_BUILDERS, START_ROOM } from './scenes/rooms/index'
+import { ROOM_BUILDERS, pickStartRoom } from './scenes/rooms/index'
 import { IsoRenderer, spriteDynamic, boxDynamic, type Dynamic, type SpriteDraw } from './engine/IsoRenderer'
 import { selectCharacterFrame, STRIP_CELLS } from './game/CharacterFrame'
 import { PushGauge } from './game/PushGauge'
@@ -113,6 +115,7 @@ async function main(): Promise<void> {
   const monsterSources = {
     ghost: await loadImage('/sprites/rip/ghost.png'),
     grille: await loadImage('/sprites/rip/cage.png'),
+    spikedBall: await loadImage('/sprites/rip/spiked-ball.png'),
     guardLeft: await loadImage('/sprites/rip/guard-left.png'),
     guardRight: await loadImage('/sprites/rip/guard-right.png'),
     ball: await loadImage('/sprites/rip/ball.png'),
@@ -177,7 +180,8 @@ async function main(): Promise<void> {
     player.respawnAt(room.spawnX, room.spawnZ, entryFacing)
   }
 
-  const startRoom = await manager.transitionTo(START_ROOM, 5, 5)
+  const startRoomId = pickStartRoom(Math.random())
+  const startRoom = await manager.transitionTo(startRoomId, 9, 9)
   placePlayerAtSpawn(startRoom)
 
   const intro = document.getElementById('intro')
@@ -251,9 +255,14 @@ async function main(): Promise<void> {
     hooks.__t = () => { state.toggleForm(); state.onTransformed(); state.transformTimer = 9999 }
     hooks.__win = () => { state.won = true }
     hooks.__timer = (seconds: number) => { state.transformTimer = seconds }
-    hooks.__room = (id: string, entryX = 9, entryZ = 1) => {
+    // Without a position, enters by the north door of whatever size the room is.
+    hooks.__room = (id: string, entryX?: number, entryZ?: number) => {
       transitioning = true
-      manager.transitionTo(id, entryX, entryZ).then((room) => { placePlayerAtSpawn(room); transitioning = false })
+      manager.transitionTo(id, entryX ?? 0, entryZ ?? 0).then((room) => {
+        if (entryX === undefined) room.setSpawn(Math.floor(room.grid.width / 2) * room.tileSize + room.tileSize / 2, 1)
+        placePlayerAtSpawn(room)
+        transitioning = false
+      })
     }
     hooks.__pos = (x: number, y: number, z: number) => {
       player.position.set(x, y, z)
@@ -271,6 +280,9 @@ async function main(): Promise<void> {
       pos: { x: Number(player.position.x.toFixed(2)), y: Number(player.position.y.toFixed(2)), z: Number(player.position.z.toFixed(2)) },
       platforms: activeRoom().entities.filter((e) => e instanceof MovingPlatform).map((e) => ({ x: e.position.x, z: e.position.z })),
       carrying: player.carrying,
+      monsters: activeRoom().entities
+        .filter((e) => e instanceof PathGuard || e instanceof BouncingBall || e instanceof PatrolEnemy)
+        .map((e) => ({ x: e.position.x, z: e.position.z })),
       gates: activeRoom().entities
         .filter((e): e is Portcullis => e instanceof Portcullis)
         .map((e) => ({ cells: e.cells, state: e.state, blocking: e.blocking })),
@@ -452,7 +464,7 @@ async function main(): Promise<void> {
   function dynamicSupportAt(room: Room, x: number, z: number, y: number): number | null {
     let best: number | null = null
     for (const e of room.entities) {
-      if (!(e instanceof MovingPlatform || e instanceof Table || e instanceof VanishingBlock || e instanceof Pickup)) continue
+      if (!(e instanceof MovingPlatform || e instanceof Table || e instanceof VanishingBlock || e instanceof Pickup || e instanceof FloatingBlock)) continue
       const h = e.supportAt(x, z, y)
       if (h !== null && (best === null || h > best)) best = h
     }
@@ -548,7 +560,7 @@ async function main(): Promise<void> {
         const depth = isoDepth(e.position.x, e.position.y, e.position.z) + 6
         out.push({ ...setPieceSprite(setPieces.cauldron, e.position.x, e.position.y, e.position.z), depth })
       } else if (e instanceof Spike) {
-        out.push(spikeBedDynamic(e.position.x, e.position.z))
+        out.push(spikeBedDynamic(e.position.x, e.position.y, e.position.z))
       } else if (e instanceof GhostEnemy) {
         if (e instanceof CauldronSpirit && !e.risen) continue
         out.push(stripFrame(monster('ghost', room.tint), 4, Math.floor(performance.now() / 150) % 4, e.position.x, GHOST_DRAW_HEIGHT, e.position.z))
@@ -575,6 +587,11 @@ async function main(): Promise<void> {
         for (const c of e.cells) {
           out.push(setPieceSprite(grille, c.x * room.tileSize + room.tileSize / 2, e.bottom, c.z * room.tileSize + room.tileSize / 2, acrossZ))
         }
+      } else if (e instanceof FloatingBlock) {
+        const half = room.tileSize / 2
+        out.push(boxDynamic({ x0: e.position.x - half, x1: e.position.x + half, z0: e.position.z - half, z1: e.position.z + half, y0: e.bottom, y1: e.top }))
+      } else if (e instanceof SpikedBall) {
+        out.push(setPieceSprite(monster('spikedBall', room.tint), e.position.x, e.position.y, e.position.z))
       } else if (e instanceof Flame) {
         const frameW = setPieces.flame.width / 3
         out.push(spriteDynamic({ image: setPieces.flame, frameX: e.frame * frameW, frameW, frameH: setPieces.flame.height, scale: 1, flip: false, x: e.position.x, y: e.position.y, z: e.position.z }))
@@ -720,10 +737,10 @@ function setPieceSprite(image: HTMLCanvasElement, x: number, y: number, z: numbe
 const spikeTinted = new Map<string, HTMLCanvasElement>()
 let spikesImage: HTMLImageElement
 
-function spikeBedDynamic(x: number, z: number): Dynamic {
+function spikeBedDynamic(x: number, y: number, z: number): Dynamic {
   return {
     x,
-    y: 0,
+    y,
     z,
     draw: (ctx, cfg, shades) => {
       const key = shades.top
@@ -732,7 +749,7 @@ function spikeBedDynamic(x: number, z: number): Dynamic {
         img = tintImage(spikesImage, shades.top)
         spikeTinted.set(key, img)
       }
-      const p = projectToScreen(x, 0, z + cfg.tile / 2, cfg)
+      const p = projectToScreen(x, y, z + cfg.tile / 2, cfg)
       ctx.drawImage(img, Math.round(p.sx - img.width / 2), Math.round(p.sy - img.height))
     },
   }

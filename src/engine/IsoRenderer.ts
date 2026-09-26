@@ -1,4 +1,4 @@
-import { projectToScreen, isoDepth, filmationConfig, type IsoConfig } from './IsoProjection'
+import { projectToScreen, isoDepth, filmationConfig, roomScreenOffset, type IsoConfig } from './IsoProjection'
 import type { Grid } from './Grid'
 import { buildWallLayout, type ExitDirection, type WallBox } from './WallLayout'
 
@@ -102,7 +102,9 @@ export class IsoRenderer {
     }
 
     items.sort((a, b) => a.depth - b.depth)
-    for (const it of items) it.draw(ctx, this.cfg)
+    const shift = roomScreenOffset(room.grid.width, room.grid.depth, this.cfg)
+    const cfg = { ...this.cfg, originX: this.cfg.originX + shift.dx, originY: this.cfg.originY + shift.dy }
+    for (const it of items) it.draw(ctx, cfg)
   }
 
   private brick(b: WallBox, shades: Shades): Renderable {

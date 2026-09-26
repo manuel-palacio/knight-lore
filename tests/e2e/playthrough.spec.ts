@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test'
-import { ROOM_SPECS, type RoomSpec } from '../../src/scenes/rooms/roomSpecs'
+import { ROOM_SPECS, oppositeOf, type RoomSpec } from '../../src/scenes/rooms/roomSpecs'
 import { debug, face, startGame, walkPath, walkUntil, type Cell, type Debug } from './support/game'
-import { DOOR_CELL, findFloorPath } from './support/roomPath'
+import { doorOf, findFloorPath, patrolledCells } from './support/roomPath'
 
 // A whole game played with the keyboard alone, on the real day clock: fetch
 // each charm the cauldron asks for, carry it back, wait out the night when
@@ -53,7 +53,7 @@ test('the game can be won from the start room with the keyboard', async ({ page 
       rooms.splice(rooms.indexOf(state.room), 1)
       continue
     }
-    await retrying(() => stepToward(page, nearest(state.room, whereabouts.get(wanted)!)))
+    await retrying(() => stepToward(page, nearest(state.room, cellOf(state), whereabouts.get(wanted)!)))
   }
 
   const end = await debug(page)
@@ -73,18 +73,18 @@ async function retrying(leg: () => Promise<void>): Promise<void> {
 
 async function stepToward(page: Page, goal: string): Promise<void> {
   const state = await debug(page)
-  let exit = nextExit(state.room, goal)
+  let exit = nextExit(state.room, cellOf(state), goal)
   // Ghosts, and the spirit in the cauldron, hunt only the wolf: at night he
   // waits for the morning outside their rooms, never in one.
   if (state.form === 'werewolf' && hauntedAtNight(exit.target)) {
-    if (hauntedAtNight(state.room)) exit = nextExit(state.room, safeNeighbourOf(state.room))
+    if (hauntedAtNight(state.room)) exit = nextExit(state.room, cellOf(state), safeNeighbourOf(state.room))
     else await waitForDaylight(page)
   } else if (hauntedAtNight(exit.target) && state.timer < daylightNeededIn(exit.target)) {
-    if (hauntedAtNight(state.room)) exit = nextExit(state.room, safeNeighbourOf(state.room))
+    if (hauntedAtNight(state.room)) exit = nextExit(state.room, cellOf(state), safeNeighbourOf(state.room))
     else await waitForNextMorning(page)
   }
   const spec = specOf(state.room)
-  await walkPath(page, findFloorPath(spec, cellOf(state), DOOR_CELL[exit.direction]))
+  await walkPath(page, findFloorPath(spec, cellOf(state), doorOf(spec, exit.direction)), patrolledCells(spec))
   await face(page, exit.direction)
   await walkUntil(page, (s) => s.room === exit.target)
 }
@@ -103,7 +103,7 @@ async function pickUp(page: Page, charm: { id: string; x: number; z: number }): 
   if (await nightfallStopsErrand(page)) return
   const state = await debug(page)
   const target = { x: Math.floor(charm.x / 2), z: Math.floor(charm.z / 2) }
-  await walkPath(page, findFloorPath(specOf(state.room), cellOf(state), target))
+  await walkPath(page, findFloorPath(specOf(state.room), cellOf(state), target), patrolledCells(specOf(state.room)))
   if (await nightfallStopsErrand(page)) return
   await page.keyboard.press('KeyE')
   await expect.poll(async () => (await debug(page)).carrying).toBe(charm.id)
@@ -112,7 +112,7 @@ async function pickUp(page: Page, charm: { id: string; x: number; z: number }): 
 async function deliver(page: Page): Promise<void> {
   const state = await debug(page)
   const cauldron = state.cauldron!
-  await walkPath(page, findFloorPath(specOf(state.room), cellOf(state), BESIDE_CAULDRON))
+  await walkPath(page, findFloorPath(specOf(state.room), cellOf(state), BESIDE_CAULDRON), patrolledCells(specOf(state.room)))
   await face(page, 'north')
   await walkUntil(page, (s) => s.pos.z <= cauldron.z + DELIVERY_REACH)
   if (await nightfallStopsErrand(page)) return
@@ -132,8 +132,9 @@ async function waitForDaylight(page: Page): Promise<void> {
 }
 
 function cellOf(state: Debug): Cell {
-  const clamp = (v: number) => Math.min(7, Math.max(0, Math.floor(v / 2)))
-  return { x: clamp(state.pos.x), z: clamp(state.pos.z) }
+  const spec = specOf(state.room)
+  const clamp = (v: number, cells: number) => Math.min(cells - 1, Math.max(0, Math.floor(v / 2)))
+  return { x: clamp(state.pos.x, spec.width ?? 8), z: clamp(state.pos.z, spec.depth ?? 8) }
 }
 
 function specOf(id: string): RoomSpec {
@@ -156,41 +157,78 @@ function safeNeighbourOf(roomId: string): string {
   return (safe ?? specOf(roomId).exits[0]!).target
 }
 
-function nearest(from: string, rooms: string[]): string {
-  const ranked = [...rooms].sort((a, b) => roomsBetween(from, a) - roomsBetween(from, b))
+function nearest(from: string, at: Cell, rooms: string[]): string {
+  const distance = (to: string) => {
+    try {
+      return roomsBetween(from, at, to)
+    } catch {
+      return Infinity
+    }
+  }
+  const ranked = [...rooms].filter((r) => distance(r) < Infinity).sort((a, b) => distance(a) - distance(b))
   if (!ranked[0]) throw new Error(`nowhere left to look from ${from}`)
   return ranked[0]
 }
 
-function roomsBetween(from: string, to: string): number {
-  const distance = new Map([[from, 0]])
-  const queue = [from]
-  while (queue.length > 0) {
-    const id = queue.shift()!
-    if (id === to) return distance.get(id)!
-    for (const e of specOf(id).exits) {
-      if (distance.has(e.target)) continue
-      distance.set(e.target, distance.get(id)! + 1)
-      queue.push(e.target)
+// Routes go only through crossings the walker can make on foot: from where
+// he stands in this room to one of its doors, then door to door. Puzzle
+// crossings (a charm to stand on, a block to push) are left for people.
+const walkable = new Map<string, boolean>()
+
+function canWalk(roomId: string, from: Cell, to: Cell): boolean {
+  const cacheKey = `${roomId}:${from.x},${from.z}>${to.x},${to.z}`
+  if (!walkable.has(cacheKey)) {
+    try {
+      findFloorPath(specOf(roomId), from, to)
+      walkable.set(cacheKey, true)
+    } catch {
+      walkable.set(cacheKey, false)
     }
   }
-  throw new Error(`no route ${from} -> ${to}`)
+  return walkable.get(cacheKey)!
 }
 
-function nextExit(from: string, goal: string): RoomSpec['exits'][number] {
-  const firstStep = new Map<string, RoomSpec['exits'][number]>()
-  const queue = specOf(from).exits.map((e) => {
-    firstStep.set(e.target, e)
-    return e.target
-  })
+interface Leg {
+  exit: RoomSpec['exits'][number]
+  rooms: number
+}
+
+function route(from: string, at: Cell, goal: string): Leg {
+  const firstExit = new Map<string, RoomSpec['exits'][number]>()
+  const rooms = new Map<string, number>()
+  const queue: { id: string; entry: Cell }[] = []
+  for (const e of specOf(from).exits) {
+    if (!canWalk(from, at, doorOf(specOf(from), e.direction))) continue
+    const state = arrive(e)
+    firstExit.set(state.key, e)
+    rooms.set(state.key, 1)
+    queue.push(state)
+  }
   while (queue.length > 0) {
-    const id = queue.shift()!
-    if (id === goal) return firstStep.get(id)!
+    const { id, entry, key } = queue.shift() as { id: string; entry: Cell; key: string }
+    if (id === goal) return { exit: firstExit.get(key)!, rooms: rooms.get(key)! }
     for (const e of specOf(id).exits) {
-      if (firstStep.has(e.target) || e.target === from) continue
-      firstStep.set(e.target, firstStep.get(id)!)
-      queue.push(e.target)
+      if (!canWalk(id, entry, doorOf(specOf(id), e.direction))) continue
+      const next = arrive(e)
+      if (firstExit.has(next.key)) continue
+      firstExit.set(next.key, firstExit.get(key)!)
+      rooms.set(next.key, rooms.get(key)! + 1)
+      queue.push(next)
     }
   }
-  throw new Error(`no route ${from} -> ${goal}`)
+  throw new Error(`no route on foot ${from} -> ${goal}`)
+}
+
+function arrive(e: RoomSpec['exits'][number]): { id: string; entry: Cell; key: string } {
+  const target = specOf(e.target)
+  const entry = doorOf(target, oppositeOf(e.direction))
+  return { id: e.target, entry, key: `${e.target}@${entry.x},${entry.z}` }
+}
+
+function roomsBetween(from: string, at: Cell, to: string): number {
+  return from === to ? 0 : route(from, at, to).rooms
+}
+
+function nextExit(from: string, at: Cell, goal: string): RoomSpec['exits'][number] {
+  return route(from, at, goal).exit
 }

@@ -10,18 +10,19 @@ export function tileCenter(cell: number): number {
 }
 
 // Per-room colour: each Knight Lore room had one dominant ZX Spectrum hue.
-export type RoomTint = 'yellow' | 'blue' | 'green' | 'purple' | 'red'
+export type RoomTint = 'yellow' | 'blue' | 'cyan' | 'green' | 'purple' | 'red'
 
 const TINT_RGB: Record<RoomTint, number> = {
   yellow: 0xffc060,
   blue: 0x4080c0,
+  cyan: 0x40b8c8,
   green: 0x40b070,
   purple: 0xa050c0,
   red: 0xc04050,
 }
 
-export function buildRoomShell(id: string, tint: RoomTint = 'yellow'): Room {
-  const room = new Room(id, 8, 8)
+export function buildRoomShell(id: string, tint: RoomTint = 'yellow', width = 8, depth = 8): Room {
+  const room = new Room(id, width, depth)
   room.tint = TINT_RGB[tint]
   return room
 }

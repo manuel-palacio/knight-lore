@@ -23,6 +23,16 @@ export function filmationConfig(width: number, _height: number): IsoConfig {
   return { tile: 2, tileW: 32, tileH: 16, heightScale: 16, originX: width / 2, originY: ROOM_ORIGIN_Y }
 }
 
+// The screen shift that stands a room smaller than 8x8 in the middle, where
+// the original draws its narrow rooms: half the missing tiles along each axis.
+export const FULL_ROOM_CELLS = 8
+
+export function roomScreenOffset(width: number, depth: number, cfg: IsoConfig): { dx: number; dy: number } {
+  const u = (FULL_ROOM_CELLS - width) / 2
+  const v = (FULL_ROOM_CELLS - depth) / 2
+  return { dx: (u - v) * (cfg.tileW / 2), dy: (u + v) * (cfg.tileH / 2) }
+}
+
 export interface ScreenPoint {
   sx: number
   sy: number

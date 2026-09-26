@@ -1,5 +1,5 @@
 import { expect, type Page } from '@playwright/test'
-import { isJump } from './roomPath'
+import { isClimb, isJump, type Step } from './roomPath'
 
 // Drives the dev build through its window hooks (__dbg, __room, __pos,
 // __timer) and the real keyboard. Only `vite` dev exposes the hooks.
@@ -18,6 +18,7 @@ export interface Debug {
   won: boolean
   timer: number
   gates: { cells: Cell[]; state: string; blocking: boolean }[]
+  monsters: { x: number; z: number }[]
   pickups: { id: string; x: number; y: number; z: number }[]
   cauldron: { x: number; y: number; z: number } | null
 }
@@ -72,15 +73,23 @@ export async function standAt(page: Page, at: { x: number; y: number; z: number 
 }
 
 // Turns are dropped while the transformation or a door's wipe plays, so
-// keep turning until the facing is right rather than for a fixed count.
+// keep turning until the facing is right rather than for a fixed count, and
+// turn the short way round: Right turns clockwise on screen, south to west.
+const CLOCKWISE = ['south', 'west', 'north', 'east']
+
 export async function face(page: Page, facing: string): Promise<void> {
   await expect
     .poll(async () => {
       const current = (await debug(page)).facing
-      if (current !== facing) await page.keyboard.press('ArrowLeft')
+      if (current !== facing) await page.keyboard.press(shortTurn(current, facing))
       return current
     }, { timeout: 5_000, intervals: [150] })
     .toBe(facing)
+}
+
+function shortTurn(from: string, to: string): string {
+  const quarterTurnsRight = (CLOCKWISE.indexOf(to) - CLOCKWISE.indexOf(from) + 4) % 4
+  return quarterTurnsRight <= 2 ? 'ArrowRight' : 'ArrowLeft'
 }
 
 export async function walkUntil(page: Page, arrived: (state: Debug) => boolean): Promise<void> {
@@ -95,14 +104,22 @@ export async function walkUntil(page: Page, arrived: (state: Debug) => boolean):
 // Walks cell to cell along a path of orthogonal neighbours: first onto the
 // centre of the cell it starts in, then one straight run per corner. Where
 // the path skips a cell (a spike row, see roomPath.ts) it jumps it from the
-// tile before.
-export async function walkPath(page: Page, path: Cell[]): Promise<void> {
+// tile before; where the next cell is higher, it jumps up onto it.
+export async function walkPath(page: Page, path: Step[], patrolled: Set<string> = new Set()): Promise<void> {
   const gates = (await debug(page)).gates
   const gateAt = (c: Cell) => gates.findIndex((g) => g.cells.some((gc) => gc.x === c.x && gc.z === c.z))
+  const onPatrol = (c: Cell) => patrolled.has(`${c.x},${c.z}`)
   let start = 0
   for (let i = 1; i <= path.length; i++) {
+    const intoPatrol = i < path.length && onPatrol(path[i]!) && !onPatrol(path[i - 1]!)
+    if (intoPatrol) {
+      await walkRun(page, path.slice(start, i))
+      await waitForPatrolsClear(page, path[i]!)
+      start = i - 1
+    }
     const intoGate = i < path.length && gateAt(path[i]!) >= 0 && gateAt(path[i - 1]!) < 0
-    if (i < path.length && !isJump(path[i - 1]!, path[i]!) && !intoGate) continue
+    const leap = i < path.length && (isJump(path[i - 1]!, path[i]!) || isClimb(path[i - 1]!, path[i]!))
+    if (i < path.length && !leap && !intoGate) continue
     await walkRun(page, path.slice(start, i))
     if (intoGate) {
       await waitForGateOpen(page, gateAt(path[i]!))
@@ -112,6 +129,16 @@ export async function walkPath(page: Page, path: Cell[]): Promise<void> {
     if (i < path.length) await jumpTo(page, path[i - 1]!, path[i]!)
     start = i
   }
+}
+
+// A guard or a ball walks as fast as Sabreman, so its line is crossed once
+// every one of them is well away from the cell he steps onto.
+const PATROL_CLEARANCE = 4
+
+async function waitForPatrolsClear(page: Page, cell: Cell): Promise<void> {
+  const x = tileCentre(cell.x)
+  const z = tileCentre(cell.z)
+  await expect.poll(async () => (await debug(page)).monsters.every((m) => Math.hypot(m.x - x, m.z - z) >= PATROL_CLEARANCE), { timeout: 30_000, intervals: [30] }).toBe(true)
 }
 
 // A portcullis is crossed only once it has risen all the way: it stays up

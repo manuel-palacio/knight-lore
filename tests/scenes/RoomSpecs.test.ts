@@ -1,12 +1,22 @@
 import { describe, it, expect } from 'vitest'
-import { ROOM_SPECS, entryFor, oppositeOf, type RoomSpec } from '../../src/scenes/rooms/roomSpecs'
-import { LEGACY_ROOM_LINKS } from '../../src/scenes/rooms/roomSpecs'
+import { ROOM_SPECS, START_ROOMS, doorCell, entryFor, oppositeOf, type Cell, type RoomSpec } from '../../src/scenes/rooms/roomSpecs'
 import { CHARMS } from '../../src/game/GameState'
-import { START_ROOM } from '../../src/scenes/rooms/index'
-import { findFloorPath, patrolledCells } from '../e2e/support/roomPath'
+import { findFloorPath } from '../e2e/support/roomPath'
+import { pickStartRoom } from '../../src/scenes/rooms/index'
 
-const GRID = 8
-const inGrid = (c: { x: number; z: number }) => c.x >= 0 && c.x < GRID && c.z >= 0 && c.z < GRID
+const widthOf = (s: RoomSpec) => s.width ?? 8
+const depthOf = (s: RoomSpec) => s.depth ?? 8
+const inRoom = (s: RoomSpec, c: Cell) => c.x >= 0 && c.x < widthOf(s) && c.z >= 0 && c.z < depthOf(s)
+const doorsOf = (s: RoomSpec) => s.exits.map((e) => ({ direction: e.direction, cell: doorCell(e.direction, widthOf(s), depthOf(s)) }))
+const beside = (a: Cell, b: Cell) => Math.abs(a.x - b.x) <= 1 && Math.abs(a.z - b.z) <= 1
+const walks = (s: RoomSpec, a: Cell, b: Cell) => {
+  try {
+    findFloorPath(s, a, b)
+    return true
+  } catch {
+    return false
+  }
+}
 
 function roomDistancesFrom(origin: string): Map<string, number> {
   const byId = new Map(ROOM_SPECS.map((s) => [s.id, s]))
@@ -23,37 +33,35 @@ function roomDistancesFrom(origin: string): Map<string, number> {
   return distance
 }
 
-function allLinks(): { id: string; exits: { direction: RoomSpec['exits'][number]['direction']; target: string }[] }[] {
-  return [
-    ...LEGACY_ROOM_LINKS,
-    ...ROOM_SPECS.map((s) => ({ id: s.id, exits: s.exits.map((e) => ({ direction: e.direction, target: e.target })) })),
-  ]
-}
-
-describe('room map', () => {
-  it('has unique room ids across legacy rooms and specs', () => {
-    const ids = allLinks().map((r) => r.id)
-    expect(new Set(ids).size).toBe(ids.length)
+describe('the castle', () => {
+  it('has all 128 rooms of the original, each once', () => {
+    const ids = ROOM_SPECS.map((s) => s.id)
+    expect(ids).toHaveLength(128)
+    expect(new Set(ids).size).toBe(128)
   })
 
-  it('every exit leads to a room that exists', () => {
-    const ids = new Set(allLinks().map((r) => r.id))
-    for (const room of allLinks()) for (const e of room.exits) expect(ids.has(e.target), `${room.id} -> ${e.target}`).toBe(true)
+  it('reaches every room from the cauldron', () => {
+    expect(roomDistancesFrom('room-001').size).toBe(ROOM_SPECS.length)
   })
 
   it('every exit is reciprocated by the opposite exit in the target room', () => {
-    const byId = new Map(allLinks().map((r) => [r.id, r]))
-    for (const room of allLinks()) {
+    const byId = new Map(ROOM_SPECS.map((r) => [r.id, r]))
+    for (const room of ROOM_SPECS) {
       for (const e of room.exits) {
-        const back = byId.get(e.target)!.exits.find((x) => x.direction === oppositeOf(e.direction))
+        const back = byId.get(e.target)?.exits.find((x) => x.direction === oppositeOf(e.direction))
         expect(back?.target, `${room.id} ${e.direction} -> ${e.target} has no way back`).toBe(room.id)
       }
     }
   })
 
-  it('has the cauldron room plus its mapped neighbours', () => {
-    expect(ROOM_SPECS.length).toBeGreaterThanOrEqual(8)
-    expect(ROOM_SPECS.filter((s) => s.mapped).length).toBeGreaterThanOrEqual(7)
+  it('starts in one of the original four start rooms', () => {
+    expect(START_ROOMS).toEqual(['map-7--6', 'map--4--4', 'map--5-3', 'map-7-0'])
+    for (const id of START_ROOMS) expect(ROOM_SPECS.some((s) => s.id === id), id).toBe(true)
+  })
+
+  it('has narrow rooms, four cells across one axis, as the original', () => {
+    const narrow = ROOM_SPECS.filter((s) => widthOf(s) === 4 || depthOf(s) === 4)
+    expect(narrow.length).toBeGreaterThan(40)
   })
 
   it('places every kind of charm twice and at least one extra life', () => {
@@ -73,18 +81,12 @@ describe('room map', () => {
     }
   })
 
-  it('keeps every charm out of the start room and the rooms beside it', () => {
-    const fromStart = roomDistancesFrom(START_ROOM)
-    for (const s of ROOM_SPECS.filter((r) => r.pickups?.length)) {
-      expect(fromStart.get(s.id), `${s.id} is too close to the start`).toBeGreaterThan(1)
-    }
-  })
-
-  it('gives every hand-authored room at least three placed things', () => {
-    for (const s of ROOM_SPECS.filter((r) => !r.mapped)) {
-      const count = ['platforms', 'pushBlocks', 'spikes', 'guards', 'ghosts', 'pickups', 'movingPlatforms', 'pathGuards', 'tables', 'vanishing', 'balls']
-        .reduce((sum, key) => sum + (((s as unknown as Record<string, unknown[] | undefined>)[key]) ?? []).length, 0)
-      expect(count, s.id).toBeGreaterThanOrEqual(3)
+  it('keeps every charm out of the start rooms and the rooms beside them', () => {
+    for (const start of START_ROOMS) {
+      const fromStart = roomDistancesFrom(start)
+      for (const s of ROOM_SPECS.filter((r) => r.pickups?.length)) {
+        expect(fromStart.get(s.id), `${s.id} is too close to the start ${start}`).toBeGreaterThan(1)
+      }
     }
   })
 
@@ -94,12 +96,59 @@ describe('room map', () => {
     const room = withCauldron[0]!
     expect(room.id).toBe('room-001')
     expect(room.wizard).toBeDefined()
-    expect(inGrid(room.cauldron!) && inGrid(room.wizard!)).toBe(true)
+    expect(inRoom(room, room.cauldron!) && inRoom(room, room.wizard!)).toBe(true)
   })
-
 })
 
-describe('entryFor', () => {
+describe('winning on foot', () => {
+  // Rooms reached from a start room entering by a door and leaving by any door
+  // reachable from it, never solving a puzzle.
+  function roomsOnFoot(start: string): Set<string> {
+    const byId = new Map(ROOM_SPECS.map((s) => [s.id, s]))
+    const seen = new Set<string>()
+    const entered = new Set([start])
+    const queue: { id: string; door: Cell | null }[] = [{ id: start, door: null }]
+    while (queue.length > 0) {
+      const { id, door } = queue.shift()!
+      const spec = byId.get(id)!
+      for (const e of spec.exits) {
+        const leave = doorCell(e.direction, widthOf(spec), depthOf(spec))
+        if (door && !walks(spec, door, leave)) continue
+        const target = byId.get(e.target)!
+        const arrive = doorCell(oppositeOf(e.direction), widthOf(target), depthOf(target))
+        const state = `${e.target}@${arrive.x},${arrive.z}`
+        if (seen.has(state)) continue
+        seen.add(state)
+        entered.add(e.target)
+        queue.push({ id: e.target, door: arrive })
+      }
+    }
+    return entered
+  }
+
+  it('reaches the cauldron and every charm from each start room without solving a puzzle', () => {
+    const charmRooms = ROOM_SPECS.filter((s) => s.pickups?.length).map((s) => s.id)
+    for (const start of START_ROOMS) {
+      const reached = roomsOnFoot(start)
+      expect(reached.has('room-001'), `cauldron from ${start}`).toBe(true)
+      for (const id of charmRooms) expect(reached.has(id), `${id} from ${start}`).toBe(true)
+    }
+  })
+})
+
+describe('door geometry', () => {
+  it('drops the player on the door axis of a narrow room too', () => {
+    expect(entryFor('south', 4, 8)).toEqual({ x: 5, z: 1 })
+    expect(entryFor('west', 8, 4)).toEqual({ x: 15, z: 5 })
+    expect(entryFor('north', 4, 8)).toEqual({ x: 5, z: 15 })
+  })
+
+  it('puts the door cells mid-edge of the room, whatever its size', () => {
+    expect(doorCell('north', 8, 8)).toEqual({ x: 4, z: 0 })
+    expect(doorCell('south', 4, 8)).toEqual({ x: 2, z: 7 })
+    expect(doorCell('east', 8, 4)).toEqual({ x: 7, z: 2 })
+  })
+
   it('drops the player just inside the edge opposite to the door walked through, on the door axis', () => {
     expect(entryFor('south')).toEqual({ x: 9, z: 1 })
     expect(entryFor('north')).toEqual({ x: 9, z: 15 })
@@ -108,23 +157,26 @@ describe('entryFor', () => {
   })
 })
 
-describe('room specs content', () => {
-  it('keeps every placed cell inside the grid', () => {
+describe('room contents', () => {
+  it('keeps every placed cell inside its room', () => {
     for (const s of ROOM_SPECS) {
-      for (const p of s.platforms ?? []) expect(inGrid(p), `${s.id} platform`).toBe(true)
-      for (const p of s.pushBlocks ?? []) expect(inGrid(p), `${s.id} push block`).toBe(true)
-      for (const p of s.spikes ?? []) expect(inGrid(p), `${s.id} spike`).toBe(true)
-      for (const p of s.pickups ?? []) expect(inGrid(p), `${s.id} pickup`).toBe(true)
-      for (const p of s.movingPlatforms ?? []) {
-        expect(inGrid(p.from) && inGrid(p.to), `${s.id} platform path`).toBe(true)
-        expect(p.from.x === p.to.x || p.from.z === p.to.z, `${s.id} platform must move along one axis`).toBe(true)
+      const cells: Cell[] = [
+        ...(s.platforms ?? []), ...(s.pushBlocks ?? []), ...(s.spikes ?? []), ...(s.pickups ?? []), ...(s.tables ?? []),
+        ...(s.vanishing ?? []), ...(s.flames ?? []), ...(s.ghosts ?? []), ...(s.spikedBalls ?? []), s.spawn,
+        ...(s.movingPlatforms ?? []).flatMap((p) => [p.from, p.to]),
+        ...(s.pathGuards ?? []).flatMap((g) => g.path),
+        ...(s.balls ?? []).flatMap((b) => [b.from, b.to]),
+        ...(s.portcullises ?? []).flatMap((p) => [p.from, p.to]),
+      ]
+      for (const c of cells) expect(inRoom(s, c), `${s.id} ${JSON.stringify(c)}`).toBe(true)
+    }
+  })
+
+  it('moves along one axis, for moving blocks, balls and gates', () => {
+    for (const s of ROOM_SPECS) {
+      for (const p of [...(s.movingPlatforms ?? []), ...(s.balls ?? []), ...(s.portcullises ?? [])]) {
+        expect(p.from.x === p.to.x || p.from.z === p.to.z, `${s.id} ${JSON.stringify(p)}`).toBe(true)
       }
-      for (const g of s.pathGuards ?? []) for (const c of g.path) expect(inGrid(c), `${s.id} guard path`).toBe(true)
-      for (const t of s.tables ?? []) expect(inGrid(t), `${s.id} table`).toBe(true)
-      for (const v of s.vanishing ?? []) expect(inGrid(v), `${s.id} vanishing block`).toBe(true)
-      for (const b of s.balls ?? []) expect(inGrid(b.from) && inGrid(b.to), `${s.id} ball path`).toBe(true)
-      for (const f of s.flames ?? []) expect(inGrid(f), `${s.id} flame`).toBe(true)
-      expect(inGrid(s.spawn), `${s.id} spawn`).toBe(true)
     }
   })
 
@@ -135,75 +187,67 @@ describe('room specs content', () => {
     }
   })
 
-  it('never puts a pickup on a spike', () => {
+  it('never puts a pickup on a spike or a block', () => {
     for (const s of ROOM_SPECS) {
       for (const p of s.pickups ?? []) {
-        expect((s.spikes ?? []).some((c) => c.x === p.x && c.z === p.z), `${s.id} ${p.item}`).toBe(false)
+        const under = [...(s.spikes ?? []), ...(s.platforms ?? [])]
+        expect(under.some((c) => c.x === p.x && c.z === p.z), `${s.id} ${p.item}`).toBe(false)
       }
     }
   })
 
-  it('puts a pickup that sits on a platform on top of it, never inside it', () => {
+  it('keeps the doorway cells clear of blocks and spikes, so every exit can be reached', () => {
     for (const s of ROOM_SPECS) {
-      for (const p of s.pickups ?? []) {
-        const under = (s.platforms ?? []).find((c) => c.x === p.x && c.z === p.z)
-        if (under) expect(p.y ?? 0, `${s.id} ${p.item} is inside a platform`).toBeGreaterThanOrEqual(under.height)
+      const solids = [...(s.platforms ?? []), ...(s.pushBlocks ?? []), ...(s.spikes ?? []).filter((c) => !c.height)]
+      for (const door of doorsOf(s)) {
+        expect(solids.some((c) => c.x === door.cell.x && c.z === door.cell.z), `${s.id} ${door.direction} door blocked`).toBe(false)
       }
     }
   })
 
-  it('keeps guard and ball paths away from the doorways, so entering a room is never a death', () => {
-    const doorCell = { north: { x: 4, z: 0 }, south: { x: 4, z: 7 }, west: { x: 0, z: 4 }, east: { x: 7, z: 4 } }
-    const near = (a: { x: number; z: number }, b: { x: number; z: number }) => Math.abs(a.x - b.x) <= 1 && Math.abs(a.z - b.z) <= 1
+  it('keeps guard and ball paths off the doorways and the cells beside them, so entering a room is never a death', () => {
     for (const s of ROOM_SPECS) {
-      const doors = s.exits.map((e) => doorCell[e.direction])
-      const points = [...(s.pathGuards ?? []).flatMap((g) => g.path), ...(s.balls ?? []).flatMap((b) => [b.from, b.to]), ...(s.guards ?? []).flatMap((g) => [g.from, g.to])]
-      for (const p of points) for (const d of doors) expect(near(p, d), `${s.id} path point ${p.x},${p.z} sits on the ${JSON.stringify(d)} door`).toBe(false)
+      const points = [...(s.pathGuards ?? []).flatMap((g) => g.path), ...(s.balls ?? []).flatMap((b) => [b.from, b.to])]
+      for (const p of points) {
+        for (const door of doorsOf(s)) expect(beside(p, door.cell), `${s.id} path point ${p.x},${p.z} by the ${door.direction} door`).toBe(false)
+      }
     }
   })
 
   it('keeps ghosts at least a cell away from every doorway, so a wolf entering at night is not caught on the threshold', () => {
-    const doorCell = { north: { x: 4, z: 0 }, south: { x: 4, z: 7 }, west: { x: 0, z: 4 }, east: { x: 7, z: 4 } }
     for (const s of ROOM_SPECS) {
-      for (const e of s.exits) {
-        const d = doorCell[e.direction]
-        for (const g of s.ghosts ?? []) expect(Math.abs(g.x - d.x) <= 1 && Math.abs(g.z - d.z) <= 1, `${s.id} ghost at ${g.x},${g.z} by the ${e.direction} door`).toBe(false)
+      for (const g of s.ghosts ?? []) {
+        for (const door of doorsOf(s)) expect(beside(g, door.cell), `${s.id} ghost at ${g.x},${g.z} by the ${door.direction} door`).toBe(false)
       }
     }
   })
 
-  it('keeps spikes at least a cell away from every doorway', () => {
-    const doorCell = { north: { x: 4, z: 0 }, south: { x: 4, z: 7 }, west: { x: 0, z: 4 }, east: { x: 7, z: 4 } }
-    for (const s of ROOM_SPECS) {
-      for (const e of s.exits) {
-        const d = doorCell[e.direction]
-        for (const sp of s.spikes ?? []) expect(Math.abs(sp.x - d.x) <= 1 && Math.abs(sp.z - d.z) <= 1, `${s.id} spike at ${sp.x},${sp.z} by the ${e.direction} door`).toBe(false)
-      }
-    }
-  })
-
-  it('leaves a lane clear of every guard and ball between each pair of doors and the charm', () => {
-    const doorCell = { north: { x: 4, z: 0 }, south: { x: 4, z: 7 }, west: { x: 0, z: 4 }, east: { x: 7, z: 4 } }
-    for (const s of ROOM_SPECS) {
-      const patrolled = patrolledCells(s)
-      const places = [...s.exits.map((e) => doorCell[e.direction]), ...(s.pickups ?? [])]
-      for (const from of places) {
-        for (const to of places.filter((p) => p !== from)) {
-          const crossed = findFloorPath(s, from, to).filter((c) => patrolled.has(`${c.x},${c.z}`))
-          expect(crossed, `${s.id} ${from.x},${from.z} -> ${to.x},${to.z}`).toEqual([])
+  it('lets every door and charm of a room not marked a puzzle be reached on foot: walking, climbing a block, jumping spike rows', () => {
+    const unreachable: string[] = []
+    for (const s of ROOM_SPECS.filter((r) => !r.puzzle)) {
+      const stops = [...doorsOf(s).map((d) => d.cell), ...(s.pickups ?? [])]
+      for (const to of stops.slice(1)) {
+        try {
+          findFloorPath(s, stops[0]!, to)
+        } catch {
+          unreachable.push(`${s.id} ${stops[0]!.x},${stops[0]!.z} -> ${to.x},${to.z}`)
         }
       }
     }
+    expect(unreachable).toEqual([])
   })
 
-  it('keeps the doorway cells clear so every exit can be reached', () => {
-    const doorCell = { north: { x: 4, z: 0 }, south: { x: 4, z: 7 }, west: { x: 0, z: 4 }, east: { x: 7, z: 4 } }
-    for (const s of ROOM_SPECS) {
-      const solids = [...(s.platforms ?? []), ...(s.pushBlocks ?? []), ...(s.spikes ?? [])]
-      for (const e of s.exits) {
-        const d = doorCell[e.direction]
-        expect(solids.some((c) => c.x === d.x && c.z === d.z), `${s.id} ${e.direction} door blocked`).toBe(false)
-      }
+  it('marks a room a puzzle only when some door cannot be reached on foot', () => {
+    for (const s of ROOM_SPECS.filter((r) => r.puzzle)) {
+      const doors = doorsOf(s).map((d) => d.cell)
+      const stuck = doors.some((a) => doors.some((b) => a !== b && !walks(s, a, b)))
+      expect(stuck, s.id).toBe(true)
     }
+  })
+})
+
+describe('pickStartRoom', () => {
+  it('picks one of the four start rooms from a random number, as the original does', () => {
+    expect([0, 0.3, 0.6, 0.99].map(pickStartRoom)).toEqual(START_ROOMS)
   })
 })

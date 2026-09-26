@@ -1,29 +1,42 @@
 import { test, expect } from '@playwright/test'
-import { ROOM_SPECS, entryFor, oppositeOf } from '../../src/scenes/rooms/roomSpecs'
+import { ROOM_SPECS, entryFor, oppositeOf, type RoomSpec } from '../../src/scenes/rooms/roomSpecs'
 import { debug, enterRoom, face, holdDaylight, startGame, walkPath, walkUntil } from './support/game'
-import { DOOR_CELL, findFloorPath } from './support/roomPath'
+import { doorOf, findFloorPath, patrolledCells } from './support/roomPath'
 
 // The castle walked for real: in every room, Sabreman comes in through the
-// first door, then walks with the arrow keys to the charm (and picks it up)
-// and out of every other door, without losing a life.
+// first door, then walks with the arrow keys (climbing blocks and jumping
+// spike rows where the path needs it) to the charm, picks it up, and goes out
+// of every other door he can reach on foot, without losing a life. In a room
+// marked a puzzle, the doors that need a stepping stone are left out.
 
 test.describe.configure({ mode: 'parallel' })
 
+const walks = (spec: RoomSpec, from: { x: number; z: number }, to: { x: number; z: number }) => {
+  try {
+    findFloorPath(spec, from, to)
+    return true
+  } catch {
+    return false
+  }
+}
+
 for (const spec of ROOM_SPECS) {
   const entrance = spec.exits[0]!
-  const entryDoor = DOOR_CELL[entrance.direction]
+  const entryDoor = doorOf(spec, entrance.direction)
+  const exits = spec.exits.slice(spec.exits.length > 1 ? 1 : 0).filter((e) => walks(spec, entryDoor, doorOf(spec, e.direction)))
+  const charms = (spec.pickups ?? []).filter((p) => walks(spec, entryDoor, p))
 
-  test(`${spec.id}: every door and charm can be walked to`, async ({ page }) => {
+  test(`${spec.id}: every door and charm it can reach on foot can be walked to`, async ({ page }) => {
     await startGame(page)
     const enter = async () => {
-      await enterRoom(page, spec.id, entryFor(oppositeOf(entrance.direction)))
+      await enterRoom(page, spec.id, entryFor(oppositeOf(entrance.direction), spec.width ?? 8, spec.depth ?? 8))
       await holdDaylight(page)
     }
 
     let lives = (await debug(page)).lives
-    for (const charm of spec.pickups ?? []) {
+    for (const charm of charms) {
       await enter()
-      await walkPath(page, findFloorPath(spec, entryDoor, charm))
+      await walkPath(page, findFloorPath(spec, entryDoor, charm), patrolledCells(spec))
       await page.keyboard.press('KeyE')
       if (charm.item === 'life') {
         lives += 1
@@ -33,9 +46,9 @@ for (const spec of ROOM_SPECS) {
       }
     }
 
-    for (const exit of spec.exits.slice(spec.exits.length > 1 ? 1 : 0)) {
+    for (const exit of exits) {
       await enter()
-      await walkPath(page, findFloorPath(spec, entryDoor, DOOR_CELL[exit.direction]))
+      await walkPath(page, findFloorPath(spec, entryDoor, doorOf(spec, exit.direction)), patrolledCells(spec))
       await face(page, exit.direction)
       await walkUntil(page, (state) => state.room === exit.target)
     }

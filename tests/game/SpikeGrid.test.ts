@@ -19,4 +19,9 @@ describe('Spike', () => {
     expect(room.entities.length).toBe(before + 3)
     expect(room.entities.every((e) => e.hasCategory(Category.HAZARD))).toBe(true)
   })
+
+  it('can sit on top of a block, as the original spiked blocks do', () => {
+    const spike = new Spike(2, 3, 2, 1)
+    expect(spike.position.y).toBe(1)
+  })
 })

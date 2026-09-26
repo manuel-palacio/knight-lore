@@ -6,17 +6,13 @@ import { Spike } from '../../src/game/SpikeGrid'
 import { Portcullis } from '../../src/game/Portcullis'
 
 describe('hazardHunts', () => {
-  it('ghosts leave the man alone and hunt the wolf', () => {
-    const ghost = new GhostEnemy(4, 4)
-    expect(hazardHunts(ghost, 'human')).toBe(false)
-    expect(hazardHunts(ghost, 'werewolf')).toBe(true)
-  })
-
-  it('guards and spikes hurt both forms', () => {
+  it('guards, ghosts and spikes hurt both forms', () => {
     const guard = new PathGuard([{ x: 1, z: 1 }, { x: 5, z: 1 }])
+    const ghost = new GhostEnemy(4, 4)
     const spike = new Spike(2, 2, 2)
     for (const form of ['human', 'werewolf'] as const) {
       expect(hazardHunts(guard, form)).toBe(true)
+      expect(hazardHunts(ghost, form)).toBe(true)
       expect(hazardHunts(spike, form)).toBe(true)
     }
   })

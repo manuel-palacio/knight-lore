@@ -23,6 +23,9 @@ import { PathGuard } from './game/PathGuard'
 import { Table } from './game/Table'
 import { VanishingBlock } from './game/VanishingBlock'
 import { BouncingBall } from './game/BouncingBall'
+import type { Entity } from './game/Entity'
+import { HoppingBall } from './game/HoppingBall'
+import { FallingBlock } from './game/FallingBlock'
 import { Category } from './engine/categories'
 import { Room } from './game/Room'
 import { RoomManager } from './game/RoomManager'
@@ -281,11 +284,17 @@ async function main(): Promise<void> {
       platforms: activeRoom().entities.filter((e) => e instanceof MovingPlatform).map((e) => ({ x: e.position.x, z: e.position.z })),
       carrying: player.carrying,
       monsters: activeRoom().entities
-        .filter((e) => e instanceof PathGuard || e instanceof BouncingBall || e instanceof PatrolEnemy)
-        .map((e) => ({ x: e.position.x, z: e.position.z })),
+        .filter((e) => e instanceof PathGuard || e instanceof BouncingBall || e instanceof PatrolEnemy || e instanceof GhostEnemy || e instanceof HoppingBall)
+        .map((e) => ({ kind: monsterKind(e), x: e.position.x, y: e.position.y, z: e.position.z })),
+      spikedBalls: activeRoom().entities
+        .filter((e) => e instanceof SpikedBall)
+        .map((e) => ({ x: e.position.x, y: e.position.y, z: e.position.z })),
+      fallingBlocks: activeRoom().entities
+        .filter((e): e is FallingBlock => e instanceof FallingBlock)
+        .map((e) => ({ x: e.position.x, top: e.top, z: e.position.z })),
       gates: activeRoom().entities
         .filter((e): e is Portcullis => e instanceof Portcullis)
-        .map((e) => ({ cells: e.cells, state: e.state, blocking: e.blocking })),
+        .map((e) => ({ cells: e.cells, state: e.state, blocking: e.blocking, openFramesLeft: e.openFramesLeft })),
       delivered: state.cureProgress,
       lives: state.lives,
       won: state.won,
@@ -466,7 +475,7 @@ async function main(): Promise<void> {
   function dynamicSupportAt(room: Room, x: number, z: number, y: number): number | null {
     let best: number | null = null
     for (const e of room.entities) {
-      if (!(e instanceof MovingPlatform || e instanceof Table || e instanceof VanishingBlock || e instanceof Pickup || e instanceof FloatingBlock)) continue
+      if (!(e instanceof MovingPlatform || e instanceof Table || e instanceof VanishingBlock || e instanceof Pickup || e instanceof FloatingBlock || e instanceof FallingBlock)) continue
       const h = e.supportAt(x, z, y)
       if (h !== null && (best === null || h > best)) best = h
     }
@@ -563,7 +572,7 @@ async function main(): Promise<void> {
         out.push({ ...setPieceSprite(setPieces.cauldron, e.position.x, e.position.y, e.position.z), depth })
       } else if (e instanceof Spike) {
         out.push(spikeBedDynamic(e.position.x, e.position.y, e.position.z))
-      } else if (e instanceof GhostEnemy) {
+      } else if (e instanceof GhostEnemy || e instanceof CauldronSpirit) {
         if (e instanceof CauldronSpirit && !e.risen) continue
         out.push(stripFrame(monster('ghost', room.tint), 4, Math.floor(performance.now() / 150) % 4, e.position.x, GHOST_DRAW_HEIGHT, e.position.z))
       } else if (e instanceof PatrolEnemy) {
@@ -580,6 +589,11 @@ async function main(): Promise<void> {
         if (e.present) out.push(vanishingDynamic(e))
       } else if (e instanceof BouncingBall) {
         out.push(stripFrame(monster('ball', room.tint), 2, e.position.y > 0.5 ? 1 : 0, e.position.x, e.position.y, e.position.z))
+      } else if (e instanceof HoppingBall) {
+        out.push(stripFrame(monster('ball', room.tint), 2, e.speedPx > 0 ? 1 : 0, e.position.x, e.position.y, e.position.z))
+      } else if (e instanceof FallingBlock) {
+        const half = room.tileSize / 2
+        out.push(boxDynamic({ x0: e.position.x - half, x1: e.position.x + half, z0: e.position.z - half, z1: e.position.z + half, y0: e.top - 1, y1: e.top }))
       } else if (e instanceof Wizard) {
         out.push(setPieceSprite(setPieces.wizard, e.position.x, 0, e.position.z))
       } else if (e instanceof Portcullis) {
@@ -714,6 +728,12 @@ function tableDynamics(t: Table): Dynamic[] {
   }
   const top = boxDynamic({ x0, x1: x0 + t.extents.x, z0, z1: z0 + t.extents.z, y0: t.height - TABLE_TOP, y1: t.height })
   return [...legs, { ...top, depth: isoDepth(t.position.x + half, t.height, t.position.z + half) }]
+}
+
+// How a walker gets past it: behind a patrol, under a bounce, or away from a wanderer.
+function monsterKind(e: Entity): 'patrols' | 'bounces' | 'roams' {
+  if (e instanceof BouncingBall) return 'bounces'
+  return e instanceof GhostEnemy || e instanceof HoppingBall ? 'roams' : 'patrols'
 }
 
 // Crumbling blocks flicker in their last steps before vanishing.

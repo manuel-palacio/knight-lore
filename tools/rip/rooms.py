@@ -11,6 +11,9 @@ then length-1 bytes, the length jumping to the next record. After the id:
 
 A foreground type points (table at 0x6BD1) to a template of parts, each
 starting with its graphic number, which indexes the sprite table at 0x7100.
+A part's last byte places it (the loader at 0xD46C): bit 0 moves it half a
+cell along x, bit 1 half a cell along y, and the rest lifts it that many
+pixels (a block is 12).
 
 usage (from the repo root): python3 tools/rip/rooms.py [ROOM_ID ...]"""
 import os
@@ -44,7 +47,7 @@ def decode_room(memory, body):
     while i < len(foreground):
         kind, count = foreground[i] >> 3, (foreground[i] & 7) + 1
         for position in foreground[i + 1:i + 1 + count]:
-            objects.append({'type': kind, 'graphics': graphics_of(memory, kind),
+            objects.append({'type': kind, 'graphics': graphics_of(memory, kind), 'placement': placement_of(memory, kind),
                             'x': position & 7, 'y': (position >> 3) & 7, 'z': position >> 6})
         i += 1 + count
     return {'colour': attributes & 7, 'size': attributes >> 3, 'background': background, 'objects': objects}
@@ -58,6 +61,12 @@ def graphics_of(memory, kind):
         template += TEMPLATE_PART
         if memory[template] == 0:
             return parts
+
+
+def placement_of(memory, kind):
+    template = memory[FOREGROUND_TYPES + 2 * kind] | memory[FOREGROUND_TYPES + 2 * kind + 1] << 8
+    placement = memory[template + TEMPLATE_PART - 1]
+    return {'half_x': bool(placement & 1), 'half_y': bool(placement & 2), 'lift': placement & 0xFC}
 
 
 def all_rooms(memory):

@@ -1,11 +1,11 @@
 import * as THREE from 'three'
 import { Entity, type UpdateContext } from './Entity'
 import { Category } from '../engine/categories'
-import { StepClock } from '../engine/StepClock'
+import { FrameClock } from '../engine/StepClock'
 
 const FOOTPRINT = 2
 // The original's moving blocks (handlers at 0xB6B1 and 0xB6B9) move one pixel
-// a frame: an eighth of a unit per step.
+// a frame of its clock (FrameClock): an eighth of a unit.
 export const PLATFORM_STEP = 1 / 8
 const RIDER_TOLERANCE = 0.05
 const TOP_TOLERANCE = 0.5
@@ -14,14 +14,14 @@ interface PlatformCtx extends UpdateContext {
   playerPosition?: THREE.Vector3
 }
 
-// A one-tile slab shuttling between two points on one axis, one step per
-// step tick. Anything standing on its top surface rides along with it.
+// A one-tile slab shuttling between two points on one axis, one stride a
+// frame. Anything standing on its top surface rides along with it.
 export class MovingPlatform extends Entity {
   readonly height: number
   private readonly from: { x: number; z: number }
   private readonly to: { x: number; z: number }
   private headingOut = true
-  private readonly clock = new StepClock()
+  private readonly clock = new FrameClock()
 
   constructor(from: { x: number; z: number }, to: { x: number; z: number }, height: number) {
     super()

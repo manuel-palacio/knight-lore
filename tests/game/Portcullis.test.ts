@@ -1,13 +1,12 @@
 import { describe, it, expect } from 'vitest'
-import { Portcullis, PORTCULLIS_REST_STEPS, PORTCULLIS_TOP, PORTCULLIS_OPEN_STEPS } from '../../src/game/Portcullis'
+import { Portcullis, PORTCULLIS_REST_FRAMES, PORTCULLIS_TOP, PORTCULLIS_OPEN_FRAMES } from '../../src/game/Portcullis'
 import { hazardHunts } from '../../src/game/Hazards'
-import { TICKS_PER_STEP } from '../../src/engine/StepClock'
-import { SIMULATION_DT } from '../../src/engine/GameLoop'
+import { runFrames } from './frames'
 
 const TILE = 2
 
-function run(gate: Portcullis, steps: number): void {
-  for (let i = 0; i < steps * TICKS_PER_STEP; i++) gate.update(SIMULATION_DT, {})
+function run(gate: Portcullis, frames: number): void {
+  runFrames(gate, frames)
 }
 
 function runUntil(gate: Portcullis, done: (g: Portcullis) => boolean, maxSteps = 500): number {
@@ -33,7 +32,7 @@ describe('Portcullis', () => {
 
   it('rests shut, then rises a twelfth of a block per step to the top', () => {
     const gate = across()
-    run(gate, PORTCULLIS_REST_STEPS)
+    run(gate, PORTCULLIS_REST_FRAMES)
     expect(gate.state).toBe('rising')
     const bottom = gate.bottom
     run(gate, 1)
@@ -46,7 +45,7 @@ describe('Portcullis', () => {
   it('stays open a while, then falls faster every step until it is shut again', () => {
     const gate = across()
     runUntil(gate, (g) => g.state === 'open')
-    run(gate, PORTCULLIS_OPEN_STEPS)
+    run(gate, PORTCULLIS_OPEN_FRAMES)
     expect(gate.state).toBe('falling')
     const drops: number[] = []
     let last = gate.bottom

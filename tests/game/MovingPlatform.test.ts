@@ -1,16 +1,17 @@
 import { describe, it, expect } from 'vitest'
 import * as THREE from 'three'
 import { MovingPlatform, PLATFORM_STEP } from '../../src/game/MovingPlatform'
-import { TICKS_PER_STEP } from '../../src/engine/StepClock'
+import { TICKS_PER_FRAME } from '../../src/engine/StepClock'
 import { SIMULATION_DT } from '../../src/engine/GameLoop'
+import { runFrames } from './frames'
 import { Category } from '../../src/engine/categories'
 
 function platform(): MovingPlatform {
   return new MovingPlatform({ x: 3, z: 5 }, { x: 7, z: 5 }, 1)
 }
 
-function ride(p: MovingPlatform, rider: THREE.Vector3, ticks: number): void {
-  for (let i = 0; i < ticks; i++) p.update(SIMULATION_DT, { playerPosition: rider })
+function ride(p: MovingPlatform, rider: THREE.Vector3, frames: number): void {
+  runFrames(p, frames, { playerPosition: rider })
 }
 
 describe('MovingPlatform', () => {
@@ -20,20 +21,21 @@ describe('MovingPlatform', () => {
     expect(p.hasCategory(Category.HAZARD)).toBe(false)
   })
 
-  it('moves one step toward its far end every step tick', () => {
+  it('moves one stride toward its far end on each frame of the original\'s clock', () => {
     const p = platform()
-    ride(p, new THREE.Vector3(0, 0, 0), TICKS_PER_STEP - 1)
+    const rider = { playerPosition: new THREE.Vector3(0, 0, 0) }
+    for (let i = 0; i < Math.ceil(TICKS_PER_FRAME) - 1; i++) p.update(SIMULATION_DT, rider)
     expect(p.position.x).toBe(3)
-    ride(p, new THREE.Vector3(0, 0, 0), 1)
+    p.update(SIMULATION_DT, rider)
     expect(p.position.x).toBe(3 + PLATFORM_STEP)
   })
 
   it('reverses at the far end and comes back', () => {
     const p = platform()
-    const stepsAcross = 4 / PLATFORM_STEP
-    ride(p, new THREE.Vector3(0, 0, 0), stepsAcross * TICKS_PER_STEP)
+    const framesAcross = 4 / PLATFORM_STEP
+    ride(p, new THREE.Vector3(0, 0, 0), framesAcross)
     expect(p.position.x).toBe(7)
-    ride(p, new THREE.Vector3(0, 0, 0), TICKS_PER_STEP)
+    ride(p, new THREE.Vector3(0, 0, 0), 1)
     expect(p.position.x).toBe(7 - PLATFORM_STEP)
   })
 
@@ -48,7 +50,7 @@ describe('MovingPlatform', () => {
   it('carries a rider standing on top by the same amount it moves', () => {
     const p = platform()
     const rider = new THREE.Vector3(3, 1, 5)
-    ride(p, rider, TICKS_PER_STEP * 3)
+    ride(p, rider, 3)
     expect(rider.x).toBe(3 + 3 * PLATFORM_STEP)
     expect(rider.z).toBe(5)
   })
@@ -56,11 +58,11 @@ describe('MovingPlatform', () => {
   it('leaves a body on the floor beneath it alone', () => {
     const p = platform()
     const below = new THREE.Vector3(3, 0, 5)
-    ride(p, below, TICKS_PER_STEP * 3)
+    ride(p, below, 3)
     expect(below.x).toBe(3)
   })
 
-  it('moves at the original moving block speed, one pixel a frame: an eighth of a unit per step', () => {
+  it('moves at the original moving block speed, one pixel a frame: an eighth of a unit', () => {
     expect(PLATFORM_STEP).toBe(1 / 8)
   })
 })

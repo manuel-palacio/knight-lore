@@ -1,6 +1,5 @@
 import type { Entity } from './Entity'
 import type { Form } from './GameState'
-import { GhostEnemy } from './GhostEnemy'
 import { CauldronSpirit } from './CauldronSpirit'
 import { Spike } from './SpikeGrid'
 import { Portcullis } from './Portcullis'
@@ -9,7 +8,6 @@ import { Portcullis } from './Portcullis'
 export function hazardHunts(hazard: Entity, form: Form): boolean {
   if (hazard instanceof CauldronSpirit) return hazard.risen && form === 'werewolf'
   if (hazard instanceof Portcullis) return hazard.crushing
-  if (hazard instanceof GhostEnemy) return form === 'werewolf'
   return true
 }
 

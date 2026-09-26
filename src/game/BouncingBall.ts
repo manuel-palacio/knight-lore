@@ -1,49 +1,58 @@
 import { Entity, type UpdateContext } from './Entity'
 import { Category } from '../engine/categories'
-import { StepClock, STEP_LENGTH } from '../engine/StepClock'
+import { FrameClock } from '../engine/StepClock'
+import { PIXELS_PER_BLOCK, fallOneStep, groundUnder, type GroundCtx } from './Gravity'
 
-// A ball that bounces along a line between two points, one step per step
-// tick, rising and falling on a fixed period. Touching it costs a life. The
-// original's ball (handler at 0xB865) rises three pixels a frame to 32 pixels
-// above where it started, about eleven frames, and falls back; a block is 12
-// pixels high and one of its frames is one of our steps.
-export const BOUNCE_HEIGHT = 32 / 12
-const BOUNCE_STEPS = 22
+// The original's bouncing ball (the room table's t2, t12, t24 and t28;
+// handler at 0xB865) bounces where it stands. It rises two pixels a frame
+// until it is 32 pixels above where the room's first ball started, then
+// falls under gravity onto what is under it, and rises again. Touching it
+// costs a life.
+export const RISE_PER_FRAME_PX = 2
+export const BOUNCE_ABOVE_FIRST_PX = 32
+const HALF_WIDTH = 0.4
 
 export class BouncingBall extends Entity {
-  private readonly from: { x: number; z: number }
-  private readonly to: { x: number; z: number }
-  private headingOut = true
-  private bounceStep = 0
-  private readonly clock = new StepClock()
+  heightPx: number
+  speedPx = 0
+  private rising = false
+  private readonly startPx: number
+  private readonly topPx: number
+  private readonly clock = new FrameClock()
 
-  constructor(from: { x: number; z: number }, to: { x: number; z: number }) {
+  // `height` is where it starts and `top` how high it rises, both in blocks.
+  constructor(at: { x: number; z: number }, height: number, top: number) {
     super()
     this.categories = [Category.HAZARD]
     this.extents.set(0.8, 0.8, 0.8)
-    this.from = from
-    this.to = to
-    this.position.set(from.x, 0, from.z)
+    this.startPx = Math.round(height * PIXELS_PER_BLOCK)
+    this.topPx = Math.round(top * PIXELS_PER_BLOCK)
+    this.heightPx = this.startPx
+    this.position.set(at.x, height, at.z)
   }
 
   override reset(): void {
-    this.position.set(this.from.x, 0, this.from.z)
-    this.headingOut = true
-    this.bounceStep = 0
+    this.heightPx = this.startPx
+    this.speedPx = 0
+    this.rising = false
+    this.position.y = this.heightPx / PIXELS_PER_BLOCK
   }
 
-  update(_dt: number, _ctx: UpdateContext): void {
+  update(_dt: number, ctx: UpdateContext): void {
     if (!this.clock.tick()) return
-    if (this.atTarget()) this.headingOut = !this.headingOut
-    const target = this.headingOut ? this.to : this.from
-    this.position.x += Math.sign(target.x - this.position.x) * STEP_LENGTH
-    this.position.z += Math.sign(target.z - this.position.z) * STEP_LENGTH
-    this.bounceStep = (this.bounceStep + 1) % BOUNCE_STEPS
-    this.position.y = Math.sin((this.bounceStep / BOUNCE_STEPS) * Math.PI) * BOUNCE_HEIGHT
+    if (this.rising) this.rise()
+    else this.rising = fallOneStep(this, this.groundPx(ctx as GroundCtx))
+    this.position.y = this.heightPx / PIXELS_PER_BLOCK
   }
 
-  private atTarget(): boolean {
-    const target = this.headingOut ? this.to : this.from
-    return target.x === this.position.x && target.z === this.position.z
+  private rise(): void {
+    this.speedPx = RISE_PER_FRAME_PX
+    this.heightPx += RISE_PER_FRAME_PX
+    if (this.heightPx > this.topPx) this.rising = false
+  }
+
+  private groundPx(ctx: GroundCtx): number {
+    const ground = groundUnder(ctx, this.position.x, this.position.z, HALF_WIDTH, this.heightPx / PIXELS_PER_BLOCK)
+    return Math.round(ground * PIXELS_PER_BLOCK)
   }
 }

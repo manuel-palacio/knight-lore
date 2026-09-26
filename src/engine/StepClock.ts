@@ -12,3 +12,19 @@ export class StepClock {
     return this.ticks % TICKS_PER_STEP === 0
   }
 }
+
+// The original's own clock, for everything ripped frame by frame. It moves
+// Sabreman three pixels a frame where he walks two a step here, so one of its
+// frames lasts a step and a half: 7.5 ticks, frames falling on ticks 8, 15,
+// 23, 30 and so on. Each thing keeps the original's pixels per frame, and
+// keeps its pace against Sabreman.
+export const TICKS_PER_FRAME = (TICKS_PER_STEP * 3) / 2
+
+export class FrameClock {
+  private ticks = 0
+
+  tick(): boolean {
+    this.ticks++
+    return Math.floor(this.ticks / TICKS_PER_FRAME) > Math.floor((this.ticks - 1) / TICKS_PER_FRAME)
+  }
+}

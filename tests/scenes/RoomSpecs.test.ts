@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { ROOM_SPECS, START_ROOMS, doorCell, entryFor, oppositeOf, type Cell, type RoomSpec } from '../../src/scenes/rooms/roomSpecs'
 import { CHARMS } from '../../src/game/GameState'
-import { findFloorPath } from '../e2e/support/roomPath'
+import { coveredCells, findFloorPath } from '../e2e/support/roomPath'
 import { pickStartRoom } from '../../src/scenes/rooms/index'
 
 const widthOf = (s: RoomSpec) => s.width ?? 8
@@ -162,19 +162,20 @@ describe('room contents', () => {
     for (const s of ROOM_SPECS) {
       const cells: Cell[] = [
         ...(s.platforms ?? []), ...(s.pushBlocks ?? []), ...(s.spikes ?? []), ...(s.pickups ?? []), ...(s.tables ?? []),
-        ...(s.vanishing ?? []), ...(s.flames ?? []), ...(s.ghosts ?? []), ...(s.spikedBalls ?? []), s.spawn,
+        ...(s.vanishing ?? []), ...(s.fallingBlocks ?? []), ...(s.flames ?? []), ...(s.ghosts ?? []), ...(s.spikedBalls ?? []),
+        ...(s.hoppers ?? []), s.spawn,
         ...(s.movingPlatforms ?? []).flatMap((p) => [p.from, p.to]),
-        ...(s.pathGuards ?? []).flatMap((g) => g.path),
-        ...(s.balls ?? []).flatMap((b) => [b.from, b.to]),
+        ...(s.pathGuards ?? []).flatMap((g) => g.path.flatMap(coveredCells)),
+        ...(s.balls ?? []).flatMap(coveredCells),
         ...(s.portcullises ?? []).flatMap((p) => [p.from, p.to]),
       ]
       for (const c of cells) expect(inRoom(s, c), `${s.id} ${JSON.stringify(c)}`).toBe(true)
     }
   })
 
-  it('moves along one axis, for moving blocks, balls and gates', () => {
+  it('moves along one axis, for moving blocks and gates', () => {
     for (const s of ROOM_SPECS) {
-      for (const p of [...(s.movingPlatforms ?? []), ...(s.balls ?? []), ...(s.portcullises ?? [])]) {
+      for (const p of [...(s.movingPlatforms ?? []), ...(s.portcullises ?? [])]) {
         expect(p.from.x === p.to.x || p.from.z === p.to.z, `${s.id} ${JSON.stringify(p)}`).toBe(true)
       }
     }
@@ -207,7 +208,7 @@ describe('room contents', () => {
 
   it('keeps guard and ball paths off the doorways and the cells beside them, so entering a room is never a death', () => {
     for (const s of ROOM_SPECS) {
-      const points = [...(s.pathGuards ?? []).flatMap((g) => g.path), ...(s.balls ?? []).flatMap((b) => [b.from, b.to])]
+      const points = [...(s.pathGuards ?? []).flatMap((g) => g.path), ...(s.balls ?? []), ...(s.hoppers ?? [])].flatMap(coveredCells)
       for (const p of points) {
         for (const door of doorsOf(s)) expect(beside(p, door.cell), `${s.id} path point ${p.x},${p.z} by the ${door.direction} door`).toBe(false)
       }

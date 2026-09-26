@@ -1,56 +1,63 @@
 import { describe, it, expect } from 'vitest'
-import { BouncingBall, BOUNCE_HEIGHT } from '../../src/game/BouncingBall'
-import { STEP_LENGTH, TICKS_PER_STEP } from '../../src/engine/StepClock'
-import { SIMULATION_DT } from '../../src/engine/GameLoop'
+import { BouncingBall, BOUNCE_ABOVE_FIRST_PX, RISE_PER_FRAME_PX } from '../../src/game/BouncingBall'
+import { ballTop } from '../../src/scenes/rooms/specBuilder'
+import { Grid } from '../../src/engine/Grid'
 import { Category } from '../../src/engine/categories'
+import { runFrames } from './frames'
 
-function run(b: BouncingBall, steps: number): void {
-  for (let i = 0; i < steps * TICKS_PER_STEP; i++) b.update(SIMULATION_DT, {})
+const TILE = 2
+const room = (grid = new Grid(8, 8)) => ({ grid, tileSize: TILE })
+
+// Heights in pixels, one a frame.
+function run(b: BouncingBall, frames: number, ctx = room()): number[] {
+  const heights: number[] = []
+  for (let f = 0; f < frames; f++) {
+    runFrames(b, 1, ctx)
+    heights.push(b.heightPx)
+  }
+  return heights
 }
 
+// The original's ball: handler at 0xB865.
 describe('BouncingBall', () => {
-  it('is a hazard that starts on the floor at its first point', () => {
-    const b = new BouncingBall({ x: 3, z: 5 }, { x: 9, z: 5 })
+  it('is a hazard that bounces where it stands, never moving across the floor', () => {
+    const b = new BouncingBall({ x: 7, z: 8 }, 0, 32 / 12)
     expect(b.hasCategory(Category.HAZARD)).toBe(true)
-    expect(b.position.y).toBe(0)
+    run(b, 100)
+    expect(b.position.x).toBe(7)
+    expect(b.position.z).toBe(8)
   })
 
-  it('travels one step per step tick and reverses at the far end', () => {
-    const b = new BouncingBall({ x: 3, z: 5 }, { x: 5, z: 5 })
-    run(b, 1)
-    expect(b.position.x).toBe(3 + STEP_LENGTH)
-    run(b, 7)
-    expect(b.position.x).toBe(5)
-    run(b, 1)
-    expect(b.position.x).toBe(5 - STEP_LENGTH)
+  it('rises two pixels a frame, stops just past its top, then falls a pixel a frame faster each frame', () => {
+    const b = new BouncingBall({ x: 7, z: 7 }, 0, BOUNCE_ABOVE_FIRST_PX / 12)
+    const heights = run(b, 40)
+    const peak = heights.indexOf(Math.max(...heights))
+    const rises = heights.slice(1, 17).map((h, i) => h - heights[i]!)
+    expect(rises.every((d) => d === RISE_PER_FRAME_PX)).toBe(true)
+    expect(heights[peak]).toBeGreaterThan(32)
+    expect(heights[peak]).toBeLessThanOrEqual(32 + 3)
+    const falls = heights.slice(peak + 1, peak + 5).map((h, i) => heights[peak + i]! - h)
+    expect(falls).toEqual([0, 1, 2, 3])
+    expect(heights).toContain(0)
   })
 
-  it('rises to its bounce height and comes back down every bounce', () => {
-    const b = new BouncingBall({ x: 3, z: 5 }, { x: 9, z: 5 })
-    let peak = 0
-    let landings = 0
-    let wasUp = false
-    for (let i = 0; i < 70; i++) {
-      run(b, 1)
-      peak = Math.max(peak, b.position.y)
-      if (wasUp && b.position.y === 0) landings++
-      wasUp = b.position.y > 0
-    }
-    expect(peak).toBeCloseTo(BOUNCE_HEIGHT, 5)
-    expect(landings).toBeGreaterThanOrEqual(2)
+  it('bounces again once it lands, for good', () => {
+    const b = new BouncingBall({ x: 7, z: 7 }, 0, 32 / 12)
+    const heights = run(b, 120)
+    const landings = heights.filter((h, i) => h === 0 && (heights[i - 1] ?? 0) > 0).length
+    expect(landings).toBeGreaterThanOrEqual(3)
   })
 
-  it('bounces as high as the original ball, 32 pixels (2.67 blocks), rising for about eleven steps', () => {
-    expect(BOUNCE_HEIGHT).toBeCloseTo(32 / 12, 5)
-    const b = new BouncingBall({ x: 3, z: 3 }, { x: 5, z: 3 })
-    let steps = 0
-    let last = -1
-    for (; steps < 40; steps++) {
-      for (let t = 0; t < TICKS_PER_STEP; t++) b.update(1 / 60, {})
-      if (b.position.y < last) break
-      last = b.position.y
-    }
-    expect(steps).toBeGreaterThanOrEqual(10)
-    expect(steps).toBeLessThanOrEqual(12)
+  it('lands on the block under it, not the floor', () => {
+    const grid = new Grid(8, 8)
+    grid.setSupport(3, 3, 1)
+    const b = new BouncingBall({ x: 7, z: 7 }, 1, 1 + 32 / 12)
+    const heights = run(b, 60, room(grid))
+    expect(Math.min(...heights)).toBe(12)
+  })
+
+  it('every ball in a room bounces up to 32 pixels over where the first one started (0xB86E)', () => {
+    const top = ballTop({ id: 't', tint: 'blue', exits: [], spawn: { x: 0, z: 0 }, balls: [{ x: 3, z: 3, height: 1 }, { x: 5, z: 5, height: 0 }] })
+    expect(top).toBeCloseTo(1 + 32 / 12, 5)
   })
 })

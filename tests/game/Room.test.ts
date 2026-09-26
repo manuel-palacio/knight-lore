@@ -4,7 +4,7 @@ import { Pickup } from '../../src/game/Pickup'
 import { PatrolEnemy } from '../../src/game/PatrolEnemy'
 import { MovingPlatform } from '../../src/game/MovingPlatform'
 import { PathGuard } from '../../src/game/PathGuard'
-import { TICKS_PER_STEP } from '../../src/engine/StepClock'
+import { TICKS_PER_FRAME } from '../../src/engine/StepClock'
 import { SIMULATION_DT } from '../../src/engine/GameLoop'
 
 describe('Room', () => {
@@ -30,7 +30,7 @@ describe('Room', () => {
     const guard = new PathGuard([{ x: 3, z: 3 }, { x: 7, z: 3 }, { x: 7, z: 7 }])
     room.add(platform)
     room.add(guard)
-    for (let i = 0; i < TICKS_PER_STEP * 10; i++) room.update(SIMULATION_DT, {})
+    for (let i = 0; i < TICKS_PER_FRAME * 10; i++) room.update(SIMULATION_DT, {})
     expect(platform.position.x).not.toBe(3)
     expect(guard.position.x).not.toBe(3)
     room.reset()

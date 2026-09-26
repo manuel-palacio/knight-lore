@@ -1,45 +1,56 @@
-import * as THREE from 'three'
 import { Entity, type UpdateContext } from './Entity'
 import { Category } from '../engine/categories'
-import type { GameState } from './GameState'
+import { FrameClock } from '../engine/StepClock'
+import { PIXELS_PER_UNIT, fitsAt, type GroundCtx } from './Gravity'
 
-export const GHOST_SPEED = 1.1
-export const WEREWOLF_AGGRESSION = 1.6
+// The original's ghost (the room table's t9, handler at 0xC5C8) hunts
+// nobody. It drifts on a diagonal, three or four pixels a frame on each axis
+// (entries 4-7 of the table at 0xC64E), and whenever a wall or a block stops
+// it on either axis, or it stands still, it picks a new heading at random.
+// Man or wolf, day or night, it is the same; touching it costs a life.
+export const GHOST_SPEEDS_PX = [-3, 3, -4, 4]
 const FLOAT_HEIGHT = 0.8
+const HALF_WIDTH = 0.75
 
-interface GhostCtx extends UpdateContext {
-  state: GameState
-  playerPosition: THREE.Vector3
-}
-
-// Hovers where it was placed while Sabreman is human; once he is the wolf it
-// drifts straight at him through anything, faster than he can walk.
 export class GhostEnemy extends Entity {
+  heading = { x: 0, z: 0 }
   private readonly home: { x: number; z: number }
+  private readonly random: () => number
+  private readonly clock = new FrameClock()
 
-  constructor(x: number, z: number) {
+  constructor(x: number, z: number, random: () => number = Math.random) {
     super()
     this.categories = [Category.HAZARD]
     this.extents.set(0.9, 1.4, 0.9)
     this.home = { x, z }
+    this.random = random
     this.position.set(x, FLOAT_HEIGHT, z)
   }
 
   override reset(): void {
     this.position.set(this.home.x, FLOAT_HEIGHT, this.home.z)
+    this.heading = { x: 0, z: 0 }
   }
 
-  update(dt: number, ctxRaw: UpdateContext): void {
-    const ctx = ctxRaw as GhostCtx
-    if (ctx.state.form !== 'werewolf') return
-    const dx = ctx.playerPosition.x - this.position.x
-    const dz = ctx.playerPosition.z - this.position.z
-    const dist = Math.hypot(dx, dz)
-    if (dist < 1e-3) return
-    const speed = GHOST_SPEED * (ctx.state.form === 'werewolf' ? WEREWOLF_AGGRESSION : 1)
-    const step = Math.min(speed * dt, dist)
-    this.position.x += (dx / dist) * step
-    this.position.z += (dz / dist) * step
-    this.position.y = FLOAT_HEIGHT
+  update(_dt: number, ctxRaw: UpdateContext): void {
+    if (!this.clock.tick()) return
+    const ctx = ctxRaw as GroundCtx
+    const movedX = this.tryMove(ctx, this.heading.x, 0)
+    const movedZ = this.tryMove(ctx, 0, this.heading.z)
+    const still = this.heading.x === 0 && this.heading.z === 0
+    if (still || !movedX || !movedZ) this.heading = { x: this.randomSpeed(), z: this.randomSpeed() }
+  }
+
+  private tryMove(ctx: GroundCtx, dx: number, dz: number): boolean {
+    const x = this.position.x + dx
+    const z = this.position.z + dz
+    if (!fitsAt(ctx, x, z, HALF_WIDTH, 0)) return false
+    this.position.x = x
+    this.position.z = z
+    return true
+  }
+
+  private randomSpeed(): number {
+    return GHOST_SPEEDS_PX[Math.floor(this.random() * GHOST_SPEEDS_PX.length)]! / PIXELS_PER_UNIT
   }
 }

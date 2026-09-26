@@ -41,9 +41,9 @@ npm run build             # tsc + vite build into dist/
 
 - **The cure.** Fourteen charms, the seven kinds each asked for twice, in an order drawn at the start of every game. They lie at the far ends of the castle, none beside the start room or within two rooms of the cauldron. The extra life is taken at once.
 - **Day and night.** A day is 60 seconds and a night 30, forty days in all, about an hour of play. The dial in the HUD shows the sun or the moon, and dusk is signalled five seconds ahead. Changing form is a seizure: Sabreman cannot move for two seconds and drops what he carries.
-- **The wolf.** He cannot carry or deliver charms. Ghosts hunt only him, and at nightfall a spirit rises from the cauldron three seconds after the change, so the cauldron room is no place for him after dark.
-- **Dangers.** Guards walk their loops, balls bounce along their lines, flames and spike beds hold their ground. Spikes hurt the feet: a jump taken from anywhere on the tile before a spike bed clears it. The room south of the start is barred wall to wall by one. Portcullises rise, wait and drop on the original's beat, and crush whoever is under them; two cages and a corridor have them. Speeds come from the original's handlers: guards two pixels a frame, moving blocks one, balls bouncing 32 pixels high.
-- **Climbing.** A charm lying on the floor is something to stand on: put one down with E and jump onto it to reach a block too high to jump to from the floor. Collapsing blocks crumble under Sabreman and stay gone until he comes back into the room.
+- **The wolf.** He cannot carry or deliver charms. Hopping balls head for him (and away from the man), and at nightfall a spirit rises from the cauldron three seconds after the change, so the cauldron room is no place for him after dark.
+- **Dangers.** Monsters move as the original's handlers do. One guard paces along its row and turns back when something stops it; the other walks a rectangle, turning each time it is stopped. Balls bounce where they stand, up to 32 pixels over where the room's first one started. Ghosts drift on diagonals, faster than Sabreman, and take a new heading at random when stopped, by day and by night. Only a room's first spiked ball ever drops, one frame in sixteen (in odd-numbered rooms not before something is picked up or put down there), and it lies where it lands. Flames and spike beds hold their ground. Spikes hurt the feet: a jump taken from anywhere on the tile before a spike bed clears it. The room south of the start is barred wall to wall by one. Portcullises rise, wait and drop on the original's beat, and crush whoever is under them; two cages and a corridor have them. Speeds come from the original's handlers: guards two pixels a frame, moving blocks and falling blocks one, ghosts three or four.
+- **Climbing.** A charm lying on the floor is something to stand on: put one down with E and jump onto it to reach a block too high to jump to from the floor. Collapsing blocks crumble under Sabreman and stay gone until he comes back into the room; falling blocks sink under him a pixel a frame and stay where they stop.
 - **Sound.** The original's three tunes, decoded from its memory: the title tune on the start screen (and again when the last life goes), the start tune when a game begins, the cure tune when it is won. Footsteps go tick, ticky, ticky; everything else is square-wave beeps.
 
 ## How it is built
@@ -91,7 +91,7 @@ reference      local only (git-ignored): recordings, the memory snapshot, frames
 
 ## Status and next steps
 
-The game has been won start to finish by the playthrough bot, on day 25 with every life left. See `NEXT_ISSUES.md` for the worked issue list and `docs/PLAYTEST.md` for what the playtests found. Headline gaps: pushable blocks are not yet pushed the way the original's puzzles need, and ghosts chase the wolf rather than wander as the original's do.
+The game has been won start to finish by the playthrough bot, on day 25 with every life left. See `NEXT_ISSUES.md` for the worked issue list and `docs/PLAYTEST.md` for what the playtests found. Headline gap: pushable blocks are not yet pushed the way the original's puzzles need.
 
 ## Sources
 

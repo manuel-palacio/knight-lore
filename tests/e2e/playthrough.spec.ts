@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test'
 import { ROOM_SPECS, oppositeOf, type RoomSpec } from '../../src/scenes/rooms/roomSpecs'
 import { debug, face, startGame, walkPath, walkUntil, type Cell, type Debug } from './support/game'
-import { doorOf, findFloorPath, patrolledCells } from './support/roomPath'
+import { dangersOf, doorOf, findFloorPath } from './support/roomPath'
 
 // A whole game played with the keyboard alone, on the real day clock: fetch
 // each charm the cauldron asks for, carry it back, wait out the night when
@@ -16,6 +16,9 @@ const MAX_ATTEMPTS_PER_LEG = 4
 // takes three to five seconds to walk, turns included.
 const DAYLIGHT_TO_CROSS = 12
 const DAYLIGHT_TO_DELIVER = 20
+// In a room with ghosts or hopping balls he may first wait for them to be
+// well away (up to eight seconds, see walkPath).
+const DAYLIGHT_TO_WAIT_FOR_WANDERERS = 8
 
 test.skip(!process.env.PLAYTHROUGH, 'set PLAYTHROUGH=1 to play a whole game')
 
@@ -32,8 +35,8 @@ test('the game can be won from the start room with the keyboard', async ({ page 
     if (state.won) break
     expect(state.lives, 'ran out of lives').toBeGreaterThan(0)
     const wanted = state.wanted!
-    if (state.night && hauntedAtNight(state.room)) {
-      await retrying(() => stepToward(page, safeNeighbourOf(state.room)))
+    if (state.night && noPlaceToLinger(state.room)) {
+      await retrying(page, () => stepToward(page, safeNeighbourOf(state.room)))
       continue
     }
     // The wolf can neither carry nor deliver, and jumps higher into what hangs
@@ -44,7 +47,7 @@ test('the game can be won from the start room with the keyboard', async ({ page 
     }
     if (state.carrying === wanted) {
       if (state.room === CAULDRON_ROOM) await deliver(page)
-      else await retrying(() => stepToward(page, CAULDRON_ROOM))
+      else await retrying(page, () => stepToward(page, CAULDRON_ROOM))
       const after = await debug(page)
       if (after.carrying === null && after.delivered === state.delivered) {
         const droppedIn = after.pickups.some((p) => p.id === wanted) ? after.room : state.room
@@ -54,12 +57,12 @@ test('the game can be won from the start room with the keyboard', async ({ page 
     }
     const onFloorHere = state.pickups.find((p) => p.id === wanted)
     if (onFloorHere) {
-      await retrying(() => pickUp(page, onFloorHere))
+      await retrying(page, () => pickUp(page, onFloorHere))
       const rooms = whereabouts.get(wanted)!
       rooms.splice(rooms.indexOf(state.room), 1)
       continue
     }
-    await retrying(() => stepToward(page, nearest(state.room, cellOf(state), whereabouts.get(wanted)!)))
+    await retrying(page, () => stepToward(page, nearest(state.room, cellOf(state), whereabouts.get(wanted)!)))
   }
 
   const end = await debug(page)
@@ -67,11 +70,13 @@ test('the game can be won from the start room with the keyboard', async ({ page 
   expect(end.won).toBe(true)
 })
 
-async function retrying(leg: () => Promise<void>): Promise<void> {
+async function retrying(page: Page, leg: () => Promise<void>): Promise<void> {
   for (let attempt = 1; ; attempt++) {
     try {
       return await leg()
     } catch (err) {
+      const s = await debug(page)
+      console.log(`attempt ${attempt} failed in ${s.room} at ${s.pos.x},${s.pos.y},${s.pos.z} facing ${s.facing}, ${s.state}, ${s.form}, timer ${s.timer.toFixed(1)}: ${String(err).split('\n')[0]}`)
       if (attempt >= MAX_ATTEMPTS_PER_LEG) throw err
     }
   }
@@ -80,18 +85,19 @@ async function retrying(leg: () => Promise<void>): Promise<void> {
 async function stepToward(page: Page, goal: string): Promise<void> {
   const state = await debug(page)
   let exit = nextExit(state.room, cellOf(state), goal)
-  // Ghosts, and the spirit in the cauldron, hunt only the wolf: at night he
-  // waits for the morning outside their rooms, never in one.
-  if (state.night && hauntedAtNight(exit.target)) {
-    if (hauntedAtNight(state.room)) exit = nextExit(state.room, cellOf(state), safeNeighbourOf(state.room))
+  // The spirit rises out of the cauldron at night, and ghosts and hopping
+  // balls wander day and night: the wolf waits for the morning outside
+  // their rooms, never in one.
+  if (state.night && noPlaceToLinger(exit.target)) {
+    if (noPlaceToLinger(state.room)) exit = nextExit(state.room, cellOf(state), safeNeighbourOf(state.room))
     else await waitForDaylight(page)
   } else if (!state.night && state.timer < daylightNeededIn(exit.target)) {
     // Never set off into a room with dusk near: the wolf is caught half-way.
-    if (hauntedAtNight(state.room)) exit = nextExit(state.room, cellOf(state), safeNeighbourOf(state.room))
+    if (noPlaceToLinger(state.room)) exit = nextExit(state.room, cellOf(state), safeNeighbourOf(state.room))
     else await waitForNextMorning(page)
   }
   const spec = specOf(state.room)
-  await walkPath(page, findFloorPath(spec, cellOf(state), doorOf(spec, exit.direction)), patrolledCells(spec))
+  await walkPath(page, findFloorPath(spec, cellOf(state), doorOf(spec, exit.direction)), dangersOf(spec))
   await face(page, exit.direction)
   await walkUntil(page, (s) => s.room === exit.target)
 }
@@ -101,7 +107,7 @@ async function stepToward(page: Page, goal: string): Promise<void> {
 async function nightfallStopsErrand(page: Page): Promise<boolean> {
   const state = await debug(page)
   if (!state.night) return false
-  if (hauntedAtNight(state.room)) return true
+  if (noPlaceToLinger(state.room)) return true
   await waitForDaylight(page)
   return false
 }
@@ -110,7 +116,7 @@ async function pickUp(page: Page, charm: { id: string; x: number; z: number }): 
   if (await nightfallStopsErrand(page)) return
   const state = await debug(page)
   const target = { x: Math.floor(charm.x / 2), z: Math.floor(charm.z / 2) }
-  await walkPath(page, findFloorPath(specOf(state.room), cellOf(state), target), patrolledCells(specOf(state.room)))
+  await walkPath(page, findFloorPath(specOf(state.room), cellOf(state), target), dangersOf(specOf(state.room)))
   if (await nightfallStopsErrand(page)) return
   await page.keyboard.press('KeyE')
   await expect.poll(async () => (await debug(page)).carrying).toBe(charm.id)
@@ -119,7 +125,7 @@ async function pickUp(page: Page, charm: { id: string; x: number; z: number }): 
 async function deliver(page: Page): Promise<void> {
   const state = await debug(page)
   const cauldron = state.cauldron!
-  await walkPath(page, findFloorPath(specOf(state.room), cellOf(state), BESIDE_CAULDRON), patrolledCells(specOf(state.room)))
+  await walkPath(page, findFloorPath(specOf(state.room), cellOf(state), BESIDE_CAULDRON), dangersOf(specOf(state.room)))
   await face(page, 'north')
   await walkUntil(page, (s) => s.pos.z <= cauldron.z + DELIVERY_REACH)
   if (await nightfallStopsErrand(page)) return
@@ -152,16 +158,16 @@ function specOf(id: string): RoomSpec {
 }
 
 function daylightNeededIn(roomId: string): number {
-  return roomId === CAULDRON_ROOM ? DAYLIGHT_TO_DELIVER : DAYLIGHT_TO_CROSS
+  const crossing = roomId === CAULDRON_ROOM ? DAYLIGHT_TO_DELIVER : DAYLIGHT_TO_CROSS
+  return crossing + (wandered(roomId) ? DAYLIGHT_TO_WAIT_FOR_WANDERERS : 0)
 }
 
-function hauntedAtNight(roomId: string): boolean {
-  const spec = specOf(roomId)
-  return Boolean(spec.cauldron) || (spec.ghosts?.length ?? 0) > 0
+function noPlaceToLinger(roomId: string): boolean {
+  return Boolean(specOf(roomId).cauldron) || wandered(roomId)
 }
 
 function safeNeighbourOf(roomId: string): string {
-  const safe = specOf(roomId).exits.find((e) => !hauntedAtNight(e.target))
+  const safe = specOf(roomId).exits.find((e) => !noPlaceToLinger(e.target))
   return (safe ?? specOf(roomId).exits[0]!).target
 }
 
@@ -201,30 +207,42 @@ interface Leg {
   rooms: number
 }
 
+// Ghosts and hopping balls may cost a life whenever their room is crossed:
+// one counts as this many rooms of walking, so a short way round is taken.
+const WANDERED_ROOM_COST = 4
+
+// The cheapest way on foot, counting rooms: the first door to take.
 function route(from: string, at: Cell, goal: string): Leg {
   const firstExit = new Map<string, RoomSpec['exits'][number]>()
-  const rooms = new Map<string, number>()
-  const queue: { id: string; entry: Cell }[] = []
-  for (const e of specOf(from).exits) {
-    if (!canWalk(from, at, doorOf(specOf(from), e.direction))) continue
-    const state = arrive(e)
-    firstExit.set(state.key, e)
-    rooms.set(state.key, 1)
+  const cost = new Map<string, number>()
+  const queue: { id: string; entry: Cell; key: string }[] = []
+  const reach = (state: { id: string; entry: Cell; key: string }, exit: RoomSpec['exits'][number], total: number) => {
+    if (cost.has(state.key) && cost.get(state.key)! <= total) return
+    cost.set(state.key, total)
+    firstExit.set(state.key, exit)
     queue.push(state)
   }
+  for (const e of specOf(from).exits) {
+    if (canWalk(from, at, doorOf(specOf(from), e.direction))) reach(arrive(e), e, costOfEntering(e.target))
+  }
   while (queue.length > 0) {
-    const { id, entry, key } = queue.shift() as { id: string; entry: Cell; key: string }
-    if (id === goal) return { exit: firstExit.get(key)!, rooms: rooms.get(key)! }
+    queue.sort((a, b) => cost.get(a.key)! - cost.get(b.key)!)
+    const { id, entry, key } = queue.shift()!
+    if (id === goal) return { exit: firstExit.get(key)!, rooms: cost.get(key)! }
     for (const e of specOf(id).exits) {
-      if (!canWalk(id, entry, doorOf(specOf(id), e.direction))) continue
-      const next = arrive(e)
-      if (firstExit.has(next.key)) continue
-      firstExit.set(next.key, firstExit.get(key)!)
-      rooms.set(next.key, rooms.get(key)! + 1)
-      queue.push(next)
+      if (canWalk(id, entry, doorOf(specOf(id), e.direction))) reach(arrive(e), firstExit.get(key)!, cost.get(key)! + costOfEntering(e.target))
     }
   }
   throw new Error(`no route on foot ${from} -> ${goal}`)
+}
+
+function costOfEntering(roomId: string): number {
+  return wandered(roomId) ? WANDERED_ROOM_COST : 1
+}
+
+function wandered(roomId: string): boolean {
+  const spec = specOf(roomId)
+  return (spec.ghosts?.length ?? 0) + (spec.hoppers?.length ?? 0) > 0
 }
 
 function arrive(e: RoomSpec['exits'][number]): { id: string; entry: Cell; key: string } {

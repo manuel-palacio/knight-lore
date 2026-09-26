@@ -5,7 +5,10 @@ import { MovingPlatform } from '../../game/MovingPlatform'
 import { PathGuard } from '../../game/PathGuard'
 import { Table } from '../../game/Table'
 import { VanishingBlock } from '../../game/VanishingBlock'
-import { BouncingBall } from '../../game/BouncingBall'
+import { BouncingBall, BOUNCE_ABOVE_FIRST_PX } from '../../game/BouncingBall'
+import { HoppingBall } from '../../game/HoppingBall'
+import { FallingBlock } from '../../game/FallingBlock'
+import { PIXELS_PER_BLOCK } from '../../game/Gravity'
 import { Cauldron } from '../../game/Cauldron'
 import { CauldronSpirit } from '../../game/CauldronSpirit'
 import { Wizard } from '../../game/Wizard'
@@ -42,11 +45,14 @@ export function buildRoomFromSpec(spec: RoomSpec, sizeOf: (id: string) => RoomSi
     }
     for (const g of spec.pathGuards ?? []) room.add(new PathGuard(g.path.map(cellCentre)))
     for (const p of spec.portcullises ?? []) room.add(new Portcullis(p.from, p.to, room.tileSize))
-    for (const b of spec.spikedBalls ?? []) room.add(new SpikedBall(b, b.height, b.bobs ?? false, room.tileSize))
+    for (const b of spec.spikedBalls ?? []) room.add(new SpikedBall(b, b.height, room.tileSize, { drops: b.drops, waits: b.waits }))
     for (const b of spec.floatingBlocks ?? []) room.add(new FloatingBlock(b.x, b.z, b.bottom, room.tileSize))
     for (const t of spec.tables ?? []) room.add(new Table(t.x, t.z, t.height, room.tileSize))
     for (const v of spec.vanishing ?? []) room.add(new VanishingBlock(v.x, v.z, v.height, room.tileSize))
-    for (const b of spec.balls ?? []) room.add(new BouncingBall(cellCentre(b.from), cellCentre(b.to)))
+    for (const f of spec.fallingBlocks ?? []) room.add(new FallingBlock(f.x, f.z, f.height, room.tileSize))
+    const bounceTop = ballTop(spec)
+    for (const b of spec.balls ?? []) room.add(new BouncingBall(cellCentre(b), b.height, bounceTop))
+    for (const h of spec.hoppers ?? []) room.add(new HoppingBall(cellCentre(h), h.height, { randomHops: h.randomHops }))
     if (spec.cauldron) {
       const cauldron = new Cauldron()
       cauldron.position.set(tileCenter(spec.cauldron.x), spec.cauldron.height, tileCenter(spec.cauldron.z))
@@ -63,6 +69,12 @@ export function buildRoomFromSpec(spec: RoomSpec, sizeOf: (id: string) => RoomSi
     room.setSpawn(tileCenter(spec.spawn.x), tileCenter(spec.spawn.z))
     return room
   }
+}
+
+// Every ball in a room bounces up to 32 pixels over where the first one started (0xB86E).
+export function ballTop(spec: RoomSpec): number {
+  const first = spec.balls?.[0]
+  return first ? first.height + BOUNCE_ABOVE_FIRST_PX / PIXELS_PER_BLOCK : 0
 }
 
 function cellCentre(cell: { x: number; z: number }): { x: number; z: number } {

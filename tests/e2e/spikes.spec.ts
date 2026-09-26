@@ -4,8 +4,10 @@ import { debug, enterRoom, face, holdDaylight, standAt, startGame, tileCentre, w
 import { doorOf, findFloorPath, isJump, type Step } from './support/roomPath'
 
 // A room of the original barred by a spike row: the way between its first two
-// doors has to jump it. Chosen from the data, the first such room.
-const barred = ROOM_SPECS.filter((s) => !s.puzzle && s.exits.length >= 2).map((spec) => {
+// doors has to jump it. Chosen from the data, the first such room with no
+// ghost or hopping ball wandering in it.
+const wandered = (s: (typeof ROOM_SPECS)[number]) => (s.ghosts?.length ?? 0) + (s.hoppers?.length ?? 0) > 0
+const barred = ROOM_SPECS.filter((s) => !s.puzzle && s.exits.length >= 2 && !wandered(s)).map((spec) => {
   try {
     const path = findFloorPath(spec, doorOf(spec, spec.exits[0]!.direction), doorOf(spec, spec.exits[1]!.direction))
     const at = path.findIndex((c, i) => i > 0 && isJump(path[i - 1]!, c))

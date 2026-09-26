@@ -14,6 +14,7 @@ rooms from the cauldron and away from the start rooms, on the free floor
 cell nearest the middle that can be walked to. Anything the generator has to drop or move is reported.
 
 usage (from the repo root): python3 tools/rip/castle.py"""
+import math
 import os
 import re
 import sys
@@ -42,12 +43,19 @@ BLOCK_TYPES = {0, 3, 4, 11}
 SPIKES, TABLE, GHOST, SPARKLE = 5, 7, 9, 25
 PUSHABLE = {6, 16}
 FLAMES = {10, 20}
+# Guards: 8 walks back and forth along x (handler 0xB73C), 13 round a
+# rectangle (0xB9A5). Balls bounce where they stand (0xB865); 23 hops after
+# Sabreman (0xB5FF).
 GUARDS = {8, 13}
-BALLS = {2: 'x', 12: 'x', 28: 'x', 23: None, 24: None}
+BALLS = {2, 12, 24, 28}
+HOPPER = 23
 MOVERS = {14: 'x', 15: 'z'}
-CRUMBLING = {21, 22}
-SPIKED_BALLS = {18: False, 19: True}
+FALLING, CRUMBLING = 21, 22
+SPIKED_BALLS = {18, 19}
 GATES = {26: 'x', 27: 'z'}
+PIXELS_PER_BLOCK = 12
+# 0xB9D8: the rectangle guard turns -x, +y, +x, -y, each when it is blocked.
+ROUND_TURNS = [(-1, 0), (0, 1), (1, 0), (0, -1)]
 
 warnings = []
 
@@ -114,6 +122,8 @@ class RoomBuild:
 
     def __init__(self, room_id, room, exits):
         self.id = name_of(room_id)
+        # The original holds back some things in odd-numbered rooms (0xD20D).
+        self.odd = bool(room_id & 1)
         self.width, self.depth = size_of(room)
         self.dx = NARROW_FROM if self.width == NARROW else 0
         self.dz = NARROW_FROM if self.depth == NARROW else 0
@@ -174,16 +184,27 @@ class RoomBuild:
             self.put('ghosts', {'x': x, 'z': z})
         elif kind in FLAMES:
             self.put('flames', {'x': x, 'z': z, 'height': level})
-        elif kind in CRUMBLING:
+        elif kind == CRUMBLING:
             self.put('vanishing', {'x': x, 'z': z, 'height': level + 1})
+        elif kind == FALLING:
+            self.put('fallingBlocks', {'x': x, 'z': z, 'height': level + 1})
         elif kind in SPIKED_BALLS:
-            self.put('spikedBalls', {'x': x, 'z': z, 'height': level, **({'bobs': True} if SPIKED_BALLS[kind] else {})})
+            # Every spiked ball rolls the same random byte each frame, in table
+            # order, and one that has landed takes the turn again (0xB7A9):
+            # only the room's first ever drops.
+            height = level + obj['placement']['lift'] // PIXELS_PER_BLOCK
+            if 'spikedBalls' in self.fields:
+                self.put('spikedBalls', {'x': x, 'z': z, 'height': height})
+            else:
+                self.put('spikedBalls', {'x': x, 'z': z, 'height': height, 'drops': True, **({'waits': True} if self.odd else {})})
         elif kind in GATES:
             self.put('_gates', (x, z, GATES[kind]))
         elif kind in GUARDS:
-            self.put('_guards', (x, z))
+            self.put('_guards', (x, z, kind, obj['placement']['half_y']))
         elif kind in BALLS:
-            self.put('_balls', (x, z, BALLS[kind]))
+            self.put('_balls', (x, z, level, obj['placement']))
+        elif kind == HOPPER:
+            self.put('_hoppers', (x, z, level))
         elif kind in MOVERS:
             self.put('_movers', (x, z, level, MOVERS[kind]))
         else:
@@ -199,18 +220,19 @@ class RoomBuild:
             else:
                 span = (0, self.depth - 1) if self.depth == NARROW else (z, min(z + 1, self.depth - 1))
                 self.put('portcullises', {'from': {'x': x, 'z': span[0]}, 'to': {'x': x, 'z': span[1]}})
-        for x, z in self.fields.pop('_guards', []):
+        for x, z, kind, half in self.fields.pop('_guards', []):
             x, z = self.inward(x, z)
-            line = self.free_line(x, z, 'x') or self.free_line(x, z, 'z')
-            if line:
-                self.put('pathGuards', {'path': [{'x': a, 'z': b} for a, b in line]})
+            route = self.guard_route(kind, x, z, half)
+            if len(route) > 1:
+                self.put('pathGuards', {'path': [{'x': a, 'z': b + (0.5 if half else 0)} for a, b in route]})
             else:
                 warn(f'{self.id}: guard at ({x},{z}) has nowhere to walk, dropped')
-        for x, z, axis in self.fields.pop('_balls', []):
+        for x, z, level, placement in self.fields.pop('_balls', []):
             x, z = self.inward(x, z)
-            line = self.free_line(x, z, axis) if axis else None
-            ends = line or [(x, z), (x, z)]
-            self.put('balls', {'from': {'x': ends[0][0], 'z': ends[0][1]}, 'to': {'x': ends[1][0], 'z': ends[1][1]}})
+            self.put('balls', {'x': x + 0.5 if placement['half_x'] else x, 'z': z + 0.5 if placement['half_y'] else z, 'height': level})
+        for x, z, level in self.fields.pop('_hoppers', []):
+            x, z = self.inward(x, z)
+            self.put('hoppers', {'x': x, 'z': z, 'height': level, **({'randomHops': True} if self.odd else {})})
         for x, z, level, axis in self.fields.pop('_movers', []):
             line = self.free_line(x, z, axis)
             if line:
@@ -219,6 +241,38 @@ class RoomBuild:
                 self.columns[(x, z)] = max(self.columns.get((x, z), 0), level + 1)
                 warn(f'{self.id}: moving block at ({x},{z}) has nowhere to move, kept as a block')
         self.fields['platforms'] = [{'x': x, 'z': z, 'height': h} for (x, z), h in sorted(self.columns.items())]
+
+    def guard_route(self, kind, x, z, half):
+        """The corners a guard turns at, walking as its handler does: 8 along x,
+        first towards -x, back whenever it is blocked; 13 round the turns of
+        ROUND_TURNS. The loop it settles into, from where it starts."""
+        if kind == 8:
+            low = self.walk_until_blocked((x, z), (-1, 0), half)
+            high = self.walk_until_blocked(low, (1, 0), half)
+            return distinct_corners([(x, z), low, high])
+        corners, seen, at, turn = [], {}, (x, z), 0
+        while (at, turn) not in seen:
+            seen[(at, turn)] = len(corners)
+            corners.append(at)
+            at = self.walk_until_blocked(at, ROUND_TURNS[turn], half)
+            turn = (turn + 1) % 4
+        loop_start = seen[(at, turn)]
+        if corners[loop_start] != (x, z):
+            warn(f'{self.id}: guard at ({x},{z}) starts at {corners[loop_start]}, where its loop begins')
+        return distinct_corners(corners[loop_start:])
+
+    def walk_until_blocked(self, at, step, half):
+        x, z = at
+        while self.guard_fits(x + step[0], z + step[1], half):
+            x, z = x + step[0], z + step[1]
+        return x, z
+
+    def guard_fits(self, x, z, half):
+        """A guard on a half cell (half) straddles this row and the next."""
+        solid = {(p['x'], p['z']) for f in ('pushBlocks', 'tables') for p in self.fields.get(f, [])}
+        rows = (z, z + 1) if half else (z,)
+        return all(0 <= x < self.width and 0 <= r < self.depth and not self.blocked(x, r) and (x, r) not in solid
+                   and not self.near_door(x, r) for r in rows)
 
     def clear_of_doors(self, ghost):
         x, z = self.inward(ghost['x'], ghost['z'], 'ghost')
@@ -264,7 +318,7 @@ class RoomBuild:
 
     def free_cells(self):
         taken = set(self.columns) | self.doors
-        for field in ('spikes', 'pushBlocks', 'tables', 'flames', 'vanishing', 'ghosts', 'spikedBalls'):
+        for field in ('spikes', 'pushBlocks', 'tables', 'flames', 'vanishing', 'fallingBlocks', 'ghosts', 'spikedBalls', 'hoppers'):
             taken |= {(c['x'], c['z']) for c in self.fields.get(field, [])}
         for gate in self.fields.get('portcullises', []):
             taken |= set(cells_between(gate['from'], gate['to']))
@@ -273,7 +327,7 @@ class RoomBuild:
             for a, b in zip(path, path[1:] + path[:1]):
                 taken |= set(cells_between(a, b))
         for ball in self.fields.get('balls', []):
-            taken |= set(cells_between(ball['from'], ball['to']))
+            taken |= set(covered_cells(ball))
         cx, cz = (self.width - 1) / 2, (self.depth - 1) / 2
         cells = [(x, z) for x in range(self.width) for z in range(self.depth) if (x, z) not in taken and not self.near_door(x, z)]
         return sorted(cells, key=lambda c: (abs(c[0] - cx) + abs(c[1] - cz), c))
@@ -288,14 +342,33 @@ class RoomBuild:
 GHOST_LIKE = {GHOST} | set(SPIKED_BALLS) | FLAMES
 
 
+def distinct_corners(corners):
+    """Drops a corner the walk did not move from, and a last one back where it started."""
+    out = []
+    for c in corners:
+        if not out or out[-1] != c:
+            out.append(c)
+    while len(out) > 1 and out[-1] == out[0]:
+        out.pop()
+    return out
+
+
+def covered_cells(point):
+    """The cells under something standing on a cell, or on the line between two."""
+    xs = {math.floor(point['x']), math.ceil(point['x'])}
+    zs = {math.floor(point['z']), math.ceil(point['z'])}
+    return [(x, z) for x in sorted(xs) for z in sorted(zs)]
+
+
 def cells_between(a, b):
+    """Every cell from a to b, stepping one cell at a time, both cells of a half-cell line."""
     x, z = a['x'], a['z']
-    out = [(x, z)]
+    out = covered_cells({'x': x, 'z': z})
     while (x, z) != (b['x'], b['z']):
         x += (b['x'] > x) - (b['x'] < x)
         z += (b['z'] > z) - (b['z'] < z)
-        out.append((x, z))
-    return out
+        out += covered_cells({'x': x, 'z': z})
+    return list(dict.fromkeys(out))
 
 
 CLIMB, HEADROOM = 1, 2
@@ -317,7 +390,7 @@ class Walkable:
         self.hanging, self.floor_blocked, self.floor_spikes, self.hazards = {}, set(), set(), {}
         for b in f.get('floatingBlocks', []):
             self.hanging.setdefault((b['x'], b['z']), []).append(b['bottom'])
-        for v in f.get('vanishing', []):
+        for v in f.get('vanishing', []) + f.get('fallingBlocks', []):
             self.hanging.setdefault((v['x'], v['z']), []).append(v['height'] - 1)
         for t in f.get('tables', []):
             self.floor_blocked.add((t['x'], t['z']))
@@ -332,7 +405,14 @@ class Walkable:
         for fl in f.get('flames', []):
             self.hazards.setdefault((fl['x'], fl['z']), []).append(fl['height'])
         for b in f.get('spikedBalls', []):
-            self.hazards.setdefault((b['x'], b['z']), []).append(b['height'])
+            # The one that drops lets go in the end, and lies where it lands.
+            cell = (b['x'], b['z'])
+            self.hazards.setdefault(cell, []).append(self.ground_under(cell, b['height']) if b.get('drops') else b['height'])
+
+    def ground_under(self, cell, height):
+        """What something falling from a height in this cell comes to rest on."""
+        tops = [self.columns.get(cell, 0)] + [b + 1 for b in self.hanging.get(cell, []) if b + 1 <= height]
+        return max(tops)
 
     def standings(self, c):
         column = self.columns.get(c)
@@ -460,8 +540,8 @@ def ts_value(value):
     return str(value)
 
 
-FIELD_ORDER = ['platforms', 'floatingBlocks', 'spikes', 'pushBlocks', 'tables', 'vanishing', 'movingPlatforms', 'portcullises',
-               'pathGuards', 'balls', 'ghosts', 'spikedBalls', 'flames', 'pickups']
+FIELD_ORDER = ['platforms', 'floatingBlocks', 'spikes', 'pushBlocks', 'tables', 'vanishing', 'fallingBlocks', 'movingPlatforms', 'portcullises',
+               'pathGuards', 'balls', 'hoppers', 'ghosts', 'spikedBalls', 'flames', 'pickups']
 
 
 def spec_text(room_id, build):

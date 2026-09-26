@@ -1,15 +1,22 @@
 import { describe, it, expect } from 'vitest'
 import type { RoomSpec } from '../../src/scenes/rooms/roomSpecs'
-import { findFloorPath, patrolledCells } from '../e2e/support/roomPath'
+import { findFloorPath, guardedEdges, patrolledCells } from '../e2e/support/roomPath'
 
 const room = (extra: Partial<RoomSpec>): RoomSpec => ({
   id: 'test', tint: 'blue', exits: [], spawn: { x: 4, z: 1 }, ...extra,
 })
 
 describe('patrolledCells', () => {
-  it('covers every cell of a ball line, both ends included', () => {
-    const cells = patrolledCells(room({ balls: [{ from: { x: 1, z: 2 }, to: { x: 4, z: 2 } }] }))
-    expect([...cells].sort()).toEqual(['1,2', '2,2', '3,2', '4,2'])
+  it('covers the cell a ball bounces on, and both cells of one half a cell over', () => {
+    expect([...patrolledCells(room({ balls: [{ x: 1, z: 2, height: 0 }] }))]).toEqual(['1,2'])
+    const cells = patrolledCells(room({ balls: [{ x: 1.5, z: 2.5, height: 0 }] }))
+    expect([...cells].sort()).toEqual(['1,2', '1,3', '2,2', '2,3'])
+  })
+
+  it('leaves both rows of a guard walking between them to the walker, and guards the steps across its line', () => {
+    const spec = room({ pathGuards: [{ path: [{ x: 1, z: 2.5 }, { x: 3, z: 2.5 }] }] })
+    expect([...patrolledCells(spec)]).toEqual([])
+    expect([...guardedEdges(spec)].sort()).toEqual(['1,2|1,3', '2,2|2,3', '3,2|3,3'])
   })
 
   it('covers every leg of a guard loop, the closing leg too', () => {
@@ -19,8 +26,8 @@ describe('patrolledCells', () => {
 })
 
 describe('findFloorPath', () => {
-  it('walks round a ball line when a clear lane exists', () => {
-    const spec = room({ balls: [{ from: { x: 3, z: 2 }, to: { x: 3, z: 6 } }] })
+  it('walks round a guard line when a clear lane exists', () => {
+    const spec = room({ pathGuards: [{ path: [{ x: 3, z: 2 }, { x: 3, z: 6 }] }] })
     const path = findFloorPath(spec, { x: 0, z: 4 }, { x: 7, z: 4 })
     const crossed = path.filter((c) => c.x === 3 && c.z >= 2 && c.z <= 6)
     expect(crossed).toEqual([])
@@ -28,13 +35,13 @@ describe('findFloorPath', () => {
   })
 
   it('crosses a line when there is no other way', () => {
-    const spec = room({ balls: [{ from: { x: 3, z: 0 }, to: { x: 3, z: 7 } }] })
+    const spec = room({ pathGuards: [{ path: [{ x: 3, z: 0 }, { x: 3, z: 7 }] }] })
     const path = findFloorPath(spec, { x: 0, z: 4 }, { x: 7, z: 4 })
     expect(path).toHaveLength(8)
   })
 
   it('may start or end on a line', () => {
-    const spec = room({ balls: [{ from: { x: 1, z: 1 }, to: { x: 6, z: 1 } }] })
+    const spec = room({ pathGuards: [{ path: [{ x: 1, z: 1 }, { x: 6, z: 1 }] }] })
     expect(findFloorPath(spec, { x: 4, z: 1 }, { x: 4, z: 3 })).toEqual([{ x: 4, z: 1, y: 0 }, { x: 4, z: 2, y: 0 }, { x: 4, z: 3, y: 0 }])
   })
 })
@@ -70,6 +77,12 @@ describe('findFloorPath round portcullises', () => {
     const cage = room({ portcullises: [{ from: { x: 3, z: 2 }, to: { x: 4, z: 2 } }, { from: { x: 3, z: 5 }, to: { x: 4, z: 5 } }] })
     const path = findFloorPath(cage, { x: 4, z: 0 }, { x: 4, z: 7 })
     expect(path.some((c) => ['3,2', '4,2', '3,5', '4,5'].includes(key(c)))).toBe(false)
+  })
+
+  it('crosses a grille straight through, never walking along under it', () => {
+    const gate = room({ portcullises: [{ from: { x: 5, z: 0 }, to: { x: 5, z: 7 } }] })
+    const path = findFloorPath(gate, { x: 7, z: 5 }, { x: 3, z: 1 })
+    expect(path.filter((c) => c.x === 5)).toHaveLength(1)
   })
 
   it('goes through a gate that spans the room, since there is no other way', () => {
@@ -109,5 +122,37 @@ describe('findFloorPath: jumps into danger', () => {
   it('does not jump a spike row with spikes hanging above it too', () => {
     const trap = room({ spikes: [0, 1, 2, 3, 4, 5, 6, 7].flatMap((x) => [{ x, z: 4 }, { x, z: 4, height: 1 }]) })
     expect(() => findFloorPath(trap, { x: 4, z: 0 }, { x: 4, z: 7 })).toThrow()
+  })
+})
+
+describe('findFloorPath past a guard walking between two rows', () => {
+  it('goes round by the row it is on rather than cross the guard\'s line', () => {
+    const spec = room({ pathGuards: [{ path: [{ x: 3, z: 1.5 }, { x: 5, z: 1.5 }] }] })
+    const path = findFloorPath(spec, { x: 7, z: 1 }, { x: 4, z: 0 })
+    expect(path.some((c) => c.z >= 2)).toBe(false)
+  })
+})
+
+describe('findFloorPath past a moving block', () => {
+  it('keeps off its track when there is a way round, since the block may stand in the way', () => {
+    const spec = room({ width: 4, movingPlatforms: [{ from: { x: 2, z: 2 }, to: { x: 2, z: 4 }, height: 1 }] })
+    const path = findFloorPath(spec, { x: 2, z: 7 }, { x: 2, z: 0 })
+    expect(path.some((c) => c.x === 2 && c.z >= 2 && c.z <= 4)).toBe(false)
+  })
+})
+
+describe('findFloorPath past spiked balls and falling blocks', () => {
+  const row = (first: { drops?: boolean }) => [0, 1, 2, 3, 4, 5, 6, 7].map((x) => ({ x, z: 4, height: 6, ...(x === 0 ? first : {}) }))
+
+  it('walks under hanging spiked balls, but not where the room\'s dropper will lie', () => {
+    const spec = room({ spikedBalls: row({ drops: true }) })
+    const path = findFloorPath(spec, { x: 0, z: 0 }, { x: 0, z: 7 })
+    expect(path.some((c) => c.x === 0 && c.z === 4)).toBe(false)
+    expect(path.some((c) => c.z === 4 && c.y === 0)).toBe(true)
+  })
+
+  it('stands on a falling block at its height, as on a collapsing one', () => {
+    const wall = room({ depth: 4, platforms: [{ x: 4, z: 0, height: 4 }, { x: 4, z: 2, height: 4 }, { x: 4, z: 3, height: 4 }], fallingBlocks: [{ x: 4, z: 1, height: 1 }] })
+    expect(findFloorPath(wall, { x: 7, z: 1 }, { x: 0, z: 1 })).toContainEqual({ x: 4, z: 1, y: 1 })
   })
 })

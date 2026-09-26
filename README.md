@@ -2,7 +2,9 @@
 
 A faithful browser remake of Ultimate Play the Game's *Knight Lore* (ZX Spectrum, 1984), the Filmation isometric adventure. TypeScript, a 2D canvas, no engine.
 
-Sabreman is cursed to become a werewolf at night. Melkhior's cauldron asks for charms one at a time; fetch each from the castle and drop it in before forty days pass. Some monsters only go for the wolf. The wolf jumps higher than the man.
+Sabreman is cursed to become a werewolf at night. Melkhior's cauldron asks for fourteen charms one at a time; fetch each from the castle and drop it in before forty days pass. Some monsters only go for the wolf. The wolf jumps higher than the man.
+
+Play it at https://knight-lore.fly.dev.
 
 ## Run it
 
@@ -11,7 +13,7 @@ npm install
 npm run dev
 ```
 
-Open the URL Vite prints. Any key starts; C continues a saved game.
+Open the URL Vite prints. Any key starts; C continues a saved game. The title screen plays the original's title tune; where the browser holds sound back until the page is clicked, it says so, and a click gives it sound.
 
 | Key | Action |
 |---|---|
@@ -20,16 +22,26 @@ Open the URL Vite prints. Any key starts; C continues a saved game.
 | Space | Jump, straight up when standing, forward when walking |
 | E | Pick up, deliver to the cauldron, or pull the nearest block |
 | P | Pause |
+| M | Sound on / off |
 | R | Restart after game over |
 
 A gamepad works too: d-pad turns and walks, A jumps, B acts, Start pauses.
 
 ```
-npm test          # vitest
-npm run test:e2e  # playwright against the dev server
+npm test                  # vitest
+npm run test:e2e          # playwright against the dev server
+npm run test:playthrough  # a whole game won with the keyboard, about 40 minutes
 npm run lint
-npm run build     # tsc + vite build into dist/
+npm run build             # tsc + vite build into dist/
 ```
+
+## The game
+
+- **The cure.** Fourteen charms, the seven kinds each asked for twice, in an order drawn at the start of every game. They lie at the far ends of the castle, none beside the start room or within two rooms of the cauldron. The extra life is taken at once.
+- **Day and night.** A day is 60 seconds and a night 30, forty days in all, about an hour of play. The dial in the HUD shows the sun or the moon, and dusk is signalled five seconds ahead. Changing form is a seizure: Sabreman cannot move for two seconds and drops what he carries.
+- **The wolf.** He cannot carry or deliver charms. Ghosts hunt only him, and at nightfall a spirit rises from the cauldron three seconds after the change, so the cauldron room is no place for him after dark.
+- **Dangers.** Guards walk their loops, balls bounce along their lines, flames and spike beds hold their ground. Spikes hurt the feet: a jump taken from anywhere on the tile before a spike bed clears it. The room south of the start is barred wall to wall by one.
+- **Sound.** The original's three tunes, decoded from its memory: the title tune on the start screen (and again when the last life goes), the start tune when a game begins, the cure tune when it is won. Footsteps go tick, ticky, ticky; everything else is square-wave beeps.
 
 ## How it is built
 
@@ -40,12 +52,19 @@ npm run build     # tsc + vite build into dist/
 **Assets.** Sprites come from three sources, all in `public/sprites`:
 
 - `rip/` holds 99 sprites decoded from the game's own memory: format is a two-byte header (width in bytes, height) followed by rows of mask and pixel byte pairs, stored bottom-up, with animation pointer tables at 0x7140. `rip/index.json` records the addresses. Ghost, ball, cauldron, spikes, flame, and the charms are drawn from these.
-- Sabreman, the wolf, and the guard are full-body strips lifted from gameplay footage by background subtraction, with a computed mask. The rip's character frames are torsos only; the original draws legs separately and those sprites are not yet located.
-- `map.png` at the repo root is the complete original map. Rooms are read from it by detectors: arches vote each room's corner and doors, block top faces are snapped to the lattice with their heights, spike beds are found by tooth density, and white and red sprites are classified into charms and monsters. See `docs/MAP.md`.
+- Sabreman and the wolf are full-body strips lifted from gameplay footage by background subtraction, with a computed mask. The rip's character frames are upper bodies; the original draws the legs as separate four-frame strips (0x922e and 0x93b6 for the man, 0xa0b4 and 0xa23c for the wolf, filed in `rip/` as `creature1-*` and `creature2-*`), and the offset that joins the two is not measured yet.
+- The guard is the rip's hood over the man's legs, 16 px down, measured against the guards on the map (`tools/rip/guards.py`).
+- `map.png` at the repo root is the complete original map. Rooms are read from it by the tools in `tools/map`, checked room by room against a magnified crop, and generated into the room specs. See `docs/MAP.md`.
 
-**Rooms.** All rooms are data in `src/scenes/rooms/roomSpecs.ts`, built by `specBuilder.ts`. Fields: platforms, push blocks, spikes, guards, path guards, ghosts, balls, tables, vanishing blocks, moving platforms, flames, pickups, the cauldron and wizard. Tests enforce that every door leads somewhere and back, doorways and spawns stay clear, and every charm is placed once.
+`tools/rip` loads the memory snapshot (`z80.py`), decodes its sprites (`sprite.py`), composes the guard strips, and extracts the tunes into `src/engine/tunes.ts` (`music.py`): the beeper player at 0xB2C5 reads a byte per note, six bits of pitch from the table at 0xB332 and two of length.
 
-**Persistence.** The run is saved to `localStorage` on every room change.
+**Rooms.** 62 connected rooms, all data in `src/scenes/rooms/roomSpecs.ts`, built by `specBuilder.ts`. Fields: platforms, push blocks, spikes, guards, path guards, ghosts, balls, tables, vanishing blocks, moving platforms, flames, pickups, the cauldron and wizard. Tests enforce that every door leads somewhere and back; doorways, spawns and the cells beside doors stay clear of spikes, ghosts and patrols; every room leaves a lane clear of guards and balls between its doors and its charm; and the charms are placed as the cure needs.
+
+**Persistence.** The run is saved to `localStorage` on every room change. A continued game remembers which rooms' charms were delivered and whether the extra life was taken. Saves from older versions of the cure are refused rather than continued.
+
+**Tests.** Vitest covers the simulation and the room data. Playwright drives the dev build through window hooks (`__dbg`, `__room`, `__pos`, `__timer`) and the real keyboard: it walks every room from its first door to every other door and to its charm, jumping spike rows where it must, and a bot plays a whole game on the real clock (`tests/e2e/playthrough.spec.ts`), keeping the wolf out of haunted rooms at night.
+
+**Deploy.** Pushing `main` deploys to Fly.io: the `Dockerfile` builds the game and serves `dist/` with nginx (`nginx.conf`, `fly.toml`). CI runs lint, the unit tests and the build on every push.
 
 ## Layout
 
@@ -55,13 +74,14 @@ src/game       entities (player, guards, ghosts, platforms, ...), game state, HU
 src/scenes     room specs and the spec builder
 public/sprites sprite strips, ripped originals under rip/, charms under items/
 tests          vitest suites mirroring src; tests/e2e holds the playwright specs
-docs           map, gameplay notes, physics notes
+tools          map readers (tools/map) and memory-snapshot rippers (tools/rip), Python
+docs           map, gameplay notes, physics notes, playtest log
 reference      local only (git-ignored): recordings, the memory snapshot, frames used for extraction
 ```
 
 ## Status and next steps
 
-See `NEXT_ISSUES.md` for the worked issue list and what is open. Headline gaps: the castle reachable from the start room is 30 rooms of the original's 128, mapped rooms are approximate where the detectors missed an arch style, the cauldron asks for 8 charms rather than 14, and the leg sprites for the ripped character frames are still to be found.
+The game has been won start to finish by the playthrough bot, on day 25 with every life left. See `NEXT_ISSUES.md` for the worked issue list and `docs/PLAYTEST.md` for what the playtests found. Headline gaps: the castle is 62 rooms of the original's 128 (the garden rooms, whose doors are gaps in hedges, and the groups beyond them are not read yet); Sabreman and the wolf still use the footage strips until the ripped legs are joined to their upper bodies; portcullis gates and enemy speeds timed against the original are still to do.
 
 ## Sources
 

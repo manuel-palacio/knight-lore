@@ -36,6 +36,12 @@ test('the game can be won from the start room with the keyboard', async ({ page 
       await retrying(() => stepToward(page, safeNeighbourOf(state.room)))
       continue
     }
+    // The wolf can neither carry nor deliver, and jumps higher into what hangs
+    // above: at night he waits for the morning where he is.
+    if (state.form === 'werewolf') {
+      await waitForDaylight(page)
+      continue
+    }
     if (state.carrying === wanted) {
       if (state.room === CAULDRON_ROOM) await deliver(page)
       else await retrying(() => stepToward(page, CAULDRON_ROOM))

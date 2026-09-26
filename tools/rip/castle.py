@@ -236,7 +236,13 @@ class RoomBuild:
         return x, z
 
     def blocked(self, x, z):
-        return (x, z) in self.columns or any(s['x'] == x and s['z'] == z and not s.get('height') for s in self.fields.get('spikes', []))
+        """Blocks, floor spikes and grilles stop a guard or a ball: a guard in a
+        cage walks between its grilles."""
+        gates = set()
+        for gate in self.fields.get('portcullises', []):
+            gates |= set(cells_between(gate['from'], gate['to']))
+        floor_spike = any(s['x'] == x and s['z'] == z and not s.get('height') for s in self.fields.get('spikes', []))
+        return (x, z) in self.columns or (x, z) in gates or floor_spike
 
     def near_door(self, x, z):
         return any(abs(x - dx) <= 1 and abs(z - dz) <= 1 for dx, dz in self.doors)

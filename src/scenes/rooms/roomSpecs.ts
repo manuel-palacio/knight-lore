@@ -680,7 +680,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     platforms: [{ x: 2, z: 0, height: 2 }, { x: 2, z: 3, height: 2 }, { x: 5, z: 0, height: 2 }, { x: 5, z: 3, height: 2 }],
     spikes: [{ x: 2, z: 3, height: 2 }, { x: 5, z: 3, height: 2 }, { x: 2, z: 0, height: 2 }, { x: 5, z: 0, height: 2 }],
     portcullises: [{ from: { x: 2, z: 0 }, to: { x: 2, z: 3 } }, { from: { x: 5, z: 0 }, to: { x: 5, z: 3 } }],
-    pathGuards: [{ path: [{ x: 2, z: 1 }, { x: 5, z: 1 }] }],
+    pathGuards: [{ path: [{ x: 3, z: 1 }, { x: 4, z: 1 }] }],
     pickups: [{ x: 3, z: 2, item: 'poison' }],
   },
   {

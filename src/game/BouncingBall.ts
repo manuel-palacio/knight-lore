@@ -3,9 +3,12 @@ import { Category } from '../engine/categories'
 import { StepClock, STEP_LENGTH } from '../engine/StepClock'
 
 // A ball that bounces along a line between two points, one step per step
-// tick, rising and falling on a fixed period. Touching it costs a life.
-export const BOUNCE_HEIGHT = 1.0
-const BOUNCE_STEPS = 8
+// tick, rising and falling on a fixed period. Touching it costs a life. The
+// original's ball (handler at 0xB865) rises three pixels a frame to 32 pixels
+// above where it started, about eleven frames, and falls back; a block is 12
+// pixels high and one of its frames is one of our steps.
+export const BOUNCE_HEIGHT = 32 / 12
+const BOUNCE_STEPS = 22
 
 export class BouncingBall extends Entity {
   private readonly from: { x: number; z: number }

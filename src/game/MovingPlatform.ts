@@ -1,9 +1,12 @@
 import * as THREE from 'three'
 import { Entity, type UpdateContext } from './Entity'
 import { Category } from '../engine/categories'
-import { StepClock, STEP_LENGTH } from '../engine/StepClock'
+import { StepClock } from '../engine/StepClock'
 
 const FOOTPRINT = 2
+// The original's moving blocks (handlers at 0xB6B1 and 0xB6B9) move one pixel
+// a frame: an eighth of a unit per step.
+export const PLATFORM_STEP = 1 / 8
 const RIDER_TOLERANCE = 0.05
 const TOP_TOLERANCE = 0.5
 
@@ -53,8 +56,8 @@ export class MovingPlatform extends Entity {
     const ctx = ctxRaw as PlatformCtx
     if (this.atTarget()) this.headingOut = !this.headingOut
     const target = this.headingOut ? this.to : this.from
-    const dx = Math.sign(target.x - this.position.x) * STEP_LENGTH
-    const dz = Math.sign(target.z - this.position.z) * STEP_LENGTH
+    const dx = Math.sign(target.x - this.position.x) * PLATFORM_STEP
+    const dz = Math.sign(target.z - this.position.z) * PLATFORM_STEP
     const rider = ctx.playerPosition
     const riding = rider !== undefined && this.supportAt(rider.x, rider.z) !== null && Math.abs(rider.y - this.height) < RIDER_TOLERANCE
     this.position.x += dx

@@ -1,10 +1,14 @@
 import { Entity, type UpdateContext } from './Entity'
 import { Category } from '../engine/categories'
-import { StepClock, STEP_LENGTH } from '../engine/StepClock'
+import { StepClock } from '../engine/StepClock'
 import { facingFromDelta, type Facing } from './Facing'
 
 // A guard marching a fixed loop of waypoints, one step per step tick, like
 // the original's patrols. Touching it costs a life.
+// The original's guard (handler at 0xB73C) walks two pixels a frame; a tile
+// is 16 pixels and 2 units, and one of its frames is one of our steps.
+export const GUARD_STEP = 2 / 8
+
 export class PathGuard extends Entity {
   facing: Facing = 'east'
   stepsTaken = 0
@@ -36,12 +40,12 @@ export class PathGuard extends Entity {
     const dz = target.z - this.position.z
     const dist = Math.hypot(dx, dz)
     this.facing = this.facingToTarget()
-    if (dist <= STEP_LENGTH + 1e-9) {
+    if (dist <= GUARD_STEP + 1e-9) {
       this.position.set(target.x, 0, target.z)
       this.targetIndex = (this.targetIndex + 1) % this.path.length
     } else {
-      this.position.x += (dx / dist) * STEP_LENGTH
-      this.position.z += (dz / dist) * STEP_LENGTH
+      this.position.x += (dx / dist) * GUARD_STEP
+      this.position.z += (dz / dist) * GUARD_STEP
     }
     this.stepsTaken++
   }

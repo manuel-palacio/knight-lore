@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { PathGuard } from '../../src/game/PathGuard'
+import { PathGuard, GUARD_STEP } from '../../src/game/PathGuard'
 import { STEP_LENGTH, TICKS_PER_STEP } from '../../src/engine/StepClock'
 import { SIMULATION_DT } from '../../src/engine/GameLoop'
 import { Category } from '../../src/engine/categories'
@@ -53,5 +53,9 @@ describe('PathGuard', () => {
     const g = guard()
     run(g, TICKS_PER_STEP * 3)
     expect(g.stepsTaken).toBe(3)
+  })
+
+  it('walks at the original guard speed, two pixels a frame: a quarter unit per step', () => {
+    expect(GUARD_STEP).toBe(2 / 8)
   })
 })

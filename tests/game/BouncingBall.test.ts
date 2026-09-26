@@ -30,7 +30,7 @@ describe('BouncingBall', () => {
     let peak = 0
     let landings = 0
     let wasUp = false
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < 70; i++) {
       run(b, 1)
       peak = Math.max(peak, b.position.y)
       if (wasUp && b.position.y === 0) landings++
@@ -38,5 +38,19 @@ describe('BouncingBall', () => {
     }
     expect(peak).toBeCloseTo(BOUNCE_HEIGHT, 5)
     expect(landings).toBeGreaterThanOrEqual(2)
+  })
+
+  it('bounces as high as the original ball, 32 pixels (2.67 blocks), rising for about eleven steps', () => {
+    expect(BOUNCE_HEIGHT).toBeCloseTo(32 / 12, 5)
+    const b = new BouncingBall({ x: 3, z: 3 }, { x: 5, z: 3 })
+    let steps = 0
+    let last = -1
+    for (; steps < 40; steps++) {
+      for (let t = 0; t < TICKS_PER_STEP; t++) b.update(1 / 60, {})
+      if (b.position.y < last) break
+      last = b.position.y
+    }
+    expect(steps).toBeGreaterThanOrEqual(10)
+    expect(steps).toBeLessThanOrEqual(12)
   })
 })

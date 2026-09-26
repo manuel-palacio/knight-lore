@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import * as THREE from 'three'
-import { MovingPlatform } from '../../src/game/MovingPlatform'
-import { STEP_LENGTH, TICKS_PER_STEP } from '../../src/engine/StepClock'
+import { MovingPlatform, PLATFORM_STEP } from '../../src/game/MovingPlatform'
+import { TICKS_PER_STEP } from '../../src/engine/StepClock'
 import { SIMULATION_DT } from '../../src/engine/GameLoop'
 import { Category } from '../../src/engine/categories'
 
@@ -25,16 +25,16 @@ describe('MovingPlatform', () => {
     ride(p, new THREE.Vector3(0, 0, 0), TICKS_PER_STEP - 1)
     expect(p.position.x).toBe(3)
     ride(p, new THREE.Vector3(0, 0, 0), 1)
-    expect(p.position.x).toBe(3 + STEP_LENGTH)
+    expect(p.position.x).toBe(3 + PLATFORM_STEP)
   })
 
   it('reverses at the far end and comes back', () => {
     const p = platform()
-    const stepsAcross = 4 / STEP_LENGTH
+    const stepsAcross = 4 / PLATFORM_STEP
     ride(p, new THREE.Vector3(0, 0, 0), stepsAcross * TICKS_PER_STEP)
     expect(p.position.x).toBe(7)
     ride(p, new THREE.Vector3(0, 0, 0), TICKS_PER_STEP)
-    expect(p.position.x).toBe(7 - STEP_LENGTH)
+    expect(p.position.x).toBe(7 - PLATFORM_STEP)
   })
 
   it('reports its top height under points inside its footprint only', () => {
@@ -49,7 +49,7 @@ describe('MovingPlatform', () => {
     const p = platform()
     const rider = new THREE.Vector3(3, 1, 5)
     ride(p, rider, TICKS_PER_STEP * 3)
-    expect(rider.x).toBe(3 + 3 * STEP_LENGTH)
+    expect(rider.x).toBe(3 + 3 * PLATFORM_STEP)
     expect(rider.z).toBe(5)
   })
 
@@ -58,5 +58,9 @@ describe('MovingPlatform', () => {
     const below = new THREE.Vector3(3, 0, 5)
     ride(p, below, TICKS_PER_STEP * 3)
     expect(below.x).toBe(3)
+  })
+
+  it('moves at the original moving block speed, one pixel a frame: an eighth of a unit per step', () => {
+    expect(PLATFORM_STEP).toBe(1 / 8)
   })
 })

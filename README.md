@@ -6,6 +6,8 @@ Sabreman is cursed to become a werewolf at night. Melkhior's cauldron asks for f
 
 Play it at https://knight-lore.fly.dev.
 
+![The wolf on day 7, beside a spike bed](wolf.png)
+
 ## Run it
 
 ```

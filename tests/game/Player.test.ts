@@ -286,21 +286,50 @@ describe('Player pickup', () => {
     const { state, player } = setupRoom()
     state.toggleForm()
     expect(state.form).toBe('werewolf')
-    const overlap = { id: 'goblet', position: player.position.clone() }
-    let picked: string | null = null
-    player.tryPickup(overlap, state, () => { picked = overlap.id })
-    expect(picked).toBe(null)
-    expect(player.carrying).toBe(null)
+    let picked = false
+    player.tryPickup(new Pickup('goblet', 'r'), state, () => { picked = true })
+    expect(picked).toBe(false)
+    expect(player.carrying).toEqual([])
   })
 
   it('human form accepts pickup attempt', () => {
     const { state, player } = setupRoom()
-    const overlap = { id: 'goblet', position: player.position.clone() }
-    let picked: string | null = null
-    player.tryPickup(overlap, state, () => { picked = overlap.id })
-    expect(picked).toBe('goblet')
-    expect(player.carrying).toBe('goblet')
+    let picked = false
+    player.tryPickup(new Pickup('goblet', 'r'), state, () => { picked = true })
+    expect(picked).toBe(true)
+    expect(player.carrying).toEqual(['goblet'])
     expect(state.hasItem('goblet')).toBe(true)
+  })
+
+  it('carries three, and hands back the one carried longest to take a fourth', () => {
+    const { state, player } = setupRoom()
+    let letGo: Pickup | undefined
+    for (const id of ['gem', 'boot', 'teacup', 'poison']) player.tryPickup(new Pickup(id, 'r'), state, (l) => { letGo = l })
+    expect(player.carrying).toEqual(['boot', 'teacup', 'poison'])
+    expect(letGo?.id).toBe('gem')
+    expect(state.hasItem('gem')).toBe(false)
+  })
+})
+
+// The original's put-down (0xC0DD): the charm goes under his feet, he a block up.
+describe('Player putting a charm down under his feet', () => {
+  it('stands on it a block higher, carrying one less', () => {
+    const { state, player } = setupRoom()
+    player.tryPickup(new Pickup('gem', 'r'), state, () => {})
+    player.tryPickup(new Pickup('boot', 'r'), state, () => {})
+    expect(player.putDownUnderFoot(state, true)?.id).toBe('gem')
+    expect(player.position.y).toBe(CHARM_HEIGHT)
+    expect(player.carrying).toEqual(['boot'])
+  })
+
+  it('does not with something over his head, nor in the air', () => {
+    const { state, player } = setupRoom()
+    player.tryPickup(new Pickup('gem', 'r'), state, () => {})
+    expect(player.putDownUnderFoot(state, false)).toBeUndefined()
+    player.state = 'airborne'
+    expect(player.putDownUnderFoot(state, true)).toBeUndefined()
+    expect(player.position.y).toBe(0)
+    expect(player.carrying).toEqual(['gem'])
   })
 })
 

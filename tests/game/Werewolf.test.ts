@@ -30,4 +30,14 @@ describe('Werewolf transformation', () => {
     expect(dropped).toBe('goblet')
     expect(s.hasItem('goblet')).toBe(false)
   })
+
+  it('transforming drops everything carried: the wolf carries nothing', () => {
+    const s = new GameState()
+    for (const id of ['goblet', 'gem', 'gem']) s.addItem(id)
+    const dropped: string[] = []
+    s.onTransformWhileCarrying = (id: string) => { dropped.push(id) }
+    s.tickTransform(HUMAN_DURATION + 0.001)
+    expect(dropped).toEqual(['goblet', 'gem', 'gem'])
+    expect(s.inventory).toEqual([])
+  })
 })

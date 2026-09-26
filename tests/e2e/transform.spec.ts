@@ -13,12 +13,12 @@ test('morphing while carrying freezes Sabreman and drops the charm', async ({ pa
   const charm = room.pickups[0]!
   await standAt(page, charm)
   await page.keyboard.press('KeyE')
-  await expect.poll(async () => (await debug(page)).carrying).toBe(charm.id)
+  await expect.poll(async () => (await debug(page)).carrying).toEqual([charm.id])
   await face(page, 'south')
 
   await page.evaluate(() => (window as unknown as { __timer: (s: number) => void }).__timer(0.05))
   await page.waitForTimeout(150)
-  expect((await debug(page)).carrying).toBeNull()
+  expect((await debug(page)).carrying).toEqual([])
   const before = (await debug(page)).pos
   await page.keyboard.down('ArrowUp')
   await page.waitForTimeout(1_000)

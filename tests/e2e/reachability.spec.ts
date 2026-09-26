@@ -66,7 +66,7 @@ for (const spec of ROOM_SPECS) {
         if (charm.item === 'life') {
           await expect.poll(async () => (await debug(page)).lives, { message: 'extra life taken' }).toBe(lives + 1)
         } else {
-          await expect.poll(async () => (await debug(page)).carrying, { message: `${charm.item} picked up` }).toBe(charm.item)
+          await expect.poll(async () => (await debug(page)).carrying, { message: `${charm.item} picked up` }).toContain(charm.item)
         }
       })
     }

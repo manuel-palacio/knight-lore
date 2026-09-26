@@ -100,12 +100,14 @@ export class GameState {
   onTransformWhileCarrying: (id: string) => void = () => {}
   onLifeLost: () => void = () => {}
 
+  // Two charms of a kind can be carried at once: each is counted.
   addItem(id: string): void {
-    if (!this.inventory.includes(id)) this.inventory.push(id)
+    this.inventory.push(id)
   }
 
   removeItem(id: string): void {
-    this.inventory = this.inventory.filter((x) => x !== id)
+    const at = this.inventory.indexOf(id)
+    if (at >= 0) this.inventory.splice(at, 1)
   }
 
   hasItem(id: string): boolean {
@@ -120,7 +122,7 @@ export class GameState {
   tickTransform(dt: number): void {
     this.transformTimer -= dt
     if (this.transformTimer <= 0) {
-      if (this.form === 'human' && this.inventory.length > 0) {
+      while (this.form === 'human' && this.inventory.length > 0) {
         const id = this.inventory[0]!
         this.removeItem(id)
         this.onTransformWhileCarrying(id)

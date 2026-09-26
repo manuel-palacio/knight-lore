@@ -45,11 +45,11 @@ test('the game can be won from the start room with the keyboard', async ({ page 
       await waitForDaylight(page)
       continue
     }
-    if (state.carrying === wanted) {
+    if (state.carrying.includes(wanted)) {
       if (state.room === CAULDRON_ROOM) await deliver(page)
       else await retrying(page, () => stepToward(page, CAULDRON_ROOM))
       const after = await debug(page)
-      if (after.carrying === null && after.delivered === state.delivered) {
+      if (!after.carrying.includes(wanted) && after.delivered === state.delivered) {
         const droppedIn = after.pickups.some((p) => p.id === wanted) ? after.room : state.room
         whereabouts.get(wanted)!.push(droppedIn)
       }
@@ -119,7 +119,7 @@ async function pickUp(page: Page, charm: { id: string; x: number; z: number }): 
   await walkPath(page, findFloorPath(specOf(state.room), cellOf(state), target), dangersOf(specOf(state.room)))
   if (await nightfallStopsErrand(page)) return
   await page.keyboard.press('KeyE')
-  await expect.poll(async () => (await debug(page)).carrying).toBe(charm.id)
+  await expect.poll(async () => (await debug(page)).carrying).toContain(charm.id)
 }
 
 async function deliver(page: Page): Promise<void> {

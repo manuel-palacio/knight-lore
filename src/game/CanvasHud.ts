@@ -9,9 +9,9 @@ export const HUD_HEIGHT = 64
 const HERO = { x: 20, y: 16 }
 const LIVES = { x: 32, y: 24 }
 const DAY = { x: 120, y: 57 }
-// As in the original: the carried charm sits under the lives, the sun or
-// moon fills the scroll and the wanted charm shows small in its corner.
-const CARRY = { x: 28, y: 44 }
+// As in the original: the carried charms sit under the lives, side by side,
+// the sun or moon fills the scroll and the wanted charm shows small in its corner.
+const CARRY = { x: 28, y: 44, apart: 16 }
 const SCROLL = { x: 186, y: 33, w: 44, h: 30 }
 const DIAL_TRAVEL = 26
 const WANTED = { x: 222, y: 48 }
@@ -26,7 +26,7 @@ export interface HudImages {
 export class CanvasHud {
   constructor(private readonly images: HudImages, private readonly tintFrame: (hue: number) => HTMLCanvasElement) {}
 
-  draw(ctx: CanvasRenderingContext2D, top: number, state: GameState, carrying: string | null, roomTint: number): void {
+  draw(ctx: CanvasRenderingContext2D, top: number, state: GameState, carrying: string[], roomTint: number): void {
     // The room's near corner runs under the HUD; the original blanks it.
     ctx.fillStyle = '#000'
     ctx.fillRect(0, top, ctx.canvas.width, HUD_HEIGHT)
@@ -36,7 +36,7 @@ export class CanvasHud {
     ctx.drawImage(this.images.hero, HERO.x, top + HERO.y)
     drawDigits(ctx, String(state.lives).padStart(2, '0'), LIVES.x, top + LIVES.y, '#fff')
     drawDigits(ctx, String(Math.min(state.dayCount, 40)).padStart(2, '0'), DAY.x, top + DAY.y, '#fff')
-    if (carrying) this.drawItem(ctx, carrying, CARRY.x, top + CARRY.y, 1)
+    carrying.forEach((id, i) => this.drawItem(ctx, id, CARRY.x + i * CARRY.apart, top + CARRY.y, 1))
     this.drawDial(ctx, top, state)
     if (state.wantedItem) this.drawItem(ctx, state.wantedItem, WANTED.x, top + WANTED.y, 0.5)
   }

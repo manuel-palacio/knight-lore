@@ -14,7 +14,7 @@ export interface Debug {
   state: string
   pos: { x: number; y: number; z: number }
   wanted: string | null
-  carrying: string | null
+  carrying: string[]
   delivered: number
   lives: number
   day: number

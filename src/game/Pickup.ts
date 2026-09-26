@@ -13,7 +13,7 @@ export const CHARM_HEIGHT = 1
 const FOOTPRINT_HALF = 1
 const TOP_TOLERANCE = 0.5
 // Charms hover this far above what they lie on (see addPickup and dropAt callers).
-const HOVER = 0.4
+export const CHARM_HOVER = 0.4
 
 export class Pickup extends Entity {
   readonly id: string
@@ -37,7 +37,7 @@ export class Pickup extends Entity {
   supportAt(x: number, z: number, actorY: number): number | null {
     if (this.collected) return null
     const inside = Math.abs(x - this.position.x) <= FOOTPRINT_HALF && Math.abs(z - this.position.z) <= FOOTPRINT_HALF
-    const top = this.position.y - HOVER + CHARM_HEIGHT
+    const top = this.position.y - CHARM_HOVER + CHARM_HEIGHT
     return inside && actorY >= top - TOP_TOLERANCE ? top : null
   }
 

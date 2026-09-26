@@ -2,7 +2,7 @@ import { test, expect, type Page } from '@playwright/test'
 import { ROOM_SPECS } from '../../src/scenes/rooms/roomSpecs'
 
 const CHARM_HOVER = 0.4
-import { debug, enterRoom, face, holdDaylight, standAt, startGame } from './support/game'
+import { debug, enterRoom, holdDaylight, standAt, startGame } from './support/game'
 
 async function pickUpCharmIn(page: Page, roomId: string): Promise<string> {
   const room = await enterRoom(page, roomId)
@@ -11,7 +11,7 @@ async function pickUpCharmIn(page: Page, roomId: string): Promise<string> {
   if (!charm) throw new Error(`no charm in ${roomId}`)
   await standAt(page, { ...charm, y: charm.y - CHARM_HOVER }) // on the ground the charm hovers over
   await page.keyboard.press('KeyE')
-  await expect.poll(async () => (await debug(page)).carrying).toBe(charm.id)
+  await expect.poll(async () => (await debug(page)).carrying).toEqual([charm.id])
   return charm.id
 }
 
@@ -28,7 +28,7 @@ test('a charm dropped at nightfall stays in the room where it fell', async ({ pa
 
   await enterRoom(page, elsewhere)
   await fallNight(page)
-  await expect.poll(async () => (await debug(page)).carrying).toBeNull()
+  await expect.poll(async () => (await debug(page)).carrying).toEqual([])
   expect((await debug(page)).pickups.map((p) => p.id)).toContain(charm)
 
   await enterRoom(page, charmRoom.id)
@@ -44,29 +44,24 @@ test('the extra life is taken at once, not carried, and does not come back', asy
   await standAt(page, life)
   await page.keyboard.press('KeyE')
   await expect.poll(async () => (await debug(page)).lives).toBe(6)
-  expect((await debug(page)).carrying).toBeNull()
+  expect((await debug(page)).carrying).toEqual([])
 
   await enterRoom(page, lifeRoom.exits[0]!.target)
   const back = await enterRoom(page, lifeRoom.id)
   expect(back.pickups.map((p) => p.id)).not.toContain('life')
 })
 
-test('E drops the carried charm at his feet, and he can jump up and stand on it', async ({ page }) => {
+test('E puts the carried charm down under his feet, and he stands on it a block higher', async ({ page }) => {
   await startGame(page)
   const charmRoom = ROOM_SPECS.find((s) => s.pickups?.some((p) => p.item !== 'life'))!
   const charm = await pickUpCharmIn(page, charmRoom.id)
+  const before = (await debug(page)).pos
   await page.keyboard.press('KeyE')
-  await expect.poll(async () => (await debug(page)).carrying).toBeNull()
-  const dropped = (await debug(page)).pickups.find((p) => p.id === charm)!
-  expect(dropped).toBeDefined()
-
-  // A jump comes down onto whatever lies about three units ahead of the take-off.
-  await standAt(page, { x: dropped.x, y: 0, z: dropped.z - 3 })
-  await face(page, 'south')
-  await page.keyboard.down('ArrowUp')
-  await page.keyboard.press('Space')
-  await expect.poll(async () => (await debug(page)).state, { intervals: [20] }).not.toBe('grounded')
-  await page.keyboard.up('ArrowUp')
-  await expect.poll(async () => (await debug(page)).state, { intervals: [20] }).toBe('grounded')
-  expect((await debug(page)).pos.y).toBe(1)
+  await expect.poll(async () => (await debug(page)).carrying).toEqual([])
+  const after = await debug(page)
+  expect(after.pos.y).toBe(before.y + 1)
+  expect(after.state).toBe('grounded')
+  const dropped = after.pickups.find((p) => p.id === charm)!
+  expect(dropped.x).toBe(before.x)
+  expect(dropped.z).toBe(before.z)
 })

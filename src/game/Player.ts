@@ -3,10 +3,11 @@ import { Category } from '../engine/categories'
 import { resolveHorizontal, type AABB } from '../engine/Collision'
 import type { Grid } from '../engine/Grid'
 import type { GameState } from './GameState'
-import * as THREE from 'three'
 import { StepClock, STEP_LENGTH, TICKS_PER_STEP } from '../engine/StepClock'
 import { EPS } from '../engine/epsilons'
 import { FACINGS_CLOCKWISE, FACING_VECTOR, type Facing } from './Facing'
+import { Satchel } from './Satchel'
+import { CHARM_HEIGHT, type Pickup } from './Pickup'
 
 export { STEP_LENGTH, TICKS_PER_STEP }
 export type { Facing }
@@ -40,7 +41,7 @@ export class Player extends Entity {
   state: 'grounded' | 'airborne' | 'jumping' = 'grounded'
   facing: Facing = 'south'
   stepsTaken = 0
-  carrying: string | null = null
+  readonly satchel = new Satchel<Pickup>()
 
   private readonly clock = new StepClock()
   private invulnerableSteps = 0
@@ -180,19 +181,29 @@ export class Player extends Entity {
     return Math.max(ctx.grid.supportHeight(cx, cz), this.dynamicSupportAt(ctx, this.position.x, this.position.z))
   }
 
-  tryPickup(item: { id: string; position: THREE.Vector3 }, state: GameState, onSuccess: () => void): void {
-    if (state.form !== 'human') return
-    if (this.carrying) return
-    this.carrying = item.id
-    state.addItem(item.id)
-    onSuccess()
+  get carrying(): string[] {
+    return this.satchel.ids
   }
 
-  dropCarried(state: GameState, onDrop: (id: string, pos: THREE.Vector3) => void): void {
-    if (!this.carrying) return
-    const id = this.carrying
-    this.carrying = null
-    state.removeItem(id)
-    onDrop(id, this.position.clone())
+  // The man takes a charm (the wolf cannot); `onTaken` is handed the one he
+  // let go of to make room, if his hands were full.
+  tryPickup(charm: Pickup, state: GameState, onTaken: (letGo: Pickup | undefined) => void): void {
+    if (state.form !== 'human') return
+    state.addItem(charm.id)
+    const letGo = this.satchel.take(charm)
+    if (letGo) state.removeItem(letGo.id)
+    onTaken(letGo)
+  }
+
+  // As the original (0xC0DD): the charm carried longest goes down under his
+  // feet and he stands on it, a block higher, when there is room over his
+  // head. Returns the charm, to be laid where his feet were.
+  putDownUnderFoot(state: GameState, headroom: boolean): Pickup | undefined {
+    if (!headroom || this.state !== 'grounded') return undefined
+    const charm = this.satchel.putDownOldest()
+    if (!charm) return undefined
+    state.removeItem(charm.id)
+    this.position.y += CHARM_HEIGHT
+    return charm
   }
 }

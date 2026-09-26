@@ -11,7 +11,7 @@ import { SpikedBall } from './game/SpikedBall'
 import { FloatingBlock } from './game/FloatingBlock'
 import { hazardHunts, touchesHazard } from './game/Hazards'
 import { Player, type Facing } from './game/Player'
-import { Pickup } from './game/Pickup'
+import { CHARM_HEIGHT, CHARM_HOVER, Pickup } from './game/Pickup'
 import { PushBlock } from './game/PushBlock'
 import { Cauldron } from './game/Cauldron'
 import { Spike } from './game/SpikeGrid'
@@ -161,7 +161,6 @@ async function main(): Promise<void> {
   const wipe = new Transition(WIPE_SECONDS)
   let paused = false
   let lastStepCount = 0
-  let carriedPickup: Pickup | null = null
   let transitioning = false
 
   // Character visual state (2D): form lags state.form across a short flicker.
@@ -310,8 +309,10 @@ async function main(): Promise<void> {
     })
   }
 
-  state.onTransformWhileCarrying = () => {
-    dropCarried()
+  // The wolf can carry nothing: at nightfall what the man carried falls at his feet.
+  state.onTransformWhileCarrying = (id) => {
+    const charm = player.satchel.handOver(id)
+    if (charm) layCharm(charm, player.position)
     beeper.play('drop')
   }
   // Death: white flash, the room's movers go back to their starts, and
@@ -331,24 +332,40 @@ async function main(): Promise<void> {
     beeper.play('title')
   }
 
-  // E with a charm in hand, away from the cauldron, puts it down at his feet:
-  // to leave it for later, or to stand on.
-  function tryDropPass(): void {
-    if (!input.wasPressed('KeyE')) return
-    dropCarried()
+  // E with nothing in reach to pick up puts down the charm carried longest,
+  // under his feet: he stands on it, a block higher (see Player).
+  function tryPutDownPass(room: Room): void {
+    const feet = player.position.clone()
+    const charm = player.putDownUnderFoot(state, hasHeadroom(room, feet))
+    if (!charm) return
+    layCharm(charm, feet)
     beeper.play('drop')
   }
 
-  function dropCarried(): void {
-    if (!carriedPickup) return
-    carriedPickup.dropAt(player.position.x, player.position.y + 0.4, player.position.z)
-    activeRoom().add(carriedPickup)
-    carriedPickup = null
-    player.carrying = null
+  // Nothing may hang in the block over his head that he is lifted into.
+  function hasHeadroom(room: Room, feet: THREE.Vector3): boolean {
+    const from = feet.y + CHARM_HEIGHT
+    const to = from + player.extents.y
+    return !room.entities.some((e) => {
+      if (e === player || !e.active) return false
+      const over = Math.abs(e.position.x - feet.x) < (e.extents.x + player.extents.x) / 2 &&
+        Math.abs(e.position.z - feet.z) < (e.extents.z + player.extents.z) / 2
+      if (!over) return false
+      const top = 'supportAt' in e ? (e as { supportAt: (x: number, z: number, y: number) => number | null }).supportAt(feet.x, feet.z, Infinity) : null
+      const bottom = top !== null ? top - 1 : e.position.y
+      const height = top !== null ? 1 : e.extents.y
+      return bottom < to && bottom + height > from + 1e-6
+    })
   }
 
-  function tryPickupPass(room: Room): void {
-    if (!input.wasPressed('KeyE')) return
+  function layCharm(charm: Pickup, at: THREE.Vector3): void {
+    charm.dropAt(at.x, at.y + CHARM_HOVER, at.z)
+    activeRoom().add(charm)
+  }
+
+  // E by a charm picks it up; with his hands full, the charm carried longest
+  // is left where the new one lay. True when there was a charm to pick up.
+  function tryPickupPass(room: Room): boolean {
     for (const e of room.entities) {
       if (!(e instanceof Pickup) || e.collected) continue
       const near =
@@ -357,16 +374,18 @@ async function main(): Promise<void> {
       if (!near) continue
       if (e.id === 'life') {
         takeExtraLife(room, e)
-        return
+        return true
       }
-      player.tryPickup({ id: e.id, position: e.position }, state, () => {
+      const where = e.position.clone().setY(e.position.y - CHARM_HOVER)
+      player.tryPickup(e, state, (letGo) => {
         beeper.play('pickup')
         e.collect()
         room.remove(e)
-        carriedPickup = e
+        if (letGo) layCharm(letGo, where)
       })
-      return
+      return true
     }
+    return false
   }
 
   function takeExtraLife(room: Room, life: Pickup): void {
@@ -378,18 +397,17 @@ async function main(): Promise<void> {
   }
 
   function tryDeliverPass(room: Room): boolean {
-    if (!input.wasPressed('KeyE')) return false
     const cauldron = room.entities.find((e): e is Cauldron => e instanceof Cauldron)
     if (!cauldron || !cauldron.isInRange(player.position)) return false
-    const home = carriedPickup?.homeRoomId
-    if (!state.deliverCureItem(player.carrying)) {
-      if (player.carrying) beeper.play('wrong')
+    const wanted = state.wantedItem
+    const charm = wanted ? player.satchel.handOver(wanted) : undefined
+    if (!charm || !state.deliverCureItem(charm.id)) {
+      if (charm) player.satchel.take(charm)
+      if (!player.satchel.isEmpty) beeper.play('wrong')
       return false
     }
-    if (home) state.emptiedRooms.push(home)
+    state.emptiedRooms.push(charm.homeRoomId)
     beeper.play(state.won ? 'win' : 'deliver')
-    carriedPickup = null
-    player.carrying = null
     return true
   }
 
@@ -430,7 +448,6 @@ async function main(): Promise<void> {
   }
 
   function tryPullPass(room: Room): boolean {
-    if (!input.wasPressed('KeyE')) return false
     for (const e of room.entities) {
       if (!e.hasCategory(Category.SOLID_DYNAMIC)) continue
       const block = e as PushBlock
@@ -650,12 +667,9 @@ async function main(): Promise<void> {
     room.update(dt, ctx)
     handlePushAttempt(room, stepped)
     resolveActorOverlap(room)
-    if (!tryDeliverPass(room)) {
-      if (player.carrying !== null) tryDropPass()
-      else {
-        tryPickupPass(room)
-        if (player.carrying === null) tryPullPass(room)
-      }
+    if (input.wasPressed('KeyE') && !tryDeliverPass(room) && !tryPickupPass(room)) {
+      if (!player.satchel.isEmpty) tryPutDownPass(room)
+      else tryPullPass(room)
     }
     hazardPass(room)
     exitPass()

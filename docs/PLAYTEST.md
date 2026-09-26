@@ -45,3 +45,30 @@ Nothing stopped the wolf loitering by the cauldron. A spirit now rises from it a
 - The guard in map--1-2 takes a life from the bot on the way out with the poison: a timing puzzle, left as is.
 - **Run 10 won**: fourteen charms delivered on day 20 of 40 with four lives left, 30 minutes of real time, keyboard only. The game is winnable as a player plays it.
 - **62-room castle won**: day 25 of 40, all five lives, 38 minutes, keyboard only.
+
+## 2026-09-26: the 128-room castle
+
+The castle is now generated from the original's room table (`tools/rip/castle.py`): all 128 rooms, narrow rooms, floating blocks, spiked balls, spikes on blocks, portcullises and the four start rooms. The walkers were taught what the new rooms need: climb one block, jump a row of floor spikes, wait for a gate, cross a patrol line behind the guard or ball.
+
+- `tests/e2e/reachability.spec.ts` walks all 128 rooms, to every door and charm reachable on foot.
+- 13 rooms are puzzles: some door needs a charm to stand on or a pushed block. The walkers skip those crossings; `RoomSpecs.test.ts` › "winning on foot" proves the cauldron and every charm are reachable from each start room without them.
+
+### Blockers found and fixed
+
+| Room | Problem | Fix |
+|---|---|---|
+| spike rooms | The jump was too short to clear a spike row | jump 4.5 units; spikes hurt only through the feet |
+| a floating block over a door | The block sat in the doorway and the room could not be entered | blocks kept off the door cells and the cells beside them |
+| the cage (0x87) | The guard walked through the grilles | a guard's line stops at gates |
+| a charm room | A charm sat in a spike trap under a hanging block | spike jumps only over spikes with nothing above them |
+| rooms with a ghost or patrol by a door | Entering was a death on the threshold | moved one cell inward |
+
+### Charm placement
+
+The first 128-room runs could not finish in 40 days: charms scattered over the whole castle lay too far apart for a day's walk. They now sit three to eight rooms from the cauldron, a day's walk there and back, all reachable on foot from every start room.
+
+### What the bot runs taught
+
+- The bot read night from the drawn form, which lags the clock; it now reads the game's own night flag, and never sets off into a new room with dusk near. The wolf waits for morning instead of wandering.
+- Stray Playwright workers from earlier runs drove the same page and spoiled three runs; kill them before a playthrough.
+- **128-room castle won**: fourteen charms delivered on day 38 of 40 with all five lives, 57 minutes, keyboard only. The margin is thin: a player who wastes days will not finish, as in the original.

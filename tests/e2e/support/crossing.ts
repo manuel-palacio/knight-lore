@@ -7,7 +7,7 @@ import { PIXELS_PER_BLOCK } from '../../../src/game/Gravity'
 
 // Foresees a crossing of a guard's route or a ball's bounce: where Sabreman
 // will be, step by step, as he walks the path through the patrolled cells
-// (a quarter unit a step; a jump carries three quarters), and where the
+// (a quarter unit a step, jumping or not), and where the
 // guard or the ball will be on the original's frame clock (a guard a
 // quarter unit a frame, a frame a step and a half). Safe when the two never
 // touch, even if he sets off a few steps later than foreseen.
@@ -19,7 +19,8 @@ export interface Point {
 
 const TILE = 2
 const WALK_STRIDE = 0.25
-const JUMP_STRIDE = 0.75
+// A jump carries him on at his walking pace (see Player).
+const JUMP_STRIDE = WALK_STRIDE
 const GUARD_STRIDE = GUARD_STEP * (TICKS_PER_STEP / TICKS_PER_FRAME)
 // Both bodies are 0.8 across: they touch closer than 0.8, and a margin.
 const TOUCH = 0.8 + 0.1

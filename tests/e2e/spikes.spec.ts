@@ -53,7 +53,7 @@ for (const form of ['human', 'werewolf'] as const) {
   })
 }
 
-test('a jump taken from anywhere on the tile before the spikes clears them', async ({ page }) => {
+test('a held jump taken from anywhere on the tile before the spikes clears them', async ({ page }) => {
   test.setTimeout(120_000)
   await startGame(page)
   await enter(page)
@@ -67,11 +67,10 @@ test('a jump taken from anywhere on the tile before the spikes clears them', asy
     spot[axis] = back + sign * along
     await standAt(page, spot)
     await face(page, facing)
-    await page.keyboard.down('ArrowUp')
-    await page.keyboard.press('Space')
+    await page.keyboard.down('Space')
     await expect.poll(async () => (await debug(page)).state, { intervals: [20] }).not.toBe('grounded')
     await expect.poll(async () => (await debug(page)).state, { intervals: [20] }).toBe('grounded')
-    await page.keyboard.up('ArrowUp')
+    await page.keyboard.up('Space')
     expect((await debug(page)).lives, `take-off at ${axis}=${spot[axis]}`).toBe(5)
   }
 })

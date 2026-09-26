@@ -371,7 +371,9 @@ def cells_between(a, b):
     return list(dict.fromkeys(out))
 
 
-CLIMB, HEADROOM = 1, 2
+# A tapped jump rises a block; a held one two, but only with a run-up: the
+# cell he jumps from entered from the one behind it, as high (see Player).
+CLIMB, HIGH_CLIMB, HEADROOM = 1, 2, 2
 STEPS = ((1, 0), (-1, 0), (0, 1), (0, -1))
 
 
@@ -425,27 +427,35 @@ class Walkable:
         heights += [b + 1 for b in hanging if b >= base]
         return [y for y in heights if not any(y <= h < y + HEADROOM for h in self.hazards.get(c, []))]
 
+    def jumpable(self, c):
+        """A floor cell whose dangers all lie on the floor (spikes, a spiked ball
+        lying there), with nothing over them for a jump to run into."""
+        low = self.hazards.get(c, [])
+        return c not in self.columns and (c in self.floor_spikes or bool(low)) and all(h == 0 for h in low)
+
     def inside(self, x, z):
         return 0 <= x < self.width and 0 <= z < self.depth
 
     def reaches(self, start, goal):
-        first = (start[0], start[1], self.columns.get(start, 0))
+        first = ((start[0], start[1], self.columns.get(start, 0)), None)
         seen, queue = {first}, deque([first])
         while queue:
-            x, z, y = queue.popleft()
+            (x, z, y), came = queue.popleft()
             if (x, z) == goal:
                 return True
             nexts = []
             for dx, dz in STEPS:
                 if self.inside(x + dx, z + dz):
-                    nexts += [(x + dx, z + dz, t) for t in self.standings((x + dx, z + dz)) if t <= y + CLIMB]
+                    reach = y + (HIGH_CLIMB if came == (x - dx, z - dz, y) else CLIMB)
+                    nexts += [(x + dx, z + dz, t) for t in self.standings((x + dx, z + dz)) if t <= reach]
                 over = (x + dx, z + dz)
-                if y == 0 and over in self.floor_spikes and over not in self.hazards and self.inside(x + 2 * dx, z + 2 * dz) and 0 in self.standings((x + 2 * dx, z + 2 * dz)):
+                if y == 0 and self.jumpable(over) and self.inside(x + 2 * dx, z + 2 * dz) and 0 in self.standings((x + 2 * dx, z + 2 * dz)):
                     nexts.append((x + 2 * dx, z + 2 * dz, 0))
             for n in nexts:
-                if n not in seen:
-                    seen.add(n)
-                    queue.append(n)
+                state = (n, (x, z, y))
+                if state not in seen:
+                    seen.add(state)
+                    queue.append(state)
         return False
 
 

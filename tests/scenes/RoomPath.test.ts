@@ -63,7 +63,7 @@ describe('findFloorPath over spike rows', () => {
   })
 
   it('never jumps a wall too high to climb, or two spike rows at once', () => {
-    const wall = room({ platforms: [0, 1, 2, 3, 4, 5, 6, 7].map((x) => ({ x, z: 4, height: 2 })) })
+    const wall = room({ platforms: [0, 1, 2, 3, 4, 5, 6, 7].map((x) => ({ x, z: 4, height: 3 })) })
     expect(() => findFloorPath(wall, { x: 4, z: 0 }, { x: 4, z: 7 })).toThrow()
     const deep = room({ spikes: [0, 1, 2, 3, 4, 5, 6, 7].flatMap((x) => [{ x, z: 4 }, { x, z: 5 }]) })
     expect(() => findFloorPath(deep, { x: 4, z: 0 }, { x: 4, z: 7 })).toThrow()
@@ -100,16 +100,26 @@ describe('findFloorPath with heights', () => {
     expect(path.at(-1)).toEqual({ x: 0, z: 2, y: 0 })
   })
 
-  it('cannot climb a wall two blocks high without something to stand on', () => {
-    const wall = room({ width: 4, platforms: [0, 1, 2, 3].map((x) => ({ x, z: 3, height: 2 })) })
-    expect(() => findFloorPath(wall, { x: 2, z: 7 }, { x: 2, z: 0 })).toThrow()
+  it('climbs a wall two blocks high with a held jump and a run-up, but not three', () => {
+    const two = room({ width: 4, platforms: [0, 1, 2, 3].map((x) => ({ x, z: 3, height: 2 })) })
+    const path = findFloorPath(two, { x: 2, z: 7 }, { x: 2, z: 0 })
+    const up = path.findIndex((c) => c.y === 2)
+    expect(path[up - 1]!.y).toBe(0)
+    expect(path[up - 2]!.z - path[up - 1]!.z).toBe(path[up - 1]!.z - path[up]!.z)
+    const three = room({ width: 4, platforms: [0, 1, 2, 3].map((x) => ({ x, z: 3, height: 3 })) })
+    expect(() => findFloorPath(three, { x: 2, z: 7 }, { x: 2, z: 0 })).toThrow()
   })
 
-  it('walks under a block hanging two blocks up, but cannot pass one hanging a block up', () => {
+  it('has no run-up for a two-high jump from right against a wall', () => {
+    const tight = room({ width: 4, depth: 3, platforms: [0, 1, 2, 3].map((x) => ({ x, z: 1, height: 2 })) })
+    expect(() => findFloorPath(tight, { x: 2, z: 2 }, { x: 2, z: 0 })).toThrow()
+  })
+
+  it('walks under a block hanging two blocks up, but must jump onto one hanging a block up', () => {
     const high = room({ width: 4, platforms: [0, 1, 3].map((x) => ({ x, z: 3, height: 4 })), floatingBlocks: [{ x: 2, z: 3, bottom: 2 }] })
     expect(findFloorPath(high, { x: 2, z: 7 }, { x: 2, z: 0 }).some((c) => c.z === 3 && c.y === 0)).toBe(true)
     const low = room({ width: 4, platforms: [0, 1, 3].map((x) => ({ x, z: 3, height: 4 })), floatingBlocks: [{ x: 2, z: 3, bottom: 1 }] })
-    expect(() => findFloorPath(low, { x: 2, z: 7 }, { x: 2, z: 0 })).toThrow()
+    expect(findFloorPath(low, { x: 2, z: 7 }, { x: 2, z: 0 })).toContainEqual({ x: 2, z: 3, y: 2 })
   })
 
   it('does not stand on a block topped with spikes', () => {

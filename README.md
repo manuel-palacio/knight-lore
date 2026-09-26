@@ -2,7 +2,7 @@
 
 A faithful browser remake of Ultimate Play the Game's *Knight Lore* (ZX Spectrum, 1984), the Filmation isometric adventure. TypeScript, a 2D canvas, no engine.
 
-Sabreman is cursed to become a werewolf at night. Melkhior's cauldron asks for fourteen charms one at a time; fetch each from the castle and drop it in before forty days pass. Some monsters only go for the wolf. The wolf jumps higher than the man.
+Sabreman is cursed to become a werewolf at night. Melkhior's cauldron asks for fourteen charms one at a time; fetch each from the castle and drop it in before forty days pass. Some monsters only go for the wolf.
 
 Play it at https://knight-lore.fly.dev.
 
@@ -21,7 +21,7 @@ Open the URL Vite prints. Any key starts; C continues a saved game. The title sc
 |---|---|
 | Left / Right | Turn |
 | Up | Walk forward (walk into a block to push it) |
-| Space | Jump, straight up when standing, forward when walking |
+| Space | Jump: tap for a low jump (a block high), hold for a high one (two and a third); a jump always carries forward |
 | E | Pick up or put down a charm, deliver to the cauldron, or pull the nearest block |
 | P | Pause |
 | M | Sound on / off |
@@ -42,8 +42,8 @@ npm run build             # tsc + vite build into dist/
 - **The cure.** Fourteen charms, the seven kinds each asked for twice, in an order drawn at the start of every game. They lie at the far ends of the castle, none beside the start room or within two rooms of the cauldron. The extra life is taken at once.
 - **Day and night.** A day is 60 seconds and a night 30, forty days in all, about an hour of play. The dial in the HUD shows the sun or the moon, and dusk is signalled five seconds ahead. Changing form is a seizure: Sabreman cannot move for two seconds and drops what he carries.
 - **The wolf.** He cannot carry or deliver charms. Hopping balls head for him (and away from the man), and at nightfall a spirit rises from the cauldron three seconds after the change, so the cauldron room is no place for him after dark.
-- **Dangers.** Monsters move as the original's handlers do. One guard paces along its row and turns back when something stops it; the other walks a rectangle, turning each time it is stopped. Balls bounce where they stand, up to 32 pixels over where the room's first one started. Ghosts drift on diagonals, faster than Sabreman, and take a new heading at random when stopped, by day and by night. Only a room's first spiked ball ever drops, one frame in sixteen (in odd-numbered rooms not before something is picked up or put down there), and it lies where it lands. Flames and spike beds hold their ground. Spikes hurt the feet: a jump taken from anywhere on the tile before a spike bed clears it. The room south of the start is barred wall to wall by one. Portcullises rise, wait and drop on the original's beat, and crush whoever is under them; two cages and a corridor have them. Speeds come from the original's handlers: guards two pixels a frame, moving blocks and falling blocks one, ghosts three or four.
-- **Climbing.** A charm lying on the floor is something to stand on: put one down with E and jump onto it to reach a block too high to jump to from the floor. Collapsing blocks crumble under Sabreman and stay gone until he comes back into the room; falling blocks sink under him a pixel a frame and stay where they stop.
+- **Dangers.** Monsters move as the original's handlers do. One guard paces along its row and turns back when something stops it; the other walks a rectangle, turning each time it is stopped. Balls bounce where they stand, up to 32 pixels over where the room's first one started. Ghosts drift on diagonals, faster than Sabreman, and take a new heading at random when stopped, by day and by night. Only a room's first spiked ball ever drops, one frame in sixteen (in odd-numbered rooms not before something is picked up or put down there), and it lies where it lands. Flames and spike beds hold their ground. Spikes hurt the feet: a held jump taken from anywhere on the tile before a spike bed clears it, and a spiked ball lying on the floor can be jumped the same way. The room south of the start is barred wall to wall by one. Portcullises rise, wait and drop on the original's beat, and crush whoever is under them; two cages and a corridor have them. Speeds come from the original's handlers: guards two pixels a frame, moving blocks and falling blocks one, ghosts three or four.
+- **Climbing.** As the original's handler: a jump sets off at 8 pixels a frame upwards and loses 1 a frame while Space is held, 2 otherwise, going forward at walking pace. A tapped jump reaches a block, a held one two with a run-up (a block's face stops him until he is over it). Man and wolf jump alike. Sabreman carries three charms; E puts the one carried longest down under his feet and he stands on it, a block higher, so charms are steps: three make a stair. Collapsing blocks crumble under Sabreman and stay gone until he comes back into the room; falling blocks sink under him a pixel a frame and stay where they stop.
 - **Sound.** The original's three tunes, decoded from its memory: the title tune on the start screen (and again when the last life goes), the start tune when a game begins, the cure tune when it is won. Footsteps go tick, ticky, ticky; everything else is square-wave beeps.
 
 ## How it is built

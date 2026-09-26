@@ -3,7 +3,8 @@ import { Category } from '../engine/categories'
 import { resolveHorizontal, type AABB } from '../engine/Collision'
 import type { Grid } from '../engine/Grid'
 import type { GameState } from './GameState'
-import { StepClock, STEP_LENGTH, TICKS_PER_STEP } from '../engine/StepClock'
+import { FrameClock, StepClock, STEP_LENGTH, TICKS_PER_FRAME, TICKS_PER_STEP } from '../engine/StepClock'
+import { PIXELS_PER_BLOCK } from './Gravity'
 import { EPS } from '../engine/epsilons'
 import { FACINGS_CLOCKWISE, FACING_VECTOR, type Facing } from './Facing'
 import { Satchel } from './Satchel'
@@ -12,17 +13,16 @@ import { CHARM_HEIGHT, type Pickup } from './Pickup'
 export { STEP_LENGTH, TICKS_PER_STEP }
 export type { Facing }
 
-// Filmation-style tank controls. Sabreman acts on the shared step clock:
-// each step he turns one facing, walks one STEP_LENGTH, or advances one frame
-// of a committed jump arc. Nothing moves between steps.
-const JUMP_HEIGHT = 1.0
-// The wolf springs higher than the man, which some rooms rely on.
-export const WOLF_JUMP_HEIGHT = 1.5
-const JUMP_STEPS = 6
-const FALL_PER_STEP = 0.5
-// A jump carries three walking strides per step: six steps cover 4.5 units,
-// so a one-tile spike bed is cleared from anywhere on the tile before it.
-const JUMP_STRIDES_PER_STEP = 3
+// Filmation-style tank controls. On the ground Sabreman acts on the shared
+// step clock: each step he turns one facing or walks one STEP_LENGTH. In the
+// air he moves as the original's handler moves him, frame by frame on its
+// clock (FrameClock): a jump sets off at 8 pixels a frame upwards (0xC95F),
+// losing one a frame while Space is held on the way up and two otherwise
+// (0xC9C1), so a tapped jump rises a block (12 pixels) and a held one 28;
+// and all the while he goes forward at his walking pace (0xC9AB), three
+// pixels a frame. Man and wolf jump alike. Nothing moves between ticks.
+export const JUMP_SPEED_PX = 8
+const AIR_STRIDE = (STEP_LENGTH * TICKS_PER_FRAME) / TICKS_PER_STEP
 // Steps of grace after a respawn so a guard camping the door cannot chain kills.
 export const INVULNERABLE_STEPS = 24
 
@@ -44,12 +44,11 @@ export class Player extends Entity {
   readonly satchel = new Satchel<Pickup>()
 
   private readonly clock = new StepClock()
+  private readonly frameClock = new FrameClock()
   private invulnerableSteps = 0
   private tappedKeys = new Set<string>()
-  private jumpStep = 0
-  private jumpStartY = 0
-  private jumpHeight = JUMP_HEIGHT
-  private jumpMovesForward = false
+  // Pixels a frame upwards while in the air; negative on the way down.
+  private riseSpeedPx = 0
 
   constructor() {
     super()
@@ -65,7 +64,7 @@ export class Player extends Entity {
     this.position.set(x, 0, z)
     this.facing = facing
     this.state = 'grounded'
-    this.jumpMovesForward = false
+    this.riseSpeedPx = 0
     this.invulnerableSteps = INVULNERABLE_STEPS
   }
 
@@ -73,9 +72,13 @@ export class Player extends Entity {
     const ctx = ctxRaw as PlayerCtx
     this.latchJumpRequest(ctx)
     this.latchTaps(ctx)
+    const frame = this.frameClock.tick()
+    if (this.state !== 'grounded') {
+      if (frame) this.frameInTheAir(ctx)
+    }
     if (!this.clock.tick()) return
     if (this.invulnerableSteps > 0) this.invulnerableSteps--
-    this.step(ctx)
+    if (this.state === 'grounded') this.stepGrounded(ctx)
     this.tappedKeys.clear()
   }
 
@@ -93,17 +96,9 @@ export class Player extends Entity {
 
   private latchJumpRequest(ctx: PlayerCtx): void {
     if (this.state !== 'grounded' || !ctx.input.wasPressed('Space')) return
-    this.jumpHeight = ctx.state.form === 'werewolf' ? WOLF_JUMP_HEIGHT : JUMP_HEIGHT
-    this.jumpMovesForward = ctx.input.isDown('ArrowUp')
     this.state = 'jumping'
-    this.jumpStep = 0
-    this.jumpStartY = this.position.y
+    this.riseSpeedPx = JUMP_SPEED_PX
     ctx.onJumped()
-  }
-
-  private step(ctx: PlayerCtx): void {
-    if (this.state === 'grounded') this.stepGrounded(ctx)
-    else this.stepAirborne(ctx)
   }
 
   private stepGrounded(ctx: PlayerCtx): void {
@@ -113,33 +108,28 @@ export class Player extends Entity {
       this.walkForward(ctx)
       this.stepsTaken++
     }
-    if (this.position.y > this.supportAt(ctx) + 1e-3) this.state = 'airborne'
+    if (this.position.y > this.supportAt(ctx) + 1e-3) {
+      this.state = 'airborne'
+      this.riseSpeedPx = 0
+    }
   }
 
-  private stepAirborne(ctx: PlayerCtx): void {
-    if (this.jumpMovesForward) for (let i = 0; i < JUMP_STRIDES_PER_STEP; i++) this.walkForward(ctx)
-    if (this.state === 'jumping') this.advanceJumpArc()
-    else this.position.y -= FALL_PER_STEP
+  // One frame of the original's clock off the ground: forward (always in a
+  // jump; in a fall only while walking on), then up or down.
+  private frameInTheAir(ctx: PlayerCtx): void {
+    if (this.state === 'jumping' || ctx.input.isDown('ArrowUp')) this.walkForward(ctx, AIR_STRIDE)
+    const holding = this.state === 'jumping' && this.riseSpeedPx >= 0 && ctx.input.isDown('Space')
+    this.riseSpeedPx -= holding ? 1 : 2
+    this.position.y += this.riseSpeedPx / PIXELS_PER_BLOCK
     this.tryLand(ctx)
   }
 
-  private advanceJumpArc(): void {
-    this.jumpStep++
-    if (this.jumpStep >= JUMP_STEPS) {
-      this.state = 'airborne'
-      this.position.y = this.jumpStartY
-      return
-    }
-    this.position.y = this.jumpStartY + Math.sin((this.jumpStep / JUMP_STEPS) * Math.PI) * this.jumpHeight
-  }
-
   private tryLand(ctx: PlayerCtx): void {
-    const descending = this.state === 'airborne' || this.jumpStep > JUMP_STEPS / 2
     const supportY = this.supportAt(ctx)
-    if (!descending || this.position.y > supportY) return
+    if (this.riseSpeedPx > 0 || this.position.y > supportY) return
     this.position.y = supportY
     this.state = 'grounded'
-    this.jumpMovesForward = false
+    this.riseSpeedPx = 0
     ctx.onLanded()
   }
 
@@ -148,10 +138,10 @@ export class Player extends Entity {
     this.facing = FACINGS_CLOCKWISE[(index + turns + 4) % 4]
   }
 
-  private walkForward(ctx: PlayerCtx): void {
+  private walkForward(ctx: PlayerCtx, stride = STEP_LENGTH): void {
     const dir = FACING_VECTOR[this.facing]
-    const targetX = this.position.x + dir.x * STEP_LENGTH
-    const targetZ = this.position.z + dir.z * STEP_LENGTH
+    const targetX = this.position.x + dir.x * stride
+    const targetZ = this.position.z + dir.z * stride
     if (this.dynamicSupportAt(ctx, targetX, targetZ) > this.position.y + EPS.STEP) return
     const resolved = resolveHorizontal(
       { x: this.position.x, z: this.position.z },

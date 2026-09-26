@@ -229,7 +229,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     platforms: [],
     spikes: [{ x: 0, z: 5 }, { x: 1, z: 5 }, { x: 2, z: 5 }, { x: 3, z: 5 }, { x: 0, z: 2 }, { x: 1, z: 2 }, { x: 2, z: 2 }, { x: 3, z: 2 }],
     hoppers: [{ x: 1, z: 3, height: 0 }],
-    pickups: [{ x: 1, z: 4, item: 'wine-bottle' }],
+    pickups: [{ x: 1, z: 4, item: 'crystal-ball' }],
   },
   {
     id: 'map-5--7', tint: 'yellow', width: 4,
@@ -296,7 +296,6 @@ export const ROOM_SPECS: RoomSpec[] = [
     floatingBlocks: [{ x: 1, z: 0, bottom: 3 }, { x: 2, z: 0, bottom: 3 }],
     spikes: [{ x: 1, z: 1 }, { x: 2, z: 1 }],
     tables: [{ x: 1, z: 4, height: 1 }, { x: 1, z: 4, height: 2 }],
-    pickups: [{ x: 1, z: 3, item: 'teacup' }],
   },
   {
     id: 'map-5--6', tint: 'green',
@@ -344,6 +343,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     platforms: [{ x: 2, z: 5, height: 1 }],
     movingPlatforms: [{ from: { x: 2, z: 2 }, to: { x: 2, z: 4 }, height: 1 }],
     ghosts: [{ x: 3, z: 4 }, { x: 0, z: 3 }],
+    pickups: [{ x: 1, z: 3, item: 'life' }],
   },
   {
     id: 'map-0--5', tint: 'purple', width: 4,
@@ -353,7 +353,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     floatingBlocks: [{ x: 0, z: 0, bottom: 3 }, { x: 0, z: 3, bottom: 3 }, { x: 0, z: 6, bottom: 3 }, { x: 0, z: 7, bottom: 1 }, { x: 1, z: 0, bottom: 3 }, { x: 2, z: 0, bottom: 3 }],
     spikes: [{ x: 0, z: 5 }, { x: 0, z: 4 }, { x: 0, z: 3 }, { x: 0, z: 2 }, { x: 0, z: 1 }],
     vanishing: [{ x: 0, z: 5, height: 4 }, { x: 0, z: 4, height: 4 }, { x: 0, z: 2, height: 4 }, { x: 0, z: 1, height: 4 }],
-    pickups: [{ x: 1, z: 3, item: 'gem' }],
+    pickups: [{ x: 1, z: 3, item: 'crystal-ball' }],
   },
   {
     id: 'map-7--5', tint: 'purple',
@@ -395,7 +395,6 @@ export const ROOM_SPECS: RoomSpec[] = [
     floatingBlocks: [{ x: 2, z: 1, bottom: 1 }, { x: 2, z: 2, bottom: 1 }, { x: 5, z: 1, bottom: 1 }, { x: 5, z: 2, bottom: 1 }],
     spikes: [{ x: 3, z: 3, height: 1 }, { x: 4, z: 3, height: 1 }, { x: 3, z: 0, height: 1 }, { x: 4, z: 0, height: 1 }],
     balls: [{ x: 3.5, z: 1.5, height: 0 }],
-    puzzle: true,
   },
   {
     id: 'map--4--4', tint: 'green',
@@ -420,7 +419,6 @@ export const ROOM_SPECS: RoomSpec[] = [
     platforms: [{ x: 3, z: 1, height: 2 }, { x: 3, z: 2, height: 2 }, { x: 4, z: 0, height: 2 }, { x: 4, z: 3, height: 2 }, { x: 5, z: 1, height: 2 }, { x: 5, z: 2, height: 2 }],
     vanishing: [{ x: 4, z: 2, height: 3 }, { x: 4, z: 2, height: 4 }, { x: 4, z: 1, height: 3 }, { x: 4, z: 1, height: 4 }],
     spikedBalls: [{ x: 4, z: 2, height: 0, drops: true }, { x: 4, z: 1, height: 0 }],
-    puzzle: true,
   },
   {
     id: 'map--1--4', tint: 'purple',
@@ -435,7 +433,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     platforms: [{ x: 2, z: 1, height: 3 }, { x: 2, z: 5, height: 3 }, { x: 3, z: 4, height: 1 }, { x: 3, z: 5, height: 2 }],
     floatingBlocks: [{ x: 1, z: 0, bottom: 3 }, { x: 2, z: 0, bottom: 3 }, { x: 2, z: 1, bottom: 3 }],
     spikes: [{ x: 1, z: 1 }, { x: 2, z: 2 }],
-    pickups: [{ x: 1, z: 3, item: 'teacup' }],
+    pickups: [{ x: 1, z: 3, item: 'life' }],
   },
   {
     id: 'map-7--4', tint: 'yellow',
@@ -485,6 +483,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     exits: [{ direction: 'south', target: 'map--4--1' }, { direction: 'north', target: 'map--4--3' }],
     spawn: { x: 2, z: 0 },
     platforms: [{ x: 1, z: 0, height: 1 }, { x: 1, z: 1, height: 1 }, { x: 1, z: 4, height: 2 }, { x: 1, z: 5, height: 1 }, { x: 2, z: 1, height: 1 }, { x: 2, z: 4, height: 1 }, { x: 2, z: 5, height: 1 }],
+    pickups: [{ x: 1, z: 3, item: 'goblet' }],
   },
   {
     id: 'map--1--2', tint: 'green', width: 4,
@@ -516,6 +515,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     platforms: [{ x: 4, z: 1, height: 2 }, { x: 4, z: 2, height: 2 }],
     floatingBlocks: [{ x: 7, z: 1, bottom: 3 }, { x: 7, z: 2, bottom: 3 }],
     flames: [{ x: 6, z: 0, height: 3 }, { x: 5, z: 3, height: 3 }],
+    pickups: [{ x: 3, z: 1, item: 'boot' }],
   },
   {
     id: 'map-4--2', tint: 'purple', depth: 4,
@@ -523,7 +523,6 @@ export const ROOM_SPECS: RoomSpec[] = [
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 3, z: 0, height: 2 }, { x: 3, z: 1, height: 2 }, { x: 3, z: 2, height: 2 }, { x: 3, z: 3, height: 2 }],
     spikedBalls: [{ x: 3, z: 3, height: 6, drops: true }, { x: 3, z: 2, height: 6 }, { x: 3, z: 1, height: 6 }, { x: 3, z: 0, height: 6 }, { x: 3, z: 3, height: 7 }, { x: 3, z: 2, height: 7 }, { x: 3, z: 1, height: 7 }, { x: 3, z: 0, height: 7 }],
-    puzzle: true,
   },
   {
     id: 'map-5--2', tint: 'yellow',
@@ -532,14 +531,13 @@ export const ROOM_SPECS: RoomSpec[] = [
     platforms: [{ x: 4, z: 2, height: 4 }, { x: 4, z: 5, height: 4 }],
     floatingBlocks: [{ x: 4, z: 3, bottom: 2 }, { x: 4, z: 4, bottom: 2 }],
     tables: [{ x: 1, z: 1, height: 1 }],
-    pickups: [{ x: 3, z: 3, item: 'crystal-ball' }],
+    pickups: [{ x: 3, z: 3, item: 'boot' }],
   },
   {
     id: 'map-6--2', tint: 'purple',
     exits: [{ direction: 'east', target: 'map-7--2' }, { direction: 'north', target: 'map-6--3' }, { direction: 'west', target: 'map-5--2' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
-    pickups: [{ x: 3, z: 3, item: 'gem' }],
   },
   {
     id: 'map-7--2', tint: 'yellow',
@@ -570,7 +568,6 @@ export const ROOM_SPECS: RoomSpec[] = [
     platforms: [{ x: 4, z: 3, height: 1 }],
     floatingBlocks: [{ x: 5, z: 3, bottom: 1 }, { x: 6, z: 3, bottom: 2 }, { x: 7, z: 0, bottom: 3 }, { x: 7, z: 1, bottom: 3 }, { x: 7, z: 2, bottom: 3 }, { x: 7, z: 3, bottom: 3 }],
     spikes: [{ x: 6, z: 0 }, { x: 6, z: 1 }, { x: 6, z: 2 }, { x: 5, z: 0 }, { x: 5, z: 1 }, { x: 5, z: 2 }],
-    puzzle: true,
   },
   {
     id: 'map--1--1', tint: 'purple',
@@ -610,7 +607,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     exits: [{ direction: 'south', target: 'map--5-1' }, { direction: 'east', target: 'map--4-0' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
-    pickups: [{ x: 3, z: 3, item: 'wine-bottle' }],
+    pickups: [{ x: 3, z: 3, item: 'teacup' }],
   },
   {
     id: 'map--4-0', tint: 'cyan', depth: 4,
@@ -618,7 +615,6 @@ export const ROOM_SPECS: RoomSpec[] = [
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 2, z: 0, height: 3 }, { x: 2, z: 3, height: 3 }, { x: 5, z: 0, height: 3 }, { x: 5, z: 3, height: 3 }],
     balls: [{ x: 5, z: 1.5, height: 0 }, { x: 2, z: 1.5, height: 2 }],
-    pickups: [{ x: 3, z: 1, item: 'poison' }],
   },
   {
     id: 'map--3-0', tint: 'green', depth: 4,
@@ -681,7 +677,6 @@ export const ROOM_SPECS: RoomSpec[] = [
     spikes: [{ x: 2, z: 3, height: 2 }, { x: 5, z: 3, height: 2 }, { x: 2, z: 0, height: 2 }, { x: 5, z: 0, height: 2 }],
     portcullises: [{ from: { x: 2, z: 0 }, to: { x: 2, z: 3 } }, { from: { x: 5, z: 0 }, to: { x: 5, z: 3 } }],
     pathGuards: [{ path: [{ x: 3, z: 1.5 }, { x: 4, z: 1.5 }] }],
-    pickups: [{ x: 3, z: 0, item: 'life' }],
   },
   {
     id: 'map-5-0', tint: 'cyan',
@@ -691,7 +686,6 @@ export const ROOM_SPECS: RoomSpec[] = [
     floatingBlocks: [{ x: 3, z: 5, bottom: 3 }, { x: 3, z: 6, bottom: 3 }, { x: 3, z: 7, bottom: 3 }, { x: 4, z: 5, bottom: 1 }, { x: 4, z: 7, bottom: 2 }, { x: 4, z: 7, bottom: 3 }, { x: 5, z: 5, bottom: 3 }, { x: 5, z: 6, bottom: 3 }, { x: 5, z: 7, bottom: 3 }],
     spikes: [{ x: 4, z: 4 }],
     balls: [{ x: 4, z: 4.5, height: 3 }],
-    pickups: [{ x: 3, z: 3, item: 'crystal-ball' }],
   },
   {
     id: 'map-6-0', tint: 'purple', depth: 4,
@@ -713,14 +707,13 @@ export const ROOM_SPECS: RoomSpec[] = [
     spawn: { x: 2, z: 0 },
     platforms: [{ x: 0, z: 3, height: 4 }, { x: 1, z: 3, height: 1 }, { x: 2, z: 3, height: 1 }, { x: 3, z: 3, height: 4 }],
     flames: [{ x: 1, z: 3, height: 1 }],
-    pickups: [{ x: 1, z: 4, item: 'poison' }],
+    pickups: [{ x: 1, z: 4, item: 'gem' }],
   },
   {
     id: 'map--1-1', tint: 'green', width: 4,
     exits: [{ direction: 'south', target: 'map--1-2' }, { direction: 'north', target: 'map--1-0' }],
     spawn: { x: 2, z: 0 },
     platforms: [{ x: 0, z: 3, height: 2 }, { x: 1, z: 3, height: 2 }, { x: 2, z: 3, height: 2 }, { x: 3, z: 3, height: 2 }],
-    puzzle: true,
   },
   {
     id: 'map-0-1', tint: 'purple', width: 4,
@@ -779,14 +772,13 @@ export const ROOM_SPECS: RoomSpec[] = [
     floatingBlocks: [{ x: 0, z: 1, bottom: 1 }, { x: 0, z: 2, bottom: 2 }],
     spikes: [{ x: 0, z: 5, height: 2 }, { x: 1, z: 4, height: 2 }],
     fallingBlocks: [{ x: 0, z: 4, height: 4 }],
-    pickups: [{ x: 3, z: 3, item: 'life' }],
   },
   {
     id: 'map-3-2', tint: 'green',
     exits: [{ direction: 'south', target: 'map-3-3' }, { direction: 'north', target: 'map-3-1' }, { direction: 'west', target: 'map-2-2' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
-    pickups: [{ x: 3, z: 3, item: 'boot' }],
+    pickups: [{ x: 3, z: 3, item: 'poison' }],
   },
   {
     id: 'map-7-2', tint: 'green', width: 4,
@@ -820,7 +812,6 @@ export const ROOM_SPECS: RoomSpec[] = [
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 3, z: 3, height: 3 }, { x: 3, z: 5, height: 3 }],
     spikes: [{ x: 2, z: 5 }, { x: 2, z: 4 }, { x: 2, z: 4, height: 1 }, { x: 2, z: 4, height: 2 }, { x: 2, z: 3 }, { x: 4, z: 5 }, { x: 4, z: 4 }, { x: 4, z: 4, height: 1 }, { x: 4, z: 4, height: 2 }, { x: 4, z: 3 }],
-    pickups: [{ x: 3, z: 2, item: 'boot' }],
   },
   {
     id: 'map-3-3', tint: 'yellow',
@@ -829,7 +820,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     platforms: [],
     floatingBlocks: [{ x: 4, z: 4, bottom: 1 }, { x: 4, z: 4, bottom: 2 }],
     ghosts: [{ x: 4, z: 4 }],
-    pickups: [{ x: 3, z: 3, item: 'goblet' }],
+    pickups: [{ x: 3, z: 3, item: 'wine-bottle' }],
   },
   {
     id: 'map-7-3', tint: 'purple',
@@ -901,6 +892,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 4, z: 2, height: 3 }, { x: 4, z: 3, height: 1 }, { x: 4, z: 4, height: 1 }, { x: 4, z: 5, height: 4 }],
     balls: [{ x: 5, z: 3.5, height: 1 }, { x: 3, z: 3.5, height: 0 }],
+    pickups: [{ x: 2, z: 3, item: 'teacup' }],
   },
   {
     id: 'map--1-5', tint: 'purple',
@@ -920,6 +912,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     exits: [{ direction: 'south', target: 'map-1-6' }, { direction: 'west', target: 'map-0-5' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
+    pickups: [{ x: 3, z: 3, item: 'gem' }],
   },
   {
     id: 'map-5-5', tint: 'yellow',
@@ -957,7 +950,6 @@ export const ROOM_SPECS: RoomSpec[] = [
     spawn: { x: 2, z: 0 },
     platforms: [],
     spikedBalls: [{ x: 3, z: 0, height: 0, drops: true }, { x: 0, z: 1, height: 0 }, { x: 2, z: 1, height: 0 }, { x: 1, z: 2, height: 0 }, { x: 3, z: 2, height: 0 }, { x: 0, z: 3, height: 0 }, { x: 2, z: 3, height: 0 }, { x: 1, z: 4, height: 0 }, { x: 3, z: 4, height: 0 }, { x: 0, z: 5, height: 0 }, { x: 2, z: 5, height: 0 }, { x: 1, z: 6, height: 0 }, { x: 3, z: 6, height: 0 }, { x: 0, z: 7, height: 0 }],
-    puzzle: true,
   },
   {
     id: 'map--5-6', tint: 'yellow', width: 4,
@@ -980,6 +972,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     spawn: { x: 4, z: 0 },
     platforms: [],
     spikes: [{ x: 3, z: 6 }, { x: 4, z: 6 }, { x: 1, z: 4 }, { x: 1, z: 3 }, { x: 6, z: 4 }, { x: 6, z: 3 }, { x: 3, z: 1 }, { x: 4, z: 1 }],
+    pickups: [{ x: 3, z: 3, item: 'poison' }],
   },
   {
     id: 'map-0-6', tint: 'yellow',
@@ -987,6 +980,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 1, z: 4, height: 1 }, { x: 3, z: 2, height: 1 }, { x: 3, z: 4, height: 4 }, { x: 3, z: 6, height: 1 }, { x: 5, z: 4, height: 1 }],
     spikes: [{ x: 3, z: 5 }, { x: 4, z: 4 }, { x: 3, z: 3 }, { x: 2, z: 4 }],
+    pickups: [{ x: 4, z: 3, item: 'wine-bottle' }],
   },
   {
     id: 'map-1-6', tint: 'purple',

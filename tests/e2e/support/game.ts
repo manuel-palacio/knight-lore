@@ -1,5 +1,7 @@
 import { expect, type Page } from '@playwright/test'
 import { edgeKey, isClimb, isJump, type RoomDangers, type Step } from './roomPath'
+import { jumpFrom, planJump, type JumpPlan } from './jumping'
+import type { RoomSpec } from '../../../src/scenes/rooms/roomSpecs'
 import { centreOf, guardTrack, safeToCross, safeUnderBall, shouldWalkOn, sightingBefore, walkerTrack, type Point, type Sighting } from './crossing'
 import { PIXELS_PER_BLOCK } from '../../../src/game/Gravity'
 import { TICKS_PER_FRAME, TICKS_PER_STEP } from '../../../src/engine/StepClock'
@@ -131,7 +133,7 @@ const FACING_STEP: Record<string, Point> = { north: { x: 0, z: -1 }, south: { x:
 // the path skips a cell (a spike row, see roomPath.ts) it jumps it from the
 // tile before; where the next cell is higher, it jumps up onto it.
 export async function walkPath(page: Page, path: Step[], dangers: RoomDangers = { patrolled: new Set(), guardedEdges: new Set(), routes: [], ballTop: 0 }): Promise<void> {
-  const gates = (await debug(page)).gates
+  const { gates, room } = await debug(page)
   const gateAt = (c: Cell) => gates.findIndex((g) => g.cells.some((gc) => gc.x === c.x && gc.z === c.z))
   const onPatrol = (c: Cell) => dangers.patrolled.has(`${c.x},${c.z}`)
   const guarded = (i: number) => onPatrol(path[i]!) || dangers.guardedEdges.has(edgeKey(path[i - 1]!, path[i]!))
@@ -149,8 +151,10 @@ export async function walkPath(page: Page, path: Step[], dangers: RoomDangers = 
   await waitForWanderersAway(page)
   let start = 0
   for (let i = 1; i <= path.length; i++) {
+    const leap = i < path.length && (isJump(path[i - 1]!, path[i]!) || isClimb(path[i - 1]!, path[i]!))
+    const plan = leap && dangers.spec ? await planJump(dangers.spec, path, i) : undefined
     if (intoPatrol(i) && !waitedFor.has(i)) {
-      await walkRun(page, path.slice(start, i))
+      await walkRun(page, path.slice(start, i), plan?.at)
       const walker = walkerTrack(path, i - 1, dangers)
       const grille = pastRun(i, guarded)
       if (grille < path.length && underGrille(grille)) {
@@ -162,9 +166,8 @@ export async function walkPath(page: Page, path: Step[], dangers: RoomDangers = 
       start = i - 1
     }
     const intoGate = i < path.length && underGrille(i) && !underGrille(i - 1) && !waitedFor.has(i)
-    const leap = i < path.length && (isJump(path[i - 1]!, path[i]!) || isClimb(path[i - 1]!, path[i]!))
     if (i < path.length && !leap && !intoGate) continue
-    await walkRun(page, path.slice(start, i))
+    await walkRun(page, path.slice(start, i), plan?.at)
     if (intoGate) {
       const patrol = pastRun(i, underGrille)
       const patrolClear = intoPatrol(patrol) ? () => patrolsClear(page, path[patrol]!, walkerTrack(path, i - 1, dangers, patrol), dangers) : undefined
@@ -173,7 +176,9 @@ export async function walkPath(page: Page, path: Step[], dangers: RoomDangers = 
       start = i - 1
       continue
     }
-    if (i < path.length) await jumpTo(page, path[i - 1]!, path[i]!)
+    if (i < path.length) await jumpTo(page, path, i, dangers.spec, plan)
+    // A jump at a doorway can carry him out through it: he is where he was going.
+    if ((await debug(page)).room !== room) return
     start = i
   }
 }
@@ -245,27 +250,55 @@ async function waitForGateOpen(page: Page, gate: number, cellsAway: number, patr
 }
 
 // A run starts where he stands (off the centre, after a jump): he lines up
-// across the way he is going, never turning back along it.
-async function walkRun(page: Page, run: Cell[]): Promise<void> {
+// across the way he is going, never turning back along it. It ends on the
+// last cell's centre, or at `endAt` there (a jump's take-off), lined up
+// across the jump before stepping along it.
+async function walkRun(page: Page, run: Cell[], endAt?: { x: number; z: number }): Promise<void> {
   const alongX = run.length > 1 && run[1]!.x !== run[0]!.x
-  for (const [i, corner] of cornersOf(run).entries()) {
-    if (i > 0 || !alongX) await walkAxisTo(page, 'x', tileCentre(corner.x))
-    if (i > 0 || alongX || run.length === 1) await walkAxisTo(page, 'z', tileCentre(corner.z))
+  const corners = cornersOf(run)
+  for (const [i, corner] of corners.entries()) {
+    const last = i === corners.length - 1
+    const target = last && endAt ? endAt : { x: tileCentre(corner.x), z: tileCentre(corner.z) }
+    const jumpAlongX = last && endAt !== undefined && endAt.x !== tileCentre(corner.x)
+    const axes: ('x' | 'z')[] = jumpAlongX ? ['z', 'x'] : ['x', 'z']
+    for (const axis of axes) {
+      const firstOfRun = i === 0 && run.length > 1 && (axis === 'x') === alongX
+      if (!firstOfRun) await walkAxisTo(page, axis, target[axis])
+    }
   }
 }
 
-// A jump is committed: hold forward, press jump, and let go once landed.
-async function jumpTo(page: Page, from: Cell, to: Cell): Promise<void> {
+// A jump is committed: from the take-off point planJump found (or, with no
+// room to plan in, where he stands with Space held), facing the way, Space
+// down, and up again at once for a low jump or once landed for a high one.
+async function jumpTo(page: Page, path: Step[], into: number, spec?: RoomSpec, plan?: JumpPlan): Promise<void> {
+  const from = path[into - 1]!
+  const to = path[into]!
   const facing = to.x > from.x ? 'east' : to.x < from.x ? 'west' : to.z > from.z ? 'south' : 'north'
+  const held = spec && plan ? await takeOffFor(page, spec, path, into, plan) : true
   await face(page, facing)
-  await page.keyboard.down('ArrowUp')
-  await page.keyboard.press('Space')
+  if (held) await page.keyboard.down('Space')
+  else await page.keyboard.press('Space')
   try {
     await expect.poll(async () => (await debug(page)).state, { intervals: [20] }).not.toBe('grounded')
     await expect.poll(async () => (await debug(page)).state, { intervals: [20] }).toBe('grounded')
   } finally {
-    await page.keyboard.up('ArrowUp')
+    await page.keyboard.up('Space')
   }
+}
+
+// Walks to the planned take-off and settles, from where he stopped, whether
+// to hold Space; walks there again if from there no jump would land.
+async function takeOffFor(page: Page, spec: RoomSpec, path: Step[], into: number, plan: JumpPlan): Promise<boolean> {
+  for (let tries = 0; tries < 3; tries++) {
+    const now = await debug(page)
+    const held = await jumpFrom(spec, path, into, now.pos, now.fallingBlocks)
+    if (held !== undefined) return held
+    plan = await planJump(spec, path, into, now.fallingBlocks)
+    await walkAxisTo(page, 'x', plan.at.x)
+    await walkAxisTo(page, 'z', plan.at.z)
+  }
+  return plan.held
 }
 
 async function walkAxisTo(page: Page, axis: 'x' | 'z', target: number): Promise<void> {

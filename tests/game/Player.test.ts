@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { Grid } from '../../src/engine/Grid'
-import { Player, STEP_LENGTH, TICKS_PER_STEP, INVULNERABLE_STEPS, WOLF_JUMP_HEIGHT } from '../../src/game/Player'
+import { Player, STEP_LENGTH, TICKS_PER_STEP, INVULNERABLE_STEPS, JUMP_SPEED_PX } from '../../src/game/Player'
 import { GameState } from '../../src/game/GameState'
 import { SIMULATION_DT } from '../../src/engine/GameLoop'
 import { Pickup, CHARM_HEIGHT } from '../../src/game/Pickup'
@@ -15,7 +15,7 @@ function setupRoom() {
   return { grid, state, player }
 }
 
-type Keys = { up?: boolean; left?: boolean; right?: boolean; jump?: boolean; tapUp?: boolean; tapRight?: boolean }
+type Keys = { up?: boolean; left?: boolean; right?: boolean; jump?: boolean; space?: boolean; tapUp?: boolean; tapRight?: boolean }
 
 function ctx(grid: Grid, state: GameState, input: Keys = {}) {
   return {
@@ -27,6 +27,7 @@ function ctx(grid: Grid, state: GameState, input: Keys = {}) {
         if (code === 'ArrowUp') return !!input.up
         if (code === 'ArrowLeft') return !!input.left
         if (code === 'ArrowRight') return !!input.right
+        if (code === 'Space') return !!input.space
         return false
       },
       wasPressed: (code: string) => {
@@ -137,7 +138,23 @@ describe('Player walking', () => {
   })
 })
 
+// The original's jump (0xC948, 0xC95F, 0xC9C1, 0xC9AB): it sets off at 8
+// pixels a frame upwards, losing 1 a frame while Space is held on the way up
+// and 2 otherwise, and carries him forward at his walking pace.
 describe('Player jump', () => {
+  // Runs a jump to its landing; `held` keeps Space down throughout.
+  function jump(held: boolean, grid = new Grid(8, 8), state = new GameState()) {
+    const player = new Player()
+    player.position.set(4, 0, 4)
+    tick(player, ctx(grid, state, { jump: true, space: held }))
+    let peak = 0
+    for (let i = 0; i < 400 && player.state !== 'grounded'; i++) {
+      tick(player, ctx(grid, state, { space: held }))
+      peak = Math.max(peak, player.position.y)
+    }
+    return { player, peak }
+  }
+
   it('jump fires only from grounded state', () => {
     const { grid, state, player } = setupRoom()
     let jumped = 0
@@ -148,40 +165,26 @@ describe('Player jump', () => {
     expect(jumped).toBe(1)
   })
 
-  it('standing jump goes straight up and lands on the same spot', () => {
-    const { grid, state, player } = setupRoom()
-    let landed = 0
-    tick(player, { ...ctx(grid, state, { jump: true }), onLanded: () => { landed++ } })
-    const c = { ...ctx(grid, state), onLanded: () => { landed++ } }
-    let peak = 0
-    for (let i = 0; i < 200 && player.state !== 'grounded'; i++) {
-      tick(player, c)
-      peak = Math.max(peak, player.position.y)
-    }
-    expect(player.state).toBe('grounded')
-    expect(landed).toBe(1)
-    expect(peak).toBeGreaterThan(0.5)
-    expect(player.position.x).toBe(4)
-    expect(player.position.z).toBe(4)
+  it('a tapped jump rises a block, 12 pixels: 6, 4 and 2 a frame', () => {
+    expect(JUMP_SPEED_PX).toBe(8)
+    expect(jump(false).peak).toBeCloseTo(1, 5)
   })
 
-  it('walking jump carries forward a fixed distance', () => {
-    const { grid, state, player } = setupRoom()
-    tick(player, ctx(grid, state, { up: true, jump: true }))
-    const c = ctx(grid, state)
-    for (let i = 0; i < 200 && player.state !== 'grounded'; i++) tick(player, c)
-    expect(player.state).toBe('grounded')
-    expect(player.position.z).toBeGreaterThan(4 + STEP_LENGTH)
+  it('a held jump rises 28 pixels, 7 down to 1 a frame: two blocks and a third', () => {
+    expect(jump(true).peak).toBeCloseTo(28 / 12, 5)
   })
 
-  it('walking jump carries past a one-tile spike bed even from the back of the tile before it', () => {
-    const { grid, state, player } = setupRoom()
-    const start = player.position.z
-    tick(player, ctx(grid, state, { up: true, jump: true }))
-    const c = ctx(grid, state)
-    for (let i = 0; i < 200 && player.state !== 'grounded'; i++) tick(player, c)
+  it('carries him forward at his walking pace all the while, lands and says so', () => {
+    const tapped = jump(false).player
+    const held = jump(true).player
+    expect(tapped.state).toBe('grounded')
+    expect(tapped.position.z - 4).toBeGreaterThan(2)
+    expect(held.position.z - 4).toBeGreaterThan(tapped.position.z - 4 + 2)
+  })
+
+  it('a held jump clears a one-tile spike bed from the back of the tile before it', () => {
     const fromBackOfTileBeforeToFarSideOfSpikes = 2 * TILE
-    expect(player.position.z - start).toBeGreaterThan(fromBackOfTileBeforeToFarSideOfSpikes)
+    expect(jump(true).player.position.z - 4).toBeGreaterThan(fromBackOfTileBeforeToFarSideOfSpikes)
   })
 
   it('cannot steer or turn while airborne', () => {
@@ -191,7 +194,12 @@ describe('Player jump', () => {
     for (let i = 0; i < 200 && player.state !== 'grounded'; i++) tick(player, c)
     expect(player.facing).toBe('south')
     expect(player.position.x).toBe(4)
-    expect(player.position.z).toBe(4)
+  })
+
+  it('the wolf jumps as high as the man: they share the handler', () => {
+    const wolf = new GameState()
+    wolf.toggleForm()
+    expect(jump(true, new Grid(8, 8), wolf).peak).toBeCloseTo(jump(true).peak, 5)
   })
 
   it('stepping off support starts falling', () => {
@@ -235,22 +243,6 @@ describe('Player on dynamic supports', () => {
     gone = true
     step(player, c)
     expect(player.state).toBe('airborne')
-  })
-})
-
-describe('Wolf form', () => {
-  it('jumps higher than the man', () => {
-    const peak = (form: 'human' | 'werewolf') => {
-      const { grid, state, player } = setupRoom()
-      if (form === 'werewolf') state.toggleForm()
-      tick(player, ctx(grid, state, { jump: true }))
-      const c = ctx(grid, state)
-      let top = 0
-      for (let i = 0; i < 200 && (player.state as string) !== 'grounded'; i++) { tick(player, c); top = Math.max(top, player.position.y) }
-      return top
-    }
-    expect(peak('werewolf')).toBeGreaterThan(peak('human'))
-    expect(peak('werewolf')).toBeCloseTo(WOLF_JUMP_HEIGHT, 5)
   })
 })
 
@@ -350,11 +342,19 @@ describe('Player and a charm as a stepping stone', () => {
     for (let i = 0; i < 400 && player.state !== 'grounded'; i++) tick(player, c())
   }
 
-  it('cannot get onto a two-high block by jumping from the floor', () => {
+  it('cannot get onto a two-high block with a tapped jump from the floor', () => {
     const { player, c } = stage()
     player.position.set(4, 0, 4.8) // just past the charm, so it is not in the way
     jumpForward(player, c)
     expect(player.position.y).toBe(0)
+  })
+
+  it('gets onto a two-high block with a held jump from the floor', () => {
+    const { player, c } = stage()
+    player.position.set(4, 0, 4.8)
+    tick(player, c({ jump: true, space: true }))
+    for (let i = 0; i < 400 && player.state !== 'grounded'; i++) tick(player, c({ space: true }))
+    expect(player.position.y).toBe(2)
   })
 
   it('stands on a charm lying on the floor, and jumps from it onto the block', () => {

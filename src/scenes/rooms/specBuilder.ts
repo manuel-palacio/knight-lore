@@ -1,9 +1,9 @@
-import { buildRoomShell, addPlatform, addPushBlock, addPatrolEnemy, tileCenter } from './shell'
+import { buildRoomShell, addPlatform, addPatrolEnemy, tileCenter } from './shell'
 import { placeSpikes } from '../../game/SpikeGrid'
 import { GhostEnemy } from '../../game/GhostEnemy'
 import { MovingPlatform } from '../../game/MovingPlatform'
 import { PathGuard } from '../../game/PathGuard'
-import { Table } from '../../game/Table'
+import { PushableBox } from '../../game/PushableBox'
 import { VanishingBlock } from '../../game/VanishingBlock'
 import { BouncingBall, BOUNCE_ABOVE_FIRST_PX } from '../../game/BouncingBall'
 import { HoppingBall } from '../../game/HoppingBall'
@@ -31,7 +31,6 @@ export function buildRoomFromSpec(spec: RoomSpec, sizeOf: (id: string) => RoomSi
   return async (state) => {
     const room = buildRoomShell(spec.id, spec.tint, spec.width ?? FULL_SIZE, spec.depth ?? FULL_SIZE)
     for (const p of spec.platforms ?? []) addPlatform(room, p.x, p.z, p.height)
-    for (const b of spec.pushBlocks ?? []) addPushBlock(room, b.x, b.z)
     placeSpikes(room, spec.spikes ?? [])
     for (const g of spec.guards ?? []) {
       addPatrolEnemy(room, { x: tileCenter(g.from.x), z: tileCenter(g.from.z) }, { x: tileCenter(g.to.x), z: tileCenter(g.to.z) }, g.speed)
@@ -47,7 +46,7 @@ export function buildRoomFromSpec(spec: RoomSpec, sizeOf: (id: string) => RoomSi
     for (const p of spec.portcullises ?? []) room.add(new Portcullis(p.from, p.to, room.tileSize))
     for (const b of spec.spikedBalls ?? []) room.add(new SpikedBall(b, b.height, room.tileSize, { drops: b.drops, waits: b.waits }))
     for (const b of spec.floatingBlocks ?? []) room.add(new FloatingBlock(b.x, b.z, b.bottom, room.tileSize))
-    for (const t of spec.tables ?? []) room.add(new Table(t.x, t.z, t.height, room.tileSize))
+    for (const b of spec.boxes ?? []) room.add(new PushableBox(b.kind, cellCentre(b), b.height))
     for (const v of spec.vanishing ?? []) room.add(new VanishingBlock(v.x, v.z, v.height, room.tileSize))
     for (const f of spec.fallingBlocks ?? []) room.add(new FallingBlock(f.x, f.z, f.height, room.tileSize))
     const bounceTop = ballTop(spec)

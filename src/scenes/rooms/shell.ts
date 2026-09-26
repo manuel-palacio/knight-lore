@@ -1,6 +1,5 @@
 import { Room } from '../../game/Room'
 import { StaticBlock } from '../../game/StaticBlock'
-import { PushBlock } from '../../game/PushBlock'
 import { PatrolEnemy } from '../../game/PatrolEnemy'
 
 export const TILE = 2
@@ -45,8 +44,3 @@ export function addPatrolEnemy(
 }
 
 // 1.0 high so a 1.0 jump can climb it.
-export function addPushBlock(room: Room, gridX: number, gridZ: number): void {
-  const block = new PushBlock(gridX, gridZ)
-  block.placeOnGrid(room.grid, TILE)
-  room.add(block)
-}

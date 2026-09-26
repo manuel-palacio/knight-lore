@@ -1,5 +1,6 @@
 import type { RoomTint } from './shell'
 import type { ItemId } from './items'
+import type { BoxKind } from '../../game/PushableBox'
 
 // Data-driven rooms. A spec is pure data (unit-tested for map integrity);
 // buildRoomFromSpec turns it into a Room. Cells are 0..7 on the 8x8 grid.
@@ -21,7 +22,6 @@ export interface RoomSpec {
   exits: { direction: Direction; target: string }[]
   spawn: Cell
   platforms?: (Cell & { height: number })[]
-  pushBlocks?: Cell[]
   // A spike with a height sits on top of a block that tall.
   spikes?: (Cell & { height?: number })[]
   // Only a room's first spiked ball drops (`drops`), and in the original's
@@ -37,7 +37,8 @@ export interface RoomSpec {
   pickups?: (Cell & { item: ItemId; y?: number })[]
   movingPlatforms?: { from: Cell; to: Cell; height: number }[]
   pathGuards?: { path: Cell[] }[]
-  tables?: (Cell & { height: number })[]
+  // Tables and chests, pushable (see PushableBox); `height` is what they stand on.
+  boxes?: (Cell & { height: number; kind: BoxKind })[]
   vanishing?: (Cell & { height: number })[]
   // Blocks that sink while stood on; `height` is the top, in blocks.
   fallingBlocks?: (Cell & { height: number })[]
@@ -159,7 +160,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 2, z: 4, height: 3 }, { x: 4, z: 4, height: 3 }],
     spikes: [{ x: 2, z: 5 }, { x: 3, z: 5 }, { x: 3, z: 5, height: 1 }, { x: 4, z: 5 }, { x: 2, z: 3 }, { x: 3, z: 3 }, { x: 3, z: 3, height: 1 }, { x: 4, z: 3 }],
-    tables: [{ x: 6, z: 1, height: 1 }],
+    boxes: [{ x: 6, z: 1, height: 0, kind: 'table' }],
   },
   {
     id: 'map-3--8', tint: 'yellow',
@@ -262,8 +263,9 @@ export const ROOM_SPECS: RoomSpec[] = [
     exits: [{ direction: 'east', target: 'map--6--6' }, { direction: 'west', target: 'map--8--6' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 1, z: 2, height: 2 }, { x: 4, z: 2, height: 2 }, { x: 5, z: 2, height: 2 }, { x: 6, z: 2, height: 2 }],
-    floatingBlocks: [{ x: 2, z: 2, bottom: 2 }, { x: 2, z: 2, bottom: 3 }, { x: 3, z: 2, bottom: 2 }, { x: 7, z: 1, bottom: 3 }, { x: 7, z: 2, bottom: 3 }],
+    floatingBlocks: [{ x: 2, z: 2, bottom: 2 }, { x: 3, z: 2, bottom: 2 }, { x: 7, z: 1, bottom: 3 }, { x: 7, z: 2, bottom: 3 }],
     spikes: [{ x: 4, z: 2, height: 2 }, { x: 6, z: 2, height: 2 }],
+    boxes: [{ x: 2, z: 2, height: 3, kind: 'chest' }],
     balls: [{ x: 5, z: 2, height: 2 }],
   },
   {
@@ -296,7 +298,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     platforms: [],
     floatingBlocks: [{ x: 1, z: 0, bottom: 3 }, { x: 2, z: 0, bottom: 3 }],
     spikes: [{ x: 1, z: 1 }, { x: 2, z: 1 }],
-    tables: [{ x: 1, z: 4, height: 1 }, { x: 1, z: 4, height: 2 }],
+    boxes: [{ x: 1, z: 4, height: 0, kind: 'table' }, { x: 1, z: 4, height: 1, kind: 'table' }],
   },
   {
     id: 'map-5--6', tint: 'green',
@@ -333,7 +335,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     exits: [{ direction: 'south', target: 'map--4--4' }, { direction: 'north', target: 'map--4--6' }],
     spawn: { x: 2, z: 0 },
     platforms: [],
-    tables: [{ x: 0, z: 3, height: 1 }, { x: 1, z: 3, height: 1 }, { x: 2, z: 3, height: 1 }, { x: 3, z: 3, height: 1 }, { x: 0, z: 3, height: 2 }, { x: 1, z: 3, height: 2 }, { x: 2, z: 3, height: 2 }, { x: 3, z: 3, height: 2 }],
+    boxes: [{ x: 0, z: 3, height: 0, kind: 'table' }, { x: 1, z: 3, height: 0, kind: 'table' }, { x: 2, z: 3, height: 0, kind: 'table' }, { x: 3, z: 3, height: 0, kind: 'table' }, { x: 0, z: 3, height: 1, kind: 'table' }, { x: 1, z: 3, height: 1, kind: 'table' }, { x: 2, z: 3, height: 1, kind: 'table' }, { x: 3, z: 3, height: 1, kind: 'table' }],
     spikedBalls: [{ x: 0, z: 3, height: 2, drops: true }, { x: 1, z: 3, height: 2 }, { x: 2, z: 3, height: 2 }, { x: 3, z: 3, height: 2 }, { x: 0, z: 3, height: 3 }, { x: 1, z: 3, height: 3 }, { x: 2, z: 3, height: 3 }, { x: 3, z: 3, height: 3 }],
     puzzle: true,
   },
@@ -483,7 +485,8 @@ export const ROOM_SPECS: RoomSpec[] = [
     id: 'map--4--2', tint: 'yellow', width: 4,
     exits: [{ direction: 'south', target: 'map--4--1' }, { direction: 'north', target: 'map--4--3' }],
     spawn: { x: 2, z: 0 },
-    platforms: [{ x: 1, z: 0, height: 1 }, { x: 1, z: 1, height: 1 }, { x: 1, z: 4, height: 2 }, { x: 1, z: 5, height: 1 }, { x: 2, z: 1, height: 1 }, { x: 2, z: 4, height: 1 }, { x: 2, z: 5, height: 1 }],
+    platforms: [{ x: 1, z: 0, height: 1 }, { x: 1, z: 1, height: 1 }, { x: 1, z: 4, height: 1 }, { x: 1, z: 5, height: 1 }, { x: 2, z: 1, height: 1 }, { x: 2, z: 4, height: 1 }, { x: 2, z: 5, height: 1 }],
+    boxes: [{ x: 1, z: 4, height: 1, kind: 'chest' }],
     pickups: [{ x: 1, z: 3, item: 'goblet' }],
   },
   {
@@ -522,7 +525,8 @@ export const ROOM_SPECS: RoomSpec[] = [
     id: 'map-4--2', tint: 'purple', depth: 4,
     exits: [{ direction: 'east', target: 'map-5--2' }, { direction: 'west', target: 'map-3--2' }],
     spawn: { x: 4, z: 0 },
-    platforms: [{ x: 3, z: 0, height: 2 }, { x: 3, z: 1, height: 2 }, { x: 3, z: 2, height: 2 }, { x: 3, z: 3, height: 2 }],
+    platforms: [],
+    boxes: [{ x: 3, z: 3, height: 0, kind: 'chest' }, { x: 3, z: 2, height: 0, kind: 'chest' }, { x: 3, z: 1, height: 0, kind: 'chest' }, { x: 3, z: 0, height: 0, kind: 'chest' }, { x: 3, z: 3, height: 1, kind: 'chest' }, { x: 3, z: 2, height: 1, kind: 'chest' }, { x: 3, z: 1, height: 1, kind: 'chest' }, { x: 3, z: 0, height: 1, kind: 'chest' }],
     spikedBalls: [{ x: 3, z: 3, height: 6, drops: true }, { x: 3, z: 2, height: 6 }, { x: 3, z: 1, height: 6 }, { x: 3, z: 0, height: 6 }, { x: 3, z: 3, height: 7 }, { x: 3, z: 2, height: 7 }, { x: 3, z: 1, height: 7 }, { x: 3, z: 0, height: 7 }],
   },
   {
@@ -531,7 +535,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 4, z: 2, height: 4 }, { x: 4, z: 5, height: 4 }],
     floatingBlocks: [{ x: 4, z: 3, bottom: 2 }, { x: 4, z: 4, bottom: 2 }],
-    tables: [{ x: 1, z: 1, height: 1 }],
+    boxes: [{ x: 1, z: 1, height: 0, kind: 'table' }],
     pickups: [{ x: 3, z: 3, item: 'boot' }],
   },
   {
@@ -692,7 +696,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     exits: [{ direction: 'east', target: 'map-7-0' }, { direction: 'west', target: 'map-5-0' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
-    tables: [{ x: 3, z: 2, height: 1 }, { x: 3, z: 2, height: 2 }],
+    boxes: [{ x: 3, z: 2, height: 0, kind: 'table' }, { x: 3, z: 2, height: 1, kind: 'table' }],
     ghosts: [{ x: 3, z: 3 }],
   },
   {
@@ -784,7 +788,8 @@ export const ROOM_SPECS: RoomSpec[] = [
     id: 'map-7-2', tint: 'green', width: 4,
     exits: [{ direction: 'south', target: 'map-7-3' }, { direction: 'north', target: 'map-7-1' }],
     spawn: { x: 2, z: 0 },
-    platforms: [{ x: 1, z: 3, height: 1 }, { x: 1, z: 6, height: 1 }, { x: 2, z: 3, height: 1 }, { x: 2, z: 6, height: 2 }],
+    platforms: [{ x: 1, z: 3, height: 1 }, { x: 1, z: 6, height: 1 }, { x: 2, z: 3, height: 1 }, { x: 2, z: 6, height: 1 }],
+    boxes: [{ x: 2, z: 6, height: 1, kind: 'chest' }],
   },
   {
     id: 'map--5-3', tint: 'yellow',
@@ -796,8 +801,8 @@ export const ROOM_SPECS: RoomSpec[] = [
     id: 'map--4-3', tint: 'green',
     exits: [{ direction: 'west', target: 'map--5-3' }],
     spawn: { x: 4, z: 0 },
-    platforms: [{ x: 3, z: 2, height: 1 }, { x: 3, z: 3, height: 1 }, { x: 3, z: 4, height: 4 }, { x: 4, z: 2, height: 1 }, { x: 5, z: 2, height: 2 }],
-    tables: [{ x: 6, z: 5, height: 1 }, { x: 6, z: 5, height: 2 }],
+    platforms: [{ x: 3, z: 2, height: 1 }, { x: 3, z: 3, height: 1 }, { x: 3, z: 4, height: 4 }, { x: 4, z: 2, height: 1 }, { x: 5, z: 2, height: 1 }],
+    boxes: [{ x: 5, z: 2, height: 1, kind: 'chest' }, { x: 6, z: 5, height: 0, kind: 'table' }, { x: 6, z: 5, height: 1, kind: 'table' }],
   },
   {
     id: 'map--1-3', tint: 'green', width: 4,
@@ -920,7 +925,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 6, z: 3, height: 1 }, { x: 6, z: 4, height: 1 }, { x: 7, z: 2, height: 1 }, { x: 7, z: 5, height: 1 }],
     floatingBlocks: [{ x: 7, z: 3, bottom: 3 }, { x: 7, z: 4, bottom: 3 }],
-    tables: [{ x: 2, z: 3, height: 1 }, { x: 2, z: 3, height: 2 }, { x: 2, z: 3, height: 3 }, { x: 2, z: 3, height: 4 }],
+    boxes: [{ x: 2, z: 3, height: 0, kind: 'table' }, { x: 2, z: 3, height: 1, kind: 'table' }, { x: 2, z: 3, height: 2, kind: 'table' }, { x: 2, z: 3, height: 3, kind: 'table' }],
   },
   {
     id: 'map-6-5', tint: 'purple', depth: 4,
@@ -1027,8 +1032,9 @@ export const ROOM_SPECS: RoomSpec[] = [
     id: 'map--5-7', tint: 'purple',
     exits: [{ direction: 'north', target: 'map--5-6' }, { direction: 'west', target: 'map--6-7' }],
     spawn: { x: 4, z: 0 },
-    platforms: [{ x: 2, z: 6, height: 2 }, { x: 2, z: 7, height: 2 }, { x: 3, z: 5, height: 2 }, { x: 4, z: 6, height: 2 }, { x: 4, z: 7, height: 2 }],
+    platforms: [{ x: 2, z: 6, height: 2 }, { x: 2, z: 7, height: 2 }, { x: 4, z: 6, height: 2 }, { x: 4, z: 7, height: 2 }],
     floatingBlocks: [{ x: 3, z: 6, bottom: 2 }, { x: 3, z: 7, bottom: 2 }],
+    boxes: [{ x: 3, z: 5, height: 0, kind: 'chest' }, { x: 3, z: 5, height: 1, kind: 'chest' }],
     ghosts: [{ x: 3, z: 6 }],
   },
   {
@@ -1036,8 +1042,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     exits: [{ direction: 'east', target: 'map--1-7' }, { direction: 'north', target: 'map--2-6' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 3, z: 3, height: 4 }],
-    pushBlocks: [{ x: 2, z: 2 }],
-    tables: [{ x: 4, z: 6, height: 1 }],
+    boxes: [{ x: 2, z: 2, height: 0, kind: 'chest' }, { x: 4, z: 6, height: 0, kind: 'table' }],
     vanishing: [{ x: 4, z: 3, height: 1 }],
   },
   {
@@ -1045,7 +1050,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     exits: [{ direction: 'east', target: 'map-0-7' }, { direction: 'north', target: 'map--1-6' }, { direction: 'west', target: 'map--2-7' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 2, z: 2, height: 1 }, { x: 2, z: 3, height: 1 }, { x: 2, z: 4, height: 1 }, { x: 3, z: 2, height: 1 }, { x: 3, z: 4, height: 1 }, { x: 4, z: 2, height: 1 }, { x: 4, z: 3, height: 1 }, { x: 4, z: 4, height: 1 }],
-    floatingBlocks: [{ x: 3, z: 3, bottom: 1 }],
+    boxes: [{ x: 3, z: 3, height: 1, kind: 'chest' }],
     hoppers: [{ x: 3, z: 3, height: 0, randomHops: true }],
   },
   {

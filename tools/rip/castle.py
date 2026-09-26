@@ -39,9 +39,13 @@ TINT = {3: 'purple', 4: 'green', 5: 'cyan', 6: 'yellow'}
 CHARMS = ['goblet', 'gem', 'wine-bottle', 'crystal-ball', 'boot', 'teacup', 'poison']
 NEAR_ENOUGH = 8
 
-BLOCK_TYPES = {0, 3, 4, 11}
-SPIKES, TABLE, GHOST, SPARKLE = 5, 7, 9, 25
-PUSHABLE = {6, 16}
+# Type 16 zeroes its own velocity before it moves (0xC4AA): pushed, it never
+# moves, a block like any other.
+BLOCK_TYPES = {0, 3, 4, 11, 16}
+SPIKES, GHOST, SPARKLE = 5, 9, 25
+# Pushable (template flag bit 2): a table moves only while pushed (0xC4C3), a
+# chest slides on until stopped (0xC4B6).
+BOXES = {6: 'chest', 7: 'table'}
 FLAMES = {10, 20}
 # Guards: 8 walks back and forth along x (handler 0xB73C), 13 round a
 # rectangle (0xB9A5). Balls bounce where they stand (0xB865); 23 hops after
@@ -170,16 +174,12 @@ class RoomBuild:
         if cell in self.doors and level == 0 and kind not in GHOST_LIKE:
             warn(f'{self.id}: type {kind} on the doorway ({x},{z}), dropped')
             return
-        if kind in BLOCK_TYPES or (kind in PUSHABLE and level > 0):
+        if kind in BLOCK_TYPES:
             self.stacks.setdefault(cell, set()).add(level)
-        elif kind in PUSHABLE and any(o['x'] == obj['x'] and o['y'] == obj['y'] and o['z'] > 0 for o in self.objects):
-            self.stacks.setdefault(cell, set()).add(level)  # a chest with something on it is part of the stack
         elif kind == SPIKES:
             self.put('spikes', {'x': x, 'z': z, **({'height': level} if level else {})})
-        elif kind in PUSHABLE:
-            self.put('pushBlocks', {'x': x, 'z': z})
-        elif kind == TABLE:
-            self.put('tables', {'x': x, 'z': z, 'height': level + 1})
+        elif kind in BOXES:
+            self.put('boxes', {'x': x, 'z': z, 'height': level, 'kind': BOXES[kind]})
         elif kind == GHOST:
             self.put('ghosts', {'x': x, 'z': z})
         elif kind in FLAMES:
@@ -269,7 +269,7 @@ class RoomBuild:
 
     def guard_fits(self, x, z, half):
         """A guard on a half cell (half) straddles this row and the next."""
-        solid = {(p['x'], p['z']) for f in ('pushBlocks', 'tables') for p in self.fields.get(f, [])}
+        solid = {(p['x'], p['z']) for p in self.fields.get('boxes', [])}
         rows = (z, z + 1) if half else (z,)
         return all(0 <= x < self.width and 0 <= r < self.depth and not self.blocked(x, r) and (x, r) not in solid
                    and not self.near_door(x, r) for r in rows)
@@ -318,7 +318,7 @@ class RoomBuild:
 
     def free_cells(self):
         taken = set(self.columns) | self.doors
-        for field in ('spikes', 'pushBlocks', 'tables', 'flames', 'vanishing', 'fallingBlocks', 'ghosts', 'spikedBalls', 'hoppers'):
+        for field in ('spikes', 'boxes', 'flames', 'vanishing', 'fallingBlocks', 'ghosts', 'spikedBalls', 'hoppers'):
             taken |= {(c['x'], c['z']) for c in self.fields.get(field, [])}
         for gate in self.fields.get('portcullises', []):
             taken |= set(cells_between(gate['from'], gate['to']))
@@ -387,8 +387,10 @@ class Walkable:
         f = build.fields
         self.width, self.depth = build.width, build.depth
         self.columns = dict(build.columns)
-        for p in f.get('pushBlocks', []):
-            self.columns[(p['x'], p['z'])] = 1
+        # Walkers take boxes as they stand, a pile of them as tall as it is.
+        for b in sorted(f.get('boxes', []), key=lambda b: b['height']):
+            cell = (b['x'], b['z'])
+            self.columns[cell] = max(self.columns.get(cell, 0), b['height']) + 1
         self.hanging, self.floor_blocked, self.floor_spikes, self.hazards = {}, set(), set(), {}
         # A collapsing block is gone two frames after it is stood on: it can
         # be walked under, never stood on.
@@ -399,9 +401,6 @@ class Walkable:
             self.hanging.setdefault((v['x'], v['z']), []).append(v['height'] - 1)
         for v in f.get('vanishing', []):
             self.overhead.setdefault((v['x'], v['z']), []).append(v['height'] - 1)
-        for t in f.get('tables', []):
-            self.floor_blocked.add((t['x'], t['z']))
-            self.hanging.setdefault((t['x'], t['z']), []).append(t['height'] - 1)
         if build.id == 'room-001':
             self.floor_blocked.add((4, 4))
         for sp in f.get('spikes', []):
@@ -561,7 +560,7 @@ def ts_value(value):
     return str(value)
 
 
-FIELD_ORDER = ['platforms', 'floatingBlocks', 'spikes', 'pushBlocks', 'tables', 'vanishing', 'fallingBlocks', 'movingPlatforms', 'portcullises',
+FIELD_ORDER = ['platforms', 'floatingBlocks', 'spikes', 'boxes', 'vanishing', 'fallingBlocks', 'movingPlatforms', 'portcullises',
                'pathGuards', 'balls', 'hoppers', 'ghosts', 'spikedBalls', 'flames', 'pickups']
 
 

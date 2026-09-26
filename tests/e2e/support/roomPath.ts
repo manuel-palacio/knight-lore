@@ -112,15 +112,14 @@ class RoomSurfaces {
     this.width = spec.width ?? 8
     this.depth = spec.depth ?? 8
     for (const p of spec.platforms ?? []) this.columns.set(key(p), p.height)
-    for (const p of spec.pushBlocks ?? []) this.columns.set(key(p), 1)
+    // Walkers take boxes as they stand, a pile of them as tall as it is.
+    for (const b of [...(spec.boxes ?? [])].sort((a, b) => a.height - b.height)) {
+      this.columns.set(key(b), Math.max(this.columns.get(key(b)) ?? 0, b.height) + 1)
+    }
     for (const b of spec.floatingBlocks ?? []) this.hang(b, b.bottom)
-    // A falling block sinks only while stood on; a table is stood on, not under.
+    // A falling block sinks only while stood on.
     for (const v of spec.fallingBlocks ?? []) this.hang(v, v.height - 1)
     for (const v of spec.vanishing ?? []) this.overhead.set(key(v), [...(this.overhead.get(key(v)) ?? []), v.height - 1])
-    for (const t of spec.tables ?? []) {
-      this.floorBlocked.add(key(t))
-      this.hang(t, t.height - 1)
-    }
     if (spec.cauldron) this.floorBlocked.add(key(spec.cauldron))
     for (const s of spec.spikes ?? []) {
       if (s.height) this.addHazard(s, s.height)

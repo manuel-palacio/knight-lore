@@ -11,8 +11,10 @@ import { SpikedBall } from './game/SpikedBall'
 import { FloatingBlock } from './game/FloatingBlock'
 import { hazardHunts, touchesHazard } from './game/Hazards'
 import { Player, type Facing } from './game/Player'
+import { FACING_VECTOR } from './game/Facing'
+import { STEP_LENGTH, TICKS_PER_FRAME, TICKS_PER_STEP } from './engine/StepClock'
+import { EPS } from './engine/epsilons'
 import { CHARM_HEIGHT, CHARM_HOVER, Pickup } from './game/Pickup'
-import { PushBlock } from './game/PushBlock'
 import { Cauldron } from './game/Cauldron'
 import { Spike } from './game/SpikeGrid'
 import { PatrolEnemy } from './game/PatrolEnemy'
@@ -20,7 +22,7 @@ import { GhostEnemy } from './game/GhostEnemy'
 import { CauldronSpirit } from './game/CauldronSpirit'
 import { MovingPlatform } from './game/MovingPlatform'
 import { PathGuard } from './game/PathGuard'
-import { Table } from './game/Table'
+import { PushableBox } from './game/PushableBox'
 import { VanishingBlock } from './game/VanishingBlock'
 import { BouncingBall } from './game/BouncingBall'
 import type { Entity } from './game/Entity'
@@ -32,7 +34,6 @@ import { RoomManager } from './game/RoomManager'
 import { ROOM_BUILDERS, pickStartRoom } from './scenes/rooms/index'
 import { IsoRenderer, spriteDynamic, boxDynamic, type Dynamic, type SpriteDraw } from './engine/IsoRenderer'
 import { selectCharacterFrame, STRIP_CELLS } from './game/CharacterFrame'
-import { PushGauge } from './game/PushGauge'
 import { Transition } from './game/Transition'
 import { loadSave, writeSave, clearSave } from './engine/SaveSlot'
 import { Beeper, footstepSound } from './engine/Beeper'
@@ -40,9 +41,6 @@ import { projectToScreen, isoDepth } from './engine/IsoProjection'
 
 const PICKUP_RANGE = 1.6
 const PICKUP_HEIGHT = 1.8
-const PUSH_RANGE_MAX = 1.5
-const PUSH_RANGE_MIN = 0.4
-const PUSH_STEPS_PER_TILE = 4
 const DEATH_FLASH_FRAMES = 2
 const GHOST_DRAW_HEIGHT = 0.3
 const WIPE_SECONDS = 0.25
@@ -156,7 +154,6 @@ async function main(): Promise<void> {
 
   const manager = new RoomManager(ROOM_BUILDERS, state)
   const player = new Player()
-  const pushGauge = new PushGauge(PUSH_STEPS_PER_TILE)
   const beeper = new Beeper()
   const wipe = new Transition(WIPE_SECONDS)
   let paused = false
@@ -447,52 +444,25 @@ async function main(): Promise<void> {
       })
   }
 
-  function tryPullPass(room: Room): boolean {
-    for (const e of room.entities) {
-      if (!e.hasCategory(Category.SOLID_DYNAMIC)) continue
-      const block = e as PushBlock
-      const dx = block.position.x - player.position.x
-      const dz = block.position.z - player.position.z
-      const dist = Math.hypot(dx, dz)
-      if (dist > PUSH_RANGE_MAX || dist <= PUSH_RANGE_MIN) continue
-      const dominantX = Math.abs(dx) > Math.abs(dz)
-      const dir = dominantX ? (dx > 0 ? 'west' : 'east') : (dz > 0 ? 'north' : 'south')
-      if (block.tryPush(dir, room.grid, room.tileSize)) return true
-    }
-    return false
-  }
-
-  // The gauge charges once per step walked into the block, not per tick, so
-  // blocks feel heavy: four steps of shoving before a tile of movement.
-  function handlePushAttempt(room: Room, stepped: boolean): void {
-    if (!input.isDown('ArrowUp') || player.state !== 'grounded') {
-      pushGauge.release()
-      return
-    }
-    if (!stepped) return
-    const px = player.facing === 'east' ? 1 : player.facing === 'west' ? -1 : 0
-    const pz = player.facing === 'south' ? 1 : player.facing === 'north' ? -1 : 0
-    for (const e of room.entities) {
-      if (!e.hasCategory(Category.SOLID_DYNAMIC)) continue
-      const block = e as PushBlock
-      const dx = block.position.x - player.position.x
-      const dz = block.position.z - player.position.z
-      const dist = Math.hypot(dx, dz)
-      if (dist > PUSH_RANGE_MAX || dist <= PUSH_RANGE_MIN) continue
-      const dominantX = Math.abs(dx) > Math.abs(dz)
-      if (dominantX ? Math.sign(dx) !== px : Math.sign(dz) !== pz) continue
-      if (!pushGauge.press()) return
-      const dir = dominantX ? (px > 0 ? 'east' : 'west') : (pz > 0 ? 'south' : 'north')
-      if (block.tryPush(dir, room.grid, room.tileSize)) beeper.play('drop')
-      return
-    }
-    pushGauge.release()
+  // Walking into a table or a chest pushes it (0xCBCD): it takes his pace
+  // (three pixels a frame of the original's), and he follows it.
+  function pushPass(room: Room): void {
+    if (player.state !== 'grounded') return
+    const ahead = FACING_VECTOR[player.facing]
+    const reach = player.extents.x / 2 + STEP_LENGTH
+    const x = player.position.x + ahead.x * reach
+    const z = player.position.z + ahead.z * reach
+    const box = room.entities.find((e): e is PushableBox =>
+      e instanceof PushableBox && e.covers(x, z) && e.top > player.position.y + EPS.STEP && e.bottom < player.position.y + player.extents.y)
+    if (!box) return
+    const pace = (STEP_LENGTH * TICKS_PER_FRAME) / TICKS_PER_STEP
+    box.push({ x: ahead.x * pace, z: ahead.z * pace })
   }
 
   function dynamicSupportAt(room: Room, x: number, z: number, y: number): number | null {
     let best: number | null = null
     for (const e of room.entities) {
-      if (!(e instanceof MovingPlatform || e instanceof Table || e instanceof VanishingBlock || e instanceof Pickup || e instanceof FloatingBlock || e instanceof FallingBlock)) continue
+      if (!(e instanceof MovingPlatform || e instanceof PushableBox || e instanceof VanishingBlock || e instanceof Pickup || e instanceof FloatingBlock || e instanceof FallingBlock)) continue
       const h = e.supportAt(x, z, y)
       if (h !== null && (best === null || h > best)) best = h
     }
@@ -600,8 +570,8 @@ async function main(): Promise<void> {
       } else if (e instanceof MovingPlatform) {
         const half = e.extents.x / 2
         out.push(boxDynamic({ x0: e.position.x - half, x1: e.position.x + half, z0: e.position.z - half, z1: e.position.z + half, y0: 0, y1: e.height }))
-      } else if (e instanceof Table) {
-        out.push(...tableDynamics(e))
+      } else if (e instanceof PushableBox) {
+        out.push(...boxDynamics(e))
       } else if (e instanceof VanishingBlock) {
         if (e.present) out.push(vanishingDynamic(e))
       } else if (e instanceof BouncingBall) {
@@ -654,6 +624,7 @@ async function main(): Promise<void> {
       tileSize: room.tileSize,
       playerPosition: player.position,
       dynamicSupport: (x: number, z: number, y: number) => dynamicSupportAt(room, x, z, y),
+      boxes: room.entities.filter((e) => e instanceof PushableBox),
       onLanded: () => beeper.play('land'),
       onJumped: () => beeper.play('jump'),
     }
@@ -665,12 +636,9 @@ async function main(): Promise<void> {
       if (footstep) beeper.play(footstep)
     }
     room.update(dt, ctx)
-    handlePushAttempt(room, stepped)
+    if (stepped) pushPass(room)
     resolveActorOverlap(room)
-    if (input.wasPressed('KeyE') && !tryDeliverPass(room) && !tryPickupPass(room)) {
-      if (!player.satchel.isEmpty) tryPutDownPass(room)
-      else tryPullPass(room)
-    }
+    if (input.wasPressed('KeyE') && !tryDeliverPass(room) && !tryPickupPass(room)) tryPutDownPass(room)
     hazardPass(room)
     exitPass()
     state.tickTransform(dt)
@@ -732,16 +700,19 @@ const TABLE_TOP = 0.25
 const TABLE_LEG = 0.25
 
 // A slab on four legs: the slab is one box, each leg a thin box at a corner.
-function tableDynamics(t: Table): Dynamic[] {
-  const half = t.extents.x / 2
-  const x0 = t.position.x - half
-  const z0 = t.position.z - half
+// A table is a top on four legs, a chest a box.
+function boxDynamics(b: PushableBox): Dynamic[] {
+  const x0 = b.position.x - b.halfX
+  const z0 = b.position.z - b.halfZ
+  const x1 = b.position.x + b.halfX
+  const z1 = b.position.z + b.halfZ
+  if (b.kind === 'chest') return [boxDynamic({ x0, x1, z0, z1, y0: b.bottom, y1: b.top })]
   const legs: Dynamic[] = []
-  for (const [lx, lz] of [[x0, z0], [x0 + t.extents.x - TABLE_LEG, z0], [x0, z0 + t.extents.z - TABLE_LEG], [x0 + t.extents.x - TABLE_LEG, z0 + t.extents.z - TABLE_LEG]]) {
-    legs.push(boxDynamic({ x0: lx, x1: lx + TABLE_LEG, z0: lz, z1: lz + TABLE_LEG, y0: 0, y1: t.height - TABLE_TOP }))
+  for (const [lx, lz] of [[x0, z0], [x1 - TABLE_LEG, z0], [x0, z1 - TABLE_LEG], [x1 - TABLE_LEG, z1 - TABLE_LEG]]) {
+    legs.push(boxDynamic({ x0: lx!, x1: lx! + TABLE_LEG, z0: lz!, z1: lz! + TABLE_LEG, y0: b.bottom, y1: b.top - TABLE_TOP }))
   }
-  const top = boxDynamic({ x0, x1: x0 + t.extents.x, z0, z1: z0 + t.extents.z, y0: t.height - TABLE_TOP, y1: t.height })
-  return [...legs, { ...top, depth: isoDepth(t.position.x + half, t.height, t.position.z + half) }]
+  const top = boxDynamic({ x0, x1, z0, z1, y0: b.top - TABLE_TOP, y1: b.top })
+  return [...legs, { ...top, depth: isoDepth(x1, b.top, z1) }]
 }
 
 // How a walker gets past it: behind a patrol, under a bounce, or away from a wanderer.

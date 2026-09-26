@@ -161,7 +161,7 @@ describe('room contents', () => {
   it('keeps every placed cell inside its room', () => {
     for (const s of ROOM_SPECS) {
       const cells: Cell[] = [
-        ...(s.platforms ?? []), ...(s.pushBlocks ?? []), ...(s.spikes ?? []), ...(s.pickups ?? []), ...(s.tables ?? []),
+        ...(s.platforms ?? []), ...(s.boxes ?? []), ...(s.spikes ?? []), ...(s.pickups ?? []),
         ...(s.vanishing ?? []), ...(s.fallingBlocks ?? []), ...(s.flames ?? []), ...(s.ghosts ?? []), ...(s.spikedBalls ?? []),
         ...(s.hoppers ?? []), s.spawn,
         ...(s.movingPlatforms ?? []).flatMap((p) => [p.from, p.to]),
@@ -183,7 +183,7 @@ describe('room contents', () => {
 
   it('never spawns the player on a solid or a spike', () => {
     for (const s of ROOM_SPECS) {
-      const solids = [...(s.platforms ?? []), ...(s.pushBlocks ?? []), ...(s.spikes ?? [])]
+      const solids = [...(s.platforms ?? []), ...(s.boxes ?? []), ...(s.spikes ?? [])]
       expect(solids.some((c) => c.x === s.spawn.x && c.z === s.spawn.z), s.id).toBe(false)
     }
   })
@@ -199,7 +199,7 @@ describe('room contents', () => {
 
   it('keeps the doorway cells clear of blocks and spikes, so every exit can be reached', () => {
     for (const s of ROOM_SPECS) {
-      const solids = [...(s.platforms ?? []), ...(s.pushBlocks ?? []), ...(s.spikes ?? []).filter((c) => !c.height)]
+      const solids = [...(s.platforms ?? []), ...(s.boxes ?? []), ...(s.spikes ?? []).filter((c) => !c.height)]
       for (const door of doorsOf(s)) {
         expect(solids.some((c) => c.x === door.cell.x && c.z === door.cell.z), `${s.id} ${door.direction} door blocked`).toBe(false)
       }

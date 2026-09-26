@@ -1,5 +1,7 @@
 """Decode Knight Lore sprites from memory: a (width in bytes, height) header,
-then height rows of width (mask, pixel) byte pairs, rows stored bottom-up."""
+then height rows of width (mask, pixel) byte pairs, rows stored bottom-up.
+A set mask bit is part of the sprite (lit if its pixel bit is set, black
+if not); a clear mask bit is transparent."""
 from PIL import Image
 
 
@@ -15,7 +17,7 @@ def decode(memory, address):
             for bit in range(8):
                 x = col * 8 + bit
                 lit = pixels >> (7 - bit) & 1
-                opaque = not (mask >> (7 - bit) & 1)
+                opaque = mask >> (7 - bit) & 1
                 if lit:
                     image.putpixel((x, y), (255, 255, 255, 255))
                 elif opaque:

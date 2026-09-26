@@ -2,8 +2,8 @@ import type { Facing } from './Facing'
 
 // Filmation draws two views and mirrors them: a "front" strip (toward the
 // camera, drawn facing east) and a "back" strip (away, drawn facing west).
-// Sabreman's strip is [stand, A, B] and ping-pongs; the wolf's four poses
-// run the original's six-step lope.
+// Both forms have the original's four frames per view, body over legs
+// (tools/rip/characters.py), walked 0 1 2 3 2 1 as its animation table does.
 export type CharacterView = 'front' | 'back'
 export type CharacterForm = 'human' | 'werewolf'
 
@@ -13,14 +13,12 @@ export interface CharacterFrame {
   flip: boolean
 }
 
-const WALK_CYCLE: Record<CharacterForm, number[]> = {
-  human: [0, 1, 2, 1],
-  werewolf: [1, 2, 1, 0, 3, 0],
-}
+const WALK_CYCLE = [0, 1, 2, 3, 2, 1]
+// The feet-together pose of each form's strip.
+const STANDING_FRAME: Record<CharacterForm, number> = { human: 2, werewolf: 1 }
+const AIRBORNE_FRAME = 0
 
-export const STRIP_CELLS: Record<CharacterForm, number> = { human: 3, werewolf: 4 }
-
-const AIRBORNE_FRAME = 1
+export const STRIP_CELLS: Record<CharacterForm, number> = { human: 4, werewolf: 4 }
 
 export function selectCharacterFrame(
   facing: Facing,
@@ -29,8 +27,7 @@ export function selectCharacterFrame(
   airborne = false,
   form: CharacterForm = 'human',
 ): CharacterFrame {
-  const cycle = WALK_CYCLE[form]
-  const frame = airborne ? AIRBORNE_FRAME : walking ? cycle[stepsTaken % cycle.length]! : 0
+  const frame = airborne ? AIRBORNE_FRAME : walking ? WALK_CYCLE[stepsTaken % WALK_CYCLE.length]! : STANDING_FRAME[form]
   switch (facing) {
     case 'east': return { view: 'front', frame, flip: false }
     case 'south': return { view: 'front', frame, flip: true }

@@ -52,11 +52,10 @@ npm run build             # tsc + vite build into dist/
 **Assets.** Sprites come from three sources, all in `public/sprites`:
 
 - `rip/` holds 99 sprites decoded from the game's own memory: format is a two-byte header (width in bytes, height) followed by rows of mask and pixel byte pairs, stored bottom-up, with animation pointer tables at 0x7140. `rip/index.json` records the addresses. Ghost, ball, cauldron, spikes, flame, and the charms are drawn from these.
-- Sabreman and the wolf are full-body strips lifted from gameplay footage by background subtraction, with a computed mask. The rip's character frames are upper bodies; the original draws the legs as separate four-frame strips (0x922e and 0x93b6 for the man, 0xa0b4 and 0xa23c for the wolf, filed in `rip/` as `creature1-*` and `creature2-*`), and the offset that joins the two is not measured yet.
-- The guard is the rip's hood over the man's legs, 16 px down, measured against the guards on the map (`tools/rip/guards.py`).
+- Sabreman, the wolf and the guard are the original's own sprites: an upper body (the guard's hood) drawn over a pair of walking legs, four frames each, walked 0 1 2 3 2 1 as the original's animation table does. The legs are the four-frame strips the first rip filed as `creature1-*` (the man's, and the guard's) and `creature2-*` (the wolf's); how far below the body they sit was measured by fitting both sprites to frames of the original. The transformation is the four full-body poses at 0xac28-0xae98. `tools/rip/characters.py` composes all the strips.
 - `map.png` at the repo root is the complete original map. Rooms are read from it by the tools in `tools/map`, checked room by room against a magnified crop, and generated into the room specs. See `docs/MAP.md`.
 
-`tools/rip` loads the memory snapshot (`z80.py`), decodes its sprites (`sprite.py`), composes the guard strips, and extracts the tunes into `src/engine/tunes.ts` (`music.py`): the beeper player at 0xB2C5 reads a byte per note, six bits of pitch from the table at 0xB332 and two of length.
+`tools/rip` loads the memory snapshot (`z80.py`), decodes its sprites (`sprite.py`), composes the character strips, and extracts the tunes into `src/engine/tunes.ts` (`music.py`): the beeper player at 0xB2C5 reads a byte per note, six bits of pitch from the table at 0xB332 and two of length.
 
 **Rooms.** 62 connected rooms, all data in `src/scenes/rooms/roomSpecs.ts`, built by `specBuilder.ts`. Fields: platforms, push blocks, spikes, guards, path guards, ghosts, balls, tables, vanishing blocks, moving platforms, flames, pickups, the cauldron and wizard. Tests enforce that every door leads somewhere and back; doorways, spawns and the cells beside doors stay clear of spikes, ghosts and patrols; every room leaves a lane clear of guards and balls between its doors and its charm; and the charms are placed as the cure needs.
 
@@ -81,7 +80,7 @@ reference      local only (git-ignored): recordings, the memory snapshot, frames
 
 ## Status and next steps
 
-The game has been won start to finish by the playthrough bot, on day 25 with every life left. See `NEXT_ISSUES.md` for the worked issue list and `docs/PLAYTEST.md` for what the playtests found. Headline gaps: the castle is 62 rooms of the original's 128 (the garden rooms, whose doors are gaps in hedges, and the groups beyond them are not read yet); Sabreman and the wolf still use the footage strips until the ripped legs are joined to their upper bodies; portcullis gates and enemy speeds timed against the original are still to do.
+The game has been won start to finish by the playthrough bot, on day 25 with every life left. See `NEXT_ISSUES.md` for the worked issue list and `docs/PLAYTEST.md` for what the playtests found. Headline gaps: the castle is 62 rooms of the original's 128 (the garden rooms, whose doors are gaps in hedges, and the groups beyond them are not read yet); portcullis gates and enemy speeds timed against the original are still to do.
 
 ## Sources
 

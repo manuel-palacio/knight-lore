@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { Beeper, SOUNDS, footstepSound, type SoundName } from '../../src/engine/Beeper'
 
-const EXPECTED: SoundName[] = ['tick', 'ticky', 'gameStart', 'gameOver', 'jump', 'land', 'pickup', 'drop', 'deliver', 'transform', 'hurt', 'door', 'win', 'wrong', 'day']
+const EXPECTED: SoundName[] = ['tick', 'ticky', 'gameStart', 'title', 'jump', 'land', 'pickup', 'drop', 'deliver', 'transform', 'hurt', 'door', 'win', 'wrong', 'day']
 
 describe('beeper sound table', () => {
   it('defines every game sound as at least one audible note', () => {
@@ -63,9 +63,9 @@ describe('the original tunes', () => {
     expect(seconds('gameStart')).toBeCloseTo(2.5, 0)
   })
 
-  it('ends a game with the 32-note results tune', () => {
-    expect(SOUNDS.gameOver).toHaveLength(32)
-    expect(seconds('gameOver')).toBeCloseTo(5, 0)
+  it('greets the title screen with the 32-note tune', () => {
+    expect(SOUNDS.title).toHaveLength(32)
+    expect(seconds('title')).toBeCloseTo(5, 0)
   })
 
   it('greets the brewed cure with the 25-note tune', () => {
@@ -73,8 +73,72 @@ describe('the original tunes', () => {
   })
 
   it('keeps every note in the beeper range', () => {
-    for (const name of ['gameStart', 'gameOver', 'win'] as const) {
+    for (const name of ['gameStart', 'title', 'win'] as const) {
       for (const n of SOUNDS[name]) expect(n.frequency === 0 || (n.frequency > 100 && n.frequency < 2000), name).toBe(true)
     }
+  })
+})
+
+// A stand-in for the browser's audio device: records oscillators, and can be
+// created suspended, as it is before the page has had a click or a key.
+function fakeAudio(state: 'running' | 'suspended') {
+  const oscillators: { started: boolean; stopped: boolean }[] = []
+  class FakeParam { value = 0; setValueAtTime() {} linearRampToValueAtTime() {} }
+  class FakeContext {
+    state = state
+    currentTime = 0
+    destination = {}
+    resume() { return state === 'running' ? Promise.resolve() : new Promise<void>(() => {}) }
+    createGain() { return { gain: new FakeParam(), connect: (to: unknown) => to } }
+    createOscillator() {
+      const record = { started: false, stopped: false }
+      oscillators.push(record)
+      return {
+        type: '', frequency: new FakeParam(),
+        connect: (to: unknown) => to,
+        start: () => { record.started = true },
+        stop: (when?: number) => { if (when === undefined) record.stopped = true },
+      }
+    }
+  }
+  return { FakeContext, oscillators }
+}
+
+async function withAudio(state: 'running' | 'suspended', run: (oscillators: { started: boolean; stopped: boolean }[]) => void | Promise<void>): Promise<void> {
+  const globals = globalThis as Record<string, unknown>
+  const original = globals.AudioContext
+  const { FakeContext, oscillators } = fakeAudio(state)
+  globals.AudioContext = FakeContext
+  try {
+    await run(oscillators)
+  } finally {
+    globals.AudioContext = original
+  }
+}
+
+describe('Beeper.stop', () => {
+  it('silences every note still to come, so one tune never runs over the next', async () => {
+    await withAudio('running', (oscillators) => {
+      const beeper = new Beeper()
+      beeper.play('title')
+      beeper.stop()
+      expect(oscillators).toHaveLength(SOUNDS.title.length)
+      expect(oscillators.every((o) => o.stopped)).toBe(true)
+    })
+  })
+})
+
+describe('Beeper.soundAllowed', () => {
+  it('is yes when the browser lets the page make sound', async () => {
+    await withAudio('running', async () => {
+      expect(await new Beeper().soundAllowed()).toBe(true)
+    })
+  })
+
+  it('is no, after a short wait, while the browser holds sound back', async () => {
+    await withAudio('suspended', async (oscillators) => {
+      expect(await new Beeper().soundAllowed()).toBe(false)
+      expect(oscillators).toHaveLength(0)
+    })
   })
 })

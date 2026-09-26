@@ -181,15 +181,51 @@ async function main(): Promise<void> {
   const intro = document.getElementById('intro')
   const continueHint = document.getElementById('continue-hint')
   if (continueHint && saved) continueHint.style.display = 'block'
+  playTitleTune()
   window.addEventListener('keydown', (e) => {
     if (intro && intro.style.display !== 'none') {
       intro.style.display = 'none'
+      hideSoundHint()
+      beeper.stop()
       beeper.play('gameStart')
       if (e.code === 'KeyC' && saved) resumeSavedGame(saved)
       else clearSave()
     }
     if (e.code === 'KeyR' && (state.gameOver || state.won)) location.reload()
   })
+
+  // The original's title tune. Browsers hold sound back until the page has
+  // had a click or a key, and a key starts the game, so when sound is held
+  // back a click on the title screen plays the tune instead. Whichever comes
+  // first, the click or the browser's yes, starts it once.
+  function playTitleTune(): void {
+    let started = false
+    const start = (): void => {
+      if (started || !titleShowing()) return
+      started = true
+      hideSoundHint()
+      beeper.play('title')
+    }
+    window.addEventListener('pointerdown', start, { once: true })
+    void beeper.soundAllowed().then((allowed) => {
+      if (allowed) start()
+      else if (!started && titleShowing()) showSoundHint()
+    })
+  }
+
+  function showSoundHint(): void {
+    const hint = document.getElementById('sound-hint')
+    if (hint) hint.style.display = 'block'
+  }
+
+  function titleShowing(): boolean {
+    return intro !== null && intro.style.display !== 'none'
+  }
+
+  function hideSoundHint(): void {
+    const hint = document.getElementById('sound-hint')
+    if (hint) hint.style.display = 'none'
+  }
 
   function resumeSavedGame(save: SavedGame): void {
     state.apply(save)
@@ -264,7 +300,7 @@ async function main(): Promise<void> {
   function playGameOverTuneOnce(): void {
     if (!state.gameOver || gameOverTunePlayed) return
     gameOverTunePlayed = true
-    beeper.play('gameOver')
+    beeper.play('title')
   }
 
   function dropCarried(): void {

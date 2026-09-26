@@ -1,21 +1,21 @@
 // ZX-style beeper: square-wave blips from a note table, no samples. The
 // AudioContext is created lazily because browsers require a user gesture.
 
-import { CURE_TUNE, GAME_OVER_TUNE, GAME_START_TUNE } from './tunes'
+import { CURE_TUNE, GAME_START_TUNE, TITLE_TUNE } from './tunes'
 
 export interface Note {
   frequency: number
   duration: number
 }
 
-export type SoundName = 'tick' | 'ticky' | 'gameStart' | 'gameOver' | 'jump' | 'land' | 'pickup' | 'drop' | 'deliver' | 'transform' | 'hurt' | 'door' | 'win' | 'wrong' | 'day'
+export type SoundName = 'tick' | 'ticky' | 'gameStart' | 'title' | 'jump' | 'land' | 'pickup' | 'drop' | 'deliver' | 'transform' | 'hurt' | 'door' | 'win' | 'wrong' | 'day'
 
 const note = (frequency: number, duration: number): Note => ({ frequency, duration })
 
 export const SOUNDS: Record<SoundName, Note[]> = {
   tick: [note(1400, 0.018)],
   gameStart: GAME_START_TUNE,
-  gameOver: GAME_OVER_TUNE,
+  title: TITLE_TUNE,
   ticky: [note(1400, 0.016), note(1100, 0.02)],
   jump: [note(300, 0.04), note(450, 0.04), note(600, 0.05)],
   land: [note(220, 0.05)],
@@ -38,14 +38,37 @@ export function footstepSound(stepsTaken: number): SoundName | null {
   return FOOTSTEPS[stepsTaken % FOOTSTEPS.length] ?? null
 }
 
+const START_GRACE_MS = 300
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
 export class Beeper {
   private context: AudioContext | null = null
   private muted = false
+  private sounding: OscillatorNode[] = []
 
   // Returns whether the beeper is now muted.
   toggleMute(): boolean {
     this.muted = !this.muted
     return this.muted
+  }
+
+  // Browsers hold sound back until the page has had a click or a key. A new
+  // audio device can report itself suspended for a moment even when sound is
+  // allowed, so it is given a short while to start before the answer is no.
+  async soundAllowed(): Promise<boolean> {
+    const ctx = this.ensureContext()
+    if (!ctx) return false
+    if (ctx.state !== 'running') await Promise.race([ctx.resume(), delay(START_GRACE_MS)])
+    return ctx.state === 'running'
+  }
+
+  // Silences every note still sounding or still to come.
+  stop(): void {
+    for (const osc of this.sounding) osc.stop()
+    this.sounding = []
   }
 
   play(name: SoundName): void {
@@ -71,6 +94,8 @@ export class Beeper {
       osc.connect(gain).connect(ctx.destination)
       osc.start(at)
       osc.stop(at + n.duration)
+      osc.onended = () => { this.sounding = this.sounding.filter((o) => o !== osc) }
+      this.sounding.push(osc)
       at += n.duration
     }
   }

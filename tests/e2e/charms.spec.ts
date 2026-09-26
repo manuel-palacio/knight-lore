@@ -1,13 +1,15 @@
 import { test, expect, type Page } from '@playwright/test'
 import { ROOM_SPECS } from '../../src/scenes/rooms/roomSpecs'
-import { debug, enterRoom, holdDaylight, standAt, startGame } from './support/game'
+
+const CHARM_HOVER = 0.4
+import { debug, enterRoom, face, holdDaylight, standAt, startGame } from './support/game'
 
 async function pickUpCharmIn(page: Page, roomId: string): Promise<string> {
   const room = await enterRoom(page, roomId)
   await holdDaylight(page)
   const charm = room.pickups[0]
   if (!charm) throw new Error(`no charm in ${roomId}`)
-  await standAt(page, charm)
+  await standAt(page, { ...charm, y: charm.y - CHARM_HOVER }) // on the ground the charm hovers over
   await page.keyboard.press('KeyE')
   await expect.poll(async () => (await debug(page)).carrying).toBe(charm.id)
   return charm.id
@@ -47,4 +49,24 @@ test('the extra life is taken at once, not carried, and does not come back', asy
   await enterRoom(page, lifeRoom.exits[0]!.target)
   const back = await enterRoom(page, lifeRoom.id)
   expect(back.pickups.map((p) => p.id)).not.toContain('life')
+})
+
+test('E drops the carried charm at his feet, and he can jump up and stand on it', async ({ page }) => {
+  await startGame(page)
+  const charmRoom = ROOM_SPECS.find((s) => s.pickups?.some((p) => p.item !== 'life'))!
+  const charm = await pickUpCharmIn(page, charmRoom.id)
+  await page.keyboard.press('KeyE')
+  await expect.poll(async () => (await debug(page)).carrying).toBeNull()
+  const dropped = (await debug(page)).pickups.find((p) => p.id === charm)!
+  expect(dropped).toBeDefined()
+
+  // A jump comes down onto whatever lies about three units ahead of the take-off.
+  await standAt(page, { x: dropped.x, y: 0, z: dropped.z - 3 })
+  await face(page, 'south')
+  await page.keyboard.down('ArrowUp')
+  await page.keyboard.press('Space')
+  await expect.poll(async () => (await debug(page)).state, { intervals: [20] }).not.toBe('grounded')
+  await page.keyboard.up('ArrowUp')
+  await expect.poll(async () => (await debug(page)).state, { intervals: [20] }).toBe('grounded')
+  expect((await debug(page)).pos.y).toBe(1)
 })

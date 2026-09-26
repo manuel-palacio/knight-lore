@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import * as THREE from 'three'
-import { VanishingBlock, VANISH_AFTER_STEPS, RETURN_AFTER_STEPS } from '../../src/game/VanishingBlock'
+import { VanishingBlock, VANISH_AFTER_STEPS } from '../../src/game/VanishingBlock'
 import { TICKS_PER_STEP } from '../../src/engine/StepClock'
 import { SIMULATION_DT } from '../../src/engine/GameLoop'
 
@@ -32,16 +32,15 @@ describe('VanishingBlock', () => {
     expect(b.present).toBe(true)
   })
 
-  it('comes back after its return delay', () => {
+  it('stays gone for as long as Sabreman is in the room, as the original collapsing block does', () => {
     const b = new VanishingBlock(2, 2, 1, 2)
-    const rider = new THREE.Vector3(5, 1, 5)
-    run(b, rider, VANISH_AFTER_STEPS)
+    run(b, new THREE.Vector3(5, 1, 5), VANISH_AFTER_STEPS)
     expect(b.present).toBe(false)
-    run(b, new THREE.Vector3(0, 0, 0), RETURN_AFTER_STEPS)
-    expect(b.present).toBe(true)
+    run(b, new THREE.Vector3(0, 0, 0), 500)
+    expect(b.present).toBe(false)
   })
 
-  it('reset() restores it immediately', () => {
+  it('is back when the room is re-entered (reset)', () => {
     const b = new VanishingBlock(2, 2, 1, 2)
     run(b, new THREE.Vector3(5, 1, 5), VANISH_AFTER_STEPS)
     b.reset()

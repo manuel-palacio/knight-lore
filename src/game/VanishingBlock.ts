@@ -3,10 +3,10 @@ import { Entity, type UpdateContext } from './Entity'
 import { Category } from '../engine/categories'
 import { StepClock } from '../engine/StepClock'
 
-// A block that crumbles a few steps after someone stands on it and grows
-// back later. Like a table, it only supports from above.
+// The original's collapsing block (handler at 0xB6A2): it crumbles a few
+// steps after someone stands on it and stays gone until the room is entered
+// again. Like a table, it only supports from above.
 export const VANISH_AFTER_STEPS = 8
-export const RETURN_AFTER_STEPS = 24
 const TOP_TOLERANCE = 0.5
 const RIDER_TOLERANCE = 0.05
 
@@ -51,16 +51,9 @@ export class VanishingBlock extends Entity {
     if (!this.clock.tick()) return
     const rider = (ctxRaw as RiderCtx).playerPosition
     if (this.present && this.countdown < 0 && rider && this.isStandingOn(rider)) this.countdown = VANISH_AFTER_STEPS
-    if (this.countdown < 0) return
+    if (!this.present || this.countdown < 0) return
     this.countdown--
-    if (this.countdown > 0) return
-    if (this.present) {
-      this.present = false
-      this.countdown = RETURN_AFTER_STEPS
-    } else {
-      this.present = true
-      this.countdown = -1
-    }
+    if (this.countdown === 0) this.present = false
   }
 
   private isStandingOn(rider: THREE.Vector3): boolean {

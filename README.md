@@ -20,7 +20,7 @@ Open the URL Vite prints. Any key starts; C continues a saved game. The title sc
 | Left / Right | Turn |
 | Up | Walk forward (walk into a block to push it) |
 | Space | Jump, straight up when standing, forward when walking |
-| E | Pick up, deliver to the cauldron, or pull the nearest block |
+| E | Pick up or put down a charm, deliver to the cauldron, or pull the nearest block |
 | P | Pause |
 | M | Sound on / off |
 | R | Restart after game over |

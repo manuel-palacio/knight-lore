@@ -308,6 +308,14 @@ async function main(): Promise<void> {
     beeper.play('title')
   }
 
+  // E with a charm in hand, away from the cauldron, puts it down at his feet:
+  // to leave it for later, or to stand on.
+  function tryDropPass(): void {
+    if (!input.wasPressed('KeyE')) return
+    dropCarried()
+    beeper.play('drop')
+  }
+
   function dropCarried(): void {
     if (!carriedPickup) return
     carriedPickup.dropAt(player.position.x, player.position.y + 0.4, player.position.z)
@@ -444,7 +452,7 @@ async function main(): Promise<void> {
   function dynamicSupportAt(room: Room, x: number, z: number, y: number): number | null {
     let best: number | null = null
     for (const e of room.entities) {
-      if (!(e instanceof MovingPlatform || e instanceof Table || e instanceof VanishingBlock)) continue
+      if (!(e instanceof MovingPlatform || e instanceof Table || e instanceof VanishingBlock || e instanceof Pickup)) continue
       const h = e.supportAt(x, z, y)
       if (h !== null && (best === null || h > best)) best = h
     }
@@ -610,9 +618,11 @@ async function main(): Promise<void> {
     handlePushAttempt(room, stepped)
     resolveActorOverlap(room)
     if (!tryDeliverPass(room)) {
-      const had = player.carrying !== null
-      tryPickupPass(room)
-      if (!had && player.carrying === null) tryPullPass(room)
+      if (player.carrying !== null) tryDropPass()
+      else {
+        tryPickupPass(room)
+        if (player.carrying === null) tryPullPass(room)
+      }
     }
     hazardPass(room)
     exitPass()

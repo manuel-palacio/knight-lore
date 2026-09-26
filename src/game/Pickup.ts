@@ -6,6 +6,15 @@ import { Category } from '../engine/categories'
 const BOB_SPEED = 2.5
 const BOB_AMPLITUDE = 0.06
 
+// A charm lying on the floor is something to stand on, as in the original:
+// drop one and climb it to reach a block too high to jump to from the floor.
+// Like a table, it holds from above and does not stop anyone walking into it.
+export const CHARM_HEIGHT = 1
+const FOOTPRINT_HALF = 1
+const TOP_TOLERANCE = 0.5
+// Charms hover this far above what they lie on (see addPickup and dropAt callers).
+const HOVER = 0.4
+
 export class Pickup extends Entity {
   readonly id: string
   // The room the charm was placed in when the castle was built.
@@ -23,6 +32,13 @@ export class Pickup extends Entity {
 
   update(dt: number, _ctx: UpdateContext): void {
     this.bobPhase += dt
+  }
+
+  supportAt(x: number, z: number, actorY: number): number | null {
+    if (this.collected) return null
+    const inside = Math.abs(x - this.position.x) <= FOOTPRINT_HALF && Math.abs(z - this.position.z) <= FOOTPRINT_HALF
+    const top = this.position.y - HOVER + CHARM_HEIGHT
+    return inside && actorY >= top - TOP_TOLERANCE ? top : null
   }
 
   collect(): void {

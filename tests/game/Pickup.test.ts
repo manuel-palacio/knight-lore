@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { Pickup } from '../../src/game/Pickup'
+import { Pickup, CHARM_HEIGHT } from '../../src/game/Pickup'
 import { Room } from '../../src/game/Room'
 
 describe('Pickup', () => {
@@ -29,5 +29,28 @@ describe('Pickup', () => {
     pickup.collect()
     for (let i = 0; i < 60; i++) room.update(1 / 60, {})
     expect(pickup.bobOffset).toBe(0)
+  })
+})
+
+describe('Pickup as a stepping stone', () => {
+  it('holds from above, one block high, over the floor it lies on', () => {
+    const charm = new Pickup('gem', 'test-room')
+    charm.dropAt(4, 0.4, 4)
+    expect(charm.supportAt(4, 4, 1)).toBe(CHARM_HEIGHT)
+    expect(charm.supportAt(4, 4, 0)).toBeNull()
+    expect(charm.supportAt(6, 4, 1)).toBeNull()
+  })
+
+  it('stands a block above the block it was dropped on', () => {
+    const charm = new Pickup('gem', 'test-room')
+    charm.dropAt(4, 2 + 0.4, 4)
+    expect(charm.supportAt(4, 4, 3)).toBe(2 + CHARM_HEIGHT)
+  })
+
+  it('holds nothing once picked up', () => {
+    const charm = new Pickup('gem', 'test-room')
+    charm.dropAt(4, 0.4, 4)
+    charm.collect()
+    expect(charm.supportAt(4, 4, 1)).toBeNull()
   })
 })

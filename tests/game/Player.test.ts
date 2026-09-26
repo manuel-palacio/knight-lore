@@ -3,6 +3,7 @@ import { Grid } from '../../src/engine/Grid'
 import { Player, STEP_LENGTH, TICKS_PER_STEP, INVULNERABLE_STEPS, WOLF_JUMP_HEIGHT } from '../../src/game/Player'
 import { GameState } from '../../src/game/GameState'
 import { SIMULATION_DT } from '../../src/engine/GameLoop'
+import { Pickup, CHARM_HEIGHT } from '../../src/game/Pickup'
 
 const TILE = 2
 
@@ -300,5 +301,40 @@ describe('Player pickup', () => {
     expect(picked).toBe('goblet')
     expect(player.carrying).toBe('goblet')
     expect(state.hasItem('goblet')).toBe(true)
+  })
+})
+
+describe('Player and a charm as a stepping stone', () => {
+  // A two-block-high block on the tile south of Sabreman, and a charm at his feet.
+  function stage() {
+    const { grid, state, player } = setupRoom()
+    grid.setSolid(2, 3, true)
+    grid.setSupport(2, 3, 2)
+    const charm = new Pickup('boot', 'test-room')
+    charm.position.set(4, 0.4, 4)
+    const c = (keys: Keys = {}) => ({ ...ctx(grid, state, keys), dynamicSupport: (x: number, z: number, y: number) => charm.supportAt(x, z, y) })
+    return { player, c }
+  }
+
+  function jumpForward(player: Player, c: (keys?: Keys) => ReturnType<typeof ctx>): void {
+    tick(player, c({ up: true, jump: true }))
+    for (let i = 0; i < 400 && player.state !== 'grounded'; i++) tick(player, c())
+  }
+
+  it('cannot get onto a two-high block by jumping from the floor', () => {
+    const { player, c } = stage()
+    player.position.set(4, 0, 4.8) // just past the charm, so it is not in the way
+    jumpForward(player, c)
+    expect(player.position.y).toBe(0)
+  })
+
+  it('stands on a charm lying on the floor, and jumps from it onto the block', () => {
+    const { player, c } = stage()
+    player.position.set(4, CHARM_HEIGHT, 4)
+    step(player, c())
+    expect(player.state).toBe('grounded')
+    expect(player.position.y).toBe(CHARM_HEIGHT)
+    jumpForward(player, c)
+    expect(player.position.y).toBe(2)
   })
 })

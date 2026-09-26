@@ -36,7 +36,6 @@ type Hooks = {
 const TILE = 2
 const NO_NIGHTFALL = 99_999
 const STEP_TOLERANCE = 0.4
-const TAKE_OFF_SLACK = 0.1
 
 export function tileCentre(cell: number): number {
   return cell * TILE + TILE / 2
@@ -113,15 +112,10 @@ async function walkRun(page: Page, run: Cell[]): Promise<void> {
   }
 }
 
-// A jump is committed: hold forward, press jump, and let go once landed. It
-// carries 3 units, so take off no further back than the middle of the tile
-// before the spikes, or the landing falls on them.
+// A jump is committed: hold forward, press jump, and let go once landed.
 async function jumpTo(page: Page, from: Cell, to: Cell): Promise<void> {
-  const axis = to.x !== from.x ? 'x' : 'z'
-  const sign = Math.sign(to[axis] - from[axis])
-  await face(page, axis === 'x' ? (sign > 0 ? 'east' : 'west') : (sign > 0 ? 'south' : 'north'))
-  const takeOff = tileCentre(from[axis]) - sign * TAKE_OFF_SLACK
-  if (sign * ((await debug(page)).pos[axis] - takeOff) < 0) await walkUntil(page, (s) => sign * (s.pos[axis] - takeOff) >= 0)
+  const facing = to.x > from.x ? 'east' : to.x < from.x ? 'west' : to.z > from.z ? 'south' : 'north'
+  await face(page, facing)
   await page.keyboard.down('ArrowUp')
   await page.keyboard.press('Space')
   try {

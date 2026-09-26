@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { ROOM_SPECS, START_ROOMS, doorCell, entryFor, oppositeOf, type Cell, type RoomSpec } from '../../src/scenes/rooms/roomSpecs'
 import { CHARMS } from '../../src/game/GameState'
 import { coveredCells, findFloorPath } from '../e2e/support/roomPath'
+import { SOLVED_PUZZLES } from '../e2e/support/puzzles'
 import { pickStartRoom } from '../../src/scenes/rooms/index'
 
 const widthOf = (s: RoomSpec) => s.width ?? 8
@@ -236,6 +237,11 @@ describe('room contents', () => {
       }
     }
     expect(unreachable).toEqual([])
+  })
+
+  it('leaves no door out of reach: every room marked a puzzle is one solved in puzzles.spec.ts', () => {
+    const puzzles = ROOM_SPECS.filter((r) => r.puzzle).map((r) => r.id).sort()
+    expect(puzzles).toEqual([...SOLVED_PUZZLES].sort())
   })
 
   it('marks a room a puzzle only when some door cannot be reached on foot', () => {

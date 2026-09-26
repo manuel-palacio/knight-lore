@@ -20,7 +20,7 @@ Open the URL Vite prints. Any key starts; C continues a saved game. The title sc
 | Key | Action |
 |---|---|
 | Left / Right | Turn |
-| Up | Walk forward (walk into a block to push it) |
+| Up | Walk forward (walk into a table or a chest to push it) |
 | Space | Jump: tap for a low jump (a block high), hold for a high one (two and a third); a jump always carries forward |
 | E | Pick up or put down a charm, deliver to the cauldron, or pull the nearest block |
 | P | Pause |
@@ -65,7 +65,7 @@ npm run build             # tsc + vite build into dist/
 - **Sizes:** rooms are full size or narrow on one axis, as the original draws them.
 - **Objects** map onto the game's entities: blocks (stacked, or floating in the air), spikes on the floor or on blocks, spiked balls, guards, balls, ghosts, flames, tables, chests, collapsing and moving blocks, and portcullises.
 - **Start rooms:** each game starts in one of the original's four (the table at 0xD1E2), chosen at random.
-- **Puzzle rooms:** thirteen rooms need a charm to stand on, or a block pushed, to get between their doors. They are marked `puzzle`.
+- **Puzzle rooms:** six rooms need charms put down to climb on, or a table pushed, to get between their doors. They are marked `puzzle`, and `tests/e2e/puzzles.spec.ts` solves each both ways with the keyboard.
 - **Charms** go only where they can be reached from every start room without solving a puzzle, and so does the cauldron.
 
 Tests check that every door leads somewhere and back, that every room is reachable, that every room not marked a puzzle can be walked door to door on foot (climbing, jumping spike rows, timing patrols and gates), and that the game can be won from each start room without a puzzle.
@@ -91,7 +91,7 @@ reference      local only (git-ignored): recordings, the memory snapshot, frames
 
 ## Status and next steps
 
-The game has been won start to finish by the playthrough bot, on day 25 with every life left. See `NEXT_ISSUES.md` for the worked issue list and `docs/PLAYTEST.md` for what the playtests found. Headline gap: pushable blocks are not yet pushed the way the original's puzzles need.
+The game has been won start to finish by the playthrough bot, on day 25 with every life left. See `NEXT_ISSUES.md` for the worked issue list and `docs/PLAYTEST.md` for what the playtests found. Known deviation: the original lets at most two charms lie in a room at once (one in the cauldron room); here any number can.
 
 ## Sources
 

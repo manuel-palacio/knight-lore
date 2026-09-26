@@ -42,6 +42,7 @@ type Hooks = {
   __room: (id: string, x?: number, z?: number) => void
   __pos: (x: number, y: number, z: number) => void
   __timer: (seconds: number) => void
+  __give: (ids: string[]) => void
 }
 
 const TILE = 2
@@ -76,6 +77,11 @@ export async function enterRoom(page: Page, id: string, at?: { x: number; z: num
   )
   await expect.poll(async () => (await debug(page)).room).toBe(id)
   return debug(page)
+}
+
+export async function give(page: Page, charms: string[]): Promise<void> {
+  await page.evaluate((ids) => (window as unknown as Hooks).__give(ids), charms)
+  await expect.poll(async () => (await debug(page)).carrying.length).toBe(charms.length)
 }
 
 export async function standAt(page: Page, at: { x: number; y: number; z: number }): Promise<void> {

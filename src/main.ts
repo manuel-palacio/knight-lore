@@ -263,6 +263,10 @@ async function main(): Promise<void> {
         transitioning = false
       })
     }
+    // Puts charms in his hands, as if carried in from other rooms.
+    hooks.__give = (ids: string[]) => {
+      for (const id of ids) player.tryPickup(new Pickup(id, state.currentRoomId), state, () => {})
+    }
     hooks.__pos = (x: number, y: number, z: number) => {
       player.position.set(x, y, z)
     }

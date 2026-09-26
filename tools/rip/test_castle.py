@@ -76,6 +76,13 @@ def test_a_type_21_block_is_a_falling_block_not_a_collapsing_one():
     assert room.fields['vanishing'] == [{'x': 4, 'z': 3, 'height': 2}]
 
 
+def test_a_collapsing_block_is_walked_under_never_stood_on():
+    # 0xB6A2 -> 0xBF2B -> 0xBF37: gone two frames after it is stood on.
+    walk = Walkable(build([thing(22, 3, 3, 0), thing(22, 4, 3, 2)]))
+    assert walk.standings((3, 3)) == []
+    assert walk.standings((4, 3)) == [0]
+
+
 if __name__ == '__main__':
     tests = [f for name, f in sorted(globals().items()) if name.startswith('test_')]
     for test in tests:

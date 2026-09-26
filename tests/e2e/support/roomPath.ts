@@ -60,9 +60,9 @@ export function findFloorPath(spec: RoomSpec, from: Cell, to: Cell): Step[] {
   throw new Error(`${spec.id}: no floor path ${key(from)} -> ${key(to)}`)
 }
 
-// True where two consecutive path cells are two apart: a jump over the cell between.
+// True where two consecutive path cells are two or three apart: a jump over the cells between.
 export function isJump(from: Cell, to: Cell): boolean {
-  return Math.abs(to.x - from.x) + Math.abs(to.z - from.z) === 2
+  return Math.abs(to.x - from.x) + Math.abs(to.z - from.z) >= 2
 }
 
 // True where the next step is up onto a higher block: a climbing jump.
@@ -101,6 +101,9 @@ class RoomSurfaces {
   private readonly depth: number
   private readonly columns = new Map<string, number>()
   private readonly hanging = new Map<string, number[]>()
+  // A collapsing block is gone two frames after it is stood on: it can be
+  // walked under, never stood on.
+  private readonly overhead = new Map<string, number[]>()
   private readonly floorBlocked = new Set<string>()
   private readonly floorSpikes = new Set<string>()
   private readonly hazardHeights = new Map<string, number[]>()
@@ -111,9 +114,9 @@ class RoomSurfaces {
     for (const p of spec.platforms ?? []) this.columns.set(key(p), p.height)
     for (const p of spec.pushBlocks ?? []) this.columns.set(key(p), 1)
     for (const b of spec.floatingBlocks ?? []) this.hang(b, b.bottom)
-    // A collapsing block holds long enough to cross, a falling one sinks only
-    // while stood on; a table is stood on, not under.
-    for (const v of [...(spec.vanishing ?? []), ...(spec.fallingBlocks ?? [])]) this.hang(v, v.height - 1)
+    // A falling block sinks only while stood on; a table is stood on, not under.
+    for (const v of spec.fallingBlocks ?? []) this.hang(v, v.height - 1)
+    for (const v of spec.vanishing ?? []) this.overhead.set(key(v), [...(this.overhead.get(key(v)) ?? []), v.height - 1])
     for (const t of spec.tables ?? []) {
       this.floorBlocked.add(key(t))
       this.hang(t, t.height - 1)
@@ -145,16 +148,20 @@ class RoomSurfaces {
   // A jump over one cell whose dangers all lie on the floor (spikes, a
   // spiked ball lying there), to the floor beyond, when nothing hangs in the
   // air above them for the jump to run into.
+  // A held jump carries about five units: over one cell, or over two of
+  // spikes (a spiked ball stands too tall for the ends of so long a jump).
   spikeJumps(at: Step): Step[] {
     if (at.y !== 0) return []
     const jumpable = (c: Cell) => {
       const low = this.hazardHeights.get(key(c)) ?? []
-      return !this.columns.has(key(c)) && (this.floorSpikes.has(key(c)) || low.length > 0) && low.every((h) => h === 0)
+      const clear = !this.columns.has(key(c)) && !this.hanging.has(key(c)) && !this.overhead.has(key(c))
+      return clear && (this.floorSpikes.has(key(c)) || low.length > 0) && low.every((h) => h === 0)
     }
-    return [[1, 0], [-1, 0], [0, 1], [0, -1]]
-      .filter(([dx, dz]) => jumpable({ x: at.x + dx!, z: at.z + dz! }))
-      .map(([dx, dz]) => ({ x: at.x + 2 * dx!, z: at.z + 2 * dz!, y: 0 }))
-      .filter((n) => this.inRoom(n) && this.standings(n).includes(0))
+    return [[1, 0], [-1, 0], [0, 1], [0, -1]].flatMap(([dx, dz]) => [1, 2]
+      .filter((span) => Array.from({ length: span }, (_, k) => ({ x: at.x + (k + 1) * dx!, z: at.z + (k + 1) * dz! }))
+        .every((c) => jumpable(c) && (span === 1 || !this.hazardHeights.has(key(c)))))
+      .map((span) => ({ x: at.x + (span + 1) * dx!, z: at.z + (span + 1) * dz!, y: 0 }))
+      .filter((n) => this.inRoom(n) && this.standings(n).includes(0)))
   }
 
   // The heights he can stand at in a cell: its column top (or the floor, if
@@ -166,7 +173,8 @@ class RoomSurfaces {
     const base = column ?? 0
     const floorOk = column !== undefined || (!this.floorBlocked.has(key(c)) && !this.floorSpikes.has(key(c)))
     const heights: number[] = []
-    if (floorOk && hanging.every((bottom) => bottom >= base + HEADROOM || bottom < base)) heights.push(base)
+    const overhead = [...hanging, ...(this.overhead.get(key(c)) ?? [])]
+    if (floorOk && overhead.every((bottom) => bottom >= base + HEADROOM || bottom < base)) heights.push(base)
     for (const bottom of hanging) if (bottom >= base) heights.push(bottom + 1)
     const hazards = this.hazardHeights.get(key(c)) ?? []
     return heights.filter((y) => !hazards.some((h) => h >= y && h < y + HEADROOM))

@@ -1,14 +1,14 @@
 import * as THREE from 'three'
 import { Entity, type UpdateContext } from './Entity'
 import { Category } from '../engine/categories'
-import { StepClock } from '../engine/StepClock'
+import { FrameClock } from '../engine/StepClock'
 
-// The original's collapsing block (handler at 0xB6A2): it crumbles a few
-// steps after someone stands on it and stays gone until the room is entered
-// again. Like a table, it only supports from above. It holds for a second,
-// long enough to walk across it (eight steps) and turn: the original's rows
-// of these over spike pits are walked, not only hopped.
-export const VANISH_AFTER_STEPS = 12
+// The original's collapsing block (the room table's t22, handler at 0xB6A2):
+// stood on, it turns to its crumbling graphic (0xB8, handler 0xBF2B), the
+// next frame to the last (0xB9, 0xBF37), which takes it away: gone two
+// frames after someone lands on it, and gone until the room is entered
+// again. Like a table, it only supports from above.
+export const VANISH_AFTER_FRAMES = 2
 const TOP_TOLERANCE = 0.5
 const RIDER_TOLERANCE = 0.05
 
@@ -21,7 +21,7 @@ export class VanishingBlock extends Entity {
   present = true
   private readonly footprint: number
   private countdown = -1
-  private readonly clock = new StepClock()
+  private readonly clock = new FrameClock()
 
   constructor(gridX: number, gridZ: number, height: number, tileSize: number) {
     super()
@@ -32,8 +32,8 @@ export class VanishingBlock extends Entity {
     this.position.set(gridX * tileSize + tileSize / 2, 0, gridZ * tileSize + tileSize / 2)
   }
 
-  // Steps left before it crumbles, or -1 when it is not counting down.
-  get stepsUntilVanish(): number {
+  // Frames left before it crumbles, or -1 when it is not counting down.
+  get framesUntilVanish(): number {
     return this.present ? this.countdown : -1
   }
 
@@ -52,7 +52,7 @@ export class VanishingBlock extends Entity {
   update(_dt: number, ctxRaw: UpdateContext): void {
     if (!this.clock.tick()) return
     const rider = (ctxRaw as RiderCtx).playerPosition
-    if (this.present && this.countdown < 0 && rider && this.isStandingOn(rider)) this.countdown = VANISH_AFTER_STEPS
+    if (this.present && this.countdown < 0 && rider && this.isStandingOn(rider)) this.countdown = VANISH_AFTER_FRAMES
     if (!this.present || this.countdown < 0) return
     this.countdown--
     if (this.countdown === 0) this.present = false

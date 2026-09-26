@@ -62,11 +62,18 @@ describe('findFloorPath over spike rows', () => {
     path.slice(1).forEach((c, i) => expect(Math.abs(c.x - path[i]!.x) + Math.abs(c.z - path[i]!.z)).toBe(1))
   })
 
-  it('never jumps a wall too high to climb, or two spike rows at once', () => {
+  it('never jumps a wall too high to climb, or three spike rows at once', () => {
     const wall = room({ platforms: [0, 1, 2, 3, 4, 5, 6, 7].map((x) => ({ x, z: 4, height: 3 })) })
     expect(() => findFloorPath(wall, { x: 4, z: 0 }, { x: 4, z: 7 })).toThrow()
-    const deep = room({ spikes: [0, 1, 2, 3, 4, 5, 6, 7].flatMap((x) => [{ x, z: 4 }, { x, z: 5 }]) })
+    const deep = room({ spikes: [0, 1, 2, 3, 4, 5, 6, 7].flatMap((x) => [{ x, z: 3 }, { x, z: 4 }, { x, z: 5 }]) })
     expect(() => findFloorPath(deep, { x: 4, z: 0 }, { x: 4, z: 7 })).toThrow()
+  })
+
+  it('jumps a spike bed two cells wide with a held jump', () => {
+    const wide = room({ spikes: [0, 1, 2, 3, 4, 5, 6, 7].flatMap((x) => [{ x, z: 4 }, { x, z: 5 }]) })
+    const path = findFloorPath(wide, { x: 4, z: 0 }, { x: 4, z: 7 })
+    expect(path).toContainEqual({ x: 4, z: 6, y: 0 })
+    expect(path.some((c) => c.z === 4 || c.z === 5)).toBe(false)
   })
 })
 

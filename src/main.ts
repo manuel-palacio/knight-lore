@@ -754,7 +754,7 @@ function monsterKind(e: Entity): 'patrols' | 'bounces' | 'roams' {
 function vanishingDynamic(v: VanishingBlock): Dynamic {
   const half = v.extents.x / 2
   const box = boxDynamic({ x0: v.position.x - half, x1: v.position.x + half, z0: v.position.z - half, z1: v.position.z + half, y0: 0, y1: v.height })
-  const crumbling = v.stepsUntilVanish >= 0 && v.stepsUntilVanish <= 3
+  const crumbling = v.framesUntilVanish >= 0
   if (!crumbling) return box
   return { ...box, draw: (ctx, cfg, shades) => { if (Math.floor(performance.now() / 80) % 2 === 0) box.draw(ctx, cfg, shades) } }
 }

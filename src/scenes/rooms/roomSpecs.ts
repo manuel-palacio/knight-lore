@@ -124,6 +124,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     spikes: [{ x: 3, z: 2 }, { x: 3, z: 1 }, { x: 4, z: 2 }, { x: 4, z: 1 }],
     vanishing: [{ x: 3, z: 2, height: 2 }, { x: 4, z: 2, height: 2 }, { x: 3, z: 1, height: 2 }, { x: 4, z: 1, height: 2 }],
     spikedBalls: [{ x: 3, z: 3, height: 0, drops: true, waits: true }, { x: 4, z: 3, height: 0 }, { x: 3, z: 0, height: 0 }, { x: 4, z: 0, height: 0 }],
+    puzzle: true,
   },
   {
     id: 'map--4--8', tint: 'cyan',
@@ -591,7 +592,6 @@ export const ROOM_SPECS: RoomSpec[] = [
     spikes: [{ x: 3, z: 3 }, { x: 4, z: 3 }, { x: 3, z: 2 }, { x: 4, z: 2 }, { x: 3, z: 1 }, { x: 4, z: 1 }, { x: 3, z: 0 }, { x: 4, z: 0 }],
     vanishing: [{ x: 2, z: 2, height: 1 }, { x: 2, z: 1, height: 1 }, { x: 5, z: 2, height: 1 }, { x: 5, z: 1, height: 1 }],
     balls: [{ x: 3.5, z: 1.5, height: 3 }],
-    puzzle: true,
   },
   {
     id: 'map-2--1', tint: 'cyan',

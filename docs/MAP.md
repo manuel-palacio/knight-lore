@@ -1,5 +1,7 @@
 # Map
 
+**Superseded (2026-09-26).** The castle is now generated from the original's own room table by `tools/rip/castle.py` (see #11 and the README): all 128 rooms, with their real doors, sizes and objects. What follows describes how rooms were read off `map.png` before that, and is kept for reference; `tools/map` still runs.
+
 Rooms are read off `map.png`, Paul Dunn's complete map of the original. Grid coordinates are room steps from the cauldron room: `map-<rx>-<rz>` is rx rooms east and rz rooms south of `room-001`. The castle has 62 of the original's 128 rooms, all connected; the start room is `map--4-4`.
 
 ```

@@ -290,6 +290,8 @@ async function main(): Promise<void> {
       lives: state.lives,
       won: state.won,
       timer: state.transformTimer,
+      // The form the game is in; `form` is the one drawn, which lags through the transformation.
+      night: state.form === 'werewolf',
       pickups: activeRoom().entities
         .filter((e): e is Pickup => e instanceof Pickup && !e.collected)
         .map((e) => ({ id: e.id, x: e.position.x, y: e.position.y, z: e.position.z })),

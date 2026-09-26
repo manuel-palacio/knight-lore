@@ -32,13 +32,13 @@ test('the game can be won from the start room with the keyboard', async ({ page 
     if (state.won) break
     expect(state.lives, 'ran out of lives').toBeGreaterThan(0)
     const wanted = state.wanted!
-    if (state.form === 'werewolf' && hauntedAtNight(state.room)) {
+    if (state.night && hauntedAtNight(state.room)) {
       await retrying(() => stepToward(page, safeNeighbourOf(state.room)))
       continue
     }
     // The wolf can neither carry nor deliver, and jumps higher into what hangs
     // above: at night he waits for the morning where he is.
-    if (state.form === 'werewolf') {
+    if (state.night) {
       await waitForDaylight(page)
       continue
     }
@@ -82,10 +82,11 @@ async function stepToward(page: Page, goal: string): Promise<void> {
   let exit = nextExit(state.room, cellOf(state), goal)
   // Ghosts, and the spirit in the cauldron, hunt only the wolf: at night he
   // waits for the morning outside their rooms, never in one.
-  if (state.form === 'werewolf' && hauntedAtNight(exit.target)) {
+  if (state.night && hauntedAtNight(exit.target)) {
     if (hauntedAtNight(state.room)) exit = nextExit(state.room, cellOf(state), safeNeighbourOf(state.room))
     else await waitForDaylight(page)
-  } else if (hauntedAtNight(exit.target) && state.timer < daylightNeededIn(exit.target)) {
+  } else if (!state.night && state.timer < daylightNeededIn(exit.target)) {
+    // Never set off into a room with dusk near: the wolf is caught half-way.
     if (hauntedAtNight(state.room)) exit = nextExit(state.room, cellOf(state), safeNeighbourOf(state.room))
     else await waitForNextMorning(page)
   }
@@ -99,7 +100,7 @@ async function stepToward(page: Page, goal: string): Promise<void> {
 // errand and let the main loop walk him out; elsewhere, wait for the morning.
 async function nightfallStopsErrand(page: Page): Promise<boolean> {
   const state = await debug(page)
-  if (state.form === 'human') return false
+  if (!state.night) return false
   if (hauntedAtNight(state.room)) return true
   await waitForDaylight(page)
   return false
@@ -128,12 +129,13 @@ async function deliver(page: Page): Promise<void> {
 }
 
 async function waitForNextMorning(page: Page): Promise<void> {
-  await expect.poll(async () => (await debug(page)).form, { timeout: 30_000, intervals: [250] }).toBe('werewolf')
+  await expect.poll(async () => (await debug(page)).night, { timeout: 30_000, intervals: [250] }).toBe(true)
   await waitForDaylight(page)
 }
 
 async function waitForDaylight(page: Page): Promise<void> {
-  await expect.poll(async () => (await debug(page)).form, { timeout: 60_000, intervals: [250] }).toBe('human')
+  await expect.poll(async () => (await debug(page)).night, { timeout: 60_000, intervals: [250] }).toBe(false)
+  await expect.poll(async () => (await debug(page)).form, { timeout: 5_000, intervals: [100] }).toBe('human')
   await expect.poll(async () => (await debug(page)).state, { timeout: 5_000 }).toBe('grounded')
 }
 

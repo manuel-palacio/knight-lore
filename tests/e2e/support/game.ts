@@ -17,6 +17,7 @@ export interface Debug {
   day: number
   won: boolean
   timer: number
+  night: boolean
   gates: { cells: Cell[]; state: string; blocking: boolean }[]
   monsters: { x: number; z: number }[]
   pickups: { id: string; x: number; y: number; z: number }[]

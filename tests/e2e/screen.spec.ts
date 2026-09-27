@@ -14,6 +14,15 @@ async function litPixels(page: Page, area: { x: number; y: number; w: number; h:
   }, { area, lit: lit.toString() })
 }
 
+async function pixelsIn(page: Page, area: { x: number; y: number; w: number; h: number }): Promise<number[]> {
+  return page.evaluate((area) => {
+    const canvas = document.querySelector('#app canvas') as HTMLCanvasElement
+    return Array.from(canvas.getContext('2d')!.getImageData(area.x, area.y, area.w, area.h).data)
+  }, area)
+}
+
+const changedPixels = (a: number[], b: number[]) => a.filter((v, i) => i % 4 < 3 && v !== b[i]).length
+
 const anyColour = (r: number, g: number, b: number) => r + g + b > 60
 const white = (r: number, g: number, b: number) => r > 200 && g > 200 && b > 200
 
@@ -31,21 +40,30 @@ test('the room is drawn down between the scrolls, not cut off at the HUD', async
   await expect.poll(() => litPixels(page, BETWEEN_THE_SCROLLS, anyColour)).toBeGreaterThan(20)
 })
 
-test('the charm the cauldron wants hangs over it while he is a man, not in the scroll', async ({ page }) => {
+test('the charm the cauldron wants hangs over it while he is a man, gone while he is the wolf, never in the scroll', async ({ page }) => {
   await startGame(page)
   await enterRoom(page, 'room-001')
   await holdDaylight(page)
   const { wanted, overCauldron } = await debug(page)
   expect(overCauldron).toBe(wanted)
-  await expect.poll(() => litPixels(page, OVER_THE_CAULDRON, white)).toBeGreaterThan(20)
   expect(await litPixels(page, SCROLL_END, white)).toBe(0)
-})
-
-test('while he is the wolf nothing hangs over the cauldron', async ({ page }) => {
-  await startGame(page)
-  await enterRoom(page, 'room-001')
+  await page.waitForTimeout(300)
+  const asMan = await pixelsIn(page, OVER_THE_CAULDRON)
   await page.evaluate(() => (window as unknown as { __t: () => void }).__t())
   await expect.poll(async () => (await debug(page)).form).toBe('werewolf')
   expect((await debug(page)).overCauldron).toBeNull()
-  await expect.poll(() => litPixels(page, OVER_THE_CAULDRON, white)).toBe(0)
+  await expect.poll(async () => changedPixels(asMan, await pixelsIn(page, OVER_THE_CAULDRON))).toBeGreaterThan(40)
+})
+
+// As on the Spectrum, one colour for the whole play area: in a green room
+// Sabreman is green too, not the cream he once was, and no red shows above
+// the HUD line (the HUD's red scroll is below it).
+const ABOVE_THE_HUD = { x: 0, y: 0, w: 256, h: 128 }
+const redderThanGreen = (r: number, g: number, _b: number) => r > g + 10
+
+test('Sabreman is drawn in the room\'s colour', async ({ page }) => {
+  await startGame(page)
+  await enterRoom(page, 'map-0--1')
+  await holdDaylight(page)
+  await expect.poll(() => litPixels(page, ABOVE_THE_HUD, redderThanGreen)).toBe(0)
 })

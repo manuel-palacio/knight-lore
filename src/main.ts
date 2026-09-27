@@ -64,8 +64,6 @@ function loadImage(url: string): Promise<HTMLImageElement> {
 // Recolour a sprite sheet to a flat tint (keeps alpha) so both forms read as one
 // bright silhouette — the ZX monochrome character look, regardless of the
 // source capture's colour (the wolf was extracted from a green recording).
-const CHARACTER_TINT = '#f3e6c0'
-const RED_TINT = '#ff4040'
 const SCREEN_W = 256
 const SCREEN_H = 192
 const PIXEL_SCALE = 4
@@ -95,25 +93,33 @@ async function main(): Promise<void> {
   const overlays = new Overlays()
   const renderer = new IsoRenderer(container, SCREEN_W, SCREEN_H, PIXEL_SCALE)
 
-  const transformStrip = tintImage(await loadImage('/sprites/sabreman-transform.png'), CHARACTER_TINT)
+  // Everything in the play area is drawn in the room's one colour, as on the
+  // Spectrum; each sprite is tinted per room hue on first use.
+  const tintedByHue = new WeakMap<HTMLImageElement, Map<number, HTMLCanvasElement>>()
+  const inHue = (source: HTMLImageElement, hue: number): HTMLCanvasElement => {
+    let byHue = tintedByHue.get(source)
+    if (!byHue) tintedByHue.set(source, (byHue = new Map()))
+    let img = byHue.get(hue)
+    if (!img) byHue.set(hue, (img = tintImage(source, `#${hue.toString(16).padStart(6, '0')}`)))
+    return img
+  }
+  const transformStrip = await loadImage('/sprites/sabreman-transform.png')
   const strips = {
     human: {
-      front: tintImage(await loadImage('/sprites/sabreman-front.png'), CHARACTER_TINT),
-      back: tintImage(await loadImage('/sprites/sabreman-back.png'), CHARACTER_TINT),
+      front: await loadImage('/sprites/sabreman-front.png'),
+      back: await loadImage('/sprites/sabreman-back.png'),
     },
     werewolf: {
-      front: tintImage(await loadImage('/sprites/sabrewulf-front.png'), CHARACTER_TINT),
-      back: tintImage(await loadImage('/sprites/sabrewulf-back.png'), CHARACTER_TINT),
+      front: await loadImage('/sprites/sabrewulf-front.png'),
+      back: await loadImage('/sprites/sabrewulf-back.png'),
     },
   }
   spikesImage = await loadImage('/sprites/rip/spikes.png')
   // Set pieces ripped from the original's memory (public/sprites/rip/index.json).
-  // Colours as the original: Sabreman and charms white, the wizard and fire
-  // red, the monsters in the room's own hue (tinted per room on first use).
   const setPieces = {
-    cauldron: tintImage(await loadImage('/sprites/rip/cauldron.png'), '#ffffff'),
-    wizard: tintImage(await loadImage('/sprites/wizard.png'), RED_TINT),
-    flame: tintImage(await loadImage('/sprites/flame.png'), RED_TINT),
+    cauldron: await loadImage('/sprites/rip/cauldron.png'),
+    wizard: await loadImage('/sprites/wizard.png'),
+    flame: await loadImage('/sprites/flame.png'),
   }
   const monsterSources = {
     ghost: await loadImage('/sprites/rip/ghost.png'),
@@ -127,16 +133,7 @@ async function main(): Promise<void> {
     chest: await loadImage('/sprites/rip/chest.png'),
     table: await loadImage('/sprites/rip/table.png'),
   }
-  const monsterTints = new Map<string, HTMLCanvasElement>()
-  const monster = (kind: keyof typeof monsterSources, hue: number): HTMLCanvasElement => {
-    const key = `${kind}:${hue}`
-    let img = monsterTints.get(key)
-    if (!img) {
-      img = tintImage(monsterSources[kind], `#${hue.toString(16).padStart(6, '0')}`)
-      monsterTints.set(key, img)
-    }
-    return img
-  }
+  const monster = (kind: keyof typeof monsterSources, hue: number): HTMLCanvasElement => inHue(monsterSources[kind], hue)
   const hudLayers = {
     frame: await loadImage('/sprites/hud-frame.png'),
     scroll: tintImage(await loadImage('/sprites/hud-scroll.png'), '#ff3030'),
@@ -526,7 +523,7 @@ async function main(): Promise<void> {
     const frame = transformTarget === 'werewolf' ? stage : TRANSFORM_FRAMES - 1 - stage
     const frameW = transformStrip.width / TRANSFORM_FRAMES
     return {
-      image: transformStrip,
+      image: inHue(transformStrip, activeRoom().tint),
       frameX: frame * frameW,
       frameW,
       frameH: transformStrip.height,
@@ -541,7 +538,7 @@ async function main(): Promise<void> {
   function characterDynamic(): Dynamic {
     if (morphing()) return spriteDynamic(transformSprite())
     const selected = selectCharacterFrame(player.facing, player.stepsTaken, charMoving, player.state !== 'grounded', visualForm)
-    const sheet = strips[visualForm][selected.view]
+    const sheet = inHue(strips[visualForm][selected.view], activeRoom().tint)
     const frameW = sheet.width / STRIP_CELLS[visualForm]
     const sprite: SpriteDraw = {
       image: sheet,
@@ -571,8 +568,9 @@ async function main(): Promise<void> {
     for (const e of room.entities) {
       if (e instanceof Pickup) {
         if (e.collected || !e.active) continue
-        const img = itemImages.get(e.id)
-        if (!img) continue
+        const source = itemImages.get(e.id)
+        if (!source) continue
+        const img = inHue(source, room.tint)
         out.push(
           spriteDynamic({
             image: img,
@@ -589,9 +587,10 @@ async function main(): Promise<void> {
       } else if (e instanceof Cauldron) {
         // Rests on a platform: lift to its real height and sort in front of it.
         const depth = isoDepth(e.position.x, e.position.y, e.position.z) + 6
-        out.push({ ...setPieceSprite(setPieces.cauldron, e.position.x, e.position.y, e.position.z), depth })
+        out.push({ ...setPieceSprite(inHue(setPieces.cauldron, room.tint), e.position.x, e.position.y, e.position.z), depth })
         const charm = charmOverCauldron(state.wantedItem, state.form)
-        const img = charm ? itemImages.get(charm) : undefined
+        const source = charm ? itemImages.get(charm) : undefined
+        const img = source ? inHue(source, room.tint) : undefined
         if (img) out.push({ ...spriteDynamic({ image: img, frameX: 0, frameW: img.width, frameH: img.height, scale: 1, flip: false, x: e.position.x, y: e.position.y + CHARM_OVER_CAULDRON, z: e.position.z }), depth: depth + 1 })
       } else if (e instanceof Spike) {
         out.push(spikeBedDynamic(e.position.x, e.position.y, e.position.z))
@@ -618,7 +617,7 @@ async function main(): Promise<void> {
         const half = room.tileSize / 2
         out.push(boxDynamic({ x0: e.position.x - half, x1: e.position.x + half, z0: e.position.z - half, z1: e.position.z + half, y0: e.top - 1, y1: e.top }))
       } else if (e instanceof Wizard) {
-        out.push(setPieceSprite(setPieces.wizard, e.position.x, 0, e.position.z))
+        out.push(setPieceSprite(inHue(setPieces.wizard, room.tint), e.position.x, 0, e.position.z))
       } else if (e instanceof Portcullis) {
         // One grille per cell of its line, mirrored when the line runs north-south.
         const acrossZ = e.cells[0]!.x === e.cells.at(-1)!.x && e.cells.length > 1
@@ -633,8 +632,9 @@ async function main(): Promise<void> {
       } else if (e instanceof SpikedBall) {
         out.push(setPieceSprite(monster('spikedBall', room.tint), e.position.x, e.position.y, e.position.z))
       } else if (e instanceof Flame) {
-        const frameW = setPieces.flame.width / 3
-        out.push(spriteDynamic({ image: setPieces.flame, frameX: e.frame * frameW, frameW, frameH: setPieces.flame.height, scale: 1, flip: false, x: e.position.x, y: e.position.y, z: e.position.z }))
+        const flame = inHue(setPieces.flame, room.tint)
+        const frameW = flame.width / 3
+        out.push(spriteDynamic({ image: flame, frameX: e.frame * frameW, frameW, frameH: flame.height, scale: 1, flip: false, x: e.position.x, y: e.position.y, z: e.position.z }))
       }
     }
     return out

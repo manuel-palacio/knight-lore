@@ -1,4 +1,4 @@
-import { shuffled } from '../engine/Random'
+import { mulberry32 } from '../engine/Random'
 import { endSummary, type EndSummary } from './EndSummary'
 
 export type Form = 'human' | 'werewolf'
@@ -16,10 +16,23 @@ export const STARTING_LIVES = 5
 // one at a time, in an order drawn at the start of each game like the original.
 export const CHARMS = ['goblet', 'gem', 'wine-bottle', 'crystal-ball', 'boot', 'teacup', 'poison'] as const
 export type Charm = (typeof CHARMS)[number]
-export const CURE_LENGTH = CHARMS.length * 2
+// The cure, as the original asks for it (0xC27D), read round from a start
+// chosen at the beginning of each game.
+export const CURE_ORDER: readonly Charm[] = ['gem', 'poison', 'boot', 'goblet', 'teacup', 'wine-bottle', 'crystal-ball',
+  'goblet', 'wine-bottle', 'gem', 'crystal-ball', 'poison', 'boot', 'teacup']
+export const CURE_LENGTH = CURE_ORDER.length
 // Everything that can lie on the floor: the charms and the extra life.
 export const ALL_ITEMS = [...CHARMS, 'life'] as const
 export type ItemId = (typeof ALL_ITEMS)[number]
+
+// What lies at each of the castle's 32 charm spots (see charmSpots in the
+// room specs): the kinds in graphic order from 0x60, dealt round the spots
+// from one of eight starts chosen at the beginning of each game (0xC47E).
+export const DEALT_ITEMS: readonly ItemId[] = ['gem', 'poison', 'boot', 'goblet', 'teacup', 'wine-bottle', 'crystal-ball', 'life']
+
+export function itemAtSpot(spot: number, deal: number): ItemId {
+  return DEALT_ITEMS[(deal + spot) % DEALT_ITEMS.length]!
+}
 
 export type GameOverReason = 'days' | 'lives'
 
@@ -33,17 +46,20 @@ export interface SavedGame {
   dayCount: number
   cureProgress: number
   cureSequence: Charm[]
-  // Rooms whose charm was delivered or whose extra life was taken; missing in older saves.
-  emptiedRooms?: string[]
+  // Where the deal of charms round the castle started (see itemAtSpot).
+  charmDeal: number
+  // Spots whose charm was delivered or whose extra life was taken.
+  usedSpots: number[]
   // Rooms he has been in, for the end screen's rating; missing in older saves.
   visitedRooms?: string[]
 }
 
 // Saves from earlier versions drew a different cure; continuing one would
 // ask for charms the castle no longer holds.
-export function isCompatibleSave(saved: { cureSequence: readonly string[] }): boolean {
+export function isCompatibleSave(saved: { cureSequence: readonly string[]; charmDeal?: number }): boolean {
   const charms: readonly string[] = CHARMS
-  return saved.cureSequence.length === CURE_LENGTH && saved.cureSequence.every((item) => charms.includes(item))
+  const cureOk = saved.cureSequence.length === CURE_LENGTH && saved.cureSequence.every((item) => charms.includes(item))
+  return cureOk && typeof saved.charmDeal === 'number'
 }
 
 export class GameState {
@@ -60,14 +76,17 @@ export class GameState {
   gameOverReason: GameOverReason | null = null
   cureProgress = 0
   readonly cureSequence: Charm[]
-  // Rooms whose pickup is used up (charm delivered, extra life taken): they
-  // are built without it. A room holds at most one pickup.
-  readonly emptiedRooms: string[] = []
+  charmDeal: number
+  // Spots whose charm is used up (delivered, or an extra life taken): rooms are built without it.
+  readonly usedSpots: number[] = []
   // Rooms he has been in, as the original marks them in its bitmap at 0x5BE8.
   readonly visitedRooms = new Set<string>()
 
   constructor(seed: number = Math.floor(Math.random() * 0x7fffffff)) {
-    this.cureSequence = shuffled([...CHARMS, ...CHARMS], seed)
+    const rand = mulberry32(seed)
+    const start = Math.floor(rand() * CURE_ORDER.length)
+    this.cureSequence = [...CURE_ORDER.slice(start), ...CURE_ORDER.slice(0, start)]
+    this.charmDeal = Math.floor(rand() * DEALT_ITEMS.length)
   }
 
   serialize(): SavedGame {
@@ -79,7 +98,8 @@ export class GameState {
       dayCount: this.dayCount,
       cureProgress: this.cureProgress,
       cureSequence: [...this.cureSequence],
-      emptiedRooms: [...this.emptiedRooms],
+      charmDeal: this.charmDeal,
+      usedSpots: [...this.usedSpots],
       visitedRooms: [...this.visitedRooms],
     }
   }
@@ -99,7 +119,8 @@ export class GameState {
     this.dayCount = saved.dayCount
     this.cureProgress = saved.cureProgress
     this.cureSequence.splice(0, this.cureSequence.length, ...saved.cureSequence)
-    this.emptiedRooms.splice(0, this.emptiedRooms.length, ...(saved.emptiedRooms ?? []))
+    this.charmDeal = saved.charmDeal
+    this.usedSpots.splice(0, this.usedSpots.length, ...saved.usedSpots)
     this.visitedRooms.clear()
     for (const id of saved.visitedRooms ?? [saved.currentRoomId]) this.visitedRooms.add(id)
   }

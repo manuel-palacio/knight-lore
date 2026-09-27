@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { ROOM_SPECS, entryFor, oppositeOf, type RoomSpec } from '../../src/scenes/rooms/roomSpecs'
+import { itemAtSpot } from '../../src/game/GameState'
 import { clearestPath, debug, enterRoom, face, holdDaylight, startGame, walkPath, walkUntil } from './support/game'
 import { dangersOf, doorOf, findFloorPath, findFloorPaths } from './support/roomPath'
 
@@ -20,7 +21,7 @@ const TRIES_ON_TIMING = 3
 
 test.describe.configure({ mode: 'parallel' })
 
-const walks = (spec: RoomSpec, from: { x: number; z: number }, to: { x: number; z: number }) => {
+const walks = (spec: RoomSpec, from: { x: number; z: number }, to: { x: number; z: number; y?: number }) => {
   try {
     findFloorPath(spec, from, to)
     return true
@@ -33,7 +34,9 @@ for (const spec of ROOM_SPECS) {
   const entrance = spec.exits[0]!
   const entryDoor = doorOf(spec, entrance.direction)
   const exits = spec.exits.slice(spec.exits.length > 1 ? 1 : 0).filter((e) => walks(spec, entryDoor, doorOf(spec, e.direction)))
-  const charms = (spec.pickups ?? []).filter((p) => walks(spec, entryDoor, p))
+  // Charm spots it can be walked to (many lie high, reached by stepping on other charms).
+  // A spot half way between cells is reached from the cell below and left of it: within a stride.
+  const charms = (spec.charmSpots ?? []).map((c) => ({ ...c, x: Math.floor(c.x), z: Math.floor(c.z), y: c.height })).filter((p) => walks(spec, entryDoor, p))
 
   // Spiked balls let go at random, one at a time (0xB7A9), and those down can shut a corridor.
   const dropping = (spec.spikedBalls ?? []).some((b) => !b.waits)
@@ -62,14 +65,15 @@ for (const spec of ROOM_SPECS) {
     }
 
     for (const charm of charms) {
-      await walk(`to the ${charm.item}`, async () => {
+      await walk(`to charm spot ${charm.spot}`, async () => {
         const lives = (await debug(page)).lives
+        const item = itemAtSpot(charm.spot, (await debug(page)).deal)
         await walkPath(page, await clearestPath(page, findFloorPaths(spec, entryDoor, charm), dangersOf(spec)), dangersOf(spec))
         await page.keyboard.press('KeyE')
-        if (charm.item === 'life') {
+        if (item === 'life') {
           await expect.poll(async () => (await debug(page)).lives, { message: 'extra life taken' }).toBe(lives + 1)
         } else {
-          await expect.poll(async () => (await debug(page)).carrying, { message: `${charm.item} picked up` }).toContain(charm.item)
+          await expect.poll(async () => (await debug(page)).carrying, { message: `${item} picked up` }).toContain(item)
         }
       })
     }

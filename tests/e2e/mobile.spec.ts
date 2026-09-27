@@ -1,6 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
-import { ROOM_SPECS } from '../../src/scenes/rooms/roomSpecs'
-import { debug, enterRoom, holdDaylight, standAt } from './support/game'
+import { debug, enterRoom, holdDaylight, roomHolding, standAt } from './support/game'
 
 // Playing on a phone held sideways: the on-screen d-pad, Jump and E buttons
 // (index.html #touch, src/engine/TouchControls.ts) stand for the keys.
@@ -83,8 +82,7 @@ test.describe('on a phone', () => {
 
   test('E picks up a charm', async ({ page }) => {
     await begin(page)
-    const room = ROOM_SPECS.find((s) => s.pickups?.some((p) => p.item !== 'life'))!
-    const at = await enterRoom(page, room.id)
+    const at = await enterRoom(page, await roomHolding(page, (item) => item !== 'life'))
     const charm = at.pickups.find((p) => p.id !== 'life')!
     await standAt(page, { ...charm, y: charm.y - CHARM_HOVER })
     await holdFor(page, 'KeyE', 100)

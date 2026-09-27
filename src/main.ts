@@ -290,7 +290,7 @@ async function main(): Promise<void> {
     }
     // Puts charms in his hands, as if carried in from other rooms.
     hooks.__give = (ids: string[]) => {
-      for (const id of ids) player.tryPickup(new Pickup(id, state.currentRoomId), state, () => {})
+      for (const id of ids) player.tryPickup(new Pickup(id), state, () => {})
     }
     hooks.__pos = (x: number, y: number, z: number) => {
       player.position.set(x, y, z)
@@ -306,6 +306,7 @@ async function main(): Promise<void> {
       day: state.dayCount,
       state: player.state,
       dying: dying(),
+      deal: state.charmDeal,
       facing: player.facing,
       pos: { x: Number(player.position.x.toFixed(2)), y: Number(player.position.y.toFixed(2)), z: Number(player.position.z.toFixed(2)) },
       platforms: activeRoom().entities.filter((e) => e instanceof MovingPlatform).map((e) => ({ x: e.position.x, z: e.position.z })),
@@ -434,7 +435,7 @@ async function main(): Promise<void> {
 
   function takeExtraLife(room: Room, life: Pickup): void {
     state.gainLife()
-    state.emptiedRooms.push(life.homeRoomId)
+    if (life.spot !== null) state.usedSpots.push(life.spot)
     life.collect()
     room.remove(life)
     beeper.play('pickup')
@@ -450,7 +451,7 @@ async function main(): Promise<void> {
       if (!player.satchel.isEmpty) beeper.play('wrong')
       return false
     }
-    state.emptiedRooms.push(charm.homeRoomId)
+    if (charm.spot !== null) state.usedSpots.push(charm.spot)
     if (state.won) beeper.play('win')
     else beeper.playEffect(deliveryEffect(charm.id))
     return true

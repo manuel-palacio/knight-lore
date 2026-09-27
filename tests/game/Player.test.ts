@@ -300,7 +300,7 @@ describe('Player pickup', () => {
     state.toggleForm()
     expect(state.form).toBe('werewolf')
     let picked = false
-    player.tryPickup(new Pickup('goblet', 'r'), state, () => { picked = true })
+    player.tryPickup(new Pickup('goblet'), state, () => { picked = true })
     expect(picked).toBe(false)
     expect(player.carrying).toEqual([])
   })
@@ -308,7 +308,7 @@ describe('Player pickup', () => {
   it('human form accepts pickup attempt', () => {
     const { state, player } = setupRoom()
     let picked = false
-    player.tryPickup(new Pickup('goblet', 'r'), state, () => { picked = true })
+    player.tryPickup(new Pickup('goblet'), state, () => { picked = true })
     expect(picked).toBe(true)
     expect(player.carrying).toEqual(['goblet'])
     expect(state.hasItem('goblet')).toBe(true)
@@ -317,7 +317,7 @@ describe('Player pickup', () => {
   it('carries three, and hands back the one carried longest to take a fourth', () => {
     const { state, player } = setupRoom()
     let letGo: Pickup | undefined
-    for (const id of ['gem', 'boot', 'teacup', 'poison']) player.tryPickup(new Pickup(id, 'r'), state, (l) => { letGo = l })
+    for (const id of ['gem', 'boot', 'teacup', 'poison']) player.tryPickup(new Pickup(id), state, (l) => { letGo = l })
     expect(player.carrying).toEqual(['boot', 'teacup', 'poison'])
     expect(letGo?.id).toBe('gem')
     expect(state.hasItem('gem')).toBe(false)
@@ -328,8 +328,8 @@ describe('Player pickup', () => {
 describe('Player putting a charm down under his feet', () => {
   it('stands on it a block higher, carrying one less', () => {
     const { state, player } = setupRoom()
-    player.tryPickup(new Pickup('gem', 'r'), state, () => {})
-    player.tryPickup(new Pickup('boot', 'r'), state, () => {})
+    player.tryPickup(new Pickup('gem'), state, () => {})
+    player.tryPickup(new Pickup('boot'), state, () => {})
     expect(player.putDownUnderFoot(state, true)?.id).toBe('gem')
     expect(player.position.y).toBe(CHARM_HEIGHT)
     expect(player.carrying).toEqual(['boot'])
@@ -337,7 +337,7 @@ describe('Player putting a charm down under his feet', () => {
 
   it('does not with something over his head, nor in the air', () => {
     const { state, player } = setupRoom()
-    player.tryPickup(new Pickup('gem', 'r'), state, () => {})
+    player.tryPickup(new Pickup('gem'), state, () => {})
     expect(player.putDownUnderFoot(state, false)).toBeUndefined()
     player.state = 'airborne'
     expect(player.putDownUnderFoot(state, true)).toBeUndefined()
@@ -352,7 +352,7 @@ describe('Player and a charm as a stepping stone', () => {
     const { grid, state, player } = setupRoom()
     grid.setSolid(2, 3, true)
     grid.setSupport(2, 3, 2)
-    const charm = new Pickup('boot', 'test-room')
+    const charm = new Pickup('boot')
     charm.position.set(4, 0.4, 4)
     const c = (keys: Keys = {}) => ({ ...ctx(grid, state, keys), dynamicSupport: (x: number, z: number, y: number) => charm.supportAt(x, z, y) })
     return { player, c }

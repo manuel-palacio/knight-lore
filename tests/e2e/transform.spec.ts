@@ -1,14 +1,12 @@
 import { test, expect } from '@playwright/test'
-import { ROOM_SPECS } from '../../src/scenes/rooms/roomSpecs'
-import { debug, enterRoom, face, holdDaylight, standAt, startGame } from './support/game'
+import { debug, enterRoom, face, holdDaylight, roomHolding, standAt, startGame } from './support/game'
 
 // The transformation is a seizure: Sabreman cannot move while it plays out
 // (about two seconds), drops what he carries, and comes out of it the wolf.
 
 test('morphing while carrying freezes Sabreman and drops the charm', async ({ page }) => {
   await startGame(page)
-  const charmRoom = ROOM_SPECS.find((s) => s.pickups?.some((p) => p.item !== 'life'))!
-  const room = await enterRoom(page, charmRoom.id)
+  const room = await enterRoom(page, await roomHolding(page, (item) => item !== 'life'))
   await holdDaylight(page)
   const charm = room.pickups[0]!
   await standAt(page, charm)

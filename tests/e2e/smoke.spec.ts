@@ -1,16 +1,11 @@
 import { test, expect } from '@playwright/test'
 import { ROOM_SPECS, START_ROOMS } from '../../src/scenes/rooms/roomSpecs'
-import { debug, enterRoom, face, standAt, startGame, walkPath, walkUntil } from './support/game'
+import { debug, enterRoom, face, roomHolding, standAt, startGame, walkPath, walkUntil } from './support/game'
 import { doorOf, findFloorPath } from './support/roomPath'
 
 // End-to-end smoke: the game loads, starts, lets you walk between rooms, and
 // runs the cure loop once.
 
-function roomHolding(item: string): string {
-  const spec = ROOM_SPECS.find((s) => s.pickups?.some((p) => p.item === item))
-  if (!spec) throw new Error(`no room holds ${item}`)
-  return spec.id
-}
 
 test('title screen shows and a key starts the game', async ({ page }) => {
   await startGame(page)
@@ -42,7 +37,7 @@ test('the wanted charm can be picked up and delivered to the cauldron', async ({
   const { wanted } = await debug(page)
   if (!wanted) throw new Error('nothing wanted at start')
 
-  const charmRoom = await enterRoom(page, roomHolding(wanted))
+  const charmRoom = await enterRoom(page, await roomHolding(page, (item) => item === wanted))
   const charm = charmRoom.pickups.find((p) => p.id === wanted)
   if (!charm) throw new Error(`${wanted} not in ${charmRoom.room}`)
   await standAt(page, charm)

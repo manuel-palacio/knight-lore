@@ -1,6 +1,7 @@
 import { test, expect, type Page } from '@playwright/test'
 import { ROOM_SPECS, oppositeOf, type RoomSpec } from '../../src/scenes/rooms/roomSpecs'
-import { debug, face, startGame, walkPath, walkUntil, type Cell, type Debug } from './support/game'
+import { CHARM_HOVER } from '../../src/game/Pickup'
+import { dealtCharms, debug, face, startGame, walkPath, walkUntil, type Cell, type Debug } from './support/game'
 import { dangersOf, doorOf, findFloorPath } from './support/roomPath'
 
 // A whole game played with the keyboard alone, on the real day clock: fetch
@@ -26,8 +27,12 @@ test('the game can be won from the start room with the keyboard', async ({ page 
   test.setTimeout(60 * 60_000)
   const started = Date.now()
   await startGame(page)
+  // Where each kind lies this game, as dealt round the castle's spots; those
+  // high up (reached only by stepping on other charms) are left to a player.
   const whereabouts = new Map<string, string[]>()
-  for (const spec of ROOM_SPECS) for (const p of spec.pickups ?? []) whereabouts.set(p.item, [...(whereabouts.get(p.item) ?? []), spec.id])
+  for (const c of await dealtCharms(page)) {
+    if (onFoot(c)) whereabouts.set(c.item, [...(whereabouts.get(c.item) ?? []), c.room])
+  }
 
   for (let leg = 0; leg < 2_000; leg++) {
     const state = await debug(page)
@@ -112,10 +117,10 @@ async function nightfallStopsErrand(page: Page): Promise<boolean> {
   return false
 }
 
-async function pickUp(page: Page, charm: { id: string; x: number; z: number }): Promise<void> {
+async function pickUp(page: Page, charm: { id: string; x: number; y: number; z: number }): Promise<void> {
   if (await nightfallStopsErrand(page)) return
   const state = await debug(page)
-  const target = { x: Math.floor(charm.x / 2), z: Math.floor(charm.z / 2) }
+  const target = { x: Math.floor(charm.x / 2), z: Math.floor(charm.z / 2), y: Math.round(charm.y - CHARM_HOVER) }
   await walkPath(page, findFloorPath(specOf(state.room), cellOf(state), target), dangersOf(specOf(state.room)))
   if (await nightfallStopsErrand(page)) return
   await page.keyboard.press('KeyE')
@@ -149,6 +154,21 @@ function cellOf(state: Debug): Cell {
   const spec = specOf(state.room)
   const clamp = (v: number, cells: number) => Math.min(cells - 1, Math.max(0, Math.floor(v / 2)))
   return { x: clamp(state.pos.x, spec.width ?? 8), z: clamp(state.pos.z, spec.depth ?? 8) }
+}
+
+// A charm spot the bot can walk to from each door of its room.
+function onFoot(charm: { room: string; spot: number }): boolean {
+  const room = specOf(charm.room)
+  const spot = room.charmSpots!.find((c) => c.spot === charm.spot)!
+  const cell = { x: Math.floor(spot.x), z: Math.floor(spot.z), y: spot.height }
+  return room.exits.every((e) => {
+    try {
+      findFloorPath(room, doorOf(room, e.direction), cell)
+      return true
+    } catch {
+      return false
+    }
+  })
 }
 
 function specOf(id: string): RoomSpec {

@@ -8,6 +8,8 @@ export interface Step extends Cell {
   y: number
 }
 
+type Target = Cell & { y?: number }
+
 // The cell just inside a doorway of this room, whatever its size.
 export function doorOf(spec: RoomSpec, direction: Direction): Cell {
   return doorCell(direction, spec.width ?? 8, spec.depth ?? 8)
@@ -38,7 +40,8 @@ const HEADROOM = 2
 // The way there, and another that keeps off the first one's cells where the
 // room has one: a guard's route that runs through a doorway can make the
 // first a head-on walk into it.
-export function findFloorPaths(spec: RoomSpec, from: Cell, to: Cell): Step[][] {
+// `to` may give the height to arrive at (a charm up on a block); otherwise any will do.
+export function findFloorPaths(spec: RoomSpec, from: Cell, to: Target): Step[][] {
   const first = findFloorPath(spec, from, to)
   try {
     return [first, findFloorPath(spec, from, to, new Set(first.slice(1, -1).map(key)))]
@@ -47,7 +50,7 @@ export function findFloorPaths(spec: RoomSpec, from: Cell, to: Cell): Step[][] {
   }
 }
 
-export function findFloorPath(spec: RoomSpec, from: Cell, to: Cell, keepOff = new Set<string>()): Step[] {
+export function findFloorPath(spec: RoomSpec, from: Cell, to: Target, keepOff = new Set<string>()): Step[] {
   const room = new RoomSurfaces(spec)
   // A moving block's track is kept off too: he cannot walk through the block.
   const tracks = (spec.movingPlatforms ?? []).flatMap((m) => cellsBetween(m.from, m.to)).map(key)
@@ -95,7 +98,7 @@ interface SearchRules {
   crossing?: Set<string>
 }
 
-function search(room: RoomSurfaces, rules: SearchRules, from: Step, to: Cell): Step[] | undefined {
+function search(room: RoomSurfaces, rules: SearchRules, from: Step, to: Target): Step[] | undefined {
   const { avoid, jumpSpikes, gates, crossing = new Set<string>() } = rules
   const done = new Set<string>()
   const queue: CostedNode[] = [{ at: from, from: null, cost: 0 }]
@@ -104,7 +107,7 @@ function search(room: RoomSurfaces, rules: SearchRules, from: Step, to: Cell): S
     const at = node.at
     if (done.has(nodeKey(at, node.from?.at ?? null))) continue
     done.add(nodeKey(at, node.from?.at ?? null))
-    if (at.x === to.x && at.z === to.z) return rebuild(node)
+    if (at.x === to.x && at.z === to.z && (to.y === undefined || at.y === to.y)) return rebuild(node)
     for (const next of [...room.moves(at, node.from?.at ?? null), ...(jumpSpikes ? room.spikeJumps(at) : [])]) {
       const alongGrille = gates.has(key(at)) && gates.has(key(next))
       if (done.has(nodeKey(next, at)) || avoid.has(key(next)) || avoid.has(edgeKey(at, next)) || alongGrille) continue

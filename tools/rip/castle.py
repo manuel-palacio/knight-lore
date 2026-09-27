@@ -28,6 +28,9 @@ SNAPSHOT = 'reference/KnightLore.z80'
 SPECS = 'src/scenes/rooms/roomSpecs.ts'
 CAULDRON = 0x88
 START_TABLE = 0xD1E2
+CHARM_TABLE, CHARM_ENTRY, CHARM_PLACES = 0x6FF2, 9, 32
+# Where the original has a thing, in pixels: a cell 16 across from 0x48, the floor at 0x80.
+FIRST_CELL_PX, CELL_PX, FLOOR_PX = 0x48, 16, 0x80
 FULL, NARROW, NARROW_FROM = 8, 4, 2
 # 0-3 arches, 4-7 garden gates; a narrow room draws its east and north arches
 # in two pieces, 20/22 and 21/23.
@@ -36,8 +39,6 @@ DOORS = {0: 'south', 1: 'east', 2: 'north', 3: 'west', 4: 'south', 5: 'east', 6:
 STEP = {'south': 16, 'east': 1, 'north': -16, 'west': -1}
 OPPOSITE = {'south': 'north', 'north': 'south', 'east': 'west', 'west': 'east'}
 TINT = {3: 'purple', 4: 'green', 5: 'cyan', 6: 'yellow'}
-CHARMS = ['goblet', 'gem', 'wine-bottle', 'crystal-ball', 'boot', 'teacup', 'poison']
-NEAR_ENOUGH = 8
 
 # Type 16 zeroes its own velocity before it moves (0xC4AA): pushed, it never
 # moves, a block like any other.
@@ -107,17 +108,6 @@ def reachable(rooms, exits, start):
                 seen.add(target)
                 queue.append(target)
     return seen
-
-
-def distances(exits, start):
-    distance, queue = {start: 0}, deque([start])
-    while queue:
-        room_id = queue.popleft()
-        for target in exits[room_id].values():
-            if target not in distance:
-                distance[target] = distance[room_id] + 1
-                queue.append(target)
-    return distance
 
 
 def cell_at(x, z):
@@ -525,64 +515,28 @@ def walkable_rooms(builds, exits, start):
     return entered
 
 
-def place_charms(builds, exits, starts):
-    from_cauldron = distances(exits, CAULDRON)
-    near_start = set()
-    for start in starts:
-        near_start |= {r for r, d in distances(exits, start).items() if d <= 1}
-    on_foot = set.intersection(*(walkable_rooms(builds, exits, start) for start in starts))
-    for start in starts:
-        if CAULDRON not in walkable_rooms(builds, exits, start):
-            raise SystemExit(f'the cauldron cannot be reached on foot from {name_of(start)}')
-    balls = rooms_with_spiked_balls(builds)
-    candidates = [r for r in builds if r in on_foot and r != CAULDRON and r not in near_start and r not in balls
-                  and from_cauldron.get(r, 0) > 2 and reachable_cells(builds[r])]
-    # A day's walk: far enough from the cauldron to matter, near enough that a
-    # charm can be fetched and brought back within a day or so.
-    near_enough = [r for r in candidates if from_cauldron[r] <= NEAR_ENOUGH]
-    if len(near_enough) >= 16:
-        candidates = near_enough
-    # Ghosts and hopping balls wander, the ghosts about as fast as Sabreman:
-    # a charm is placed, where the castle allows, where it can be fetched
-    # without crossing one of their rooms.
-    calm = rooms_short_of_wanderers(builds, exits)
-    if len([r for r in candidates if r in calm]) >= 16:
-        candidates = [r for r in candidates if r in calm]
-    candidates.sort(key=lambda r: (-from_cauldron[r], r))
-    items = [c for c in CHARMS for _ in range(2)] + ['life', 'life']
-    # Spread: take every n-th of the far-first ordering so charms are not bunched.
-    stride = max(1, len(candidates) // len(items))
-    chosen = candidates[::stride][:len(items)]
-    if len(chosen) < len(items):
-        raise SystemExit(f'only {len(chosen)} rooms for {len(items)} pickups')
-    order = [items[i] for i in (list(range(0, len(items), 2)) + list(range(1, len(items), 2)))]
-    for room_id, item in zip(chosen, order):
-        x, z = reachable_cells(builds[room_id])[0]
-        builds[room_id].put('pickups', {'x': x, 'z': z, 'item': item})
+def charm_table(memory):
+    """The original's 32 places for charms (0x6FF2, 9 bytes each: graphic,
+    x, y, z, room, then the same four again as it is moved). At the start of
+    a game 0xC47E deals graphic 0x60 + (start + i) & 7 to the i-th, from a
+    random start: the seven charms and the extra life, round and round."""
+    return [tuple(memory[CHARM_TABLE + CHARM_ENTRY * i + k] for k in (4, 1, 2, 3)) for i in range(CHARM_PLACES)]
 
 
-def rooms_short_of_wanderers(builds, exits):
-    """The rooms reached from the cauldron without passing through a room with a ghost or a hopping ball."""
-    wandered = {r for r, b in builds.items() if b.fields.get('ghosts') or b.fields.get('hoppers')}
-    seen, queue = {CAULDRON}, deque([CAULDRON])
-    while queue:
-        for target in exits[queue.popleft()].values():
-            if target not in seen and target not in wandered:
-                seen.add(target)
-                queue.append(target)
-    return seen
-
-
-def rooms_with_spiked_balls(builds):
-    """Rooms whose spiked balls come down on whoever lingers (or, waiting, on whoever picks a charm up there)."""
-    return {r for r, b in builds.items() if b.fields.get('spikedBalls')}
-
-
-def reachable_cells(build):
-    """Free floor cells a walker can get to from every door of the room."""
-    walk = Walkable(build)
-    doors = door_list(build)
-    return [c for c in build.free_cells() if 0 in walk.standings(c) and all(walk.reaches(d, c) for d in doors)]
+def charm_spots(memory, builds):
+    """Each room's places for charms, in its own cells: the spot's number in
+    the table, and the height it lies at."""
+    spots = {}
+    for spot, (room_id, x, y, z) in enumerate(charm_table(memory)):
+        build = builds.get(room_id)
+        if build is None:
+            warn(f'charm spot {spot} lies in {name_of(room_id)}, outside the castle')
+            continue
+        cell_x = (x - FIRST_CELL_PX) / CELL_PX - build.dx
+        cell_y = (y - FIRST_CELL_PX) / CELL_PX - build.dz
+        place = cell_at(cell_x, (build.depth - 1) - cell_y)
+        spots.setdefault(room_id, []).append({'spot': spot, **place, 'height': (z - FLOOR_PX) // PIXELS_PER_BLOCK})
+    return spots
 
 
 def mark_puzzles(builds):
@@ -608,7 +562,7 @@ def ts_value(value):
 
 
 FIELD_ORDER = ['platforms', 'decor', 'floatingBlocks', 'spikes', 'boxes', 'vanishing', 'fallingBlocks', 'movingPlatforms', 'portcullises',
-               'pathGuards', 'balls', 'hoppers', 'ghosts', 'spikedBalls', 'flames', 'pickups']
+               'pathGuards', 'balls', 'hoppers', 'ghosts', 'spikedBalls', 'flames', 'charmSpots']
 
 
 def spec_text(room_id, build):
@@ -655,7 +609,11 @@ if __name__ == '__main__':
     for build in builds.values():
         build.finish()
     mark_puzzles(builds)
-    place_charms(builds, exits, starts)
+    for start in starts:
+        if CAULDRON not in walkable_rooms(builds, exits, start):
+            raise SystemExit(f'the cauldron cannot be reached on foot from {name_of(start)}')
+    for room_id, spots in charm_spots(memory, builds).items():
+        builds[room_id].fields['charmSpots'] = spots
     write_specs([spec_text(room_id, build) for room_id, build in builds.items()], starts)
     for message in warnings:
         print(message, file=sys.stderr)

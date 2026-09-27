@@ -17,6 +17,8 @@ import { Portcullis } from '../../game/Portcullis'
 import { DropTurn, SpikedBall } from '../../game/SpikedBall'
 import { FloatingBlock } from '../../game/FloatingBlock'
 import { addPickup } from './items'
+import { itemAtSpot } from '../../game/GameState'
+import { CHARM_HOVER } from '../../game/Pickup'
 import { FULL_SIZE, entryFor, type RoomSpec } from './roomSpecs'
 import type { RoomBuilder } from '../../game/RoomManager'
 
@@ -37,8 +39,9 @@ export function buildRoomFromSpec(spec: RoomSpec, sizeOf: (id: string) => RoomSi
       addPatrolEnemy(room, { x: tileCenter(g.from.x), z: tileCenter(g.from.z) }, { x: tileCenter(g.to.x), z: tileCenter(g.to.z) }, g.speed)
     }
     for (const g of spec.ghosts ?? []) room.add(new GhostEnemy(tileCenter(g.x), tileCenter(g.z)))
-    if (!state.emptiedRooms.includes(spec.id)) {
-      for (const p of spec.pickups ?? []) addPickup(room, p.item, p.x, p.z, p.y)
+    for (const p of spec.pickups ?? []) addPickup(room, p.item, p.x, p.z, p.y)
+    for (const s of spec.charmSpots ?? []) {
+      if (!state.usedSpots.includes(s.spot)) addPickup(room, itemAtSpot(s.spot, state.charmDeal), s.x, s.z, s.height + CHARM_HOVER, s.spot)
     }
     for (const m of spec.movingPlatforms ?? []) {
       room.add(new MovingPlatform(cellCentre(m.from), cellCentre(m.to), m.height))

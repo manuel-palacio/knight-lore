@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { GameState, CHARMS, CURE_LENGTH, HUMAN_DURATION, WEREWOLF_DURATION, DUSK_WARNING, isCompatibleSave } from '../../src/game/GameState'
+import { GameState, CURE_LENGTH, HUMAN_DURATION, WEREWOLF_DURATION, DUSK_WARNING, CURE_ORDER, DEALT_ITEMS, isCompatibleSave, itemAtSpot, type ItemId, type SavedGame } from '../../src/game/GameState'
 
 describe('GameState', () => {
   it('starts as human with full timer and empty inventory', () => {
@@ -115,16 +115,20 @@ describe('GameState', () => {
     expect(restored.inventory).toEqual([])
   })
 
-  it('draws a cure of fourteen charms, each of the seven kinds twice, in a seeded random order', () => {
-    const a = new GameState(7)
-    const b = new GameState(7)
-    const c = new GameState(8)
+  it('asks for the original\'s fourteen charms (0xC27D) in its order, read round from a seeded start', () => {
     expect(CURE_LENGTH).toBe(14)
-    expect(a.cureSequence).toHaveLength(CURE_LENGTH)
-    for (const charm of CHARMS) expect(a.cureSequence.filter((i) => i === charm), charm).toHaveLength(2)
-    expect(a.cureSequence).not.toContain('life')
-    expect(a.cureSequence).toEqual(b.cureSequence)
-    expect(c.cureSequence).not.toEqual(a.cureSequence)
+    expect(CURE_ORDER).toEqual(['gem', 'poison', 'boot', 'goblet', 'teacup', 'wine-bottle', 'crystal-ball',
+      'goblet', 'wine-bottle', 'gem', 'crystal-ball', 'poison', 'boot', 'teacup'])
+    const starts = new Set<number>()
+    for (const seed of [1, 2, 3, 7, 8, 99, 12345]) {
+      const cure = new GameState(seed).cureSequence
+      const start = CURE_ORDER.indexOf(cure[0]!)
+      const rotations = CURE_ORDER.map((_, r) => [...CURE_ORDER.slice(r), ...CURE_ORDER.slice(0, r)])
+      expect(rotations).toContainEqual(cure)
+      expect(new GameState(seed).cureSequence).toEqual(cure)
+      starts.add(start)
+    }
+    expect(starts.size).toBeGreaterThan(1)
   })
 
   it('wantedItem walks the cure sequence as items are delivered', () => {
@@ -164,17 +168,51 @@ describe('GameState', () => {
 })
 
 
-describe('GameState.emptiedRooms', () => {
-  it('survives a save and continue', () => {
-    const state = new GameState(7)
-    state.emptiedRooms.push('map--1--4')
-    expect(GameState.restore(state.serialize()).emptiedRooms).toEqual(['map--1--4'])
+describe('the charms dealt round the castle (0xC47E)', () => {
+  it('deals from one of eight starts, fixed by the seed', () => {
+    for (const seed of [1, 2, 3, 99, 12345]) {
+      const deal = new GameState(seed).charmDeal
+      expect(deal).toBeGreaterThanOrEqual(0)
+      expect(deal).toBeLessThan(8)
+      expect(new GameState(seed).charmDeal).toBe(deal)
+    }
   })
 
-  it('starts empty when continuing a save written before it existed', () => {
-    const older = new GameState(7).serialize()
-    delete older.emptiedRooms
-    expect(GameState.restore(older).emptiedRooms).toEqual([])
+  it('gives each spot the next of the eight kinds, in graphic order from 0x60, round and round', () => {
+    expect(DEALT_ITEMS).toEqual(['gem', 'poison', 'boot', 'goblet', 'teacup', 'wine-bottle', 'crystal-ball', 'life'])
+    expect([0, 1, 2, 7, 8, 31].map((spot) => itemAtSpot(spot, 0))).toEqual(['gem', 'poison', 'boot', 'life', 'gem', 'life'])
+    expect(itemAtSpot(26, 6)).toBe(DEALT_ITEMS[(6 + 26) & 7])
+  })
+
+  // The eight distribution tables A-H players know (Evercade's guide to the
+  // game): which kind lies in the rooms of each of eight groups, numbered 1-8.
+  it('deals as the players\' tables A-H have it: each table one of the eight deals', () => {
+    const TABLES: ItemId[][] = [
+      ['crystal-ball', 'life', 'poison', 'wine-bottle', 'goblet', 'boot', 'gem', 'teacup'],
+      ['wine-bottle', 'crystal-ball', 'gem', 'teacup', 'boot', 'poison', 'life', 'goblet'],
+      ['goblet', 'teacup', 'crystal-ball', 'boot', 'gem', 'life', 'wine-bottle', 'poison'],
+      ['life', 'gem', 'boot', 'crystal-ball', 'teacup', 'goblet', 'poison', 'wine-bottle'],
+      ['poison', 'boot', 'teacup', 'gem', 'crystal-ball', 'wine-bottle', 'goblet', 'life'],
+      ['boot', 'goblet', 'wine-bottle', 'poison', 'life', 'crystal-ball', 'teacup', 'gem'],
+      ['teacup', 'wine-bottle', 'life', 'goblet', 'poison', 'gem', 'crystal-ball', 'boot'],
+      ['gem', 'poison', 'goblet', 'life', 'wine-bottle', 'teacup', 'boot', 'crystal-ball'],
+    ]
+    // Group n's spots are those whose number is n's, eight apart: table A is some deal.
+    const groupOf = TABLES[0]!.map((item) => DEALT_ITEMS.indexOf(item))
+    const deals = TABLES.map((table) => {
+      const deal = [0, 1, 2, 3, 4, 5, 6, 7].find((d) => table.every((item, n) => itemAtSpot(groupOf[n]!, d) === item))
+      expect(deal, table.join()).toBeDefined()
+      return deal
+    })
+    expect(new Set(deals).size).toBe(8)
+  })
+
+  it('keeps the deal and the spots used up through a save and continue', () => {
+    const state = new GameState(7)
+    state.usedSpots.push(26)
+    const back = GameState.restore(state.serialize())
+    expect(back.charmDeal).toBe(state.charmDeal)
+    expect(back.usedSpots).toEqual([26])
   })
 })
 
@@ -190,6 +228,12 @@ describe('GameState.gainLife', () => {
 describe('isCompatibleSave', () => {
   it('accepts a save written by this version', () => {
     expect(isCompatibleSave(new GameState(3).serialize())).toBe(true)
+  })
+
+  it('rejects a save from before the charms were dealt round the original\'s spots', () => {
+    const old: Partial<SavedGame> = { ...new GameState(3).serialize() }
+    delete old.charmDeal
+    expect(isCompatibleSave(old as SavedGame)).toBe(false)
   })
 
   it('rejects a save from the eight-charm version, whose cure asked for the extra life', () => {

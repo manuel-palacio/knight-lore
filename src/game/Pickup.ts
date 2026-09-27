@@ -23,15 +23,15 @@ const REACH_BELOW = 2.5
 
 export class Pickup extends Entity {
   readonly id: string
-  // The room the charm was placed in when the castle was built.
-  readonly homeRoomId: string
+  // The castle's charm spot it was dealt to (see itemAtSpot), or null.
+  readonly spot: number | null
   collected = false
   private bobPhase = 0
 
-  constructor(id: string, homeRoomId: string) {
+  constructor(id: string, spot: number | null = null) {
     super()
     this.id = id
-    this.homeRoomId = homeRoomId
+    this.spot = spot
     this.categories = [Category.PICKUP_TRIGGER]
     this.extents.set(0.6, 0.6, 0.6)
   }

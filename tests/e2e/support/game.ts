@@ -1,7 +1,8 @@
 import { expect, type Page } from '@playwright/test'
 import { edgeKey, isClimb, isJump, type RoomDangers, type Step } from './roomPath'
 import { jumpFrom, planJump, type JumpPlan } from './jumping'
-import type { RoomSpec } from '../../../src/scenes/rooms/roomSpecs'
+import { ROOM_SPECS, type RoomSpec } from '../../../src/scenes/rooms/roomSpecs'
+import { itemAtSpot } from '../../../src/game/GameState'
 import { centreOf, guardTrack, safeToCross, safeUnderBall, shouldWalkOn, sightingBefore, walkerTrack, type Point, type Sighting } from './crossing'
 import { PIXELS_PER_BLOCK } from '../../../src/game/Gravity'
 import { TICKS_PER_FRAME, TICKS_PER_STEP } from '../../../src/engine/StepClock'
@@ -18,6 +19,8 @@ export interface Debug {
   state: string
   // Dissolving into stars, or coming back out of them (see Sparkle).
   dying: boolean
+  // Where the charms were dealt round the castle from this game (see itemAtSpot).
+  deal: number
   pos: { x: number; y: number; z: number }
   wanted: string | null
   overCauldron: string | null
@@ -344,4 +347,17 @@ function cornersOf(path: Cell[]): Cell[] {
     const after = path[i + 1]!
     return (before.x === cell.x) !== (cell.x === after.x)
   })
+}
+
+// The castle's charm spots and what lies at each this game, as dealt.
+export async function dealtCharms(page: Page): Promise<{ room: string; spot: number; item: string; height: number }[]> {
+  const { deal } = await debug(page)
+  return ROOM_SPECS.flatMap((r) => (r.charmSpots ?? []).map((c) => ({ room: r.id, spot: c.spot, item: itemAtSpot(c.spot, deal), height: c.height })))
+}
+
+// A room holding, this game, a charm the test is after: on the floor if one is.
+export async function roomHolding(page: Page, wanted: (item: string) => boolean): Promise<string> {
+  const found = (await dealtCharms(page)).filter((c) => wanted(c.item)).sort((a, b) => a.height - b.height)[0]
+  if (!found) throw new Error('no such charm dealt')
+  return found.room
 }

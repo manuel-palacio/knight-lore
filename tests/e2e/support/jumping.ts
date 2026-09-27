@@ -144,8 +144,9 @@ function supportAmong(room: Room, player: Player, x: number, z: number, y: numbe
   return best
 }
 
+// The room's shape: the charms dealt to its spots are not stood on to get to them.
 function roomOf(spec: RoomSpec): Promise<Room> {
-  if (!rooms.has(spec.id)) rooms.set(spec.id, buildRoomFromSpec(spec)(new GameState()))
+  if (!rooms.has(spec.id)) rooms.set(spec.id, buildRoomFromSpec({ ...spec, charmSpots: [] })(new GameState()))
   return rooms.get(spec.id)!
 }
 

@@ -2,7 +2,7 @@ import { test, expect, type Page } from '@playwright/test'
 import { ROOM_SPECS } from '../../src/scenes/rooms/roomSpecs'
 
 const CHARM_HOVER = 0.4
-import { debug, enterRoom, holdDaylight, standAt, startGame } from './support/game'
+import { debug, enterRoom, holdDaylight, roomHolding, standAt, startGame } from './support/game'
 
 async function pickUpCharmIn(page: Page, roomId: string): Promise<string> {
   const room = await enterRoom(page, roomId)
@@ -22,7 +22,8 @@ async function fallNight(page: Page): Promise<void> {
 
 test('a charm dropped at nightfall stays in the room where it fell', async ({ page }) => {
   await startGame(page)
-  const charmRoom = ROOM_SPECS.find((s) => s.pickups?.length)!
+  const charmRoomId = await roomHolding(page, (item) => item !== 'life')
+  const charmRoom = ROOM_SPECS.find((s) => s.id === charmRoomId)!
   const charm = await pickUpCharmIn(page, charmRoom.id)
   const elsewhere = charmRoom.exits[0]!.target
 
@@ -37,7 +38,8 @@ test('a charm dropped at nightfall stays in the room where it fell', async ({ pa
 
 test('the extra life is taken at once, not carried, and does not come back', async ({ page }) => {
   await startGame(page)
-  const lifeRoom = ROOM_SPECS.find((s) => s.pickups?.some((p) => p.item === 'life'))!
+  const lifeRoomId = await roomHolding(page, (item) => item === 'life')
+  const lifeRoom = ROOM_SPECS.find((s) => s.id === lifeRoomId)!
   const room = await enterRoom(page, lifeRoom.id)
   await holdDaylight(page)
   const life = room.pickups.find((p) => p.id === 'life')!
@@ -53,8 +55,7 @@ test('the extra life is taken at once, not carried, and does not come back', asy
 
 test('E puts the carried charm down under his feet, and he stands on it a block higher', async ({ page }) => {
   await startGame(page)
-  const charmRoom = ROOM_SPECS.find((s) => s.pickups?.some((p) => p.item !== 'life'))!
-  const charm = await pickUpCharmIn(page, charmRoom.id)
+  const charm = await pickUpCharmIn(page, await roomHolding(page, (item) => item !== 'life'))
   const before = (await debug(page)).pos
   await page.keyboard.press('KeyE')
   await expect.poll(async () => (await debug(page)).carrying).toEqual([])
@@ -68,8 +69,7 @@ test('E puts the carried charm down under his feet, and he stands on it a block 
 
 test('jumping off a charm he put down, E takes it back up in mid-air', async ({ page }) => {
   await startGame(page)
-  const charmRoom = ROOM_SPECS.find((s) => s.pickups?.some((p) => p.item !== 'life'))!
-  const charm = await pickUpCharmIn(page, charmRoom.id)
+  const charm = await pickUpCharmIn(page, await roomHolding(page, (item) => item !== 'life'))
   await page.keyboard.press('KeyE')
   await expect.poll(async () => (await debug(page)).carrying).toEqual([])
   const onCharm = (await debug(page)).pos.y

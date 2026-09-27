@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { ROOM_SPECS, START_ROOMS, doorCell, entryFor, oppositeOf, type Cell, type RoomSpec } from '../../src/scenes/rooms/roomSpecs'
-import { CHARMS } from '../../src/game/GameState'
+import { DEALT_ITEMS, itemAtSpot } from '../../src/game/GameState'
 import { coveredCells, findFloorPath } from '../e2e/support/roomPath'
 import { SOLVED_PUZZLES } from '../e2e/support/puzzles'
 import { pickStartRoom } from '../../src/scenes/rooms/index'
@@ -65,29 +65,17 @@ describe('the castle', () => {
     expect(narrow.length).toBeGreaterThan(40)
   })
 
-  it('places every kind of charm twice and at least one extra life', () => {
-    const placed = ROOM_SPECS.flatMap((s) => (s.pickups ?? []).map((p) => p.item))
-    for (const charm of CHARMS) expect(placed.filter((i) => i === charm), charm).toHaveLength(2)
-    expect(placed.filter((i) => i === 'life').length).toBeGreaterThanOrEqual(1)
+  it('has the original\'s 32 charm spots (0x6FF2), each once, at most one to a room', () => {
+    const spots = ROOM_SPECS.flatMap((r) => (r.charmSpots ?? []).map((c) => c.spot)).sort((a, b) => a - b)
+    expect(spots).toEqual(Array.from({ length: 32 }, (_, i) => i))
+    for (const r of ROOM_SPECS) expect((r.charmSpots ?? []).length, r.id).toBeLessThanOrEqual(1)
   })
 
-  it('puts at most one pickup in a room', () => {
-    for (const s of ROOM_SPECS) expect((s.pickups ?? []).length, s.id).toBeLessThanOrEqual(1)
-  })
-
-  it('keeps every charm more than two rooms from the cauldron', () => {
-    const fromCauldron = roomDistancesFrom('room-001')
-    for (const s of ROOM_SPECS.filter((r) => r.pickups?.length)) {
-      expect(fromCauldron.get(s.id), `${s.id} is too close to the cauldron`).toBeGreaterThan(2)
-    }
-  })
-
-  it('keeps every charm out of the start rooms and the rooms beside them', () => {
-    for (const start of START_ROOMS) {
-      const fromStart = roomDistancesFrom(start)
-      for (const s of ROOM_SPECS.filter((r) => r.pickups?.length)) {
-        expect(fromStart.get(s.id), `${s.id} is too close to the start ${start}`).toBeGreaterThan(1)
-      }
+  it('deals four of each kind round the spots, the seven charms and the extra life, whatever the start', () => {
+    const spots = ROOM_SPECS.flatMap((r) => (r.charmSpots ?? []).map((c) => c.spot))
+    for (let deal = 0; deal < 8; deal++) {
+      const dealt = spots.map((spot) => itemAtSpot(spot, deal))
+      for (const item of DEALT_ITEMS) expect(dealt.filter((i) => i === item), `${item} in deal ${deal}`).toHaveLength(4)
     }
   })
 
@@ -127,13 +115,8 @@ describe('winning on foot', () => {
     return entered
   }
 
-  it('reaches the cauldron and every charm from each start room without solving a puzzle', () => {
-    const charmRooms = ROOM_SPECS.filter((s) => s.pickups?.length).map((s) => s.id)
-    for (const start of START_ROOMS) {
-      const reached = roomsOnFoot(start)
-      expect(reached.has('room-001'), `cauldron from ${start}`).toBe(true)
-      for (const id of charmRooms) expect(reached.has(id), `${id} from ${start}`).toBe(true)
-    }
+  it('reaches the cauldron from each start room without solving a puzzle', () => {
+    for (const start of START_ROOMS) expect(roomsOnFoot(start).has('room-001'), `cauldron from ${start}`).toBe(true)
   })
 })
 
@@ -162,7 +145,7 @@ describe('room contents', () => {
   it('keeps every placed cell inside its room', () => {
     for (const s of ROOM_SPECS) {
       const cells: Cell[] = [
-        ...(s.platforms ?? []), ...(s.boxes ?? []), ...(s.spikes ?? []), ...(s.pickups ?? []),
+        ...(s.platforms ?? []), ...(s.boxes ?? []), ...(s.spikes ?? []), ...(s.pickups ?? []), ...(s.charmSpots ?? []),
         ...(s.vanishing ?? []), ...(s.fallingBlocks ?? []), ...(s.flames ?? []), ...(s.ghosts ?? []), ...(s.spikedBalls ?? []),
         ...(s.hoppers ?? []), s.spawn,
         ...(s.movingPlatforms ?? []).flatMap((p) => [p.from, p.to]),
@@ -189,11 +172,16 @@ describe('room contents', () => {
     }
   })
 
-  it('never puts a pickup on a spike or a block', () => {
+  it('lays each charm spot on the floor or on top of what stands in its cell, as the original\'s table has it', () => {
+    // Spot 6, in map-5-0, the table puts a level above the top of its stack.
+    const ABOVE_ITS_STACK = [6]
     for (const s of ROOM_SPECS) {
-      for (const p of s.pickups ?? []) {
-        const under = [...(s.spikes ?? []), ...(s.platforms ?? [])]
-        expect(under.some((c) => c.x === p.x && c.z === p.z), `${s.id} ${p.item}`).toBe(false)
+      for (const c of s.charmSpots ?? []) {
+        if (ABOVE_ITS_STACK.includes(c.spot)) continue
+        const here = (b: Cell) => b.x === Math.floor(c.x) && b.z === Math.floor(c.z)
+        const tops = [0, ...(s.platforms ?? []).filter(here).map((p) => p.height), ...(s.floatingBlocks ?? []).filter(here).map((b) => b.bottom + 1),
+          ...(s.fallingBlocks ?? []).filter(here).map((b) => b.height), ...(s.vanishing ?? []).filter(here).map((b) => b.height)]
+        expect(tops, `spot ${c.spot} in ${s.id} at height ${c.height}`).toContain(c.height)
       }
     }
   })
@@ -226,10 +214,11 @@ describe('room contents', () => {
     }
   })
 
-  it('lets every door and charm of a room not marked a puzzle be reached on foot: walking, climbing a block, jumping spike rows', () => {
+  // Charms are not: many lie high up, reached as in the original by stepping on others.
+  it('lets every door of a room not marked a puzzle be reached on foot: walking, climbing a block, jumping spike rows', () => {
     const unreachable: string[] = []
     for (const s of ROOM_SPECS.filter((r) => !r.puzzle)) {
-      const stops = [...doorsOf(s).map((d) => d.cell), ...(s.pickups ?? [])]
+      const stops = doorsOf(s).map((d) => d.cell)
       for (const to of stops.slice(1)) {
         try {
           findFloorPath(s, stops[0]!, to)

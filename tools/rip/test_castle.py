@@ -3,7 +3,8 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
-from castle import CAULDRON, RoomBuild, Walkable, rooms_short_of_wanderers  # noqa: E402
+from castle import RoomBuild, Walkable, charm_spots, charm_table  # noqa: E402
+from z80 import load_memory  # noqa: E402
 
 PLACED = {'half_x': False, 'half_y': False, 'lift': 0}
 
@@ -129,12 +130,15 @@ def test_flames_move_along_our_z_for_type_10_and_along_x_for_type_20():
     assert [f['axis'] for f in room.fields['flames']] == ['z', 'x'], room.fields['flames']
 
 
-def test_rooms_past_a_ghost_are_not_short_of_wanderers():
-    # The cauldron, then a room with a ghost, then a quiet room beyond it; and a quiet room the other way.
-    ghost, beyond, quiet = CAULDRON + 1, CAULDRON + 2, CAULDRON - 1
-    builds = {CAULDRON: build([]), ghost: build([thing(9, 3, 3)]), beyond: build([]), quiet: build([])}
-    exits = {CAULDRON: {'east': ghost, 'west': quiet}, ghost: {'west': CAULDRON, 'east': beyond}, beyond: {'west': ghost}, quiet: {'east': CAULDRON}}
-    assert rooms_short_of_wanderers(builds, exits) == {CAULDRON, quiet}
+def test_the_charm_spots_are_the_originals_32_at_0x6ff2():
+    memory = load_memory('reference/KnightLore.z80')
+    assert len(charm_table(memory)) == 32
+    spots = charm_spots(memory, {0xB4: build([], 0xB4), 0x5E: build([], 0x5E)})
+    # Spot 26: x 0x78, y 0x88, z 0xB0 in room 0xB4 (map--4-3), on top of its
+    # four-high column: cell (3, 4) of the original, our z 7 - 4 = 3, level 4.
+    assert spots[0xB4] == [{'spot': 26, 'x': 3, 'z': 3, 'height': 4}], spots[0xB4]
+    # x and y 0x80 lie half way between cells 3 and 4.
+    assert spots[0x5E] == [{'spot': 25, 'x': 3.5, 'z': 3.5, 'height': 0}], spots[0x5E]
 
 
 if __name__ == '__main__':

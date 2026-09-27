@@ -65,3 +65,17 @@ test('E puts the carried charm down under his feet, and he stands on it a block 
   expect(dropped.x).toBe(before.x)
   expect(dropped.z).toBe(before.z)
 })
+
+test('jumping off a charm he put down, E takes it back up in mid-air', async ({ page }) => {
+  await startGame(page)
+  const charmRoom = ROOM_SPECS.find((s) => s.pickups?.some((p) => p.item !== 'life'))!
+  const charm = await pickUpCharmIn(page, charmRoom.id)
+  await page.keyboard.press('KeyE')
+  await expect.poll(async () => (await debug(page)).carrying).toEqual([])
+  const onCharm = (await debug(page)).pos.y
+  await page.keyboard.down('Space')
+  await expect.poll(async () => (await debug(page)).pos.y, { intervals: [10] }).toBeGreaterThan(onCharm + 1)
+  await page.keyboard.press('KeyE')
+  await page.keyboard.up('Space')
+  await expect.poll(async () => (await debug(page)).carrying).toEqual([charm])
+})

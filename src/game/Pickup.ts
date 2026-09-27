@@ -14,6 +14,12 @@ const FOOTPRINT_HALF = 1
 const TOP_TOLERANCE = 0.5
 // Charms hover this far above what they lie on (see addPickup and dropAt callers).
 export const CHARM_HOVER = 0.4
+// In reach: within a stride across, and from a little over his head down to
+// past a held jump's rise (28 px, 0xC9C1), so the charm he jumps off can be
+// taken back in mid-air and carried on, as in the original.
+const REACH_ACROSS = 1.6
+const REACH_ABOVE = 1.8
+const REACH_BELOW = 2.5
 
 export class Pickup extends Entity {
   readonly id: string
@@ -39,6 +45,12 @@ export class Pickup extends Entity {
     const inside = Math.abs(x - this.position.x) <= FOOTPRINT_HALF && Math.abs(z - this.position.z) <= FOOTPRINT_HALF
     const top = this.position.y - CHARM_HOVER + CHARM_HEIGHT
     return inside && actorY >= top - TOP_TOLERANCE ? top : null
+  }
+
+  isWithinReachOf(feet: { x: number; y: number; z: number }): boolean {
+    const across = Math.hypot(this.position.x - feet.x, this.position.z - feet.z)
+    const rise = this.position.y - feet.y
+    return across < REACH_ACROSS && rise < REACH_ABOVE && rise > -REACH_BELOW
   }
 
   collect(): void {

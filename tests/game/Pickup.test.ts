@@ -53,4 +53,22 @@ describe('Pickup as a stepping stone', () => {
     charm.collect()
     expect(charm.supportAt(4, 4, 1)).toBeNull()
   })
+
+  describe('reach', () => {
+    const charm = new Pickup('goblet', 'test-room')
+    charm.position.set(4, 0.4, 4)
+
+    it('is in reach of him standing beside it', () => {
+      expect(charm.isWithinReachOf({ x: 5, y: 0, z: 4 })).toBe(true)
+    })
+
+    it('stays in reach while he jumps a block up off it', () => {
+      expect(charm.isWithinReachOf({ x: 4.5, y: 0 + CHARM_HEIGHT + 1, z: 4 })).toBe(true)
+    })
+
+    it('is out of reach a stride away, or far below him', () => {
+      expect(charm.isWithinReachOf({ x: 6, y: 0, z: 4 })).toBe(false)
+      expect(charm.isWithinReachOf({ x: 4, y: 3, z: 4 })).toBe(false)
+    })
+  })
 })

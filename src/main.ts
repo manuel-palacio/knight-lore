@@ -41,8 +41,6 @@ import { loadSave, writeSave, clearSave } from './engine/SaveSlot'
 import { Beeper, footstepSound } from './engine/Beeper'
 import { projectToScreen, isoDepth, FULL_ROOM_CELLS } from './engine/IsoProjection'
 
-const PICKUP_RANGE = 1.6
-const PICKUP_HEIGHT = 1.8
 const DEATH_FLASH_FRAMES = 2
 const GHOST_DRAW_HEIGHT = 0.3
 const WIPE_SECONDS = 0.25
@@ -388,10 +386,7 @@ async function main(): Promise<void> {
   function tryPickupPass(room: Room): boolean {
     for (const e of room.entities) {
       if (!(e instanceof Pickup) || e.collected) continue
-      const near =
-        Math.hypot(e.position.x - player.position.x, e.position.z - player.position.z) < PICKUP_RANGE &&
-        Math.abs(e.position.y - player.position.y) < PICKUP_HEIGHT
-      if (!near) continue
+      if (!e.isWithinReachOf(player.position)) continue
       if (e.id === 'life') {
         takeExtraLife(room, e)
         return true

@@ -21,6 +21,7 @@ import sys
 from collections import deque
 
 sys.path.insert(0, os.path.dirname(__file__))
+from backdrop import backdrop_parts  # noqa: E402
 from rooms import all_rooms  # noqa: E402
 from z80 import load_memory  # noqa: E402
 
@@ -515,6 +516,16 @@ def walkable_rooms(builds, exits, start):
     return entered
 
 
+# Background parts the game draws as things that move or act (portcullises,
+# the cauldron and the wizard): left out of the still backdrop.
+ACTING_GRAPHICS = {0x08, 0x8D, 0x8E, 0x90, 0x9E}
+
+
+def backdrop_of(memory, room):
+    """The room's walls, arches, gates and hedges as the original draws them (see backdrop.py)."""
+    return [p for p in backdrop_parts(memory, room['background']) if p['graphic'] not in ACTING_GRAPHICS]
+
+
 def charm_table(memory):
     """The original's 32 places for charms (0x6FF2, 9 bytes each: graphic,
     x, y, z, room, then the same four again as it is moved). At the start of
@@ -562,7 +573,7 @@ def ts_value(value):
 
 
 FIELD_ORDER = ['platforms', 'decor', 'floatingBlocks', 'spikes', 'boxes', 'vanishing', 'fallingBlocks', 'movingPlatforms', 'portcullises',
-               'pathGuards', 'balls', 'hoppers', 'ghosts', 'spikedBalls', 'flames', 'charmSpots']
+               'pathGuards', 'balls', 'hoppers', 'ghosts', 'spikedBalls', 'flames', 'charmSpots', 'backdrop']
 
 
 def spec_text(room_id, build):
@@ -612,6 +623,8 @@ if __name__ == '__main__':
     for start in starts:
         if CAULDRON not in walkable_rooms(builds, exits, start):
             raise SystemExit(f'the cauldron cannot be reached on foot from {name_of(start)}')
+    for room_id, build in builds.items():
+        build.fields['backdrop'] = backdrop_of(memory, ROOMS[room_id])
     for room_id, spots in charm_spots(memory, builds).items():
         builds[room_id].fields['charmSpots'] = spots
     write_specs([spec_text(room_id, build) for room_id, build in builds.items()], starts)

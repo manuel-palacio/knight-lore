@@ -33,6 +33,7 @@ export function buildRoomFromSpec(spec: RoomSpec, sizeOf: (id: string) => RoomSi
   return async (state) => {
     const room = buildRoomShell(spec.id, spec.tint, spec.width ?? FULL_SIZE, spec.depth ?? FULL_SIZE)
     for (const p of spec.platforms ?? []) addPlatform(room, p.x, p.z, p.height)
+    room.backdrop = spec.backdrop ?? []
     for (const d of spec.decor ?? []) room.addDecor(d.x, d.z, d.height, d.kind)
     placeSpikes(room, spec.spikes ?? [])
     for (const g of spec.guards ?? []) {

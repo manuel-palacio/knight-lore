@@ -35,6 +35,7 @@ import { Category } from './engine/categories'
 import { Room } from './game/Room'
 import { RoomManager } from './game/RoomManager'
 import { ROOM_BUILDERS, pickStartRoom } from './scenes/rooms/index'
+import { ROOM_SPECS } from './scenes/rooms/roomSpecs'
 import { IsoRenderer, spriteDynamic, boxDynamic, type Dynamic, type SpriteDraw } from './engine/IsoRenderer'
 import { selectCharacterFrame, STRIP_CELLS } from './game/CharacterFrame'
 import { Transition } from './game/Transition'
@@ -49,6 +50,10 @@ const DEATH_FLASH_FRAMES = 2
 const GHOST_DRAW_HEIGHT = 0.3
 const WIPE_SECONDS = 0.25
 const STAR_CELLS = 6
+// How far below its place the original draws each sprite's bottom row, in
+// pixels: the vertical offsets their handlers set (0xC4DD, 0xC4FC, 0xC4E3,
+// 0xC4D8, 0xC4F2, 0xC506).
+const DRAWN_LOWER = { man: 6, wolf: 7, block: 8, charm: 4, ghost: 6, flame: 4, stars: 4, cauldron: 12 }
 const ROOM_CENTRE = (FULL_ROOM_CELLS * 2) / 2
 // Character strips are native ZX resolution, 24x36 cells per pose, drawn at
 // 1:1 canvas pixels so the sprite stays crisp. Cells per form: STRIP_CELLS.
@@ -96,6 +101,7 @@ async function main(): Promise<void> {
   const state = new GameState()
   const overlays = new Overlays()
   const renderer = new IsoRenderer(container, SCREEN_W, SCREEN_H, PIXEL_SCALE)
+  renderer.setBackdropSprites(await loadBackdropSprites())
 
   // Everything in the play area is drawn in the room's one colour, as on the
   // Spectrum; each sprite is tinted per room hue on first use.
@@ -559,7 +565,7 @@ async function main(): Promise<void> {
   function starsSprite(): SpriteDraw {
     const stars = inHue(setPieces.stars, activeRoom().tint)
     const frameW = stars.width / STAR_CELLS
-    return { image: stars, frameX: sparkle.starCell * frameW, frameW, frameH: stars.height, scale: CHAR_SCALE, flip: false, x: player.position.x, y: player.position.y, z: player.position.z }
+    return { image: stars, frameX: sparkle.starCell * frameW, frameW, frameH: stars.height, scale: CHAR_SCALE, flip: false, x: player.position.x, y: player.position.y, z: player.position.z, drop: DRAWN_LOWER.stars }
   }
 
   // The morph strip was captured facing west; mirror it for the east-ish facings.
@@ -578,6 +584,7 @@ async function main(): Promise<void> {
       x: player.position.x,
       y: player.position.y,
       z: player.position.z,
+      drop: DRAWN_LOWER.man,
     }
   }
 
@@ -597,6 +604,7 @@ async function main(): Promise<void> {
       x: player.position.x,
       y: player.position.y,
       z: player.position.z,
+      drop: visualForm === 'human' ? DRAWN_LOWER.man : DRAWN_LOWER.wolf,
     }
     return spriteDynamic(sprite)
   }
@@ -606,7 +614,7 @@ async function main(): Promise<void> {
   function decorDynamics(room: Room): Dynamic[] {
     return [...room.decor].map(([cell, kind]) => {
       const [gx, gz, level] = cell.split(',').map(Number) as [number, number, number]
-      return setPieceSprite(monster(kind, room.tint), (gx + 0.5) * room.tileSize, level, (gz + 0.5) * room.tileSize)
+      return setPieceSprite(monster(kind, room.tint), (gx + 0.5) * room.tileSize, level, (gz + 0.5) * room.tileSize, false, DRAWN_LOWER.block)
     })
   }
 
@@ -629,32 +637,33 @@ async function main(): Promise<void> {
             x: e.position.x,
             y: e.position.y + e.bobOffset,
             z: e.position.z,
+            drop: DRAWN_LOWER.charm,
           }),
         )
       } else if (e instanceof Cauldron) {
         // Rests on a platform: lift to its real height and sort in front of it.
         const depth = isoDepth(e.position.x, e.position.y, e.position.z) + 6
-        out.push({ ...setPieceSprite(inHue(setPieces.cauldron, room.tint), e.position.x, e.position.y, e.position.z), depth })
+        out.push({ ...setPieceSprite(inHue(setPieces.cauldron, room.tint), e.position.x, e.position.y, e.position.z, false, DRAWN_LOWER.cauldron), depth })
         const charm = charmOverCauldron(state.wantedItem, state.form)
         const source = charm ? itemImages.get(charm) : undefined
         const img = source ? inHue(source, room.tint) : undefined
-        if (img) out.push({ ...spriteDynamic({ image: img, frameX: 0, frameW: img.width, frameH: img.height, scale: 1, flip: false, x: e.position.x, y: e.position.y + CHARM_OVER_CAULDRON, z: e.position.z }), depth: depth + 1 })
+        if (img) out.push({ ...spriteDynamic({ image: img, frameX: 0, frameW: img.width, frameH: img.height, scale: 1, flip: false, x: e.position.x, y: e.position.y + CHARM_OVER_CAULDRON, z: e.position.z, drop: DRAWN_LOWER.charm }), depth: depth + 1 })
       } else if (e instanceof Spike) {
         out.push(spikeBedDynamic(e.position.x, e.position.y, e.position.z))
       } else if (e instanceof GhostEnemy || e instanceof CauldronSpirit) {
         if (e instanceof CauldronSpirit && !e.risen) continue
-        out.push(stripFrame(monster('ghost', room.tint), 4, Math.floor(performance.now() / 150) % 4, e.position.x, GHOST_DRAW_HEIGHT, e.position.z))
+        out.push(stripFrame(monster('ghost', room.tint), 4, Math.floor(performance.now() / 150) % 4, e.position.x, GHOST_DRAW_HEIGHT, e.position.z, false, DRAWN_LOWER.ghost))
       } else if (e instanceof PatrolEnemy) {
-        out.push(stripFrame(monster('guardLeft', room.tint), 4, Math.floor(performance.now() / 120) % 4, e.position.x, 0, e.position.z))
+        out.push(stripFrame(monster('guardLeft', room.tint), 4, Math.floor(performance.now() / 120) % 4, e.position.x, 0, e.position.z, false, DRAWN_LOWER.man))
       } else if (e instanceof PathGuard) {
         // Seen from the front or from behind over the man's legs, mirrored as he is.
         const look = selectCharacterFrame(e.facing, e.stepsTaken, true)
-        out.push(stripFrame(monster(look.view === 'front' ? 'guardLeft' : 'guardRight', room.tint), 4, e.stepsTaken % 4, e.position.x, 0, e.position.z, look.flip))
+        out.push(stripFrame(monster(look.view === 'front' ? 'guardLeft' : 'guardRight', room.tint), 4, e.stepsTaken % 4, e.position.x, 0, e.position.z, look.flip, DRAWN_LOWER.man))
       } else if (e instanceof MovingPlatform) {
         const half = e.extents.x / 2
         out.push(boxDynamic({ x0: e.position.x - half, x1: e.position.x + half, z0: e.position.z - half, z1: e.position.z + half, y0: e.bottom, y1: e.height }))
       } else if (e instanceof PushableBox) {
-        out.push(setPieceSprite(monster(e.kind, room.tint), e.position.x, e.bottom, e.position.z))
+        out.push(setPieceSprite(monster(e.kind, room.tint), e.position.x, e.bottom, e.position.z, false, DRAWN_LOWER.block))
       } else if (e instanceof VanishingBlock) {
         if (e.present) out.push(vanishingDynamic(e))
       } else if (e instanceof BouncingBall) {
@@ -682,7 +691,7 @@ async function main(): Promise<void> {
       } else if (e instanceof Flame) {
         const flame = inHue(setPieces.flame, room.tint)
         const frameW = flame.width / FLAME_FRAMES
-        out.push(spriteDynamic({ image: flame, frameX: e.frame * frameW, frameW, frameH: flame.height, scale: 1, flip: false, x: e.position.x, y: e.position.y, z: e.position.z }))
+        out.push(spriteDynamic({ image: flame, frameX: e.frame * frameW, frameW, frameH: flame.height, scale: 1, flip: false, x: e.position.x, y: e.position.y, z: e.position.z, drop: DRAWN_LOWER.flame }))
       }
     }
     return out
@@ -808,13 +817,23 @@ function vanishingDynamic(v: VanishingBlock): Dynamic {
   return { ...box, draw: (ctx, cfg, shades) => { if (Math.floor(performance.now() / 80) % 2 === 0) box.draw(ctx, cfg, shades) } }
 }
 
-function stripFrame(image: HTMLCanvasElement, cells: number, frame: number, x: number, y: number, z: number, flip = false): Dynamic {
-  const frameW = image.width / cells
-  return spriteDynamic({ image, frameX: frame * frameW, frameW, frameH: image.height, scale: 1, flip, x, y, z })
+// Every wall, arch, gate and hedge graphic the castle's rooms use, and the
+// block (graphic 7) the columns are built of (tools/rip/objects.py).
+const BLOCK_GRAPHIC = 7
+
+async function loadBackdropSprites(): Promise<Map<number, HTMLImageElement>> {
+  const graphics = [...new Set([BLOCK_GRAPHIC, ...ROOM_SPECS.flatMap((r) => (r.backdrop ?? []).map((p) => p.graphic))])]
+  const images = await Promise.all(graphics.map((g) => loadImage(`/sprites/rip/backdrop/${g}.png`)))
+  return new Map(graphics.map((g, i) => [g, images[i]!]))
 }
 
-function setPieceSprite(image: HTMLCanvasElement, x: number, y: number, z: number, flip = false): Dynamic {
-  return spriteDynamic({ image, frameX: 0, frameW: image.width, frameH: image.height, scale: 1, flip, x, y, z })
+function stripFrame(image: HTMLCanvasElement, cells: number, frame: number, x: number, y: number, z: number, flip = false, drop = 0): Dynamic {
+  const frameW = image.width / cells
+  return spriteDynamic({ image, frameX: frame * frameW, frameW, frameH: image.height, scale: 1, flip, x, y, z, drop })
+}
+
+function setPieceSprite(image: HTMLCanvasElement, x: number, y: number, z: number, flip = false, drop = 0): Dynamic {
+  return spriteDynamic({ image, frameX: 0, frameW: image.width, frameH: image.height, scale: 1, flip, x, y, z, drop })
 }
 
 // The original's spike bed: a slab of teeth drawn in the room hue, anchored

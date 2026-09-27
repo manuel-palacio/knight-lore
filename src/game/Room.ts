@@ -1,3 +1,4 @@
+import type { BackdropPart } from '../engine/Backdrop'
 import { Entity, type UpdateContext } from './Entity'
 import { Grid } from '../engine/Grid'
 import type { DecorKind } from '../engine/ColumnLooks'
@@ -21,6 +22,8 @@ export class Room {
   spawnX = 0
   spawnZ = 0
   tint = 0xffd95a // default yellow; builders override per room
+  // Walls, arches, gates and hedges, as the original draws them.
+  backdrop: BackdropPart[] = []
 
   constructor(id: string, width: number, depth: number) {
     this.id = id

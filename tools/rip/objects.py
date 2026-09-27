@@ -12,6 +12,9 @@ round each shape so that one thing stands clear of what is behind it. The
 sprites of it the game still draws (MASKED_AGAIN) are ripped again, cell for
 cell as index.json lays them out, their ink unchanged.
 
+The rooms' walls, arches, gates and hedges (backdrop.py) are ripped too,
+one file each by graphic number, into backdrop/.
+
 usage (from the repo root): uv run --with pillow python tools/rip/objects.py"""
 import json
 import os
@@ -27,6 +30,8 @@ SNAPSHOT = 'reference/KnightLore.z80'
 OUT = 'public/sprites/rip'
 SPRITE_TABLE = 0x7112
 OBJECTS = {'spiked-ball.png': 63, 'hedge.png': 6, 'gargoyle.png': 22, 'chest.png': 85, 'table.png': 84}
+# Arch halves, garden gates, the lintel block, wall slabs and columns, hedges.
+BACKDROP_GRAPHICS = [0x02, 0x03, 0x04, 0x05, 0x07, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x80, 0x81, 0x82]
 MASKED_AGAIN = ['spikes', 'cage', 'ball', 'ghost', 'cauldron', 'stars',
                 # The flame's two graphics, 0x56 and 0x57 (the first rip had filed the hedge as it).
                 'flame']
@@ -51,6 +56,9 @@ if __name__ == '__main__':
     memory = load_memory(SNAPSHOT)
     for name, graphic in OBJECTS.items():
         decode(memory, sprite_address(memory, graphic)).save(os.path.join(OUT, name))
+    os.makedirs(os.path.join(OUT, 'backdrop'), exist_ok=True)
+    for graphic in BACKDROP_GRAPHICS:
+        decode(memory, sprite_address(memory, graphic)).save(os.path.join(OUT, 'backdrop', f'{graphic}.png'))
     with open(os.path.join(OUT, 'index.json')) as f:
         index = json.load(f)
     for name in MASKED_AGAIN:

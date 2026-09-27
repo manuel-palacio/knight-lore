@@ -59,7 +59,7 @@ describe('IsoProjection.isoDepth', () => {
 })
 
 describe('filmationConfig', () => {
-  it('projects one tile 32px wide and 16px tall, one height unit to 16px, like the original', async () => {
+  it('projects one tile 32px wide and 16px tall, a block 12px high, like the original', async () => {
     const { filmationConfig } = await import('../../src/engine/IsoProjection')
     const cfg = filmationConfig(760, 560)
     const origin = projectToScreen(0, 0, 0, cfg)
@@ -69,7 +69,13 @@ describe('filmationConfig', () => {
     expect(east.sx - origin.sx).toBe(16)
     expect(east.sy - origin.sy).toBe(8)
     expect(east.sx - south.sx).toBe(32)
-    expect(origin.sy - up.sy).toBe(16)
+    expect(origin.sy - up.sy).toBe(12)
+  })
+
+  it('stands the floor where the original does: a point at 39 + 4 (x + z) - 12 y down the screen', async () => {
+    const { filmationConfig } = await import('../../src/engine/IsoProjection')
+    const cfg = filmationConfig(256, 192)
+    expect(projectToScreen(16, 1, 16, cfg)).toEqual({ sx: 128, sy: 39 + 4 * 32 - 12 })
   })
 })
 

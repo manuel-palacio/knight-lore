@@ -1,7 +1,7 @@
 import { projectToScreen, isoDepth, filmationConfig, roomScreenOffset, type IsoConfig } from './IsoProjection'
 import type { Grid } from './Grid'
 import { snapToInkAndPaper } from './InkAndPaper'
-import { buildWallLayout, type ExitDirection, type WallBox } from './WallLayout'
+import { backdropScreenPlace, backdropWorldPlace, type BackdropPart } from './Backdrop'
 import { columnSegments, type DecorKind } from './ColumnLooks'
 
 // 2D Filmation renderer. Draws the simulation (grid solids + dynamic entities) as
@@ -9,6 +9,9 @@ import { columnSegments, type DecorKind } from './ColumnLooks'
 // (painter's algorithm). One hue per room on a black void floor — the ZX look.
 
 const TILE = 2
+const BLOCK_GRAPHIC = 7
+// Where the original draws a block from its place (its handler, 0xC4E3).
+const BLOCK_DRAWN_LOWER = 8
 
 export interface Renderable {
   // World footprint origin (min corner) in grid cells and the column height.
@@ -82,17 +85,28 @@ export class IsoRenderer {
 
   // Levels drawn as a hedge or a gargoyle are left out of the block columns;
   // their sprites come in with the dynamics.
-  render(room: { grid: Grid; tint: number; exits?: { direction: string }[]; decorAt?: (gx: number, gz: number, level: number) => DecorKind | undefined }, dynamics: Dynamic[]): void {
+  // The original's wall, arch, gate and hedge sprites, by graphic number (see Backdrop).
+  private backdropSprites = new Map<number, HTMLImageElement>()
+
+  setBackdropSprites(sprites: Map<number, HTMLImageElement>): void {
+    this.backdropSprites = sprites
+    this.blockSprite = sprites.get(BLOCK_GRAPHIC)
+  }
+
+  // The original's block (graphic 7), a level of a column each.
+  private blockSprite: HTMLImageElement | undefined
+
+  render(room: { grid: Grid; tint: number; backdrop?: BackdropPart[]; decorAt?: (gx: number, gz: number, level: number) => DecorKind | undefined }, dynamics: Dynamic[]): void {
     const ctx = this.ctx
     this.clear()
 
     const shades = toShades(room.tint)
     const items: Renderable[] = []
 
-    // Back walls and doorway arches, brick by brick (see WallLayout).
-    const exits = (room.exits ?? []).map((e) => e.direction as ExitDirection)
-    for (const b of buildWallLayout(room.grid.width, room.grid.depth, exits, TILE)) {
-      items.push(this.brick(b, shades))
+    // Walls, arches, gates and hedges: the original's sprites where it draws them.
+    for (const part of room.backdrop ?? []) {
+      const sprite = this.backdropSprites.get(part.graphic)
+      if (sprite) items.push(backdropItem(part, sprite, room.grid.width, room.grid.depth))
     }
 
     // Solid floor cells (static blocks) as cubes sized by support height.
@@ -101,7 +115,9 @@ export class IsoRenderer {
         if (!room.grid.isSolid(gx, gz)) continue
         const h = room.grid.supportHeight(gx, gz) || 1
         for (const s of columnSegments(h, (level) => room.decorAt?.(gx, gz, level))) {
-          if (s.look === 'block') items.push(this.cube(gx, gz, s.bottom, s.top, shades))
+          if (s.look !== 'block') continue
+          if (!this.blockSprite) items.push(this.cube(gx, gz, s.bottom, s.top, shades))
+          else for (let level = s.bottom; level < s.top; level++) items.push(this.block(gx, gz, level, this.blockSprite))
         }
       }
     }
@@ -131,16 +147,12 @@ export class IsoRenderer {
     this.ctx.putImageData(image, 0, 0)
   }
 
-  private brick(b: WallBox, shades: Shades): Renderable {
-    const cx = (b.x0 + b.x1) / 2
-    const cz = (b.z0 + b.z1) / 2
-    return {
-      gx: b.x0 / TILE,
-      gz: b.z0 / TILE,
-      height: b.y1,
-      depth: isoDepth(cx, b.y0, cz),
-      draw: (ctx, cfg) => drawIsoBox(ctx, cfg, b, shades),
-    }
+  // Sorted as a cube is (see cube), drawn as the original draws it.
+  private block(gx: number, gz: number, level: number, sprite: HTMLImageElement): Renderable {
+    const cx = (gx + 0.5) * TILE
+    const cz = (gz + 0.5) * TILE
+    const draw = { image: sprite, frameX: 0, frameW: sprite.width, frameH: sprite.height, scale: 1, flip: false, x: cx, y: level, z: cz, drop: BLOCK_DRAWN_LOWER }
+    return { gx, gz, height: level + 1, depth: isoDepth(cx, level, cz), draw: (ctx, cfg) => blitSprite(ctx, cfg, draw) }
   }
 
   private cube(gx: number, gz: number, bottom: number, top: number, shades: Shades): Renderable {
@@ -184,6 +196,9 @@ export interface SpriteDraw {
   x: number
   y: number
   z: number
+  // How far below its place the original draws its bottom row, in pixels
+  // (the vertical offset its handler sets).
+  drop?: number
 }
 
 // Build a Dynamic that blits a sprite frame anchored at its feet (world point).
@@ -194,13 +209,33 @@ export function boxDynamic(b: Box3): Dynamic {
   return { x: cx, y: b.y0, z: cz, draw: (ctx, cfg, shades) => drawIsoBox(ctx, cfg, b, shades) }
 }
 
+// Drawn at its place on the whole screen, which a narrow room's shift leaves alone.
+function backdropItem(part: BackdropPart, sprite: HTMLImageElement, width: number, depth: number): Renderable {
+  const at = backdropWorldPlace(part, width, depth)
+  const { left, top } = backdropScreenPlace(part, sprite.height)
+  return {
+    gx: at.x / TILE,
+    gz: at.z / TILE,
+    height: at.y,
+    depth: isoDepth(at.x, at.y, at.z),
+    draw: (ctx) => {
+      if (!part.flip) return ctx.drawImage(sprite, left, top)
+      ctx.save()
+      ctx.translate(left + sprite.width, 0)
+      ctx.scale(-1, 1)
+      ctx.drawImage(sprite, 0, top)
+      ctx.restore()
+    },
+  }
+}
+
 export function spriteDynamic(s: SpriteDraw): Dynamic {
   return { x: s.x, y: s.y, z: s.z, draw: (ctx, cfg) => blitSprite(ctx, cfg, s) }
 }
 
 function blitSprite(ctx: CanvasRenderingContext2D, cfg: IsoConfig, s: SpriteDraw): void {
   const projected = projectToScreen(s.x, s.y, s.z, cfg)
-  const feet = { sx: Math.round(projected.sx), sy: Math.round(projected.sy) }
+  const feet = { sx: Math.round(projected.sx), sy: Math.round(projected.sy) + (s.drop ?? 0) }
   const w = s.frameW * s.scale
   const h = s.frameH * s.scale
   if (s.flip) {

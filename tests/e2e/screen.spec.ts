@@ -29,8 +29,10 @@ const white = (r: number, g: number, b: number) => r > 200 && g > 200 && b > 200
 // Between the scrolls, under the line the HUD starts at (row 128): the front
 // spike bed of map-0--1 sits there, as the original draws a room's near corner.
 const BETWEEN_THE_SCROLLS = { x: 104, y: 128, w: 36, h: 18 }
-// Over the cauldron (room-001, its middle), and the scroll's right-hand end.
-const OVER_THE_CAULDRON = { x: 118, y: 44, w: 20, h: 20 }
+// Over the cauldron (room-001, its middle): the charm there, 32 pixels up,
+// has its bottom row at 39 + 4 * 18 - 32 + 4 = 83 (see IsoProjection). And
+// the scroll's right-hand end.
+const OVER_THE_CAULDRON = { x: 118, y: 64, w: 20, h: 20 }
 const SCROLL_END = { x: 212, y: 168, w: 22, h: 20 }
 
 test('the room is drawn down between the scrolls, not cut off at the HUD', async ({ page }) => {

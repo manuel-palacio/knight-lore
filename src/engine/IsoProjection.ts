@@ -12,15 +12,15 @@ export interface IsoConfig {
   originY: number // screen y of world origin
 }
 
-// The original's proportions: a block 32px wide, 16px tall on screen, and one
-// world unit of height 16px, so a 2-unit block is a 32x32 cube and Sabreman
-// (31px) stands one block tall. The room's far corner sits ROOM_ORIGIN_Y down
-// so back walls reach the top edge and the near corner tucks under the HUD,
-// as on the original 256x192 screen.
-export const ROOM_ORIGIN_Y = 26
+// The original's projection (0xD6D1): a cell 32px wide and 16px tall on
+// screen, a block 12px high, and the room's far corner at the floor
+// ROOM_ORIGIN_Y down the 256x192 screen, so that the room's own wall
+// sprites (see Backdrop) and everything else land where the original has them.
+export const ROOM_ORIGIN_Y = 39
+const BLOCK_HEIGHT_PX = 12
 
 export function filmationConfig(width: number, _height: number): IsoConfig {
-  return { tile: 2, tileW: 32, tileH: 16, heightScale: 16, originX: width / 2, originY: ROOM_ORIGIN_Y }
+  return { tile: 2, tileW: 32, tileH: 16, heightScale: BLOCK_HEIGHT_PX, originX: width / 2, originY: ROOM_ORIGIN_Y }
 }
 
 // The screen shift that stands a room smaller than 8x8 in the middle, where

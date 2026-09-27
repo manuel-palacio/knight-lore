@@ -61,3 +61,16 @@ test('a charm going into the cauldron sounds the original delivery (0xC2A5)', as
   await expect.poll(async () => (await debug(page)).delivered).toBe(1)
   await expect.poll(() => heardSince(page, before)).toContain(opening(deliveryEffect(wanted!)))
 })
+
+test('muted (M), none of them sounds', async ({ page }) => {
+  await begin(page)
+  await page.keyboard.press('KeyM')
+  await give(page, ['gem'])
+  const before = (await recorded(page)).played.length
+  await page.keyboard.press('KeyE')
+  await expect.poll(async () => (await debug(page)).carrying).toEqual([])
+  await page.keyboard.press('Space')
+  await page.evaluate(() => (window as unknown as { __t: () => void }).__t())
+  await page.waitForTimeout(500)
+  expect(await heardSince(page, before)).toEqual([])
+})

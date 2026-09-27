@@ -197,3 +197,20 @@ describe('isCompatibleSave', () => {
     expect(isCompatibleSave(old)).toBe(false)
   })
 })
+
+describe('GameState end summary', () => {
+  it('counts the rooms he has been in, and keeps them in a save', () => {
+    const state = new GameState(1)
+    for (const id of ['a', 'b', 'a', 'c']) state.visitedRooms.add(id)
+    expect(state.summary).toMatchObject({ days: 1, charms: 0, rating: 'POOR' })
+    expect(GameState.restore(state.serialize()).visitedRooms).toEqual(new Set(['a', 'b', 'c']))
+  })
+
+  it('shows at most the forty days, and rates a win four places up', () => {
+    const state = new GameState(1)
+    state.dayCount = 41
+    state.won = true
+    for (let i = 0; i < 40; i++) state.visitedRooms.add(`room-${i}`)
+    expect(state.summary).toMatchObject({ days: 40, rating: 'MARVELLOUS' })
+  })
+})

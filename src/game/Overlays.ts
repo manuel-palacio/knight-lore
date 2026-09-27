@@ -1,11 +1,15 @@
 import type { GameState } from './GameState'
+import { POTION_VERSE, summaryLines } from './EndSummary'
 
-// The HTML overlays that sit on top of the canvas: win and game over.
+// The HTML overlays that sit on top of the canvas: win and game over. Both
+// end on the original's summary (see EndSummary); a win first has the verse
+// the original shows when the cure is brewed.
 export class Overlays {
   private readonly winEl: HTMLElement
-  private readonly winDetailEl: HTMLElement
+  private readonly winVerseEl: HTMLElement
+  private readonly winSummaryEl: HTMLElement
   private readonly gameOverEl: HTMLElement
-  private readonly gameOverReasonEl: HTMLElement
+  private readonly gameOverSummaryEl: HTMLElement
 
   constructor() {
     const get = (id: string): HTMLElement => {
@@ -14,16 +18,28 @@ export class Overlays {
       return el
     }
     this.winEl = get('win')
-    this.winDetailEl = get('win-detail')
+    this.winVerseEl = get('win-verse')
+    this.winSummaryEl = get('win-summary')
     this.gameOverEl = get('gameover')
-    this.gameOverReasonEl = get('gameover-reason')
+    this.gameOverSummaryEl = get('gameover-summary')
   }
 
   render(state: GameState): void {
     this.winEl.style.display = state.won ? 'flex' : 'none'
-    this.winDetailEl.textContent = `SABREMAN IS HUMAN AGAIN — DAY ${state.dayCount} OF 40`
     this.gameOverEl.style.display = state.gameOver ? 'flex' : 'none'
-    const reason = state.gameOverReason === 'days' ? 'THE 40 DAYS HAVE PASSED' : 'OUT OF LIVES'
-    this.gameOverReasonEl.textContent = `${reason} — DAY ${state.dayCount}, ${state.cureProgress} OF ${state.cureSequence.length} CHARMS`
+    if (!state.won && !state.gameOver) return
+    const summary = summaryLines(state.summary)
+    if (state.won) {
+      setLines(this.winVerseEl, POTION_VERSE)
+      setLines(this.winSummaryEl, summary)
+    } else {
+      setLines(this.gameOverSummaryEl, summary)
+    }
   }
+}
+
+function setLines(el: HTMLElement, lines: readonly string[]): void {
+  const text = lines.join('\n')
+  if (el.textContent === text) return
+  el.textContent = text
 }

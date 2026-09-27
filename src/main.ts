@@ -257,6 +257,7 @@ async function main(): Promise<void> {
     const hooks = window as unknown as Record<string, unknown>
     hooks.__t = () => { state.toggleForm(); state.onTransformed(); state.transformTimer = 9999 }
     hooks.__win = () => { state.won = true }
+    hooks.__lose = () => { state.gameOver = true; state.gameOverReason = 'lives' }
     hooks.__timer = (seconds: number) => { state.transformTimer = seconds }
     // Without a position, enters by the north door of whatever size the room is.
     hooks.__room = (id: string, entryX?: number, entryZ?: number) => {

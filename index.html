@@ -20,6 +20,7 @@
       #intro .dismiss { animation: blink 1s steps(1) infinite; }
       .overlay .big { font-size: 40px; letter-spacing: 4px; }
       .overlay .small { font-size: 18px; margin-top: 14px; color: #a08868; }
+      #win-verse, .overlay .summary { white-space: pre-line; line-height: 1.7; font-size: 22px; color: #ffefc4; }
       #intro p { margin: 10px 0; font-size: 15px; line-height: 1.55; }
       #intro .keys { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; margin: 18px 0; }
       #intro kbd { background: #2a1f15; border: 1px solid #6a4a20; border-radius: 3px; padding: 2px 8px; color: #ffd95a; font-family: inherit; font-size: 13px; }
@@ -55,14 +56,14 @@
 
     <div id="win" class="overlay">
       <div>
-        <div class="big">THE CURSE IS LIFTED</div>
-        <div id="win-detail" class="small"></div>
+        <div id="win-verse" class="small"></div>
+        <div id="win-summary" class="small summary"></div>
         <div class="small">PRESS R TO PLAY AGAIN</div>
       </div>
     </div>
     <div id="gameover" class="overlay">
       <div>
-        <div id="gameover-reason"></div>
+        <div id="gameover-summary" class="small summary"></div>
         <div style="font-size: 20px; margin-top: 12px;">PRESS R TO RESTART</div>
       </div>
     </div>

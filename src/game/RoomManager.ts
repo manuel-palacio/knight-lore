@@ -26,6 +26,7 @@ export class RoomManager {
     }
     room.setSpawn(entryX, entryZ)
     this.state.currentRoomId = roomId
+    this.state.visitedRooms.add(roomId)
     this.active = room
     return room
   }

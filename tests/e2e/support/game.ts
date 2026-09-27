@@ -14,6 +14,8 @@ export interface Debug {
   form: string
   facing: string
   state: string
+  // Dissolving into stars, or coming back out of them (see Sparkle).
+  dying: boolean
   pos: { x: number; y: number; z: number }
   wanted: string | null
   overCauldron: string | null
@@ -73,6 +75,8 @@ export async function holdDaylight(page: Page): Promise<void> {
 }
 
 export async function enterRoom(page: Page, id: string, at?: { x: number; z: number }): Promise<Debug> {
+  // A life just lost plays out first: he comes back at the door of the room he lost it in.
+  await expect.poll(async () => (await debug(page)).dying, { timeout: 10_000 }).toBe(false)
   await page.evaluate(
     ({ room, x, z }) => (window as unknown as Hooks).__room(room, x, z),
     { room: id, x: at?.x, z: at?.z },

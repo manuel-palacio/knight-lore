@@ -39,12 +39,14 @@ import { selectCharacterFrame, STRIP_CELLS } from './game/CharacterFrame'
 import { Transition } from './game/Transition'
 import { loadSave, writeSave, clearSave } from './engine/SaveSlot'
 import { Beeper, footstepSound } from './engine/Beeper'
-import { pushEffect } from './engine/effects'
+import { dissolveEffect, pushEffect, rematerialiseEffect } from './engine/effects'
+import { Sparkle } from './game/Sparkle'
 import { projectToScreen, isoDepth, FULL_ROOM_CELLS } from './engine/IsoProjection'
 
 const DEATH_FLASH_FRAMES = 2
 const GHOST_DRAW_HEIGHT = 0.3
 const WIPE_SECONDS = 0.25
+const STAR_CELLS = 6
 const ROOM_CENTRE = (FULL_ROOM_CELLS * 2) / 2
 // Character strips are native ZX resolution, 24x36 cells per pose, drawn at
 // 1:1 canvas pixels so the sprite stays crisp. Cells per form: STRIP_CELLS.
@@ -120,6 +122,7 @@ async function main(): Promise<void> {
     cauldron: await loadImage('/sprites/rip/cauldron.png'),
     wizard: await loadImage('/sprites/wizard.png'),
     flame: await loadImage('/sprites/flame.png'),
+    stars: await loadImage('/sprites/rip/stars.png'),
   }
   const monsterSources = {
     ghost: await loadImage('/sprites/rip/ghost.png'),
@@ -272,9 +275,11 @@ async function main(): Promise<void> {
     hooks.__lose = () => { state.gameOver = true; state.gameOverReason = 'lives' }
     hooks.__timer = (seconds: number) => { state.transformTimer = seconds }
     // Without a position, enters by the north door of whatever size the room is.
+    // As through a door, the room's movers start afresh.
     hooks.__room = (id: string, entryX?: number, entryZ?: number) => {
       transitioning = true
       manager.transitionTo(id, entryX ?? 0, entryZ ?? 0).then((room) => {
+        room.reset()
         if (entryX === undefined) room.setSpawn((room.grid.width * room.tileSize) / 2, 1)
         placePlayerAtSpawn(room)
         transitioning = false
@@ -297,6 +302,7 @@ async function main(): Promise<void> {
     itemImages: itemImages.size,
       day: state.dayCount,
       state: player.state,
+      dying: dying(),
       facing: player.facing,
       pos: { x: Number(player.position.x.toFixed(2)), y: Number(player.position.y.toFixed(2)), z: Number(player.position.z.toFixed(2)) },
       platforms: activeRoom().entities.filter((e) => e instanceof MovingPlatform).map((e) => ({ x: e.position.x, z: e.position.z })),
@@ -334,12 +340,28 @@ async function main(): Promise<void> {
     if (charm) layCharm(charm, player.position)
     beeper.play('drop')
   }
-  // Death: white flash, the room's movers go back to their starts, and
-  // Sabreman reappears at the door he came in through.
+  // Death: white flash, and Sabreman dissolves into a cloud of stars where
+  // he stood; then the room's movers go back to their starts, and he comes
+  // back out of the stars at the door he came in through (see Sparkle).
+  const sparkle = new Sparkle()
   state.onLifeLost = () => {
     flashFrames = DEATH_FLASH_FRAMES
-    activeRoom().reset()
-    placePlayerAtSpawn(activeRoom())
+    sparkle.dissolve()
+  }
+
+  function sparklePass(): void {
+    const event = sparkle.update()
+    if (event?.kind === 'step') {
+      beeper.playEffect(sparkle.phase === 'dissolving' ? dissolveEffect(event.graphic) : rematerialiseEffect(event.graphic))
+    } else if (event?.kind === 'dissolved' && !state.gameOver) {
+      activeRoom().reset()
+      placePlayerAtSpawn(activeRoom())
+      sparkle.rematerialise()
+    }
+  }
+
+  function dying(): boolean {
+    return sparkle.phase !== 'idle'
   }
 
   // The original's results-screen tune, once, when the last life or the last
@@ -428,12 +450,11 @@ async function main(): Promise<void> {
   }
 
   function hazardPass(room: Room): void {
-    if (player.isInvulnerable) return
+    if (player.isInvulnerable || dying()) return
     for (const e of room.entities) {
       if (!e.active || !e.hasCategory(Category.HAZARD) || !hazardHunts(e, state.form)) continue
       if (touchesHazard(player, e)) {
         state.loseLife()
-        beeper.play('hurt')
         return
       }
     }
@@ -521,6 +542,12 @@ async function main(): Promise<void> {
     return transformElapsed < TRANSFORM_DURATION
   }
 
+  function starsSprite(): SpriteDraw {
+    const stars = inHue(setPieces.stars, activeRoom().tint)
+    const frameW = stars.width / STAR_CELLS
+    return { image: stars, frameX: sparkle.starCell * frameW, frameW, frameH: stars.height, scale: CHAR_SCALE, flip: false, x: player.position.x, y: player.position.y, z: player.position.z }
+  }
+
   // The morph strip was captured facing west; mirror it for the east-ish facings.
   function transformSprite(): SpriteDraw {
     const progress = transformElapsed / TRANSFORM_DURATION
@@ -541,6 +568,7 @@ async function main(): Promise<void> {
   }
 
   function characterDynamic(): Dynamic {
+    if (dying()) return spriteDynamic(starsSprite())
     if (morphing()) return spriteDynamic(transformSprite())
     const selected = selectCharacterFrame(player.facing, player.stepsTaken, charMoving, player.state !== 'grounded', visualForm)
     const sheet = inHue(strips[visualForm][selected.view], activeRoom().tint)
@@ -651,7 +679,7 @@ async function main(): Promise<void> {
     if (input.wasPressed('KeyP')) paused = !paused
     if (input.wasPressed('KeyM')) beeper.toggleMute()
     if (paused) return
-    if (state.gameOver || state.won) {
+    if ((state.gameOver || state.won) && !dying()) {
       playGameOverTuneOnce()
       overlays.render(state)
       return
@@ -671,7 +699,7 @@ async function main(): Promise<void> {
       onLanded: () => beeper.play('land'),
       onJumped: () => beeper.play('jump'),
     }
-    if (!morphing()) player.update(dt, ctx)
+    if (!morphing() && !dying()) player.update(dt, ctx)
     const stepped = player.stepsTaken !== lastStepCount
     if (stepped) {
       lastStepCount = player.stepsTaken
@@ -682,9 +710,10 @@ async function main(): Promise<void> {
     boxSoundPass(room)
     if (stepped) pushPass(room)
     resolveActorOverlap(room)
-    if (input.wasPressed('KeyE') && !tryDeliverPass(room) && !tryPickupPass(room)) tryPutDownPass(room)
+    if (!dying() && input.wasPressed('KeyE') && !tryDeliverPass(room) && !tryPickupPass(room)) tryPutDownPass(room)
     hazardPass(room)
-    exitPass()
+    if (!dying()) exitPass()
+    sparklePass()
     state.tickTransform(dt)
     updateCharacter(dt)
     overlays.render(state)

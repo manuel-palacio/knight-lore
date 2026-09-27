@@ -45,7 +45,33 @@ function originalPixels(at: { x: number; y: number; z: number }, room: RoomCells
 // rotated left twice, so it glides as the box slides.
 export function pushEffect(at: { x: number; y: number; z: number }, room: RoomCells): Note[] {
   const px = originalPixels(at, room)
-  const sum = ~Math.round(px.x + px.y + px.z) & 0xff
-  const pitch = ((sum << 2) | (sum >> 6)) & 0xff
-  return [cycles(pitch, 6)]
+  return [cycles(rotateLeftTwice(~Math.round(px.x + px.y + px.z) & 0xff), 6)]
+}
+
+// Losing a life (0xB419, from 0xBF0B at each step of the stars' growing, as
+// the graphic goes from 0x79 to 0x7F): single cycles for c counting down from
+// the graphic rotated left twice, low five bits, with bits 0 and 1 set; each
+// at c rotated left twice.
+export function dissolveEffect(graphic: number): Note[] {
+  const count = (rotateLeftTwice(graphic) & 0x1f) | 0x03
+  return Array.from({ length: count }, (_, i) => cycles(rotateLeftTwice(count - i)))
+}
+
+// The pitches the routine at 0xB403 plays: the Spectrum 48K ROM's bytes from
+// 0x1234, where it reads them (the ROM is not part of the game's snapshot).
+const ROM_FROM_0X1234 = [
+  0xfb, 0x21, 0xb6, 0x5c, 0x22, 0x4f, 0x5c, 0x11, 0xaf, 0x15, 0x01, 0x15, 0x00, 0xeb, 0xed, 0xb0,
+  0xeb, 0x2b, 0x22, 0x57, 0x5c, 0x23, 0x22, 0x53, 0x5c, 0x22, 0x4b, 0x5c, 0x36, 0x80, 0x23, 0x22,
+]
+
+// Coming back (0xB403, from 0xBF31 at each step of the stars' shrinking, as
+// the graphic goes from 0x71 to 0x77): two cycles at each of the ROM's bytes,
+// as many as the graphic, complemented, has in its low five bits.
+export function rematerialiseEffect(graphic: number): Note[] {
+  const count = ~graphic & 0x1f
+  return ROM_FROM_0X1234.slice(0, count).map((b) => cycles(b, 2))
+}
+
+function rotateLeftTwice(value: number): number {
+  return ((value << 2) | (value >> 6)) & 0xff
 }

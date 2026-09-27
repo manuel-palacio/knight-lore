@@ -41,6 +41,7 @@ import { loadSave, writeSave, clearSave } from './engine/SaveSlot'
 import { Beeper, footstepSound } from './engine/Beeper'
 import { dissolveEffect, pushEffect, rematerialiseEffect } from './engine/effects'
 import { Sparkle } from './game/Sparkle'
+import { HeadTurn } from './game/HeadTurn'
 import { projectToScreen, isoDepth, FULL_ROOM_CELLS } from './engine/IsoProjection'
 
 const DEATH_FLASH_FRAMES = 2
@@ -171,6 +172,7 @@ async function main(): Promise<void> {
   let transformElapsed = TRANSFORM_DURATION
   let transformTarget: 'human' | 'werewolf' = 'human'
   let charMoving = false
+  const headTurn = new HeadTurn()
 
   function activeRoom(): Room {
     const room = manager.active
@@ -294,7 +296,7 @@ async function main(): Promise<void> {
     }
     hooks.__dbg = () => ({
       steps: player.stepsTaken,
-      frame: selectCharacterFrame(player.facing, player.stepsTaken, charMoving, player.state !== 'grounded', visualForm),
+      frame: selectCharacterFrame(player.facing, player.stepsTaken, charMoving, player.state !== 'grounded', visualForm, headTurn.glance),
       form: visualForm,
       room: state.currentRoomId,
     wanted: state.wantedItem,
@@ -532,6 +534,7 @@ async function main(): Promise<void> {
 
   function updateCharacter(dt: number): void {
     charMoving = input.isDown('ArrowUp') && player.state === 'grounded'
+    headTurn.update()
     if (transformElapsed < TRANSFORM_DURATION) {
       transformElapsed += dt
       if (transformElapsed >= TRANSFORM_DURATION) visualForm = transformTarget
@@ -570,7 +573,7 @@ async function main(): Promise<void> {
   function characterDynamic(): Dynamic {
     if (dying()) return spriteDynamic(starsSprite())
     if (morphing()) return spriteDynamic(transformSprite())
-    const selected = selectCharacterFrame(player.facing, player.stepsTaken, charMoving, player.state !== 'grounded', visualForm)
+    const selected = selectCharacterFrame(player.facing, player.stepsTaken, charMoving, player.state !== 'grounded', visualForm, headTurn.glance)
     const sheet = inHue(strips[visualForm][selected.view], activeRoom().tint)
     const frameW = sheet.width / STRIP_CELLS[visualForm]
     const sprite: SpriteDraw = {

@@ -27,3 +27,16 @@ test('the title screen shows Sabreman standing', async ({ page }) => {
   await page.goto('/')
   await page.locator('#intro .hero').screenshot({ path: 'test-results/characters/title-hero.png' })
 })
+
+// Now and then he glances aside (0xCDDA, see HeadTurn): with every random
+// byte below 2 he glances one way, and the second way with every byte 0xFE or more.
+for (const [byte, cells] of [[0.001, [4, 7]], [0.999, [8, 11]]] as const) {
+  test(`he is drawn glancing with the random byte at ${byte * 256 < 2 ? 'the bottom' : 'the top'}`, async ({ page }) => {
+    await page.addInitScript((value) => { Math.random = () => value }, byte)
+    await startGame(page)
+    await enterRoom(page, 'map--4--4')
+    await holdDaylight(page)
+    await expect.poll(async () => (await debug(page)).frame.frame).toBeGreaterThanOrEqual(cells[0])
+    expect((await debug(page)).frame.frame).toBeLessThanOrEqual(cells[1])
+  })
+}

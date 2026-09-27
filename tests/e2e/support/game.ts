@@ -12,6 +12,8 @@ import { TICKS_PER_FRAME, TICKS_PER_STEP } from '../../../src/engine/StepClock'
 export interface Debug {
   room: string
   form: string
+  // The strip cell he is drawn with (see selectCharacterFrame).
+  frame: { view: string; frame: number; flip: boolean }
   facing: string
   state: string
   // Dissolving into stars, or coming back out of them (see Sparkle).

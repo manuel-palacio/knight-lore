@@ -18,8 +18,13 @@ describe('selectCharacterFrame', () => {
     expect(selectCharacterFrame('north', 0, false)).toEqual({ view: 'back', frame: 2, flip: true })
   })
 
-  it('has four frames per view for both forms, as the original strips do', () => {
-    expect(STRIP_CELLS).toEqual({ human: 4, werewolf: 4 })
+  it('has four frames per view for both forms, as the original strips do, then the two glances over each', () => {
+    expect(STRIP_CELLS).toEqual({ human: 12, werewolf: 12 })
+  })
+
+  it('draws a glance over the same legs: cells 4-7 for the first, 8-11 for the second', () => {
+    expect(selectCharacterFrame('east', 0, false, false, 'human', 0).frame).toBe(4 + 2)
+    expect(selectCharacterFrame('west', 1, true, false, 'werewolf', 1).frame).toBe(8 + 1)
   })
 
   it('walks both forms through the original six-step cycle, 0 1 2 3 2 1', () => {

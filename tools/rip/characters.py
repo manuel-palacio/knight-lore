@@ -9,6 +9,11 @@ a fixed distance below the top of the body: measured by fitting both sprites
 to frames of the original in motion (Sabreman and the wolf) and to the
 guards on map.png. The body is drawn over the legs.
 
+Now and then the body is drawn as one of two glances (its view's graphics 6
+and 7, handler 0xCDDA) over whatever legs are walking: the man's and the
+wolf's strips follow their four frames with each glance over each of the
+four legs.
+
 The transformation is the four full-body poses at 0xac28-0xae98 (the man
 with arms raised, the man with his hat pulled down, the wolf in profile, the
 wolf with arms raised), mirrored and ordered as frames of the original show
@@ -38,6 +43,7 @@ STRIPS = {
     'sabrewulf-front.png': ([0xa684, 0xa73a, 0xa7f0, 0xa8a6], WOLF_LEGS_FRONT, 21),
     'sabrewulf-back.png': ([0xa3c4, 0xa474, 0xa524, 0xa5d4], WOLF_LEGS_BACK, 20),
     # The guard's hood seen from the front and from behind, over the man's legs.
+    # (It does not glance.)
     'rip/guard-left.png': ([0x75b0] * 4, MAN_LEGS_FRONT, 16),
     'rip/guard-right.png': ([0x763c] * 4, MAN_LEGS_BACK, 16),
 }
@@ -47,6 +53,15 @@ STRIPS = {
 TRANSFORM = [(0xadb2, True), (0xadb2, True), (0xac28, False), (0xae98, True), (0xacea, False),
              (0xadb2, True), (0xadb2, True), (0xae98, False), (0xac28, True), (0xadb2, False)]
 TRANSFORM_LAST = (0xa524, 0xa178, 20)  # the wolf seen from behind, mid-stride
+
+# Each view's two glances: graphics 0x26/0x27 (back), 0x2E/0x2F (front) for
+# the man, 0x46/0x47 and 0x4E/0x4F for the wolf.
+GLANCES = {
+    'sabreman-front.png': [0x9668, 0x95d0],
+    'sabreman-back.png': [0x8e18, 0x953e],
+    'sabrewulf-front.png': [0xaabc, 0xab72],
+    'sabrewulf-back.png': [0xa95c, 0xaa0c],
+}
 
 
 def compose(memory, body_address, legs_address, drop):
@@ -58,7 +73,9 @@ def compose(memory, body_address, legs_address, drop):
 
 
 def write_strip(memory, name, bodies, legs, drop):
-    save_strip([compose(memory, body, leg, drop) for body, leg in zip(bodies, legs)], name)
+    walking = [compose(memory, body, leg, drop) for body, leg in zip(bodies, legs)]
+    glancing = [compose(memory, glance, leg, drop) for glance in GLANCES.get(name, []) for leg in legs]
+    save_strip(walking + glancing, name)
 
 
 def write_transform(memory, name):

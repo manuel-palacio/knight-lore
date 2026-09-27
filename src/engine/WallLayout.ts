@@ -9,7 +9,7 @@ export const WALL_HEIGHT = 2.5
 const COURSE = 0.5
 const BRICK = 1
 const THICK = 0.25
-const JAMB_HEIGHT = 2
+const JAMB_HEIGHT = 1.25
 const JAMB_WIDTH = 1
 const ARCH_THICK = 0.5
 const VOUSSOIR = 0.75
@@ -109,7 +109,7 @@ function arch(plane: WallPlane, centre: number): WallBox[] {
     out.push(box(plane, centre + DOOR_HALF_WIDTH, centre + outer, y, y + COURSE, 'arch', ARCH_THICK))
   }
   const ringRadius = outer - JAMB_WIDTH / 2
-  const arcOffset = 0.6
+  const arcOffset = 0.1
   const arcRadius = ringRadius + arcOffset
   const apexAngle = Math.acos(arcOffset / arcRadius)
   for (let k = 0; k <= VOUSSOIRS_PER_SIDE; k++) {

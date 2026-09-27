@@ -4,6 +4,8 @@ import { buildWallLayout, WALL_HEIGHT, type WallBox } from '../../src/engine/Wal
 const TILE = 2
 const W = 8
 const D = 8
+// He stands one block tall: 31px at 16px a unit.
+const SABREMAN_HEIGHT = 2
 
 function overlaps(box: WallBox, other: { x0: number; x1: number; z0: number; z1: number; y0: number; y1: number }): boolean {
   return box.x0 < other.x1 && box.x1 > other.x0 && box.z0 < other.z1 && box.z1 > other.z0 && box.y0 < other.y1 && box.y1 > other.y0
@@ -41,14 +43,14 @@ describe('buildWallLayout', () => {
     const boxes = buildWallLayout(W, D, ['north'], TILE)
     // Centred on the wall, on the line between two cells, as the original's.
     const mid = (W * TILE) / 2
-    const opening = { x0: mid - 1, x1: mid + 1, z0: -1, z1: 0, y0: 0, y1: 2.5 }
+    const opening = { x0: mid - 0.75, x1: mid + 0.75, z0: -1, z1: 0, y0: 0, y1: SABREMAN_HEIGHT }
     expect(boxes.some((b) => overlaps(b, opening))).toBe(false)
   })
 
   it('cuts a clear opening in the west wall for a west exit', () => {
     const boxes = buildWallLayout(W, D, ['west'], TILE)
     const mid = (D * TILE) / 2
-    const opening = { x0: -1, x1: 0, z0: mid - 1, z1: mid + 1, y0: 0, y1: 2.5 }
+    const opening = { x0: -1, x1: 0, z0: mid - 0.75, z1: mid + 0.75, y0: 0, y1: SABREMAN_HEIGHT }
     expect(boxes.some((b) => overlaps(b, opening))).toBe(false)
   })
 
@@ -57,6 +59,13 @@ describe('buildWallLayout', () => {
       const arch = buildWallLayout(W, D, [dir], TILE).filter((b) => b.kind === 'arch')
       expect(arch.length).toBeGreaterThan(6)
       expect(Math.max(...arch.map((b) => b.y1))).toBeGreaterThanOrEqual(WALL_HEIGHT - 0.5)
+    }
+  })
+
+  it('tops each arch at about the wall height, as short and round as the original\'s', () => {
+    for (const dir of ['north', 'south', 'east', 'west'] as const) {
+      const arch = buildWallLayout(W, D, [dir], TILE).filter((b) => b.kind === 'arch')
+      expect(Math.max(...arch.map((b) => b.y1))).toBeLessThanOrEqual(WALL_HEIGHT + 0.75)
     }
   })
 

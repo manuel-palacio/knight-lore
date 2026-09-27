@@ -14,6 +14,8 @@ import { Player, type Facing } from './game/Player'
 import { FACING_VECTOR } from './game/Facing'
 import { STEP_LENGTH, TICKS_PER_FRAME, TICKS_PER_STEP } from './engine/StepClock'
 import { EPS } from './engine/epsilons'
+import { TouchPad } from './engine/TouchPad'
+import { bindTouchControls, showTouchControlsWhenTouched } from './engine/TouchControls'
 import { CHARM_HEIGHT, CHARM_HOVER, Pickup } from './game/Pickup'
 import { Cauldron } from './game/Cauldron'
 import { Spike } from './game/SpikeGrid'
@@ -191,17 +193,29 @@ async function main(): Promise<void> {
   const continueHint = document.getElementById('continue-hint')
   if (continueHint && saved) continueHint.style.display = 'block'
   playTitleTune()
+  const begin = (resume: boolean): void => {
+    if (!intro || intro.style.display === 'none') return
+    intro.style.display = 'none'
+    hideSoundHint()
+    beeper.stop()
+    beeper.play('gameStart')
+    if (resume && saved) resumeSavedGame(saved)
+    else clearSave()
+  }
   window.addEventListener('keydown', (e) => {
-    if (intro && intro.style.display !== 'none') {
-      intro.style.display = 'none'
-      hideSoundHint()
-      beeper.stop()
-      beeper.play('gameStart')
-      if (e.code === 'KeyC' && saved) resumeSavedGame(saved)
-      else clearSave()
-    }
+    begin(e.code === 'KeyC')
     if (e.code === 'KeyR' && (state.gameOver || state.won)) location.reload()
   })
+
+  // On a touch screen: the on-screen controls, a button to begin (or to go on
+  // with a saved game), and a tap on the end screen to play again.
+  showTouchControlsWhenTouched(renderer.refit)
+  bindTouchControls(document.getElementById('touch')!, new TouchPad(input))
+  document.getElementById('begin')?.addEventListener('click', () => begin(false))
+  const continueButton = document.getElementById('continue')
+  if (continueButton && saved) continueButton.style.display = ''
+  continueButton?.addEventListener('click', () => begin(true))
+  for (const id of ['win', 'gameover']) document.getElementById(id)?.addEventListener('pointerdown', () => location.reload())
 
   // The original's title tune. Browsers hold sound back until the page has
   // had a click or a key, and a key starts the game, so when sound is held

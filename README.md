@@ -27,7 +27,7 @@ Open the URL Vite prints. Any key starts; C continues a saved game. The title sc
 | M | Sound on / off |
 | R | Restart after game over |
 
-A gamepad works too: d-pad turns and walks, A jumps, B acts, Start pauses.
+A gamepad works too: d-pad turns and walks, A jumps, B acts, Start pauses. On a phone or tablet held sideways, on-screen controls appear: a d-pad on the left (turn, walk), JUMP (tap or hold) and E on the right, pause and sound at the top.
 
 ```
 npm test                  # vitest

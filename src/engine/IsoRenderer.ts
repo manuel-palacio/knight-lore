@@ -26,6 +26,9 @@ export interface Shades {
   line: string
 }
 
+// CSS pixels kept clear either side of the play area for the touch controls.
+const TOUCH_SIDE_ROOM = 120
+
 export class IsoRenderer {
   readonly canvas: HTMLCanvasElement
   private readonly ctx: CanvasRenderingContext2D
@@ -36,7 +39,8 @@ export class IsoRenderer {
     this.canvas.width = width
     this.canvas.height = height
     this.fitToWindow(pixelScale)
-    window.addEventListener('resize', () => this.fitToWindow(pixelScale))
+    this.refit = () => this.fitToWindow(pixelScale)
+    window.addEventListener('resize', this.refit)
     this.canvas.style.imageRendering = 'pixelated'
     container.appendChild(this.canvas)
     const ctx = this.canvas.getContext('2d')
@@ -47,15 +51,21 @@ export class IsoRenderer {
     this.cfg = filmationConfig(width, height)
   }
 
+  // Fits the canvas again (the touch controls came or went).
+  readonly refit: () => void
+
   // Scale the 256x192 screen to the window: whole multiples up to the given
   // scale when they fit, otherwise the largest size that keeps 4:3 inside.
+  // With the touch controls showing, as large as fits between them.
   private fitToWindow(maxScale: number): void {
-    const availW = window.innerWidth
+    const touch = document.body.classList.contains('touch')
+    const availW = window.innerWidth - (touch ? 2 * TOUCH_SIDE_ROOM : 0)
     const availH = window.innerHeight
     const w = this.canvas.width
     const h = this.canvas.height
-    const whole = Math.floor(Math.min(availW / w, availH / h))
-    const scale = whole >= 1 ? Math.min(whole, maxScale) : Math.min(availW / w, availH / h)
+    const fit = Math.min(availW / w, availH / h)
+    const whole = Math.floor(fit)
+    const scale = whole >= 1 && !touch ? Math.min(whole, maxScale) : fit
     this.canvas.style.width = `${Math.floor(w * scale)}px`
     this.canvas.style.height = `${Math.floor(h * scale)}px`
   }

@@ -1,5 +1,5 @@
-// Keyboard and gamepad input, read through keyboard codes so the game has
-// one vocabulary. isDown(code) is true while held; wasPressed(code) is true
+// Keyboard, gamepad and on-screen touch input (see TouchPad), read through
+// keyboard codes so the game has one vocabulary. isDown(code) is true while held; wasPressed(code) is true
 // exactly once per press. Call update() once per simulation tick.
 
 export interface GamepadSnapshot {
@@ -31,6 +31,7 @@ export function browserGamepad(): GamepadSnapshot | null {
 export class Input {
   private keysDown = new Set<string>()
   private padDown = new Set<string>()
+  private touchDown = new Set<string>()
   private pressedThisTick = new Set<string>()
   private pressedQueued = new Set<string>()
 
@@ -74,7 +75,17 @@ export class Input {
   }
 
   isDown(code: string): boolean {
-    return this.keysDown.has(code) || this.padDown.has(code)
+    return this.keysDown.has(code) || this.padDown.has(code) || this.touchDown.has(code)
+  }
+
+  // An on-screen button held down or let go, as a key.
+  hold(code: string): void {
+    if (!this.isDown(code)) this.pressedQueued.add(code)
+    this.touchDown.add(code)
+  }
+
+  release(code: string): void {
+    this.touchDown.delete(code)
   }
 
   wasPressed(code: string): boolean {

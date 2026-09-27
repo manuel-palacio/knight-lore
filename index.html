@@ -2,7 +2,8 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
     <title>Knight Lore — 2D Filmation</title>
     <style>
       body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; }
@@ -25,6 +26,41 @@
       #intro .keys { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; margin: 18px 0; }
       #intro kbd { background: #2a1f15; border: 1px solid #6a4a20; border-radius: 3px; padding: 2px 8px; color: #ffd95a; font-family: inherit; font-size: 13px; }
       #intro .dismiss { text-align: center; margin-top: 18px; color: #a08868; font-size: 13px; }
+
+      /* Touch screens: on-screen controls either side of the play area, no
+         scrolling, zooming or long-press menus, and tap to begin. */
+      body.touch, body.touch * { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+      #touch, .touch-only, #rotate { display: none; }
+      body.touch #touch { display: block; }
+      body.touch .touch-only { display: block; }
+      body.touch span.touch-only { display: inline; }
+      #intro .keys.touch-only, body.touch #intro .keys.keys-only { display: none; }
+      body.touch #intro .keys.touch-only { display: grid; }
+      body.touch .keys-only { display: none; }
+      #touch button { position: fixed; z-index: 25; border: 2px solid rgba(255, 217, 90, 0.55); background: rgba(40, 28, 14, 0.55); color: #ffd95a; font: bold 16px 'Courier New', monospace; border-radius: 50%; padding: 0; }
+      #touch button:active, #touch button.held { background: rgba(255, 217, 90, 0.35); }
+      #touch .pad { width: 54px; height: 54px; font-size: 22px; border-radius: 12px; }
+      #touch [data-key="ArrowUp"] { left: calc(env(safe-area-inset-left) + 34px); bottom: 92px; }
+      #touch [data-key="ArrowLeft"] { left: calc(env(safe-area-inset-left) + 6px); bottom: 30px; }
+      #touch [data-key="ArrowRight"] { left: calc(env(safe-area-inset-left) + 62px); bottom: 30px; }
+      #touch [data-key="Space"] { right: calc(env(safe-area-inset-right) + 8px); bottom: 28px; width: 76px; height: 76px; }
+      #touch [data-key="KeyE"] { right: calc(env(safe-area-inset-right) + 38px); bottom: 116px; width: 56px; height: 56px; }
+      #touch .small { width: 44px; height: 44px; font-size: 13px; top: 12px; }
+      #touch [data-key="KeyP"] { right: calc(env(safe-area-inset-right) + 70px); }
+      #touch [data-key="KeyM"] { right: calc(env(safe-area-inset-right) + 16px); }
+      #intro .begin { display: none; margin: 18px auto 0; padding: 12px 28px; font: bold 18px 'Courier New', monospace; color: #1a1208; background: #ffd95a; border: 0; border-radius: 6px; }
+      body.touch #intro .begin { display: block; }
+      body.touch #intro .dismiss { display: none; }
+      body.touch #intro, body.touch #intro * { touch-action: pan-y; }
+      body.touch #intro .panel { max-height: 94vh; overflow: auto; padding: 10px 18px; }
+      body.touch #intro h1 { font-size: 30px; }
+      body.touch #intro .hero { display: none; }
+      body.touch #intro p { font-size: 12px; margin: 6px 0; }
+      body.touch #intro .keys { margin: 8px 0; font-size: 12px; }
+      body.touch #intro .begin { margin-top: 10px; }
+      @media (orientation: portrait) {
+        body.touch #rotate { display: flex; position: fixed; inset: 0; z-index: 40; align-items: center; justify-content: center; text-align: center; background: #000; color: #ffd95a; font: 20px 'Courier New', monospace; padding: 24px; }
+      }
     </style>
   </head>
   <body>
@@ -39,32 +75,51 @@
           The only cure: brew the potion by delivering fourteen charms to the cauldron,
           each in the order it requests, before 40 days pass. The wolf cannot carry
           charms, and the cauldron room is no place for him after dark.</p>
-        <div class="keys">
+        <div class="keys keys-only">
           <kbd>← →</kbd><span>Turn left / right</span>
-          <kbd>↑</kbd><span>Walk forward. Walk into a block to push it.</span>
-          <kbd>Space</kbd><span>Jump (forward while walking)</span>
-          <kbd>E</kbd><span>Pick up or put down a charm (stand on it to climb higher), deliver to the cauldron, or PULL the nearest block toward you</span>
+          <kbd>↑</kbd><span>Walk forward. Walk into a table or a chest to push it.</span>
+          <kbd>Space</kbd><span>Jump, always forward: tap for a low jump, hold for a high one</span>
+          <kbd>E</kbd><span>Pick up a charm (he carries three), put one down under his feet to stand on, or deliver to the cauldron</span>
           <kbd>P</kbd><span>Pause. A gamepad works too: d-pad turns and walks, A jumps, B acts, Start pauses.</span>
           <kbd>M</kbd><span>Sound on / off</span>
           <kbd>R</kbd><span>Restart after game over</span>
         </div>
+        <div class="keys touch-only">
+          <kbd>◀ ▶</kbd><span>Turn left / right</span>
+          <kbd>▲</kbd><span>Walk forward (into a table or a chest to push it)</span>
+          <kbd>JUMP</kbd><span>Tap for a low jump, hold for a high one</span>
+          <kbd>E</kbd><span>Pick up, put down under his feet, deliver</span>
+        </div>
         <div id="sound-hint" style="display:none; text-align:center; color:#a08868; margin-top: 14px; font-size: 13px;">Click for sound</div>
         <div id="continue-hint" style="display:none; text-align:center; color:#ffd95a; margin-top: 14px; font-size: 13px;">A game is waiting — press C to continue it</div>
         <div class="dismiss">Press any key to begin</div>
+        <button id="begin" class="begin">TAP TO BEGIN</button>
+        <button id="continue" class="begin" style="display:none">CONTINUE THE SAVED GAME</button>
       </div>
     </div>
+
+    <div id="touch" aria-label="On-screen controls">
+      <button class="pad" data-key="ArrowUp" aria-label="Walk forward">▲</button>
+      <button class="pad" data-key="ArrowLeft" aria-label="Turn left">◀</button>
+      <button class="pad" data-key="ArrowRight" aria-label="Turn right">▶</button>
+      <button data-key="Space" aria-label="Jump">JUMP</button>
+      <button data-key="KeyE" aria-label="Pick up, put down, deliver">E</button>
+      <button class="small" data-key="KeyP" aria-label="Pause">II</button>
+      <button class="small" data-key="KeyM" aria-label="Sound on or off">♪</button>
+    </div>
+    <div id="rotate">Turn your phone on its side to play</div>
 
     <div id="win" class="overlay">
       <div>
         <div id="win-verse" class="small"></div>
         <div id="win-summary" class="small summary"></div>
-        <div class="small">PRESS R TO PLAY AGAIN</div>
+        <div class="small"><span class="keys-only">PRESS R</span><span class="touch-only">TAP</span> TO PLAY AGAIN</div>
       </div>
     </div>
     <div id="gameover" class="overlay">
       <div>
         <div id="gameover-summary" class="small summary"></div>
-        <div style="font-size: 20px; margin-top: 12px;">PRESS R TO RESTART</div>
+        <div style="font-size: 20px; margin-top: 12px;"><span class="keys-only">PRESS R</span><span class="touch-only">TAP</span> TO RESTART</div>
       </div>
     </div>
 

@@ -647,8 +647,9 @@ async function main(): Promise<void> {
       } else if (e instanceof PatrolEnemy) {
         out.push(stripFrame(monster('guardLeft', room.tint), 4, Math.floor(performance.now() / 120) % 4, e.position.x, 0, e.position.z))
       } else if (e instanceof PathGuard) {
-        const leftward = e.facing === 'south' || e.facing === 'west'
-        out.push(stripFrame(monster(leftward ? 'guardLeft' : 'guardRight', room.tint), 4, e.stepsTaken % 4, e.position.x, 0, e.position.z))
+        // Seen from the front or from behind over the man's legs, mirrored as he is.
+        const look = selectCharacterFrame(e.facing, e.stepsTaken, true)
+        out.push(stripFrame(monster(look.view === 'front' ? 'guardLeft' : 'guardRight', room.tint), 4, e.stepsTaken % 4, e.position.x, 0, e.position.z, look.flip))
       } else if (e instanceof MovingPlatform) {
         const half = e.extents.x / 2
         out.push(boxDynamic({ x0: e.position.x - half, x1: e.position.x + half, z0: e.position.z - half, z1: e.position.z + half, y0: e.bottom, y1: e.height }))

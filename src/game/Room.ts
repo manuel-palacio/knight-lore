@@ -49,6 +49,7 @@ export class Room {
 
   addExit(exit: Exit): void {
     this.exits.push(exit)
+    this.grid.openDoorway(exit.direction)
   }
 
   // After a death: everything that moves goes back to its starting place.

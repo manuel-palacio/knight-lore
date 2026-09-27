@@ -64,14 +64,15 @@ describe('RoomManager', () => {
     await expect(manager.transitionTo('nope', 0, 0)).rejects.toThrow('Unknown room')
   })
 
-  it('exitAt fires only past the matching edge threshold, inside the doorway span', async () => {
+  it('exitAt fires once he is under the arch, past the edge, inside the doorway span', async () => {
     const { manager } = makeManager()
     await manager.transitionTo('room-a', 8, 14)
     expect(manager.exitAt(8, 14)).toBeNull()
-    expect(manager.exitAt(8, 15.6)?.targetRoomId).toBe('room-b') // south door, mid edge
-    expect(manager.exitAt(9, 15.6)?.targetRoomId).toBe('room-b') // still inside the doorway
-    expect(manager.exitAt(3, 15.6)).toBeNull() // south edge but through the wall
-    expect(manager.exitAt(8, 0.3)).toBeNull() // north edge has no exit
-    expect(manager.exitAt(0.3, 8)).toBeNull()
+    expect(manager.exitAt(8, 15.6)).toBeNull() // at the edge, not yet in the doorway
+    expect(manager.exitAt(8, 16.8)?.targetRoomId).toBe('room-b') // south door, under the arch
+    expect(manager.exitAt(9, 16.8)?.targetRoomId).toBe('room-b') // still inside the doorway
+    expect(manager.exitAt(3, 16.8)).toBeNull() // beyond the south edge but through the wall
+    expect(manager.exitAt(8, -0.8)).toBeNull() // north edge has no exit
+    expect(manager.exitAt(-0.8, 8)).toBeNull()
   })
 })

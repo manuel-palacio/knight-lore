@@ -40,4 +40,17 @@ describe('Grid', () => {
     g.setOccupant(2, 2, null)
     expect(g.occupant(2, 2)).toBe(null)
   })
+
+  it('opens the two cells beyond a doorway, the wall\'s thickness under the arch, and nothing else beyond the edge', () => {
+    const grid = new Grid(8, 4)
+    grid.openDoorway('west')
+    expect([grid.isSolid(-1, 1), grid.isSolid(-1, 2)]).toEqual([false, false])
+    expect([grid.isSolid(-1, 0), grid.isSolid(-1, 3), grid.isSolid(8, 1)]).toEqual([true, true, true])
+    grid.openDoorway('north')
+    expect([grid.isSolid(3, -1), grid.isSolid(4, -1), grid.isSolid(2, -1)]).toEqual([false, false, true])
+    grid.openDoorway('south')
+    grid.openDoorway('east')
+    expect([grid.isSolid(3, 4), grid.isSolid(4, 4), grid.isSolid(8, 1), grid.isSolid(8, 2)]).toEqual([false, false, false, false])
+    expect(grid.supportHeight(-1, 1)).toBe(0)
+  })
 })

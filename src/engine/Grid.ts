@@ -4,10 +4,14 @@ interface Cell {
   occupant: unknown | null
 }
 
+export type Edge = 'north' | 'south' | 'east' | 'west'
+
 export class Grid {
   readonly width: number
   readonly depth: number
   private cells: Cell[]
+  // Cells beyond the edge he may walk into: a doorway's, the wall's thickness under its arch.
+  private readonly doorways = new Set<string>()
 
   constructor(width: number, depth: number) {
     this.width = width
@@ -26,8 +30,21 @@ export class Grid {
     return x >= 0 && x < this.width && z >= 0 && z < this.depth
   }
 
+  // The two cells beyond the middle of an edge, either side of the doorway's axis.
+  openDoorway(edge: Edge): void {
+    const midX = this.width / 2
+    const midZ = this.depth / 2
+    const cells = {
+      north: [[midX - 1, -1], [midX, -1]],
+      south: [[midX - 1, this.depth], [midX, this.depth]],
+      west: [[-1, midZ - 1], [-1, midZ]],
+      east: [[this.width, midZ - 1], [this.width, midZ]],
+    }[edge]
+    for (const [x, z] of cells) this.doorways.add(`${x},${z}`)
+  }
+
   isSolid(x: number, z: number): boolean {
-    if (!this.inBounds(x, z)) return true
+    if (!this.inBounds(x, z)) return !this.doorways.has(`${x},${z}`)
     return this.cells[this.idx(x, z)]!.solid
   }
 

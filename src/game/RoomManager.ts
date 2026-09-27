@@ -3,7 +3,8 @@ import type { GameState } from './GameState'
 
 export type RoomBuilder = (state: GameState) => Promise<Room>
 
-const EDGE_MARGIN = 0.5
+// He goes through once he is under the arch, this far past the room's edge.
+const UNDER_THE_ARCH = 0.75
 // Doorways sit mid-edge; only that span leads out, the rest of the edge is wall.
 const DOOR_HALF_SPAN = 1.4
 
@@ -40,10 +41,10 @@ export class RoomManager {
     const inDoorX = Math.abs(x - midX) <= DOOR_HALF_SPAN
     const inDoorZ = Math.abs(z - midZ) <= DOOR_HALF_SPAN
     for (const exit of this.active.exits) {
-      if (exit.direction === 'north' && z < EDGE_MARGIN && inDoorX) return exit
-      if (exit.direction === 'south' && z > depth - EDGE_MARGIN && inDoorX) return exit
-      if (exit.direction === 'west' && x < EDGE_MARGIN && inDoorZ) return exit
-      if (exit.direction === 'east' && x > width - EDGE_MARGIN && inDoorZ) return exit
+      if (exit.direction === 'north' && z < -UNDER_THE_ARCH && inDoorX) return exit
+      if (exit.direction === 'south' && z > depth + UNDER_THE_ARCH && inDoorX) return exit
+      if (exit.direction === 'west' && x < -UNDER_THE_ARCH && inDoorZ) return exit
+      if (exit.direction === 'east' && x > width + UNDER_THE_ARCH && inDoorZ) return exit
     }
     return null
   }

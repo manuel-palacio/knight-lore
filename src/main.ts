@@ -36,7 +36,7 @@ import { Room } from './game/Room'
 import { RoomManager } from './game/RoomManager'
 import { ROOM_BUILDERS, pickStartRoom } from './scenes/rooms/index'
 import { ROOM_SPECS } from './scenes/rooms/roomSpecs'
-import { IsoRenderer, spriteDynamic, boxDynamic, type Dynamic, type SpriteDraw } from './engine/IsoRenderer'
+import { IsoRenderer, spriteDynamic, blockColumnDynamic, type Dynamic, type SpriteDraw } from './engine/IsoRenderer'
 import { selectCharacterFrame, STRIP_CELLS } from './game/CharacterFrame'
 import { Transition } from './game/Transition'
 import { loadSave, writeSave, clearSave } from './engine/SaveSlot'
@@ -101,7 +101,9 @@ async function main(): Promise<void> {
   const state = new GameState()
   const overlays = new Overlays()
   const renderer = new IsoRenderer(container, SCREEN_W, SCREEN_H, PIXEL_SCALE)
-  renderer.setBackdropSprites(await loadBackdropSprites())
+  const backdropSprites = await loadBackdropSprites()
+  renderer.setBackdropSprites(backdropSprites)
+  const blockSprite = backdropSprites.get(BLOCK_GRAPHIC)!
 
   // Everything in the play area is drawn in the room's one colour, as on the
   // Spectrum; each sprite is tinted per room hue on first use.
@@ -660,19 +662,17 @@ async function main(): Promise<void> {
         const look = selectCharacterFrame(e.facing, e.stepsTaken, true)
         out.push(stripFrame(monster(look.view === 'front' ? 'guardLeft' : 'guardRight', room.tint), 4, e.stepsTaken % 4, e.position.x, 0, e.position.z, look.flip, DRAWN_LOWER.man))
       } else if (e instanceof MovingPlatform) {
-        const half = e.extents.x / 2
-        out.push(boxDynamic({ x0: e.position.x - half, x1: e.position.x + half, z0: e.position.z - half, z1: e.position.z + half, y0: e.bottom, y1: e.height }))
+        out.push(blockColumnDynamic(blockSprite, e.position.x, e.position.z, e.bottom, e.height))
       } else if (e instanceof PushableBox) {
         out.push(setPieceSprite(monster(e.kind, room.tint), e.position.x, e.bottom, e.position.z, false, DRAWN_LOWER.block))
       } else if (e instanceof VanishingBlock) {
-        if (e.present) out.push(vanishingDynamic(e))
+        if (e.present) out.push(vanishingDynamic(e, blockSprite))
       } else if (e instanceof BouncingBall) {
         out.push(stripFrame(monster('ball', room.tint), 2, e.position.y > 0.5 ? 1 : 0, e.position.x, e.position.y, e.position.z))
       } else if (e instanceof HoppingBall) {
         out.push(stripFrame(monster('ball', room.tint), 2, e.speedPx > 0 ? 1 : 0, e.position.x, e.position.y, e.position.z))
       } else if (e instanceof FallingBlock) {
-        const half = room.tileSize / 2
-        out.push(boxDynamic({ x0: e.position.x - half, x1: e.position.x + half, z0: e.position.z - half, z1: e.position.z + half, y0: e.top - 1, y1: e.top }))
+        out.push(blockColumnDynamic(blockSprite, e.position.x, e.position.z, e.top - 1, e.top))
       } else if (e instanceof Wizard) {
         out.push(setPieceSprite(inHue(setPieces.wizard, room.tint), e.position.x, 0, e.position.z))
       } else if (e instanceof Portcullis) {
@@ -683,9 +683,8 @@ async function main(): Promise<void> {
           out.push(setPieceSprite(grille, c.x * room.tileSize + room.tileSize / 2, e.bottom, c.z * room.tileSize + room.tileSize / 2, acrossZ))
         }
       } else if (e instanceof FloatingBlock) {
-        const half = room.tileSize / 2
         if (room.decorAt(Math.floor(e.position.x / room.tileSize), Math.floor(e.position.z / room.tileSize), e.bottom)) continue
-        out.push(boxDynamic({ x0: e.position.x - half, x1: e.position.x + half, z0: e.position.z - half, z1: e.position.z + half, y0: e.bottom, y1: e.top }))
+        out.push(blockColumnDynamic(blockSprite, e.position.x, e.position.z, e.bottom, e.top))
       } else if (e instanceof SpikedBall) {
         out.push(setPieceSprite(monster('spikedBall', room.tint), e.position.x, e.position.y, e.position.z))
       } else if (e instanceof Flame) {
@@ -809,9 +808,8 @@ function monsterKind(e: Entity): 'patrols' | 'bounces' | 'roams' {
 }
 
 // Crumbling blocks flicker in their last steps before vanishing.
-function vanishingDynamic(v: VanishingBlock): Dynamic {
-  const half = v.extents.x / 2
-  const box = boxDynamic({ x0: v.position.x - half, x1: v.position.x + half, z0: v.position.z - half, z1: v.position.z + half, y0: 0, y1: v.height })
+function vanishingDynamic(v: VanishingBlock, blockSprite: HTMLImageElement): Dynamic {
+  const box = blockColumnDynamic(blockSprite, v.position.x, v.position.z, v.height - 1, v.height)
   const crumbling = v.framesUntilVanish >= 0
   if (!crumbling) return box
   return { ...box, draw: (ctx, cfg, shades) => { if (Math.floor(performance.now() / 80) % 2 === 0) box.draw(ctx, cfg, shades) } }

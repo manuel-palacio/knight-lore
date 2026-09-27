@@ -202,13 +202,6 @@ export interface SpriteDraw {
 }
 
 // Build a Dynamic that blits a sprite frame anchored at its feet (world point).
-// A depth-sorted solid box (moving platform) in the room's shades.
-export function boxDynamic(b: Box3): Dynamic {
-  const cx = (b.x0 + b.x1) / 2
-  const cz = (b.z0 + b.z1) / 2
-  return { x: cx, y: b.y0, z: cz, draw: (ctx, cfg, shades) => drawIsoBox(ctx, cfg, b, shades) }
-}
-
 // Drawn at its place on the whole screen, which a narrow room's shift leaves alone.
 function backdropItem(part: BackdropPart, sprite: HTMLImageElement, width: number, depth: number): Renderable {
   const at = backdropWorldPlace(part, width, depth)
@@ -227,6 +220,15 @@ function backdropItem(part: BackdropPart, sprite: HTMLImageElement, width: numbe
       ctx.restore()
     },
   }
+}
+
+// A stack of the original's blocks that moves or goes (a floating, falling,
+// crumbling or moving block), a block a level from bottom to top.
+export function blockColumnDynamic(block: CanvasImageSource & { width: number; height: number }, x: number, z: number, bottom: number, top: number): Dynamic {
+  const levels: number[] = []
+  for (let y = bottom; y < top - 1e-6; y++) levels.push(y)
+  const at = (y: number): SpriteDraw => ({ image: block, frameX: 0, frameW: block.width, frameH: block.height, scale: 1, flip: false, x, y, z, drop: BLOCK_DRAWN_LOWER })
+  return { x, y: bottom, z, draw: (ctx, cfg) => { for (const y of levels) blitSprite(ctx, cfg, at(y)) } }
 }
 
 export function spriteDynamic(s: SpriteDraw): Dynamic {
@@ -260,14 +262,6 @@ export interface Box3 {
 
 // One iso box: top diamond + right (east, +x) and left (south, +z) faces with a
 // crisp outline. Corners A=far, B=right, C=near, D=left.
-function drawIsoBox(ctx: CanvasRenderingContext2D, cfg: IsoConfig, b: Box3, shades: Shades): void {
-  const c = boxCorners(cfg, b)
-  fillQuad(ctx, [c.Bt, c.Ct, c.Cb, c.Bb], shades.right)
-  fillQuad(ctx, [c.Dt, c.Ct, c.Cb, c.Db], shades.left)
-  fillQuad(ctx, [c.At, c.Bt, c.Ct, c.Dt], shades.top)
-  outlineBox(ctx, c, shades.line, 1)
-}
-
 // A floor block: an iso box with staggered brick courses hatched on its faces.
 function drawIsoCube(
   ctx: CanvasRenderingContext2D,

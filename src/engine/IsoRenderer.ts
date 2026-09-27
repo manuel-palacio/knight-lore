@@ -1,6 +1,7 @@
 import { projectToScreen, isoDepth, filmationConfig, roomScreenOffset, type IsoConfig } from './IsoProjection'
 import type { Grid } from './Grid'
 import { buildWallLayout, type ExitDirection, type WallBox } from './WallLayout'
+import { columnSegments, type DecorKind } from './ColumnLooks'
 
 // 2D Filmation renderer. Draws the simulation (grid solids + dynamic entities) as
 // monochrome isometric cubes plus character/item sprites, depth-sorted back-to-front
@@ -68,7 +69,9 @@ export class IsoRenderer {
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
   }
 
-  render(room: { grid: Grid; tint: number; exits?: { direction: string }[] }, dynamics: Dynamic[]): void {
+  // Levels drawn as a hedge or a gargoyle are left out of the block columns;
+  // their sprites come in with the dynamics.
+  render(room: { grid: Grid; tint: number; exits?: { direction: string }[]; decorAt?: (gx: number, gz: number, level: number) => DecorKind | undefined }, dynamics: Dynamic[]): void {
     const ctx = this.ctx
     this.clear()
 
@@ -81,12 +84,14 @@ export class IsoRenderer {
       items.push(this.brick(b, shades))
     }
 
-    // Solid floor cells (static blocks, push blocks) as cubes sized by support height.
+    // Solid floor cells (static blocks) as cubes sized by support height.
     for (let gz = 0; gz < room.grid.depth; gz++) {
       for (let gx = 0; gx < room.grid.width; gx++) {
         if (!room.grid.isSolid(gx, gz)) continue
         const h = room.grid.supportHeight(gx, gz) || 1
-        items.push(this.cube(gx, gz, h, shades))
+        for (const s of columnSegments(h, (level) => room.decorAt?.(gx, gz, level))) {
+          if (s.look === 'block') items.push(this.cube(gx, gz, s.bottom, s.top, shades))
+        }
       }
     }
 
@@ -119,7 +124,7 @@ export class IsoRenderer {
     }
   }
 
-  private cube(gx: number, gz: number, height: number, shades: Shades): Renderable {
+  private cube(gx: number, gz: number, bottom: number, top: number, shades: Shades): Renderable {
     // Sort by the CELL CENTRE, not the near corner. A tall back-wall cube sorted
     // by its near corner over-sorts (its corner x exceeds an actor standing in
     // front of it on a lower z), drawing the wall OVER the actor — the player
@@ -130,9 +135,9 @@ export class IsoRenderer {
     return {
       gx,
       gz,
-      height,
-      depth: isoDepth(cx, 0, cz),
-      draw: (ctx, cfg) => drawIsoCube(ctx, cfg, gx, gz, height, shades),
+      height: top,
+      depth: isoDepth(cx, bottom, cz),
+      draw: (ctx, cfg) => drawIsoCube(ctx, cfg, gx, gz, bottom, top, shades),
     }
   }
 
@@ -215,11 +220,12 @@ function drawIsoCube(
   cfg: IsoConfig,
   gx: number,
   gz: number,
-  height: number,
+  bottom: number,
+  top: number,
   shades: Shades,
 ): void {
   // The original's block: solid top, solid left face, checker-hatched right face.
-  const b: Box3 = { x0: gx * TILE, x1: (gx + 1) * TILE, z0: gz * TILE, z1: (gz + 1) * TILE, y0: 0, y1: height }
+  const b: Box3 = { x0: gx * TILE, x1: (gx + 1) * TILE, z0: gz * TILE, z1: (gz + 1) * TILE, y0: bottom, y1: top }
   const c = boxCorners(cfg, b)
   fillQuad(ctx, [c.Bt, c.Ct, c.Cb, c.Bb], checker(ctx, shades.top))
   fillQuad(ctx, [c.Dt, c.Ct, c.Cb, c.Db], shades.left)

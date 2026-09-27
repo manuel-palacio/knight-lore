@@ -54,7 +54,7 @@ npm run build             # tsc + vite build into dist/
 
 **Assets.** Sprites come from three sources, all in `public/sprites`:
 
-- `rip/` holds 99 sprites decoded from the game's own memory: format is a two-byte header (width in bytes, height) followed by rows of mask and pixel byte pairs, stored bottom-up, with animation pointer tables at 0x7140. `rip/index.json` records the addresses. Ghost, ball, cauldron, spikes, flame, and the charms are drawn from these.
+- `rip/` holds 99 sprites decoded from the game's own memory: format is a two-byte header (width in bytes, height) followed by rows of mask and pixel byte pairs, stored bottom-up, with animation pointer tables at 0x7140. `rip/index.json` records the addresses. Ghost, ball, cauldron, spikes, flame, the charms, and the hedges, gargoyles, tables and chests are drawn from these (`tools/rip/objects.py`); every other block type draws the original's one block sprite, as the original does.
 - Sabreman, the wolf and the guard are the original's own sprites: an upper body (the guard's hood) drawn over a pair of walking legs, four frames each, walked 0 1 2 3 2 1 as the original's animation table does. The legs are the four-frame strips the first rip filed as `creature1-*` (the man's, and the guard's) and `creature2-*` (the wolf's); how far below the body they sit was measured by fitting both sprites to frames of the original. The transformation is the four full-body poses at 0xac28-0xae98. `tools/rip/characters.py` composes all the strips.
 - `map.png` at the repo root is Paul Dunn's complete map of the original. The castle was first read off it (`tools/map`, `docs/MAP.md`); it is now built from the original's own room table, and the map is kept as a reference.
 

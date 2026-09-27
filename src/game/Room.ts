@@ -1,5 +1,6 @@
 import { Entity, type UpdateContext } from './Entity'
 import { Grid } from '../engine/Grid'
+import type { DecorKind } from '../engine/ColumnLooks'
 
 const TILE_SIZE = 2
 
@@ -15,6 +16,8 @@ export class Room {
   readonly grid: Grid
   readonly entities: Entity[] = []
   readonly exits: Exit[] = []
+  // Levels of its blocks drawn as themselves (a hedge, a gargoyle), by `x,z,level`.
+  readonly decor = new Map<string, DecorKind>()
   spawnX = 0
   spawnZ = 0
   tint = 0xffd95a // default yellow; builders override per room
@@ -31,6 +34,14 @@ export class Room {
   remove(e: Entity): void {
     const i = this.entities.indexOf(e)
     if (i >= 0) this.entities.splice(i, 1)
+  }
+
+  addDecor(gridX: number, gridZ: number, level: number, kind: DecorKind): void {
+    this.decor.set(`${gridX},${gridZ},${level}`, kind)
+  }
+
+  decorAt(gridX: number, gridZ: number, level: number): DecorKind | undefined {
+    return this.decor.get(`${gridX},${gridZ},${level}`)
   }
 
   addExit(exit: Exit): void {

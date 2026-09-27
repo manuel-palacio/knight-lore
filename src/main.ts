@@ -120,6 +120,10 @@ async function main(): Promise<void> {
     guardLeft: await loadImage('/sprites/rip/guard-left.png'),
     guardRight: await loadImage('/sprites/rip/guard-right.png'),
     ball: await loadImage('/sprites/rip/ball.png'),
+    hedge: await loadImage('/sprites/rip/hedge.png'),
+    gargoyle: await loadImage('/sprites/rip/gargoyle.png'),
+    chest: await loadImage('/sprites/rip/chest.png'),
+    table: await loadImage('/sprites/rip/table.png'),
   }
   const monsterTints = new Map<string, HTMLCanvasElement>()
   const monster = (kind: keyof typeof monsterSources, hue: number): HTMLCanvasElement => {
@@ -537,8 +541,17 @@ async function main(): Promise<void> {
     return spriteDynamic(sprite)
   }
 
+  // Hedges and gargoyles, in the room's hue like everything in it, each on
+  // its level of a column (see IsoRenderer, which leaves those levels out).
+  function decorDynamics(room: Room): Dynamic[] {
+    return [...room.decor].map(([cell, kind]) => {
+      const [gx, gz, level] = cell.split(',').map(Number) as [number, number, number]
+      return setPieceSprite(monster(kind, room.tint), (gx + 0.5) * room.tileSize, level, (gz + 0.5) * room.tileSize)
+    })
+  }
+
   function entityDynamics(room: Room): Dynamic[] {
-    const out: Dynamic[] = []
+    const out: Dynamic[] = [...decorDynamics(room)]
     for (const e of room.entities) {
       if (e instanceof Pickup) {
         if (e.collected || !e.active) continue
@@ -575,7 +588,7 @@ async function main(): Promise<void> {
         const half = e.extents.x / 2
         out.push(boxDynamic({ x0: e.position.x - half, x1: e.position.x + half, z0: e.position.z - half, z1: e.position.z + half, y0: 0, y1: e.height }))
       } else if (e instanceof PushableBox) {
-        out.push(...boxDynamics(e))
+        out.push(setPieceSprite(monster(e.kind, room.tint), e.position.x, e.bottom, e.position.z))
       } else if (e instanceof VanishingBlock) {
         if (e.present) out.push(vanishingDynamic(e))
       } else if (e instanceof BouncingBall) {
@@ -596,6 +609,7 @@ async function main(): Promise<void> {
         }
       } else if (e instanceof FloatingBlock) {
         const half = room.tileSize / 2
+        if (room.decorAt(Math.floor(e.position.x / room.tileSize), Math.floor(e.position.z / room.tileSize), e.bottom)) continue
         out.push(boxDynamic({ x0: e.position.x - half, x1: e.position.x + half, z0: e.position.z - half, z1: e.position.z + half, y0: e.bottom, y1: e.top }))
       } else if (e instanceof SpikedBall) {
         out.push(setPieceSprite(monster('spikedBall', room.tint), e.position.x, e.position.y, e.position.z))
@@ -700,25 +714,8 @@ async function main(): Promise<void> {
 
 // --- Set-piece drawing ---
 
-const TABLE_TOP = 0.25
-const TABLE_LEG = 0.25
 
 // A slab on four legs: the slab is one box, each leg a thin box at a corner.
-// A table is a top on four legs, a chest a box.
-function boxDynamics(b: PushableBox): Dynamic[] {
-  const x0 = b.position.x - b.halfX
-  const z0 = b.position.z - b.halfZ
-  const x1 = b.position.x + b.halfX
-  const z1 = b.position.z + b.halfZ
-  if (b.kind === 'chest') return [boxDynamic({ x0, x1, z0, z1, y0: b.bottom, y1: b.top })]
-  const legs: Dynamic[] = []
-  for (const [lx, lz] of [[x0, z0], [x1 - TABLE_LEG, z0], [x0, z1 - TABLE_LEG], [x1 - TABLE_LEG, z1 - TABLE_LEG]]) {
-    legs.push(boxDynamic({ x0: lx!, x1: lx! + TABLE_LEG, z0: lz!, z1: lz! + TABLE_LEG, y0: b.bottom, y1: b.top - TABLE_TOP }))
-  }
-  const top = boxDynamic({ x0, x1, z0, z1, y0: b.top - TABLE_TOP, y1: b.top })
-  return [...legs, { ...top, depth: isoDepth(x1, b.top, z1) }]
-}
-
 // How a walker gets past it: behind a patrol, under a bounce, or away from a wanderer.
 function monsterKind(e: Entity): 'patrols' | 'bounces' | 'roams' {
   if (e instanceof BouncingBall) return 'bounces'

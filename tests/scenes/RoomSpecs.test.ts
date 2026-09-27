@@ -139,9 +139,9 @@ describe('winning on foot', () => {
 
 describe('door geometry', () => {
   it('drops the player on the door axis of a narrow room too', () => {
-    expect(entryFor('south', 4, 8)).toEqual({ x: 5, z: 1 })
-    expect(entryFor('west', 8, 4)).toEqual({ x: 15, z: 5 })
-    expect(entryFor('north', 4, 8)).toEqual({ x: 5, z: 15 })
+    expect(entryFor('south', 4, 8)).toEqual({ x: 4, z: 1 })
+    expect(entryFor('west', 8, 4)).toEqual({ x: 15, z: 4 })
+    expect(entryFor('north', 4, 8)).toEqual({ x: 4, z: 15 })
   })
 
   it('puts the door cells mid-edge of the room, whatever its size', () => {
@@ -151,10 +151,10 @@ describe('door geometry', () => {
   })
 
   it('drops the player just inside the edge opposite to the door walked through, on the door axis', () => {
-    expect(entryFor('south')).toEqual({ x: 9, z: 1 })
-    expect(entryFor('north')).toEqual({ x: 9, z: 15 })
-    expect(entryFor('east')).toEqual({ x: 1, z: 9 })
-    expect(entryFor('west')).toEqual({ x: 15, z: 9 })
+    expect(entryFor('south')).toEqual({ x: 8, z: 1 })
+    expect(entryFor('north')).toEqual({ x: 8, z: 15 })
+    expect(entryFor('east')).toEqual({ x: 1, z: 8 })
+    expect(entryFor('west')).toEqual({ x: 15, z: 8 })
   })
 })
 

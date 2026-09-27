@@ -39,14 +39,15 @@ describe('buildWallLayout', () => {
 
   it('cuts a clear opening in the north wall for a north exit', () => {
     const boxes = buildWallLayout(W, D, ['north'], TILE)
-    const mid = Math.floor(W / 2) * TILE + TILE / 2
+    // Centred on the wall, on the line between two cells, as the original's.
+    const mid = (W * TILE) / 2
     const opening = { x0: mid - 1, x1: mid + 1, z0: -1, z1: 0, y0: 0, y1: 2.5 }
     expect(boxes.some((b) => overlaps(b, opening))).toBe(false)
   })
 
   it('cuts a clear opening in the west wall for a west exit', () => {
     const boxes = buildWallLayout(W, D, ['west'], TILE)
-    const mid = Math.floor(D / 2) * TILE + TILE / 2
+    const mid = (D * TILE) / 2
     const opening = { x0: -1, x1: 0, z0: mid - 1, z1: mid + 1, y0: 0, y1: 2.5 }
     expect(boxes.some((b) => overlaps(b, opening))).toBe(false)
   })

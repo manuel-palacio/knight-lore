@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test'
 import { ROOM_SPECS, entryFor, oppositeOf, type Direction, type RoomSpec } from '../../src/scenes/rooms/roomSpecs'
 import { debug, enterRoom, face, give, holdDaylight, startGame, tileCentre, walkPath, walkUntil } from './support/game'
-import { dangersOf, doorOf, type Step } from './support/roomPath'
+import { dangersOf, doorOf, findFloorPath, type Step } from './support/roomPath'
 import { SOLVED_PUZZLES } from './support/puzzles'
 
 // The puzzle rooms (tools/rip/castle.py marks them: some door cannot be
@@ -72,8 +72,8 @@ for (const id of ['map--5-4', 'map-5-6'] as const) {
     test.setTimeout(120_000)
     await startGame(page)
     const room = spec(id)
-    await overTheWall(page, room, 'south', 'north', { approach: column(2, [7, 6]), first: floor(2, 5), second: floor(2, 4), wall: { x: 2, z: 3, y: 3 }, beyond: column(2, [2, 1, 0]) })
-    await overTheWall(page, room, 'north', 'south', { approach: column(2, [0]), first: floor(2, 1), second: floor(2, 2), wall: { x: 2, z: 3, y: 3 }, beyond: column(2, [4, 5, 6, 7]) })
+    await overTheWall(page, room, 'south', 'north', { approach: column(2, [7]), first: floor(2, 6), second: floor(2, 5), wall: { x: 2, z: 4, y: 3 }, beyond: column(2, [3, 2, 1, 0]) })
+    await overTheWall(page, room, 'north', 'south', { approach: column(2, [0, 1]), first: floor(2, 2), second: floor(2, 3), wall: { x: 2, z: 4, y: 3 }, beyond: column(2, [5, 6, 7]) })
   })
 }
 
@@ -82,12 +82,12 @@ test('map-7-1: over the wall at its one cell without spikes, with two charms, bo
   await startGame(page)
   const room = spec('map-7-1')
   await overTheWall(page, room, 'south', 'north', {
-    approach: [floor(2, 7), floor(1, 7), floor(0, 7), floor(0, 6)], first: floor(0, 5), second: floor(0, 4), wall: { x: 0, z: 3, y: 3 },
-    beyond: [floor(0, 2), floor(1, 2), floor(2, 2), floor(2, 1), floor(2, 0)],
+    approach: [floor(2, 7), floor(1, 7), floor(0, 7)], first: floor(0, 6), second: floor(0, 5), wall: { x: 0, z: 4, y: 3 },
+    beyond: [floor(0, 3), floor(1, 3), floor(2, 3), floor(2, 2), floor(2, 1), floor(2, 0)],
   })
   await overTheWall(page, room, 'north', 'south', {
-    approach: [floor(2, 0), floor(1, 0), floor(0, 0)], first: floor(0, 1), second: floor(0, 2), wall: { x: 0, z: 3, y: 3 },
-    beyond: [floor(0, 4), floor(1, 4), floor(2, 4), floor(2, 5), floor(2, 6), floor(2, 7)],
+    approach: [floor(2, 0), floor(1, 0), floor(0, 0), floor(0, 1)], first: floor(0, 2), second: floor(0, 3), wall: { x: 0, z: 4, y: 3 },
+    beyond: [floor(0, 5), floor(1, 5), floor(2, 5), floor(2, 6), floor(2, 7)],
   })
 })
 
@@ -95,8 +95,8 @@ test('map--1--3: onto a block of the diagonal with two charms, and down the othe
   test.setTimeout(120_000)
   await startGame(page)
   const room = spec('map--1--3')
-  await overTheWall(page, room, 'south', 'north', { approach: column(2, [7]), first: floor(2, 6), second: floor(2, 5), wall: { x: 2, z: 4, y: 3 }, beyond: column(2, [3, 2, 1, 0]) })
-  await overTheWall(page, room, 'north', 'south', { approach: column(2, [0, 1]), first: floor(2, 2), second: floor(2, 3), wall: { x: 2, z: 4, y: 3 }, beyond: column(2, [5, 6, 7]) })
+  await overTheWall(page, room, 'south', 'north', { approach: column(2, [7, 6]), first: floor(2, 5), second: floor(2, 4), wall: { x: 2, z: 3, y: 3 }, beyond: column(2, [2, 1, 0]) })
+  await overTheWall(page, room, 'north', 'south', { approach: column(2, [0]), first: floor(2, 1), second: floor(2, 2), wall: { x: 2, z: 3, y: 3 }, beyond: column(2, [4, 5, 6, 7]) })
 })
 
 // Collapsing blocks over spikes between two blocks a block high: a charm put
@@ -134,15 +134,15 @@ test('map--4--5: pushes the table stack out of the row and runs under the balls 
   await startGame(page)
   const room = spec('map--4--5')
   for (const [from, to, pastTheRow, round] of [
-    ['south', 'north', (z: number) => z <= tileCentre(2), [floor(2, 2), floor(1, 2), floor(1, 1), floor(1, 0), floor(2, 0)]],
-    ['north', 'south', (z: number) => z >= tileCentre(4), [floor(2, 4), floor(1, 4), floor(1, 5), floor(1, 6), floor(1, 7), floor(2, 7)]],
+    ['south', 'north', (z: number) => z <= tileCentre(3), [floor(2, 3), floor(1, 3), floor(1, 2), floor(1, 1), floor(1, 0), floor(2, 0)]],
+    ['north', 'south', (z: number) => z >= tileCentre(5), [floor(2, 5), floor(1, 5), floor(1, 6), floor(1, 7), floor(2, 7)]],
   ] as const) {
     for (let run = 1; ; run++) {
       if ((await debug(page)).lives < 2) await startGame(page)
       const lives = (await debug(page)).lives
       const failure = await (async () => {
         await enterBy(page, room, from)
-        await walk(page, room, from === 'south' ? column(2, [7, 6, 5, 4]) : column(2, [0, 1, 2]))
+        await walk(page, room, from === 'south' ? column(2, [7, 6, 5]) : column(2, [0, 1, 2, 3]))
         await face(page, to)
         await walkUntil(page, (s) => pastTheRow(s.pos.z))
         await walk(page, room, [...round])
@@ -155,4 +155,17 @@ test('map--4--5: pushes the table stack out of the row and runs under the balls 
       if (run >= RUNS_UNDER_THE_BALLS) throw failure
     }
   }
+})
+
+// Steps up along the back wall, a block higher each, to a falling block level
+// with the last, which sinks under him to the floor by the north door, walled
+// in by spikes. The falling block only goes down: this way only, on foot.
+test('map--6--6: up the steps along the back wall, down with the falling block, out of the north door', async ({ page }) => {
+  test.setTimeout(120_000)
+  await startGame(page)
+  const room = spec('map--6--6')
+  await enterBy(page, room, 'west')
+  await walk(page, room, findFloorPath(room, doorOf(room, 'west'), doorOf(room, 'north')))
+  await leaveBy(page, room, 'north')
+  expect((await debug(page)).lives).toBe(5)
 })

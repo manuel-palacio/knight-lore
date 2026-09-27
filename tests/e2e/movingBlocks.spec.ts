@@ -6,11 +6,12 @@ import { debug, enterRoom, holdDaylight, standAt, startGame } from './support/ga
 // against Sabreman too (0xCB45, 0xCB9A): it waits while he is in its way,
 // does not push him, and moves on once he is clear.
 
-// map--4--3: the block of column 1 sways along z between cells 3.5 and 4.5
-// (world z 8 to 10); he stands in cell (1,5), where its far end reaches.
-const IN_ITS_WAY = { x: 3, y: 0, z: 11 }
+// map--4--3: the block of column 1 sways along z between cells 2.5 and 3.5
+// (world z 6 to 8); he stands in cell (1,4), where its far end reaches.
+const IN_ITS_WAY = { x: 3, y: 0, z: 9 }
 const CLEARANCE = 1 + 0.4
-const FAR_END = 10
+const NEAR_END = 6
+const FAR_END = 8
 
 const blockOfColumnOne = async (page: import('@playwright/test').Page) => (await debug(page)).platforms.find((p) => p.x === 3)!
 
@@ -24,7 +25,7 @@ test('a moving block sways only half a cell either side of where it stands', asy
     seen.add((await blockOfColumnOne(page)).z)
     await page.waitForTimeout(40)
   }
-  expect(Math.min(...seen)).toBeGreaterThanOrEqual(8)
+  expect(Math.min(...seen)).toBeGreaterThanOrEqual(NEAR_END)
   expect(Math.max(...seen)).toBeLessThanOrEqual(FAR_END)
   expect(Math.max(...seen) - Math.min(...seen)).toBeGreaterThan(1.5)
 })

@@ -274,7 +274,7 @@ async function main(): Promise<void> {
     hooks.__room = (id: string, entryX?: number, entryZ?: number) => {
       transitioning = true
       manager.transitionTo(id, entryX ?? 0, entryZ ?? 0).then((room) => {
-        if (entryX === undefined) room.setSpawn(Math.floor(room.grid.width / 2) * room.tileSize + room.tileSize / 2, 1)
+        if (entryX === undefined) room.setSpawn((room.grid.width * room.tileSize) / 2, 1)
         placePlayerAtSpawn(room)
         transitioning = false
       })

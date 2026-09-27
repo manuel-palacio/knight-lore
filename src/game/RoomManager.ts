@@ -35,8 +35,8 @@ export class RoomManager {
     if (!this.active) return null
     const width = this.active.grid.width * this.active.tileSize
     const depth = this.active.grid.depth * this.active.tileSize
-    const midX = Math.floor(this.active.grid.width / 2) * this.active.tileSize + this.active.tileSize / 2
-    const midZ = Math.floor(this.active.grid.depth / 2) * this.active.tileSize + this.active.tileSize / 2
+    const midX = width / 2
+    const midZ = depth / 2
     const inDoorX = Math.abs(x - midX) <= DOOR_HALF_SPAN
     const inDoorZ = Math.abs(z - midZ) <= DOOR_HALF_SPAN
     for (const exit of this.active.exits) {

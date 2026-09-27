@@ -27,7 +27,7 @@ describe('rooms from the original room table', () => {
   it('a narrow corridor (0x67): four cells across, a grille and a guard across it', () => {
     const corridor = room('map--1--2')
     expect(corridor.width).toBe(4)
-    expect(corridor.portcullises).toEqual([{ from: { x: 0, z: 5 }, to: { x: 3, z: 5 } }])
+    expect(corridor.portcullises).toEqual([{ from: { x: 0, z: 2 }, to: { x: 3, z: 2 } }])
     expect(corridor.pathGuards).toHaveLength(1)
   })
 

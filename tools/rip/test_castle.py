@@ -8,8 +8,19 @@ from castle import CAULDRON, RoomBuild, Walkable, rooms_short_of_wanderers  # no
 PLACED = {'half_x': False, 'half_y': False, 'lift': 0}
 
 
-def thing(kind, x, y, z=0, **placement):
-    return {'type': kind, 'x': x, 'y': y, 'z': z, 'placement': {**PLACED, **placement}}
+FULL = 8
+
+
+def thing(kind, x, z, level=0, **placement):
+    """An object of the original's room table at our cell (x, z): its y runs the other way."""
+    return {'type': kind, 'x': x, 'y': FULL - 1 - z, 'z': level, 'placement': {**PLACED, **placement}}
+
+
+def test_the_originals_y_runs_the_other_way_to_our_z():
+    # map--4-3, the start room: its four-high column is at y 4, which stands at
+    # z 3, the back of the room, behind the blocks at y 2 (z 5) in front of it.
+    room = build([{'type': 0, 'x': 3, 'y': 4, 'z': level, 'placement': PLACED} for level in range(4)])
+    assert room.fields['platforms'] == [{'x': 3, 'z': 3, 'height': 4}], room.fields['platforms']
 
 
 def build(objects, room_id=0x44, exits=None):
@@ -29,22 +40,23 @@ def test_guard_8_walks_along_x_first_towards_minus_x_and_back_when_blocked():
 
 
 def test_guard_8_on_a_half_row_is_stopped_by_a_block_in_either_row():
-    room = build([thing(8, 4, 3, half_y=True), thing(0, 2, 4)])
-    assert path_of(room) == [(4, 3.5), (3, 3.5), (7, 3.5)], path_of(room)
+    # Half a cell up the original's y is half a cell back: rows 2 and 3.
+    room = build([thing(8, 4, 3, half_y=True), thing(0, 2, 2)])
+    assert path_of(room) == [(4, 2.5), (3, 2.5), (7, 2.5)], path_of(room)
 
 
 def test_guard_13_turns_minus_x_plus_y_plus_x_minus_y_each_time_it_is_blocked():
-    # 0xB9D8: the rectangle guard's four headings, taken in turn when blocked.
-    # From (4,3): -x to (2,3), +y to (2,5), +x to (5,5), -y to (5,2), -x to
-    # (2,2), +y back to (2,5): the loop it keeps to, without the lead-in.
-    blocks = [thing(0, 1, 3), thing(0, 2, 6), thing(0, 6, 5), thing(0, 5, 1), thing(0, 1, 2)]
+    # 0xB9D8: the rectangle guard's four headings, taken in turn when blocked;
+    # the original's +y is our -z. From (4,3): -x to (2,3), -z to (2,1), +x to
+    # (5,1), +z to (5,4), -x to (2,4), -z back to (2,1): the loop it keeps to.
+    blocks = [thing(0, 1, 3), thing(0, 2, 0), thing(0, 6, 1), thing(0, 5, 5), thing(0, 1, 4)]
     room = build([thing(13, 4, 3)] + blocks)
-    assert path_of(room) == [(2, 5), (5, 5), (5, 2), (2, 2)], path_of(room)
+    assert path_of(room) == [(2, 1), (5, 1), (5, 4), (2, 4)], path_of(room)
 
 
 def test_guard_13_in_an_empty_room_walks_round_its_edge():
     room = build([thing(13, 3, 3)])
-    assert path_of(room) == [(0, 7), (7, 7), (7, 0), (0, 0)], path_of(room)
+    assert path_of(room) == [(0, 0), (7, 0), (7, 7), (0, 7)], path_of(room)
 
 
 def test_a_guard_starts_clear_of_a_doorway_but_walks_its_whole_route_past_it():
@@ -64,9 +76,15 @@ def test_a_moving_block_sways_only_into_open_cells():
     assert room.fields['movingPlatforms'] == [{'from': {'x': 3, 'z': 2.5}, 'to': {'x': 3, 'z': 3}, 'height': 1}], room.fields['movingPlatforms']
 
 
+def test_a_guard_loop_begins_at_a_corner_clear_of_the_doorways():
+    # map-0--1's loop came out beginning at (0,3), beside the west door at (0,4).
+    room = build([], exits={'west': 0x43})
+    assert room.clear_start([(0, 3), (2, 3), (2, 5), (0, 5)]) == [(2, 3), (2, 5), (0, 5), (0, 3)]
+
+
 def test_balls_bounce_where_they_stand_offset_by_their_template():
     room = build([thing(12, 3, 3, half_x=True, half_y=True), thing(24, 5, 5, 1)])
-    assert room.fields['balls'] == [{'x': 3.5, 'z': 3.5, 'height': 0}, {'x': 5, 'z': 5, 'height': 1}]
+    assert room.fields['balls'] == [{'x': 3.5, 'z': 2.5, 'height': 0}, {'x': 5, 'z': 5, 'height': 1}]
 
 
 def test_a_type_19_spiked_ball_hangs_four_blocks_above_its_level():

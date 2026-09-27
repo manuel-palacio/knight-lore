@@ -39,8 +39,9 @@ interface WallPlane {
 export function buildWallLayout(width: number, depth: number, exits: ExitDirection[], tile: number): WallBox[] {
   const w = width * tile
   const d = depth * tile
-  const midX = Math.floor(width / 2) * tile + tile / 2
-  const midZ = Math.floor(depth / 2) * tile + tile / 2
+  // The original centres its doorways on the wall, on the line between two cells.
+  const midX = w / 2
+  const midZ = d / 2
   const northPlane: WallPlane = { length: w, toWorld: (a, c) => ({ x: a, z: -THICK + c }) }
   const westPlane: WallPlane = { length: d, toWorld: (a, c) => ({ x: -THICK + c, z: a }) }
   // Front arches stand just inside the open edge so nothing pokes past the floor.

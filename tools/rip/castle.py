@@ -61,8 +61,9 @@ FALLING, CRUMBLING = 21, 22
 SPIKED_BALLS = {18, 19}
 GATES = {26: 'x', 27: 'z'}
 PIXELS_PER_BLOCK = 12
-# 0xB9D8: the rectangle guard turns -x, +y, +x, -y, each when it is blocked.
-ROUND_TURNS = [(-1, 0), (0, 1), (1, 0), (0, -1)]
+# 0xB9D8: the rectangle guard turns -x, +y, +x, -y, each when it is blocked;
+# the original's +y is our -z (see RoomBuild.cell).
+ROUND_TURNS = [(-1, 0), (0, -1), (1, 0), (0, 1)]
 
 warnings = []
 
@@ -164,7 +165,9 @@ class RoomBuild:
         return columns
 
     def cell(self, obj):
-        x, z = obj['x'] - self.dx, obj['y'] - self.dz
+        """The original's y runs from the near side of the room to the far one,
+        our z the other way (checked against screenshots of the original)."""
+        x, z = obj['x'] - self.dx, (self.depth - 1) - (obj['y'] - self.dz)
         if not (0 <= x < self.width and 0 <= z < self.depth):
             warn(f'{self.id}: type {obj["type"]} at ({obj["x"]},{obj["y"]}) lies outside the room, dropped')
             return None
@@ -206,7 +209,9 @@ class RoomBuild:
         elif kind in GATES:
             self.put('_gates', (x, z, GATES[kind]))
         elif kind in GUARDS:
-            self.put('_guards', (x, z, kind, obj['placement']['half_y']))
+            # Half a cell up the original's y is half a cell back along our z.
+            half = obj['placement']['half_y']
+            self.put('_guards', (x, z - 1 if half else z, kind, half))
         elif kind in BALLS:
             self.put('_balls', (x, z, level, obj['placement']))
         elif kind == HOPPER:
@@ -228,14 +233,14 @@ class RoomBuild:
                 self.put('portcullises', {'from': {'x': x, 'z': span[0]}, 'to': {'x': x, 'z': span[1]}})
         for x, z, kind, half in self.fields.pop('_guards', []):
             x, z = self.inward(x, z)
-            route = self.guard_route(kind, x, z, half)
+            route = self.clear_start(self.guard_route(kind, x, z, half))
             if len(route) > 1:
                 self.put('pathGuards', {'path': [{'x': a, 'z': b + (0.5 if half else 0)} for a, b in route]})
             else:
                 warn(f'{self.id}: guard at ({x},{z}) has nowhere to walk, dropped')
         for x, z, level, placement in self.fields.pop('_balls', []):
             x, z = self.inward(x, z)
-            self.put('balls', {'x': x + 0.5 if placement['half_x'] else x, 'z': z + 0.5 if placement['half_y'] else z, 'height': level})
+            self.put('balls', {'x': x + 0.5 if placement['half_x'] else x, 'z': z - 0.5 if placement['half_y'] else z, 'height': level})
         for x, z, level in self.fields.pop('_hoppers', []):
             x, z = self.inward(x, z)
             self.put('hoppers', {'x': x, 'z': z, 'height': level, **({'randomHops': True} if self.odd else {})})
@@ -266,6 +271,11 @@ class RoomBuild:
         if corners[loop_start] != (x, z):
             warn(f'{self.id}: guard at ({x},{z}) starts at {corners[loop_start]}, where its loop begins')
         return distinct_corners(corners[loop_start:])
+
+    def clear_start(self, route):
+        """The same loop, begun at its first corner clear of the doorways."""
+        clear = [i for i, (x, z) in enumerate(route) if not self.near_door(x, z)]
+        return route[clear[0]:] + route[:clear[0]] if clear else route
 
     def walk_until_blocked(self, at, step, half):
         x, z = at
@@ -342,8 +352,9 @@ class RoomBuild:
         return sorted(cells, key=lambda c: (abs(c[0] - cx) + abs(c[1] - cz), c))
 
     def spawn(self):
+        things = {(t['x'], t['z']) for field in ('boxes', 'spikes') for t in self.fields.get(field, [])}
         for x, z in sorted(((x, z) for x in range(self.width) for z in range(self.depth)), key=lambda c: (c[1], abs(c[0] - self.width // 2))):
-            if (x, z) not in self.columns and not self.blocked(x, z):
+            if (x, z) not in self.columns and (x, z) not in things and not self.blocked(x, z):
                 return x, z
         return 0, 0
 

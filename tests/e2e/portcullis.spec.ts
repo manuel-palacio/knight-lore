@@ -9,6 +9,7 @@ const GATED = 'map--1--2'
 const spec = ROOM_SPECS.find((s) => s.id === GATED)!
 const GATE_ROW = spec.portcullises![0]!.from.z
 const DOOR_AXIS_X = tileCentre(doorOf(spec, 'south').x)
+const GRILLE_Z = tileCentre(GATE_ROW)
 
 test('the corridor cannot be crossed while the gate is shut, and can once it has risen', async ({ page }) => {
   test.setTimeout(90_000)
@@ -21,7 +22,8 @@ test('the corridor cannot be crossed while the gate is shut, and can once it has
   const held = await debug(page)
   await page.keyboard.up('ArrowUp')
   expect(held.gates[0]!.state).toBe('shut')
-  expect(held.pos.z).toBeLessThan(GATE_ROW * 2)
+  // Held short of the grille, which runs across the middle of its row.
+  expect(held.pos.z).toBeLessThan(GRILLE_Z)
 
   await walkPath(page, findFloorPath(spec, doorOf(spec, 'north'), doorOf(spec, 'south')), dangersOf(spec))
   await face(page, 'south')

@@ -1,5 +1,6 @@
 import { projectToScreen, isoDepth, filmationConfig, roomScreenOffset, type IsoConfig } from './IsoProjection'
 import type { Grid } from './Grid'
+import { snapToInkAndPaper } from './InkAndPaper'
 import { buildWallLayout, type ExitDirection, type WallBox } from './WallLayout'
 import { columnSegments, type DecorKind } from './ColumnLooks'
 
@@ -120,6 +121,14 @@ export class IsoRenderer {
     const shift = roomScreenOffset(room.grid.width, room.grid.depth, this.cfg)
     const cfg = { ...this.cfg, originX: this.cfg.originX + shift.dx, originY: this.cfg.originY + shift.dy }
     for (const it of items) it.draw(ctx, cfg)
+    this.snapToRoomInk(room.tint)
+  }
+
+  // One ink on black, as the Spectrum draws it: no shades, no soft edges.
+  private snapToRoomInk(tint: number): void {
+    const image = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height)
+    snapToInkAndPaper(image.data, { r: (tint >> 16) & 0xff, g: (tint >> 8) & 0xff, b: tint & 0xff })
+    this.ctx.putImageData(image, 0, 0)
   }
 
   private brick(b: WallBox, shades: Shades): Renderable {

@@ -11,12 +11,13 @@ export function tileCenter(cell: number): number {
 // Per-room colour: each Knight Lore room had one dominant ZX Spectrum hue.
 export type RoomTint = 'yellow' | 'blue' | 'cyan' | 'green' | 'purple' | 'red'
 
+// The four the castle uses are the original's, as the emulator shows them.
 const TINT_RGB: Record<RoomTint, number> = {
-  yellow: 0xffc060,
+  yellow: 0xffff55,
   blue: 0x4080c0,
-  cyan: 0x40b8c8,
-  green: 0x40b070,
-  purple: 0xa050c0,
+  cyan: 0x75fbfd,
+  green: 0x75fb4c,
+  purple: 0xea33f6,
   red: 0xc04050,
 }
 

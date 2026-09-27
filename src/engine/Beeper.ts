@@ -2,13 +2,14 @@
 // AudioContext is created lazily because browsers require a user gesture.
 
 import { CURE_TUNE, GAME_START_TUNE, TITLE_TUNE } from './tunes'
+import { JUMP_EFFECT, PICK_UP_EFFECT } from './effects'
 
 export interface Note {
   frequency: number
   duration: number
 }
 
-export type SoundName = 'tick' | 'ticky' | 'gameStart' | 'title' | 'jump' | 'land' | 'pickup' | 'drop' | 'deliver' | 'transform' | 'door' | 'win' | 'wrong' | 'day'
+export type SoundName = 'tick' | 'ticky' | 'gameStart' | 'title' | 'jump' | 'land' | 'pickup' | 'drop' | 'door' | 'win' | 'wrong' | 'day'
 
 const note = (frequency: number, duration: number): Note => ({ frequency, duration })
 
@@ -17,12 +18,10 @@ export const SOUNDS: Record<SoundName, Note[]> = {
   gameStart: GAME_START_TUNE,
   title: TITLE_TUNE,
   ticky: [note(1400, 0.016), note(1100, 0.02)],
-  jump: [note(300, 0.04), note(450, 0.04), note(600, 0.05)],
+  jump: JUMP_EFFECT,
   land: [note(220, 0.05)],
-  pickup: [note(660, 0.05), note(880, 0.05), note(1320, 0.08)],
-  drop: [note(440, 0.05), note(330, 0.06)],
-  deliver: [note(523, 0.08), note(659, 0.08), note(784, 0.08), note(1047, 0.16)],
-  transform: [note(200, 0.1), note(260, 0.1), note(200, 0.1), note(320, 0.1), note(200, 0.1), note(400, 0.12)],
+  pickup: PICK_UP_EFFECT,
+  drop: PICK_UP_EFFECT,
   door: [note(392, 0.05), note(523, 0.07)],
   wrong: [note(220, 0.06), note(180, 0.1)],
   day: [note(784, 0.08), note(1047, 0.16)],
@@ -36,6 +35,9 @@ const FOOTSTEPS: (SoundName | null)[] = ['tick', null, 'ticky', null, 'ticky', n
 export function footstepSound(stepsTaken: number): SoundName | null {
   return FOOTSTEPS[stepsTaken % FOOTSTEPS.length] ?? null
 }
+
+// The original's effects among the named sounds, played as effects.
+const EFFECTS = new Set<SoundName>(['jump', 'pickup', 'drop'])
 
 const START_GRACE_MS = 300
 const EFFECT_LEVEL = 0.06
@@ -73,6 +75,7 @@ export class Beeper {
   }
 
   play(name: SoundName): void {
+    if (EFFECTS.has(name)) return this.playEffect(SOUNDS[name])
     if (this.muted) return
     const ctx = this.ensureContext()
     if (!ctx) return

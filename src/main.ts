@@ -14,6 +14,7 @@ import { Player, type Facing } from './game/Player'
 import { FACING_VECTOR } from './game/Facing'
 import { STEP_LENGTH, TICKS_PER_FRAME, TICKS_PER_STEP } from './engine/StepClock'
 import { EPS } from './engine/epsilons'
+import { SEIZURE_BEAT, deliveryEffect, seizureEffect } from './engine/effects'
 import { TouchPad } from './engine/TouchPad'
 import { bindTouchControls, showTouchControlsWhenTouched } from './engine/TouchControls'
 import { CHARM_HEIGHT, CHARM_HOVER, Pickup } from './game/Pickup'
@@ -265,7 +266,7 @@ async function main(): Promise<void> {
   state.onTransformed = () => {
     transformElapsed = 0
     transformTarget = state.form
-    beeper.play('transform')
+    beeper.playEffect(seizureEffect(seizurePoses()))
     if (state.form === 'human') beeper.play('day')
   }
 
@@ -447,7 +448,8 @@ async function main(): Promise<void> {
       return false
     }
     state.emptiedRooms.push(charm.homeRoomId)
-    beeper.play(state.won ? 'win' : 'deliver')
+    if (state.won) beeper.play('win')
+    else beeper.playEffect(deliveryEffect(charm.id))
     return true
   }
 
@@ -772,6 +774,13 @@ async function main(): Promise<void> {
 
 // --- Set-piece drawing ---
 
+
+// The seizure's poses, one drawn at random on each fourth frame of it, as
+// the original draws them (0xC357), for as long as the transformation lasts.
+function seizurePoses(): number[] {
+  const beats = Math.ceil(TRANSFORM_DURATION / SEIZURE_BEAT)
+  return Array.from({ length: beats }, () => Math.floor(Math.random() * 4))
+}
 
 // A slab on four legs: the slab is one box, each leg a thin box at a corner.
 // How a walker gets past it: behind a patrol, under a bounce, or away from a wanderer.

@@ -142,7 +142,7 @@ export class Player extends Entity {
     const dir = FACING_VECTOR[this.facing]
     const targetX = this.position.x + dir.x * stride
     const targetZ = this.position.z + dir.z * stride
-    if (this.dynamicSupportAt(ctx, targetX, targetZ) > this.position.y + EPS.STEP) return
+    if (this.highestUnderFootprint(ctx, targetX, targetZ) > this.position.y + EPS.STEP) return
     const resolved = resolveHorizontal(
       { x: this.position.x, z: this.position.z },
       { x: targetX, z: targetZ },
@@ -153,6 +153,18 @@ export class Player extends Entity {
     )
     this.position.x = resolved.x
     this.position.z = resolved.z
+  }
+
+  // A box or block is walked into, or stood on, when any of his body would
+  // be in it or over it, not just his middle: two boxes side by side stop
+  // him though a gap between them lines up with it, and he lands on a box's
+  // edge.
+  private highestUnderFootprint(ctx: PlayerCtx, x: number, z: number): number {
+    const box = this.aabb(x, z)
+    const inset = EPS.OVERLAP
+    const xs = [box.minX + inset, x, box.maxX - inset]
+    const zs = [box.minZ + inset, z, box.maxZ - inset]
+    return Math.max(...xs.flatMap((px) => zs.map((pz) => this.dynamicSupportAt(ctx, px, pz))))
   }
 
   private dynamicSupportAt(ctx: PlayerCtx, x: number, z: number): number {
@@ -168,7 +180,7 @@ export class Player extends Entity {
   private supportAt(ctx: PlayerCtx): number {
     const cx = Math.floor(this.position.x / ctx.tileSize)
     const cz = Math.floor(this.position.z / ctx.tileSize)
-    return Math.max(ctx.grid.supportHeight(cx, cz), this.dynamicSupportAt(ctx, this.position.x, this.position.z))
+    return Math.max(ctx.grid.supportHeight(cx, cz), this.highestUnderFootprint(ctx, this.position.x, this.position.z))
   }
 
   get carrying(): string[] {

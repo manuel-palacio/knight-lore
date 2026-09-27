@@ -233,6 +233,27 @@ describe('Player on dynamic supports', () => {
     expect(player.position.z).toBeLessThan(5)
   })
 
+  it('is blocked by two boxes side by side though the gap between them lines up with his middle', () => {
+    // map-4--2's chests: 1.5 deep, a cell apart, half a unit of gap between them; the door is on the gap.
+    const { grid, state, player } = setupRoom()
+    player.position.set(1, 0, 4)
+    player.facing = 'east'
+    const chest = (cz: number) => (px: number, pz: number) => (Math.abs(px - 7) < 1.125 && Math.abs(pz - cz) < 0.75 ? 1 : null)
+    const c = { ...ctx(grid, state, { up: true }), dynamicSupport: (px: number, pz: number) => chest(3)(px, pz) ?? chest(5)(px, pz) }
+    step(player, c, 40)
+    expect(player.position.x).toBeLessThan(7 - 1.125)
+  })
+
+  it('lands on a box with only the edge of his body over it', () => {
+    const { grid, state, player } = setupRoom()
+    player.position.set(4.3, 3, 4)
+    player.state = 'airborne'
+    const box = (px: number, pz: number) => (px < 4 && Math.abs(pz - 4) < 1 ? 1 : null)
+    const c = { ...ctx(grid, state), dynamicSupport: box }
+    for (let i = 0; i < 200 && (player.state as string) !== 'grounded'; i++) tick(player, c)
+    expect(player.position.y).toBe(1)
+  })
+
   it('falls when the dynamic support moves away', () => {
     const { grid, state, player } = setupRoom()
     player.position.set(4, 1, 4)

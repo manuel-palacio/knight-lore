@@ -31,6 +31,7 @@ export interface Debug {
   night: boolean
   gates: { cells: Cell[]; state: string; blocking: boolean; openFramesLeft: number }[]
   spikedBalls: { x: number; y: number; z: number }[]
+  boxes: { kind: string; x: number; bottom: number; z: number }[]
   fallingBlocks: { x: number; top: number; z: number }[]
   // How each is got past: behind a patrol, under a bounce, or by luck with a wanderer.
   monsters: { kind: 'patrols' | 'bounces' | 'roams'; x: number; y: number; z: number }[]

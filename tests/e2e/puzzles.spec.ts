@@ -169,3 +169,20 @@ test('map--6--6: up the steps along the back wall, down with the falling block, 
   await leaveBy(page, room, 'north')
   expect((await debug(page)).lives).toBe(5)
 })
+
+// map-4--2's chests wall the room off, a cell apart with a gap between each
+// two, and the west door lines him up on a gap: his body still meets them.
+test('map-4--2: walking in from the west door, he cannot pass through the wall of chests', async ({ page }) => {
+  await startGame(page)
+  await enterRoom(page, 'map-4--2', entryFor('east', 8, 4))
+  await holdDaylight(page)
+  await face(page, 'east')
+  await page.keyboard.down('ArrowUp')
+  await page.waitForTimeout(7_000)
+  await page.keyboard.up('ArrowUp')
+  expect((await debug(page)).room).toBe('map-4--2')
+  // He pushes the chests in front of him on to the east wall (x 16), and
+  // stays behind them: short of it by a chest, 18 pixels across, and half himself.
+  const chestAcross = 18 / 8
+  expect((await debug(page)).pos.x).toBeLessThan(16 - chestAcross - 0.4)
+})

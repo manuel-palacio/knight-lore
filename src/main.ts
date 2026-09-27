@@ -316,6 +316,9 @@ async function main(): Promise<void> {
       spikedBalls: activeRoom().entities
         .filter((e) => e instanceof SpikedBall)
         .map((e) => ({ x: e.position.x, y: e.position.y, z: e.position.z })),
+      boxes: activeRoom().entities
+        .filter((e): e is PushableBox => e instanceof PushableBox)
+        .map((e) => ({ kind: e.kind, x: e.position.x, bottom: e.bottom, z: e.position.z })),
       fallingBlocks: activeRoom().entities
         .filter((e): e is FallingBlock => e instanceof FallingBlock)
         .map((e) => ({ x: e.position.x, top: e.top, z: e.position.z })),
@@ -494,13 +497,18 @@ async function main(): Promise<void> {
     if (player.state !== 'grounded') return
     const ahead = FACING_VECTOR[player.facing]
     const reach = player.extents.x / 2 + STEP_LENGTH
-    const x = player.position.x + ahead.x * reach
-    const z = player.position.z + ahead.z * reach
-    const box = room.entities.find((e): e is PushableBox =>
-      e instanceof PushableBox && e.covers(x, z) && e.top > player.position.y + EPS.STEP && e.bottom < player.position.y + player.extents.y)
-    if (!box) return
+    // Across his leading edge, not just his middle: he may walk into two boxes at once.
+    const half = player.extents.x / 2 - EPS.OVERLAP
+    const edge = [-half, 0, half].map((side) => ({
+      x: player.position.x + ahead.x * reach + ahead.z * side,
+      z: player.position.z + ahead.z * reach + ahead.x * side,
+    }))
     const pace = (STEP_LENGTH * TICKS_PER_FRAME) / TICKS_PER_STEP
-    box.push({ x: ahead.x * pace, z: ahead.z * pace })
+    for (const e of room.entities) {
+      const inTheWay = e instanceof PushableBox && edge.some((p) => e.covers(p.x, p.z)) &&
+        e.top > player.position.y + EPS.STEP && e.bottom < player.position.y + player.extents.y
+      if (inTheWay) e.push({ x: ahead.x * pace, z: ahead.z * pace })
+    }
   }
 
   // A table or chest glides with a sound on every frame it moves (0xC232).

@@ -110,12 +110,16 @@ function lands(room: Room, start: { x: number; y: number; z: number }, along: { 
   for (let tick = 0; tick < MAX_TICKS; tick++) {
     player.update(SIMULATION_DT, contextFor(room, player, tick === 0, held))
     if (hazards.some((h) => touchesHazard(player, h))) return false
-    if (tick > 0 && player.state === 'grounded') {
-      const cell = { x: Math.floor(player.position.x / TILE), z: Math.floor(player.position.z / TILE) }
-      return cell.x === to.x && cell.z === to.z && Math.abs(player.position.y - to.y) < 1e-6
-    }
+    if (tick > 0 && player.state === 'grounded') return overCell(player, to) && Math.abs(player.position.y - to.y) < 1e-6
   }
   return false
+}
+
+// Any of his body over the cell: he stands on an edge as well as in the middle (see Player).
+function overCell(player: Player, cell: Step): boolean {
+  const half = player.extents.x / 2
+  const inside = (at: number, c: number) => at + half > c * TILE && at - half < (c + 1) * TILE
+  return inside(player.position.x, cell.x) && inside(player.position.z, cell.z)
 }
 
 function contextFor(room: Room, player: Player, pressed: boolean, held: boolean): PlayerCtx {

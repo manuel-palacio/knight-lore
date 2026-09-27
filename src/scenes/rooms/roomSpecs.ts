@@ -2,6 +2,7 @@ import type { RoomTint } from './shell'
 import type { ItemId } from './items'
 import type { BoxKind } from '../../game/PushableBox'
 import type { DecorKind } from '../../engine/ColumnLooks'
+import type { FlameAxis } from '../../game/Flame'
 
 // Data-driven rooms. A spec is pure data (unit-tested for map integrity);
 // buildRoomFromSpec turns it into a Room. Cells are 0..7 on the 8x8 grid.
@@ -50,7 +51,7 @@ export interface RoomSpec {
   hoppers?: (Cell & { height: number; randomHops?: boolean })[]
   cauldron?: Cell & { height: number }
   wizard?: Cell
-  flames?: (Cell & { height: number })[]
+  flames?: (Cell & { height: number; axis: FlameAxis })[]
   // Grilles that rise and fall across a line of cells (see Portcullis).
   portcullises?: { from: Cell; to: Cell }[]
   // Read off map.png (tools/map): doors, blocks, spike beds, some furniture.
@@ -193,7 +194,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     exits: [{ direction: 'east', target: 'map-7--8' }, { direction: 'west', target: 'map-5--8' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
-    flames: [{ x: 2, z: 3, height: 0 }, { x: 5, z: 2, height: 0 }, { x: 4, z: 0, height: 0 }, { x: 3, z: 1, height: 0 }],
+    flames: [{ x: 2, z: 3, height: 0, axis: 'z' }, { x: 5, z: 2, height: 0, axis: 'z' }, { x: 4, z: 0, height: 0, axis: 'z' }, { x: 3, z: 1, height: 0, axis: 'z' }],
   },
   {
     id: 'map-7--8', tint: 'green',
@@ -212,7 +213,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     floatingBlocks: [{ x: 1, z: 7, bottom: 3 }, { x: 2, z: 7, bottom: 3 }],
     fallingBlocks: [{ x: 0, z: 7, height: 4 }],
     spikedBalls: [{ x: 3, z: 7, height: 5 }, { x: 2, z: 6, height: 5 }, { x: 1, z: 6, height: 5 }, { x: 0, z: 6, height: 5 }],
-    flames: [{ x: 0, z: 4, height: 1 }],
+    flames: [{ x: 0, z: 4, height: 1, axis: 'z' }],
   },
   {
     id: 'map--6--7', tint: 'green', width: 4,
@@ -387,7 +388,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     spawn: { x: 3, z: 0 },
     platforms: [{ x: 2, z: 0, height: 2 }, { x: 2, z: 3, height: 2 }, { x: 4, z: 0, height: 2 }, { x: 4, z: 3, height: 2 }, { x: 6, z: 0, height: 2 }, { x: 6, z: 3, height: 2 }],
     decor: [{ x: 2, z: 3, height: 1, kind: 'gargoyle' }, { x: 4, z: 3, height: 1, kind: 'gargoyle' }, { x: 6, z: 3, height: 1, kind: 'gargoyle' }, { x: 2, z: 0, height: 1, kind: 'gargoyle' }, { x: 4, z: 0, height: 1, kind: 'gargoyle' }, { x: 6, z: 0, height: 1, kind: 'gargoyle' }],
-    flames: [{ x: 5, z: 3, height: 0 }, { x: 3, z: 0, height: 0 }],
+    flames: [{ x: 5, z: 3, height: 0, axis: 'z' }, { x: 3, z: 0, height: 0, axis: 'z' }],
   },
   {
     id: 'map--6--4', tint: 'cyan',
@@ -531,7 +532,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 4, z: 1, height: 2 }, { x: 4, z: 2, height: 2 }],
     floatingBlocks: [{ x: 7, z: 1, bottom: 3 }, { x: 7, z: 2, bottom: 3 }],
-    flames: [{ x: 6, z: 3, height: 3 }, { x: 5, z: 0, height: 3 }],
+    flames: [{ x: 6, z: 3, height: 3, axis: 'z' }, { x: 5, z: 0, height: 3, axis: 'z' }],
     pickups: [{ x: 3, z: 1, item: 'poison' }],
   },
   {
@@ -679,7 +680,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     spawn: { x: 3, z: 0 },
     platforms: [{ x: 4, z: 0, height: 4 }, { x: 4, z: 1, height: 1 }, { x: 4, z: 2, height: 1 }, { x: 4, z: 3, height: 4 }],
     decor: [{ x: 4, z: 0, height: 3, kind: 'gargoyle' }, { x: 4, z: 3, height: 3, kind: 'gargoyle' }],
-    flames: [{ x: 4, z: 1, height: 1 }],
+    flames: [{ x: 4, z: 1, height: 1, axis: 'z' }],
   },
   {
     id: 'map-2-0', tint: 'purple', depth: 4,
@@ -734,7 +735,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     spawn: { x: 2, z: 0 },
     platforms: [{ x: 0, z: 4, height: 4 }, { x: 1, z: 4, height: 1 }, { x: 2, z: 4, height: 1 }, { x: 3, z: 4, height: 4 }],
     decor: [{ x: 0, z: 4, height: 3, kind: 'gargoyle' }, { x: 3, z: 4, height: 3, kind: 'gargoyle' }],
-    flames: [{ x: 1, z: 4, height: 1 }],
+    flames: [{ x: 1, z: 4, height: 1, axis: 'x' }],
   },
   {
     id: 'map--1-1', tint: 'green', width: 4,
@@ -930,7 +931,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     exits: [{ direction: 'south', target: 'map--1-6' }, { direction: 'east', target: 'map-0-5' }, { direction: 'north', target: 'map--1-4' }, { direction: 'west', target: 'map--2-5' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
-    flames: [{ x: 3, z: 4, height: 0 }, { x: 4, z: 3, height: 0 }, { x: 3, z: 3, height: 0 }, { x: 4, z: 4, height: 0 }],
+    flames: [{ x: 3, z: 4, height: 0, axis: 'z' }, { x: 4, z: 3, height: 0, axis: 'z' }, { x: 3, z: 3, height: 0, axis: 'x' }, { x: 4, z: 4, height: 0, axis: 'x' }],
   },
   {
     id: 'map-0-5', tint: 'purple',

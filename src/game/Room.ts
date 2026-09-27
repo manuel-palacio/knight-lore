@@ -59,7 +59,7 @@ export class Room {
   }
 
   update(dt: number, sharedCtx: UpdateContext): void {
-    const ctx = { ...sharedCtx, grid: this.grid, tileSize: TILE_SIZE }
+    const ctx = { ...sharedCtx, grid: this.grid, tileSize: TILE_SIZE, entities: this.entities }
     for (const e of this.entities) {
       if (e.active) e.update(dt, ctx)
     }

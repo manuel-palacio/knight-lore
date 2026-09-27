@@ -49,7 +49,8 @@ SPIKES, GHOST, SPARKLE = 5, 9, 25
 # Pushable (template flag bit 2): a table moves only while pushed (0xC4C3), a
 # chest slides on until stopped (0xC4B6).
 BOXES = {6: 'chest', 7: 'table'}
-FLAMES = {10, 20}
+# Flames move to and fro: type 10 (0xB80F) along the original's y, our z; type 20 (0xB7ED) along x.
+FLAMES = {10: 'z', 20: 'x'}
 # Guards: 8 walks back and forth along x (handler 0xB73C), 13 round a
 # rectangle (0xB9A5). Balls bounce where they stand (0xB865); 23 hops after
 # Sabreman (0xB5FF).
@@ -196,7 +197,7 @@ class RoomBuild:
         elif kind == GHOST:
             self.put('ghosts', {'x': x, 'z': z})
         elif kind in FLAMES:
-            self.put('flames', {'x': x, 'z': z, 'height': level})
+            self.put('flames', {'x': x, 'z': z, 'height': level, 'axis': FLAMES[kind]})
         elif kind == CRUMBLING:
             self.put('vanishing', {'x': x, 'z': z, 'height': level + 1})
         elif kind == FALLING:
@@ -359,7 +360,7 @@ class RoomBuild:
         return 0, 0
 
 
-GHOST_LIKE = {GHOST} | set(SPIKED_BALLS) | FLAMES
+GHOST_LIKE = {GHOST} | set(SPIKED_BALLS) | set(FLAMES)
 
 
 def distinct_corners(corners):

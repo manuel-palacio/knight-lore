@@ -124,6 +124,11 @@ def test_hedges_and_gargoyles_are_blocks_drawn_as_themselves():
     assert room.fields['decor'] == [{'x': 3, 'z': 3, 'height': 1, 'kind': 'gargoyle'}, {'x': 5, 'z': 5, 'height': 0, 'kind': 'hedge'}]
 
 
+def test_flames_move_along_our_z_for_type_10_and_along_x_for_type_20():
+    room = build([thing(10, 2, 3), thing(20, 5, 3)])
+    assert [f['axis'] for f in room.fields['flames']] == ['z', 'x'], room.fields['flames']
+
+
 def test_rooms_past_a_ghost_are_not_short_of_wanderers():
     # The cauldron, then a room with a ghost, then a quiet room beyond it; and a quiet room the other way.
     ghost, beyond, quiet = CAULDRON + 1, CAULDRON + 2, CAULDRON - 1

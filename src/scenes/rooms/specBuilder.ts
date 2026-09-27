@@ -61,7 +61,7 @@ export function buildRoomFromSpec(spec: RoomSpec, sizeOf: (id: string) => RoomSi
       room.add(new CauldronSpirit(tileCenter(spec.cauldron.x), tileCenter(spec.cauldron.z)))
     }
     if (spec.wizard) room.add(new Wizard(tileCenter(spec.wizard.x), tileCenter(spec.wizard.z)))
-    for (const f of spec.flames ?? []) room.add(new Flame(tileCenter(f.x), f.height, tileCenter(f.z)))
+    for (const f of spec.flames ?? []) room.add(new Flame(tileCenter(f.x), f.height, tileCenter(f.z), f.axis))
     for (const e of spec.exits) {
       const target = sizeOf(e.target)
       const entry = entryFor(e.direction, target.width, target.depth)

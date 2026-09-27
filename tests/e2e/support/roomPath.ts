@@ -55,15 +55,18 @@ export function findFloorPath(spec: RoomSpec, from: Cell, to: Cell, keepOff = ne
   patrols.delete(key(from))
   patrols.delete(key(to))
   const gates = gateCells(spec)
+  // Spiked balls let go at random: he walks under as few of them as he can.
+  const underBalls = new Set((spec.spikedBalls ?? []).filter((b) => b.height > 0).map(key))
+  const exposed = new Set([...patrols, ...underBalls])
   const tries = [
-    { avoid: new Set([...patrols, ...gates]), jumpSpikes: false },
-    { avoid: gates, jumpSpikes: false },
-    { avoid: new Set([...patrols, ...gates]), jumpSpikes: true },
-    { avoid: gates, jumpSpikes: true },
-    { avoid: patrols, jumpSpikes: false },
-    { avoid: patrols, jumpSpikes: true },
-    { avoid: new Set<string>(), jumpSpikes: false },
-    { avoid: new Set<string>(), jumpSpikes: true },
+    { avoid: new Set([...patrols, ...gates]), jumpSpikes: false, crossing: underBalls },
+    { avoid: gates, jumpSpikes: false, crossing: exposed },
+    { avoid: new Set([...patrols, ...gates]), jumpSpikes: true, crossing: underBalls },
+    { avoid: gates, jumpSpikes: true, crossing: exposed },
+    { avoid: patrols, jumpSpikes: false, crossing: underBalls },
+    { avoid: patrols, jumpSpikes: true, crossing: underBalls },
+    { avoid: new Set<string>(), jumpSpikes: false, crossing: exposed },
+    { avoid: new Set<string>(), jumpSpikes: true, crossing: exposed },
   ]
   for (const attempt of tries) {
     const avoid = new Set([...attempt.avoid, ...keepOff])
@@ -88,24 +91,43 @@ interface SearchRules {
   jumpSpikes: boolean
   // A grille is crossed straight through, never walked along under.
   gates: Set<string>
+  // Patrols crossed, and hanging balls walked under, where they must be: as few cells of them as will do.
+  crossing?: Set<string>
 }
 
 function search(room: RoomSurfaces, rules: SearchRules, from: Step, to: Cell): Step[] | undefined {
-  const { avoid, jumpSpikes, gates } = rules
-  const seen = new Set([nodeKey(from, null)])
-  const queue: Node[] = [{ at: from, from: null }]
+  const { avoid, jumpSpikes, gates, crossing = new Set<string>() } = rules
+  const done = new Set<string>()
+  const queue: CostedNode[] = [{ at: from, from: null, cost: 0 }]
   while (queue.length > 0) {
     const node = queue.shift()!
     const at = node.at
+    if (done.has(nodeKey(at, node.from?.at ?? null))) continue
+    done.add(nodeKey(at, node.from?.at ?? null))
     if (at.x === to.x && at.z === to.z) return rebuild(node)
     for (const next of [...room.moves(at, node.from?.at ?? null), ...(jumpSpikes ? room.spikeJumps(at) : [])]) {
       const alongGrille = gates.has(key(at)) && gates.has(key(next))
-      if (seen.has(nodeKey(next, at)) || avoid.has(key(next)) || avoid.has(edgeKey(at, next)) || alongGrille) continue
-      seen.add(nodeKey(next, at))
-      queue.push({ at: next, from: node })
+      if (done.has(nodeKey(next, at)) || avoid.has(key(next)) || avoid.has(edgeKey(at, next)) || alongGrille) continue
+      const exposed = crossing.has(key(next)) || crossing.has(edgeKey(at, next))
+      enqueue(queue, { at: next, from: node, cost: node.cost + 1 + (exposed ? PATROL_COST : 0) })
     }
   }
   return undefined
+}
+
+// A cell on a patrol weighs as many as this many cells off it: the way that
+// spends fewest steps on patrols, then the shortest.
+const PATROL_COST = 100
+
+interface CostedNode extends Node {
+  cost: number
+}
+
+// In order of cost, first come first served among equals (breadth first when
+// nothing is weighed).
+function enqueue(queue: CostedNode[], node: CostedNode): void {
+  const after = queue.findIndex((n) => n.cost > node.cost)
+  queue.splice(after < 0 ? queue.length : after, 0, node)
 }
 
 // Where a walker can stand in each cell of a room, and what stops him.
@@ -138,7 +160,6 @@ class RoomSurfaces {
       if (s.height) this.addHazard(s, s.height)
       else this.floorSpikes.add(key(s))
     }
-    for (const f of spec.flames ?? []) this.addHazard(f, f.height)
     // Spiked balls are walked under while they hang: they let go one at a
     // time, a second or so apart, so a room of them is crossed before they
     // are down (and in odd-numbered rooms they wait for a pick-up there).
@@ -226,7 +247,32 @@ export interface RoomDangers {
 }
 
 export function dangersOf(spec: RoomSpec): RoomDangers {
-  return { spec, patrolled: patrolledCells(spec), guardedEdges: guardedEdges(spec), routes: (spec.pathGuards ?? []).map((g) => g.path), ballTop: ballTop(spec) }
+  const routes = [...(spec.pathGuards ?? []).map((g) => g.path), ...flameRoutes(spec)]
+  return { spec, patrolled: patrolledCells(spec), guardedEdges: guardedEdges(spec), routes, ballTop: ballTop(spec) }
+}
+
+// A flame goes to and fro along its axis at a guard's pace (see Flame), over
+// the cells at its own level, turning half a unit short of whatever stops it
+// (it is 0.8 across and moves a quarter unit at a time): a guard with a
+// route of two corners, a quarter cell past the end cells' centres.
+export function flameRoutes(spec: RoomSpec): Cell[][] {
+  return (spec.flames ?? []).map((f) => {
+    const [lo, hi] = flameLane(spec, f)
+    const along = (at: number) => (f.axis === 'x' ? { x: at, z: f.z } : { x: f.x, z: at })
+    return [along(lo - 0.25), along(hi + 0.25)]
+  })
+}
+
+function flameLane(spec: RoomSpec, flame: NonNullable<RoomSpec['flames']>[number]): [number, number] {
+  const heights = new Map((spec.platforms ?? []).map((p) => [key(p), p.height]))
+  const length = flame.axis === 'x' ? spec.width ?? 8 : spec.depth ?? 8
+  const start = flame.axis === 'x' ? flame.x : flame.z
+  const level = (at: number) => heights.get(key(flame.axis === 'x' ? { x: at, z: flame.z } : { x: flame.x, z: at })) ?? 0
+  let lo = start
+  let hi = start
+  while (lo > 0 && level(lo - 1) === flame.height) lo--
+  while (hi < length - 1 && level(hi + 1) === flame.height) hi++
+  return [lo, hi]
 }
 
 // The cells a guard passes through, each leg of its loop stepped one cell at
@@ -237,6 +283,9 @@ export function patrolledCells(spec: RoomSpec): Set<string> {
   const cells = new Set<string>()
   for (const point of guardPoints(spec)) if (Number.isInteger(point.x) && Number.isInteger(point.z)) cells.add(key(point))
   for (const ball of spec.balls ?? []) for (const c of coveredCells(ball)) cells.add(key(c))
+  for (const [a, b] of flameRoutes(spec)) {
+    for (let x = Math.ceil(a!.x); x <= Math.floor(b!.x); x++) for (let z = Math.ceil(a!.z); z <= Math.floor(b!.z); z++) cells.add(key({ x, z }))
+  }
   return cells
 }
 

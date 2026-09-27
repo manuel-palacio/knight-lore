@@ -301,7 +301,7 @@ async function main(): Promise<void> {
       platforms: activeRoom().entities.filter((e) => e instanceof MovingPlatform).map((e) => ({ x: e.position.x, z: e.position.z })),
       carrying: player.carrying,
       monsters: activeRoom().entities
-        .filter((e) => e instanceof PathGuard || e instanceof BouncingBall || e instanceof PatrolEnemy || e instanceof GhostEnemy || e instanceof HoppingBall)
+        .filter((e) => e instanceof PathGuard || e instanceof Flame || e instanceof BouncingBall || e instanceof PatrolEnemy || e instanceof GhostEnemy || e instanceof HoppingBall)
         .map((e) => ({ kind: monsterKind(e), x: e.position.x, y: e.position.y, z: e.position.z })),
       spikedBalls: activeRoom().entities
         .filter((e) => e instanceof SpikedBall)

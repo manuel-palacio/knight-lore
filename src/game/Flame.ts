@@ -1,19 +1,20 @@
 import { Entity, type UpdateContext } from './Entity'
 import { Category } from '../engine/categories'
-import { FrameClock, StepClock } from '../engine/StepClock'
+import { FrameClock } from '../engine/StepClock'
 import { PIXELS_PER_UNIT, fitsAt, type GroundCtx } from './Gravity'
 
 interface FlameCtx extends GroundCtx {
   entities?: Entity[]
 }
 
-// A flame on the floor or on a block: a hazard that flickers and moves to and
+// A flame on the floor or on a block: a hazard that flickers between its two
+// graphics every frame (0x56 and 0x57, 0xB985) and moves to and
 // fro along one axis, two pixels a frame of the original's clock, turning
 // back when a wall or a block stops it (type 10, handler 0xB80F, along the
 // original's y, our z; type 20, 0xB7ED, along x), or when it meets another
 // flame. It keeps to the level it burns on.
 export const FLAME_STEP_PX = 2
-const FRAMES = 3
+export const FLAME_FRAMES = 2
 const HALF_WIDTH = 0.4
 const EDGE = 1e-6
 
@@ -24,7 +25,6 @@ export class Flame extends Entity {
   private readonly axis: FlameAxis
   private readonly home: { x: number; z: number }
   private heading = 1
-  private readonly flicker = new StepClock()
   private readonly clock = new FrameClock()
 
   constructor(x: number, y: number, z: number, axis: FlameAxis) {
@@ -42,8 +42,9 @@ export class Flame extends Entity {
   }
 
   update(_dt: number, ctx: UpdateContext): void {
-    if (this.flicker.tick()) this.frame = (this.frame + 1) % FRAMES
-    if (this.clock.tick() && !this.tryMove(ctx as FlameCtx)) this.heading = -this.heading
+    if (!this.clock.tick()) return
+    this.frame = (this.frame + 1) % FLAME_FRAMES
+    if (!this.tryMove(ctx as FlameCtx)) this.heading = -this.heading
   }
 
   private tryMove(ctx: FlameCtx): boolean {

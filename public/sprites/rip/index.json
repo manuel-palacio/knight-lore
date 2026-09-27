@@ -128,11 +128,12 @@
   ]
  },
  "flame": {
-  "cells": 1,
-  "cellWidth": 32,
-  "cellHeight": 29,
+  "cells": 2,
+  "cellWidth": 16,
+  "cellHeight": 16,
   "addresses": [
-   "0x77aa"
+   "0x7926",
+   "0x7964"
   ]
  },
  "spikes": {

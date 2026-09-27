@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { Flame, FLAME_STEP_PX } from '../../src/game/Flame'
+import { Flame, FLAME_FRAMES, FLAME_STEP_PX } from '../../src/game/Flame'
 import { PIXELS_PER_UNIT } from '../../src/game/Gravity'
 import { Grid } from '../../src/engine/Grid'
 import { runFrames } from './frames'
@@ -74,6 +74,17 @@ describe('Flame', () => {
       for (const f of flames) runFrames(f, 1, { grid, tileSize: 2, entities: flames })
       expect(right.position.x - left.position.x).toBeGreaterThanOrEqual(0.8 - 1e-9)
     }
+  })
+
+  it('flickers between its two graphics (0x56, 0x57) on every frame (0xB985)', () => {
+    expect(FLAME_FRAMES).toBe(2)
+    const flame = new Flame(9, 0, 9, 'x')
+    const seen: number[] = []
+    for (let i = 0; i < 4; i++) {
+      run(flame, 1)
+      seen.push(flame.frame)
+    }
+    expect(seen).toEqual([1, 0, 1, 0])
   })
 
   it('goes back to where it started when the room is reset', () => {

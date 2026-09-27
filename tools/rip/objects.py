@@ -27,7 +27,9 @@ SNAPSHOT = 'reference/KnightLore.z80'
 OUT = 'public/sprites/rip'
 SPRITE_TABLE = 0x7112
 OBJECTS = {'spiked-ball.png': 63, 'hedge.png': 6, 'gargoyle.png': 22, 'chest.png': 85, 'table.png': 84}
-MASKED_AGAIN = ['spikes', 'cage', 'ball', 'ghost', 'cauldron', 'stars']
+MASKED_AGAIN = ['spikes', 'cage', 'ball', 'ghost', 'cauldron', 'stars',
+                # The flame's two graphics, 0x56 and 0x57 (the first rip had filed the hedge as it).
+                'flame']
 
 
 def sprite_address(memory, graphic):

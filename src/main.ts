@@ -5,7 +5,7 @@ import { GameState, ALL_ITEMS, type SavedGame } from './game/GameState'
 import { CanvasHud, HUD_HEIGHT } from './game/CanvasHud'
 import { Overlays } from './game/Overlays'
 import { Wizard } from './game/Wizard'
-import { Flame } from './game/Flame'
+import { Flame, FLAME_FRAMES } from './game/Flame'
 import { Portcullis } from './game/Portcullis'
 import { SpikedBall } from './game/SpikedBall'
 import { FloatingBlock } from './game/FloatingBlock'
@@ -123,7 +123,7 @@ async function main(): Promise<void> {
   const setPieces = {
     cauldron: await loadImage('/sprites/rip/cauldron.png'),
     wizard: await loadImage('/sprites/wizard.png'),
-    flame: await loadImage('/sprites/flame.png'),
+    flame: await loadImage('/sprites/rip/flame.png'),
     stars: await loadImage('/sprites/rip/stars.png'),
   }
   const monsterSources = {
@@ -679,7 +679,7 @@ async function main(): Promise<void> {
         out.push(setPieceSprite(monster('spikedBall', room.tint), e.position.x, e.position.y, e.position.z))
       } else if (e instanceof Flame) {
         const flame = inHue(setPieces.flame, room.tint)
-        const frameW = flame.width / 3
+        const frameW = flame.width / FLAME_FRAMES
         out.push(spriteDynamic({ image: flame, frameX: e.frame * frameW, frameW, frameH: flame.height, scale: 1, flip: false, x: e.position.x, y: e.position.y, z: e.position.z }))
       }
     }

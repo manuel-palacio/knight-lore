@@ -37,6 +37,18 @@ describe('PushableBox', () => {
     expect(table.position.x).toBeCloseTo(7 + pace, 9)
   })
 
+  it('tells, once, that it has moved since it was last asked: the frames the push effect sounds on (0xC232)', () => {
+    const table = new PushableBox('table', { x: 7, z: 7 }, 0)
+    const ctx = room([table])
+    expect(table.consumeMoved()).toBe(false)
+    table.push(east)
+    runFrames(table, 1, ctx)
+    expect(table.consumeMoved()).toBe(true)
+    expect(table.consumeMoved()).toBe(false)
+    runFrames(table, 3, ctx)
+    expect(table.consumeMoved()).toBe(false)
+  })
+
   it('a chest slides on until something stops it', () => {
     const chest = new PushableBox('chest', { x: 7, z: 7 }, 0)
     const ctx = room([chest])

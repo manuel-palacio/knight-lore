@@ -35,6 +35,7 @@ export class PushableBox extends Entity {
   velocity: Heading = { x: 0, z: 0 }
   private readonly start: { x: number; z: number; heightPx: number }
   private readonly clock = new FrameClock()
+  private lastSeen: { x: number; z: number; heightPx: number }
 
   // `bottom` is the height it stands at, in blocks.
   constructor(kind: BoxKind, at: { x: number; z: number }, bottom: number) {
@@ -47,6 +48,7 @@ export class PushableBox extends Entity {
     this.heightPx = Math.round(bottom * PIXELS_PER_BLOCK)
     this.start = { ...at, heightPx: this.heightPx }
     this.position.set(at.x, bottom, at.z)
+    this.lastSeen = { ...at, heightPx: this.heightPx }
   }
 
   get bottom(): number {
@@ -66,6 +68,14 @@ export class PushableBox extends Entity {
     return Math.abs(x - this.position.x) < this.halfX + margin - EDGE && Math.abs(z - this.position.z) < this.halfZ + margin - EDGE
   }
 
+  // True when it has moved since this was last asked: pushed, carried or falling.
+  consumeMoved(): boolean {
+    const now = { x: this.position.x, z: this.position.z, heightPx: this.heightPx }
+    const moved = now.x !== this.lastSeen.x || now.z !== this.lastSeen.z || now.heightPx !== this.lastSeen.heightPx
+    this.lastSeen = now
+    return moved
+  }
+
   // Walked into: it takes on the pusher's velocity (units a frame).
   push(velocity: Heading): void {
     this.velocity = { ...velocity }
@@ -76,6 +86,7 @@ export class PushableBox extends Entity {
     this.heightPx = this.start.heightPx
     this.speedPx = 0
     this.velocity = { x: 0, z: 0 }
+    this.lastSeen = { ...this.start }
   }
 
   update(_dt: number, ctxRaw: UpdateContext): void {

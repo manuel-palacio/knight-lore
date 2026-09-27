@@ -39,6 +39,7 @@ import { selectCharacterFrame, STRIP_CELLS } from './game/CharacterFrame'
 import { Transition } from './game/Transition'
 import { loadSave, writeSave, clearSave } from './engine/SaveSlot'
 import { Beeper, footstepSound } from './engine/Beeper'
+import { pushEffect } from './engine/effects'
 import { projectToScreen, isoDepth, FULL_ROOM_CELLS } from './engine/IsoProjection'
 
 const DEATH_FLASH_FRAMES = 2
@@ -477,6 +478,13 @@ async function main(): Promise<void> {
     box.push({ x: ahead.x * pace, z: ahead.z * pace })
   }
 
+  // A table or chest glides with a sound on every frame it moves (0xC232).
+  function boxSoundPass(room: Room): void {
+    for (const e of room.entities) {
+      if (e instanceof PushableBox && e.consumeMoved()) beeper.playEffect(pushEffect(e.position, room.grid))
+    }
+  }
+
   function dynamicSupportAt(room: Room, x: number, z: number, y: number): number | null {
     let best: number | null = null
     for (const e of room.entities) {
@@ -671,6 +679,7 @@ async function main(): Promise<void> {
       if (footstep) beeper.play(footstep)
     }
     room.update(dt, ctx)
+    boxSoundPass(room)
     if (stepped) pushPass(room)
     resolveActorOverlap(room)
     if (input.wasPressed('KeyE') && !tryDeliverPass(room) && !tryPickupPass(room)) tryPutDownPass(room)

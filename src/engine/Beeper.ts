@@ -39,6 +39,8 @@ export function footstepSound(stepsTaken: number): SoundName | null {
 }
 
 const START_GRACE_MS = 300
+const EFFECT_LEVEL = 0.06
+const HIGHEST_HEARD = 16_000
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -98,6 +100,49 @@ export class Beeper {
       this.sounding.push(osc)
       at += n.duration
     }
+  }
+
+  // One of the original's effects (see effects.ts): its cycles are far too
+  // short for a note each, so each run of them between silences is one
+  // square wave, its pitch stepped at every cycle. What the speaker could only
+  // click at, above hearing, is left silent.
+  playEffect(notes: Note[]): void {
+    if (this.muted) return
+    const ctx = this.ensureContext()
+    if (!ctx) return
+    let at = ctx.currentTime
+    let osc: OscillatorNode | null = null
+    let gain: GainNode | null = null
+    const end = (): void => {
+      if (!osc || !gain) return
+      gain.gain.setValueAtTime(EFFECT_LEVEL, at)
+      gain.gain.linearRampToValueAtTime(0, at + 0.002)
+      osc.stop(at + 0.002)
+      osc = null
+    }
+    for (const n of notes) {
+      if (n.frequency === 0 || n.frequency > HIGHEST_HEARD) {
+        end()
+        at += n.duration
+        continue
+      }
+      if (!osc) {
+        const run = ctx.createOscillator()
+        gain = ctx.createGain()
+        run.type = 'square'
+        run.frequency.value = n.frequency
+        gain.gain.setValueAtTime(0, at)
+        gain.gain.linearRampToValueAtTime(EFFECT_LEVEL, at + 0.002)
+        run.connect(gain).connect(ctx.destination)
+        run.start(at)
+        run.onended = () => { this.sounding = this.sounding.filter((o) => o !== run) }
+        this.sounding.push(run)
+        osc = run
+      }
+      osc.frequency.setValueAtTime(n.frequency, at)
+      at += n.duration
+    }
+    end()
   }
 
   private ensureContext(): AudioContext | null {

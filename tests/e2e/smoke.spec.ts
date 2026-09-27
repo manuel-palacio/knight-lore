@@ -19,6 +19,13 @@ test('title screen shows and a key starts the game', async ({ page }) => {
   expect(state.wanted).not.toBeNull()
 })
 
+test('Sabreman begins in the middle of the start room, as in the original', async ({ page }) => {
+  await startGame(page)
+  const { pos } = await debug(page)
+  expect(pos.x).toBe(8)
+  expect(pos.z).toBe(8)
+})
+
 test('walking out through a door of the start room enters the next room', async ({ page }) => {
   await startGame(page)
   const startRoom = (await debug(page)).room

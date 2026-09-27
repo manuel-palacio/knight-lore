@@ -39,13 +39,14 @@ import { selectCharacterFrame, STRIP_CELLS } from './game/CharacterFrame'
 import { Transition } from './game/Transition'
 import { loadSave, writeSave, clearSave } from './engine/SaveSlot'
 import { Beeper, footstepSound } from './engine/Beeper'
-import { projectToScreen, isoDepth } from './engine/IsoProjection'
+import { projectToScreen, isoDepth, FULL_ROOM_CELLS } from './engine/IsoProjection'
 
 const PICKUP_RANGE = 1.6
 const PICKUP_HEIGHT = 1.8
 const DEATH_FLASH_FRAMES = 2
 const GHOST_DRAW_HEIGHT = 0.3
 const WIPE_SECONDS = 0.25
+const ROOM_CENTRE = (FULL_ROOM_CELLS * 2) / 2
 // Character strips are native ZX resolution, 24x36 cells per pose, drawn at
 // 1:1 canvas pixels so the sprite stays crisp. Cells per form: STRIP_CELLS.
 const TRANSFORM_FRAMES = 11
@@ -183,7 +184,8 @@ async function main(): Promise<void> {
   }
 
   const startRoomId = pickStartRoom(Math.random())
-  const startRoom = await manager.transitionTo(startRoomId, 9, 9)
+  // The original starts him in the middle of the room, where four cells meet.
+  const startRoom = await manager.transitionTo(startRoomId, ROOM_CENTRE, ROOM_CENTRE)
   placePlayerAtSpawn(startRoom)
 
   const intro = document.getElementById('intro')

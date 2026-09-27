@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { SpikedBall, DROP_CHANCE } from '../../src/game/SpikedBall'
+import { SpikedBall, DropTurn, DROP_CHANCE } from '../../src/game/SpikedBall'
 import { hazardHunts, touchesHazard } from '../../src/game/Hazards'
 import { GameState } from '../../src/game/GameState'
 import { Grid } from '../../src/engine/Grid'
@@ -38,15 +38,39 @@ describe('SpikedBall', () => {
 
   it('lets go one frame in sixteen: when the random byte is under 16', () => {
     expect(DROP_CHANCE).toBe(16 / 256)
-    expect(new Set(run(new SpikedBall({ x: 3, z: 2 }, 6, 2, { drops: true, random: never }), 50))).toEqual(new Set([72]))
+    expect(new Set(run(new SpikedBall({ x: 3, z: 2 }, 6, 2, { random: never }), 50))).toEqual(new Set([72]))
   })
 
-  it('only the room\'s dropper ever falls: the others hang for good', () => {
-    expect(new Set(run(new SpikedBall({ x: 3, z: 2 }, 6, 2, { random: always }), 50))).toEqual(new Set([72]))
+  it('any ball of a room may let go (the random byte is stirred after every object, 0xAFE4), but one at a time', () => {
+    const turn = new DropTurn()
+    const a = new SpikedBall({ x: 3, z: 2 }, 6, 2, { random: always, turn })
+    const b = new SpikedBall({ x: 5, z: 2 }, 6, 2, { random: always, turn })
+    const ctx = { grid: new Grid(8, 8), tileSize: 2 }
+    runFrames(a, 1, ctx)
+    runFrames(b, 1, ctx)
+    expect(a.isFalling).toBe(true)
+    expect(b.isFalling).toBe(false)
+    for (let f = 0; f < 30; f++) {
+      runFrames(a, 1, ctx)
+      runFrames(b, 1, ctx)
+    }
+    expect([a.heightPx, b.heightPx]).toEqual([0, 0])
+  })
+
+  it('lands on a ball that fell there before it', () => {
+    const turn = new DropTurn()
+    const low = new SpikedBall({ x: 3, z: 2 }, 2, 2, { random: always, turn })
+    const high = new SpikedBall({ x: 3, z: 2 }, 3, 2, { random: always, turn })
+    const ctx = { grid: new Grid(8, 8), tileSize: 2 }
+    for (let f = 0; f < 60; f++) {
+      runFrames(low, 1, ctx)
+      runFrames(high, 1, ctx)
+    }
+    expect([low.heightPx, high.heightPx]).toEqual([0, 12])
   })
 
   it('falls under gravity, a pixel a frame faster each frame, and lies where it lands', () => {
-    const heights = run(new SpikedBall({ x: 3, z: 2 }, 6, 2, { drops: true, random: always }), 30)
+    const heights = run(new SpikedBall({ x: 3, z: 2 }, 6, 2, { random: always }), 30)
     expect(heights.slice(0, 5)).toEqual([72, 71, 69, 66, 62])
     expect(heights.at(-1)).toBe(0)
   })
@@ -54,12 +78,12 @@ describe('SpikedBall', () => {
   it('lands on a block under it', () => {
     const grid = new Grid(8, 8)
     grid.setSupport(3, 2, 2)
-    expect(run(new SpikedBall({ x: 3, z: 2 }, 6, 2, { drops: true, random: always }), 30, { grid, tileSize: 2 }).at(-1)).toBe(24)
+    expect(run(new SpikedBall({ x: 3, z: 2 }, 6, 2, { random: always }), 30, { grid, tileSize: 2 }).at(-1)).toBe(24)
   })
 
   it('in an odd-numbered room it waits until something is picked up or put down, and then for good', () => {
     const state = new GameState(1)
-    const ball = new SpikedBall({ x: 3, z: 2 }, 6, 2, { drops: true, waits: true, random: always })
+    const ball = new SpikedBall({ x: 3, z: 2 }, 6, 2, { waits: true, random: always })
     const ctx = { grid: new Grid(8, 8), tileSize: 2, state }
     expect(new Set(run(ball, 20, ctx))).toEqual(new Set([72]))
     state.addItem('gem')
@@ -69,7 +93,7 @@ describe('SpikedBall', () => {
   })
 
   it('hangs again when the room is entered again', () => {
-    const ball = new SpikedBall({ x: 3, z: 2 }, 6, 2, { drops: true, random: always })
+    const ball = new SpikedBall({ x: 3, z: 2 }, 6, 2, { random: always })
     run(ball, 30)
     ball.reset()
     expect(ball.position.y).toBe(6)

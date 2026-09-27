@@ -16,6 +16,8 @@ export interface Debug {
   state: string
   pos: { x: number; y: number; z: number }
   wanted: string | null
+  overCauldron: string | null
+  platforms: { x: number; z: number }[]
   carrying: string[]
   delivered: number
   lives: number
@@ -155,6 +157,9 @@ export async function walkPath(page: Page, path: Step[], dangers: RoomDangers = 
   // the first of them: he never stands under the one waiting for the other.
   const waitedFor = new Set<number>()
   await waitForWanderersAway(page)
+  // Come in on a guard's route (it walks past the doorways): he waits there
+  // for it to be clear of the way ahead, as he would before stepping onto it.
+  if (path.length > 1 && onPatrol(path[0]!)) await waitForPatrolsClear(page, path[0]!, walkerTrack(path, 0, dangers), dangers)
   let start = 0
   for (let i = 1; i <= path.length; i++) {
     const leap = i < path.length && (isJump(path[i - 1]!, path[i]!) || isClimb(path[i - 1]!, path[i]!))
@@ -187,6 +192,16 @@ export async function walkPath(page: Page, path: Step[], dangers: RoomDangers = 
     if ((await debug(page)).room !== room) return
     start = i
   }
+}
+
+// Of the ways to go, the first he can set off on at once without meeting a
+// guard: one coming in on a guard's route may otherwise walk into it.
+export async function clearestPath(page: Page, paths: Step[][], dangers: RoomDangers): Promise<Step[]> {
+  for (const path of paths) {
+    const onPatrol = dangers.patrolled.has(`${path[0]!.x},${path[0]!.z}`)
+    if (!onPatrol || (await patrolsClear(page, path[0]!, walkerTrack(path, 0, dangers), dangers))) return path
+  }
+  return paths[0]!
 }
 
 // Ghosts and hopping balls wander at random, the ghosts faster than he

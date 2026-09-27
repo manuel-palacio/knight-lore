@@ -17,7 +17,7 @@ import { EPS } from './engine/epsilons'
 import { TouchPad } from './engine/TouchPad'
 import { bindTouchControls, showTouchControlsWhenTouched } from './engine/TouchControls'
 import { CHARM_HEIGHT, CHARM_HOVER, Pickup } from './game/Pickup'
-import { Cauldron } from './game/Cauldron'
+import { CHARM_OVER_CAULDRON, Cauldron, charmOverCauldron } from './game/Cauldron'
 import { Spike } from './game/SpikeGrid'
 import { PatrolEnemy } from './game/PatrolEnemy'
 import { GhostEnemy } from './game/GhostEnemy'
@@ -295,6 +295,7 @@ async function main(): Promise<void> {
       form: visualForm,
       room: state.currentRoomId,
     wanted: state.wantedItem,
+    overCauldron: charmOverCauldron(state.wantedItem, state.form),
     itemImages: itemImages.size,
       day: state.dayCount,
       state: player.state,
@@ -589,6 +590,9 @@ async function main(): Promise<void> {
         // Rests on a platform: lift to its real height and sort in front of it.
         const depth = isoDepth(e.position.x, e.position.y, e.position.z) + 6
         out.push({ ...setPieceSprite(setPieces.cauldron, e.position.x, e.position.y, e.position.z), depth })
+        const charm = charmOverCauldron(state.wantedItem, state.form)
+        const img = charm ? itemImages.get(charm) : undefined
+        if (img) out.push({ ...spriteDynamic({ image: img, frameX: 0, frameW: img.width, frameH: img.height, scale: 1, flip: false, x: e.position.x, y: e.position.y + CHARM_OVER_CAULDRON, z: e.position.z }), depth: depth + 1 })
       } else if (e instanceof Spike) {
         out.push(spikeBedDynamic(e.position.x, e.position.y, e.position.z))
       } else if (e instanceof GhostEnemy || e instanceof CauldronSpirit) {
@@ -601,7 +605,7 @@ async function main(): Promise<void> {
         out.push(stripFrame(monster(leftward ? 'guardLeft' : 'guardRight', room.tint), 4, e.stepsTaken % 4, e.position.x, 0, e.position.z))
       } else if (e instanceof MovingPlatform) {
         const half = e.extents.x / 2
-        out.push(boxDynamic({ x0: e.position.x - half, x1: e.position.x + half, z0: e.position.z - half, z1: e.position.z + half, y0: 0, y1: e.height }))
+        out.push(boxDynamic({ x0: e.position.x - half, x1: e.position.x + half, z0: e.position.z - half, z1: e.position.z + half, y0: e.bottom, y1: e.height }))
       } else if (e instanceof PushableBox) {
         out.push(setPieceSprite(monster(e.kind, room.tint), e.position.x, e.bottom, e.position.z))
       } else if (e instanceof VanishingBlock) {
@@ -656,6 +660,7 @@ async function main(): Promise<void> {
       grid: room.grid,
       tileSize: room.tileSize,
       playerPosition: player.position,
+      playerExtents: player.extents,
       dynamicSupport: (x: number, z: number, y: number) => dynamicSupportAt(room, x, z, y),
       boxes: room.entities.filter((e) => e instanceof PushableBox),
       onLanded: () => beeper.play('land'),

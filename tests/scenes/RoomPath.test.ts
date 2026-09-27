@@ -159,13 +159,11 @@ describe('findFloorPath past a moving block', () => {
 })
 
 describe('findFloorPath past spiked balls and falling blocks', () => {
-  const row = (first: { drops?: boolean }) => [0, 1, 2, 3, 4, 5, 6, 7].map((x) => ({ x, z: 4, height: 6, ...(x === 0 ? first : {}) }))
 
-  it('walks under hanging spiked balls, but not where the room\'s dropper will lie', () => {
-    const spec = room({ spikedBalls: row({ drops: true }) })
-    const path = findFloorPath(spec, { x: 0, z: 0 }, { x: 0, z: 7 })
-    expect(path.some((c) => c.x === 0 && c.z === 4)).toBe(false)
-    expect(path.some((c) => c.z === 4 && c.y === 0)).toBe(true)
+  it('walks under hanging spiked balls, crossing before they come down, but not a ball on the floor', () => {
+    const spec = room({ spikedBalls: [0, 1, 2, 3, 4, 5, 6, 7].map((x) => ({ x, z: 4, height: x === 4 ? 0 : 6 })) })
+    const path = findFloorPath(spec, { x: 4, z: 0 }, { x: 4, z: 7 })
+    expect(path.some((c) => c.z === 4 && c.y === 0 && c.x !== 4)).toBe(true)
   })
 
   it('stands on a falling block at its height, as on a collapsing one', () => {

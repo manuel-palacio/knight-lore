@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { ROOM_SPECS, entryFor, oppositeOf, type RoomSpec } from '../../src/scenes/rooms/roomSpecs'
-import { debug, enterRoom, face, holdDaylight, startGame, walkPath, walkUntil } from './support/game'
-import { dangersOf, doorOf, findFloorPath } from './support/roomPath'
+import { clearestPath, debug, enterRoom, face, holdDaylight, startGame, walkPath, walkUntil } from './support/game'
+import { dangersOf, doorOf, findFloorPath, findFloorPaths } from './support/roomPath'
 
 // The castle walked for real: in every room, Sabreman comes in through the
 // first door, then walks with the arrow keys (climbing blocks and jumping
@@ -11,7 +11,8 @@ import { dangersOf, doorOf, findFloorPath } from './support/roomPath'
 // and hopping balls wander at random, the ghosts faster than he walks: in
 // their rooms a walk that costs a life is walked again. So too, a few times,
 // where he crosses a guard's or a ball's path on its timing, which a busy
-// machine can make him miss.
+// machine can make him miss. Where spiked balls drop at random, a walk they
+// cut short is walked again too, as a player would come back in.
 
 const TRIES_WITH_WANDERERS = 8
 const TRIES_ON_TIMING = 3
@@ -34,7 +35,9 @@ for (const spec of ROOM_SPECS) {
   const exits = spec.exits.slice(spec.exits.length > 1 ? 1 : 0).filter((e) => walks(spec, entryDoor, doorOf(spec, e.direction)))
   const charms = (spec.pickups ?? []).filter((p) => walks(spec, entryDoor, p))
 
-  const wanderers = (spec.ghosts?.length ?? 0) + (spec.hoppers?.length ?? 0) > 0
+  // Spiked balls let go at random, one at a time (0xB7A9), and those down can shut a corridor.
+  const dropping = (spec.spikedBalls ?? []).some((b) => !b.waits)
+  const wanderers = (spec.ghosts?.length ?? 0) + (spec.hoppers?.length ?? 0) > 0 || dropping
   const timed = (spec.pathGuards?.length ?? 0) + (spec.balls?.length ?? 0) > 0
   const tries = wanderers ? TRIES_WITH_WANDERERS : timed ? TRIES_ON_TIMING : 1
 
@@ -61,7 +64,7 @@ for (const spec of ROOM_SPECS) {
     for (const charm of charms) {
       await walk(`to the ${charm.item}`, async () => {
         const lives = (await debug(page)).lives
-        await walkPath(page, findFloorPath(spec, entryDoor, charm), dangersOf(spec))
+        await walkPath(page, await clearestPath(page, findFloorPaths(spec, entryDoor, charm), dangersOf(spec)), dangersOf(spec))
         await page.keyboard.press('KeyE')
         if (charm.item === 'life') {
           await expect.poll(async () => (await debug(page)).lives, { message: 'extra life taken' }).toBe(lives + 1)
@@ -73,7 +76,7 @@ for (const spec of ROOM_SPECS) {
 
     for (const exit of exits) {
       await walk(`out of the ${exit.direction} door`, async () => {
-        await walkPath(page, findFloorPath(spec, entryDoor, doorOf(spec, exit.direction)), dangersOf(spec))
+        await walkPath(page, await clearestPath(page, findFloorPaths(spec, entryDoor, doorOf(spec, exit.direction)), dangersOf(spec)), dangersOf(spec))
         await face(page, exit.direction)
         await walkUntil(page, (state) => state.room === exit.target)
       })

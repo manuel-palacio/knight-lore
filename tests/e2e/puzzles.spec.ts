@@ -122,22 +122,37 @@ test('map--5--8: from block to block over the collapsing blocks, off a charm, bo
 })
 
 // A row of tables two high with spiked balls on top: walking into the stack
-// before the door pushes it out of the row, the balls hang where they were,
-// two blocks up and over his head, and he goes round the stack to the door.
-test('map--4--5: pushes the table stack out of the row and walks under the balls, both ways', async ({ page }) => {
-  test.setTimeout(120_000)
+// before the door pushes it out of the row, and he goes round it to the door,
+// under the balls it held up. They hang there until one lets go (any ball of
+// the room may, one at a time, 0xB7A9): a run cut short by a ball coming down,
+// or by the balls fallen in the gap, is run again from the door, as a player
+// would come back in.
+const RUNS_UNDER_THE_BALLS = 8
+
+test('map--4--5: pushes the table stack out of the row and runs under the balls before they drop, both ways', async ({ page }) => {
+  test.setTimeout(300_000)
   await startGame(page)
   const room = spec('map--4--5')
   for (const [from, to, pastTheRow, round] of [
     ['south', 'north', (z: number) => z <= tileCentre(2), [floor(2, 2), floor(1, 2), floor(1, 1), floor(1, 0), floor(2, 0)]],
     ['north', 'south', (z: number) => z >= tileCentre(4), [floor(2, 4), floor(1, 4), floor(1, 5), floor(1, 6), floor(1, 7), floor(2, 7)]],
   ] as const) {
-    await enterBy(page, room, from)
-    await walk(page, room, from === 'south' ? column(2, [7, 6, 5, 4]) : column(2, [0, 1, 2]))
-    await face(page, to)
-    await walkUntil(page, (s) => pastTheRow(s.pos.z))
-    await walk(page, room, [...round])
-    await leaveBy(page, room, to)
-    expect((await debug(page)).lives).toBe(5)
+    for (let run = 1; ; run++) {
+      if ((await debug(page)).lives < 2) await startGame(page)
+      const lives = (await debug(page)).lives
+      const failure = await (async () => {
+        await enterBy(page, room, from)
+        await walk(page, room, from === 'south' ? column(2, [7, 6, 5, 4]) : column(2, [0, 1, 2]))
+        await face(page, to)
+        await walkUntil(page, (s) => pastTheRow(s.pos.z))
+        await walk(page, room, [...round])
+        await leaveBy(page, room, to)
+      })().then(
+        async () => ((await debug(page)).lives < lives ? new Error('a ball came down on him') : null),
+        (err: Error) => err,
+      )
+      if (!failure) break
+      if (run >= RUNS_UNDER_THE_BALLS) throw failure
+    }
   }
 })

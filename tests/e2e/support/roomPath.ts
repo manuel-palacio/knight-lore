@@ -35,7 +35,19 @@ const HEADROOM = 2
 // single rows of floor spikes (the path skips the spike cell). It passes a
 // portcullis only when nothing else will do, and then keeps off patrols if
 // it can.
-export function findFloorPath(spec: RoomSpec, from: Cell, to: Cell): Step[] {
+// The way there, and another that keeps off the first one's cells where the
+// room has one: a guard's route that runs through a doorway can make the
+// first a head-on walk into it.
+export function findFloorPaths(spec: RoomSpec, from: Cell, to: Cell): Step[][] {
+  const first = findFloorPath(spec, from, to)
+  try {
+    return [first, findFloorPath(spec, from, to, new Set(first.slice(1, -1).map(key)))]
+  } catch {
+    return [first]
+  }
+}
+
+export function findFloorPath(spec: RoomSpec, from: Cell, to: Cell, keepOff = new Set<string>()): Step[] {
   const room = new RoomSurfaces(spec)
   // A moving block's track is kept off too: he cannot walk through the block.
   const tracks = (spec.movingPlatforms ?? []).flatMap((m) => cellsBetween(m.from, m.to)).map(key)
@@ -54,7 +66,8 @@ export function findFloorPath(spec: RoomSpec, from: Cell, to: Cell): Step[] {
     { avoid: new Set<string>(), jumpSpikes: true },
   ]
   for (const attempt of tries) {
-    const path = search(room, { ...attempt, gates }, { ...from, y: room.heightAt(from) }, to)
+    const avoid = new Set([...attempt.avoid, ...keepOff])
+    const path = search(room, { ...attempt, avoid, gates }, { ...from, y: room.heightAt(from) }, to)
     if (path) return path
   }
   throw new Error(`${spec.id}: no floor path ${key(from)} -> ${key(to)}`)
@@ -126,8 +139,10 @@ class RoomSurfaces {
       else this.floorSpikes.add(key(s))
     }
     for (const f of spec.flames ?? []) this.addHazard(f, f.height)
-    // The room's dropper lets go in the end, and lies where it lands.
-    for (const b of spec.spikedBalls ?? []) this.addHazard(b, b.drops ? this.groundUnder(b, b.height) : b.height)
+    // Spiked balls are walked under while they hang: they let go one at a
+    // time, a second or so apart, so a room of them is crossed before they
+    // are down (and in odd-numbered rooms they wait for a pick-up there).
+    for (const b of spec.spikedBalls ?? []) this.addHazard(b, b.height)
   }
 
   heightAt(c: Cell): number {
@@ -177,11 +192,6 @@ class RoomSurfaces {
     for (const bottom of hanging) if (bottom >= base) heights.push(bottom + 1)
     const hazards = this.hazardHeights.get(key(c)) ?? []
     return heights.filter((y) => !hazards.some((h) => h >= y && h < y + HEADROOM))
-  }
-
-  private groundUnder(c: Cell, height: number): number {
-    const tops = (this.hanging.get(key(c)) ?? []).map((bottom) => bottom + 1).filter((top) => top <= height)
-    return Math.max(this.heightAt(c), ...tops)
   }
 
   private hang(c: Cell, bottom: number): void {
@@ -265,12 +275,14 @@ function cellsBetween(from: Cell, to: Cell): Cell[] {
   return pointsBetween(from, to).flatMap(coveredCells)
 }
 
+// A cell at a time, and the last step short where an end is half way between cells.
 function pointsBetween(from: Cell, to: Cell): Cell[] {
   const at = { ...from }
   const points = [{ ...at }]
+  const towards = (a: number, b: number) => a + Math.max(-1, Math.min(1, b - a))
   while (at.x !== to.x || at.z !== to.z) {
-    at.x += Math.sign(to.x - at.x)
-    at.z += Math.sign(to.z - at.z)
+    at.x = towards(at.x, to.x)
+    at.z = towards(at.z, to.z)
     points.push({ ...at })
   }
   return points

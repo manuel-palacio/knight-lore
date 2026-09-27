@@ -12,8 +12,8 @@ def thing(kind, x, y, z=0, **placement):
     return {'type': kind, 'x': x, 'y': y, 'z': z, 'placement': {**PLACED, **placement}}
 
 
-def build(objects, room_id=0x44):
-    room = RoomBuild(room_id, {'colour': 4, 'size': 0, 'background': [], 'objects': objects}, {})
+def build(objects, room_id=0x44, exits=None):
+    room = RoomBuild(room_id, {'colour': 4, 'size': 0, 'background': [], 'objects': objects}, exits or {})
     room.finish()
     return room
 
@@ -47,27 +47,44 @@ def test_guard_13_in_an_empty_room_walks_round_its_edge():
     assert path_of(room) == [(0, 7), (7, 7), (7, 0), (0, 0)], path_of(room)
 
 
+def test_a_guard_starts_clear_of_a_doorway_but_walks_its_whole_route_past_it():
+    # The east door is at (7,4): the guard starts two cells in, then walks to the wall and back.
+    room = build([thing(8, 3, 4)], exits={'east': 0x45})
+    assert path_of(room) == [(3, 4), (0, 4), (7, 4)], path_of(room)
+
+
+def test_a_moving_block_sways_half_a_cell_either_side_of_where_it_stands():
+    # 0xB6B9: its target runs 0..15 px and back on the frame counter.
+    room = build([thing(14, 3, 3)])
+    assert room.fields['movingPlatforms'] == [{'from': {'x': 2.5, 'z': 3}, 'to': {'x': 3.5, 'z': 3}, 'height': 1}], room.fields['movingPlatforms']
+
+
+def test_a_moving_block_sways_only_into_open_cells():
+    room = build([thing(15, 3, 3), thing(0, 3, 4)])
+    assert room.fields['movingPlatforms'] == [{'from': {'x': 3, 'z': 2.5}, 'to': {'x': 3, 'z': 3}, 'height': 1}], room.fields['movingPlatforms']
+
+
 def test_balls_bounce_where_they_stand_offset_by_their_template():
     room = build([thing(12, 3, 3, half_x=True, half_y=True), thing(24, 5, 5, 1)])
     assert room.fields['balls'] == [{'x': 3.5, 'z': 3.5, 'height': 0}, {'x': 5, 'z': 5, 'height': 1}]
 
 
-def test_a_type_19_spiked_ball_hangs_four_blocks_above_its_level_and_only_the_first_drops():
-    room = build([thing(19, 3, 3, 2, lift=48), thing(19, 4, 3, 2, lift=48)])
-    assert room.fields['spikedBalls'] == [{'x': 3, 'z': 3, 'height': 6, 'drops': True}, {'x': 4, 'z': 3, 'height': 6}]
+def test_a_type_19_spiked_ball_hangs_four_blocks_above_its_level():
+    room = build([thing(19, 3, 3, 2, lift=48), thing(18, 4, 3, 2)])
+    assert room.fields['spikedBalls'] == [{'x': 3, 'z': 3, 'height': 6}, {'x': 4, 'z': 3, 'height': 2}]
 
 
-def test_in_an_odd_room_the_dropper_waits_and_the_hopper_springs_at_random():
-    room = build([thing(19, 3, 3, 2, lift=48), thing(23, 5, 5)], room_id=0x45)
-    assert room.fields['spikedBalls'][0]['waits'] is True
+def test_in_an_odd_room_the_spiked_balls_wait_and_the_hopper_springs_at_random():
+    room = build([thing(19, 3, 3, 2, lift=48), thing(19, 4, 3, 2, lift=48), thing(23, 5, 5)], room_id=0x45)
+    assert all(b['waits'] for b in room.fields['spikedBalls'])
     assert room.fields['hoppers'] == [{'x': 5, 'z': 5, 'height': 0, 'randomHops': True}]
 
 
-def test_the_dropper_lies_where_it_lands_and_the_others_hang_out_of_reach():
-    room = build([thing(19, 3, 3, 2, lift=48), thing(19, 4, 3, 2, lift=48)])
+def test_walkers_pass_under_hanging_spiked_balls_they_cross_before_the_balls_come_down():
+    room = build([thing(19, 3, 3, 2, lift=48), thing(18, 4, 3, 0)])
     walk = Walkable(room)
-    assert walk.standings((3, 3)) == []
-    assert walk.standings((4, 3)) == [0]
+    assert walk.standings((3, 3)) == [0]
+    assert walk.standings((4, 3)) == []
 
 
 def test_a_type_21_block_is_a_falling_block_not_a_collapsing_one():

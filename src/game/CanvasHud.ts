@@ -3,18 +3,17 @@ import { drawDigits } from './PixelFont'
 
 // The original's HUD, drawn into the bottom 62 rows of the 256x192 screen:
 // pillars and cords in the room hue, white hero and lives, green DAY, the
-// red scroll holding the day dial and the charm the cauldron wants.
+// red scroll holding the day dial (the charm the cauldron wants hangs over it).
 // Positions measured from the original's screen (HUD occupies rows 128..191).
 export const HUD_HEIGHT = 64
 const HERO = { x: 20, y: 16 }
 const LIVES = { x: 32, y: 24 }
 const DAY = { x: 120, y: 57 }
 // As in the original: the carried charms sit under the lives, side by side,
-// the sun or moon fills the scroll and the wanted charm shows small in its corner.
+// the sun or moon fills the scroll.
 const CARRY = { x: 28, y: 44, apart: 16 }
 const SCROLL = { x: 186, y: 33, w: 44, h: 30 }
 const DIAL_TRAVEL = 26
-const WANTED = { x: 222, y: 48 }
 
 export interface HudImages {
   scroll: HTMLCanvasElement
@@ -27,9 +26,7 @@ export class CanvasHud {
   constructor(private readonly images: HudImages, private readonly tintFrame: (hue: number) => HTMLCanvasElement) {}
 
   draw(ctx: CanvasRenderingContext2D, top: number, state: GameState, carrying: string[], roomTint: number): void {
-    // The room's near corner runs under the HUD; the original blanks it.
-    ctx.fillStyle = '#000'
-    ctx.fillRect(0, top, ctx.canvas.width, HUD_HEIGHT)
+    // Drawn over the room: its near corner shows between the scrolls, as in the original.
     ctx.drawImage(this.tintFrame(roomTint), 0, top)
     ctx.drawImage(this.images.scroll, 0, top)
     ctx.drawImage(this.images.day, 0, top)
@@ -38,7 +35,6 @@ export class CanvasHud {
     drawDigits(ctx, String(Math.min(state.dayCount, 40)).padStart(2, '0'), DAY.x, top + DAY.y, '#fff')
     carrying.forEach((id, i) => this.drawItem(ctx, id, CARRY.x + i * CARRY.apart, top + CARRY.y, 1))
     this.drawDial(ctx, top, state)
-    if (state.wantedItem) this.drawItem(ctx, state.wantedItem, WANTED.x, top + WANTED.y, 0.5)
   }
 
   // Sun by day, moon by night, sweeping across the top of the scroll.

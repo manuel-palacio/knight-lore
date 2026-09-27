@@ -118,6 +118,11 @@ def distances(exits, start):
     return distance
 
 
+def cell_at(x, z):
+    """A cell, or a point half way between two, as the specs write it."""
+    return {'x': int(x) if x == int(x) else x, 'z': int(z) if z == int(z) else z}
+
+
 def door_cells(width, depth, exits):
     cells = {'north': (width // 2, 0), 'south': (width // 2, depth - 1),
              'west': (0, depth // 2), 'east': (width - 1, depth // 2)}
@@ -194,14 +199,10 @@ class RoomBuild:
         elif kind == FALLING:
             self.put('fallingBlocks', {'x': x, 'z': z, 'height': level + 1})
         elif kind in SPIKED_BALLS:
-            # Every spiked ball rolls the same random byte each frame, in table
-            # order, and one that has landed takes the turn again (0xB7A9):
-            # only the room's first ever drops.
+            # Every spiked ball drops in the end, one at a time (0xB7A9); in
+            # odd-numbered rooms not before a pick-up or a put-down.
             height = level + obj['placement']['lift'] // PIXELS_PER_BLOCK
-            if 'spikedBalls' in self.fields:
-                self.put('spikedBalls', {'x': x, 'z': z, 'height': height})
-            else:
-                self.put('spikedBalls', {'x': x, 'z': z, 'height': height, 'drops': True, **({'waits': True} if self.odd else {})})
+            self.put('spikedBalls', {'x': x, 'z': z, 'height': height, **({'waits': True} if self.odd else {})})
         elif kind in GATES:
             self.put('_gates', (x, z, GATES[kind]))
         elif kind in GUARDS:
@@ -239,9 +240,9 @@ class RoomBuild:
             x, z = self.inward(x, z)
             self.put('hoppers', {'x': x, 'z': z, 'height': level, **({'randomHops': True} if self.odd else {})})
         for x, z, level, axis in self.fields.pop('_movers', []):
-            line = self.free_line(x, z, axis)
-            if line:
-                self.put('movingPlatforms', {'from': {'x': line[0][0], 'z': line[0][1]}, 'to': {'x': line[1][0], 'z': line[1][1]}, 'height': level + 1})
+            ends = self.sway(x, z, level, axis)
+            if ends:
+                self.put('movingPlatforms', {'from': ends[0], 'to': ends[1], 'height': level + 1})
             else:
                 self.columns[(x, z)] = max(self.columns.get((x, z), 0), level + 1)
                 warn(f'{self.id}: moving block at ({x},{z}) has nowhere to move, kept as a block')
@@ -273,11 +274,11 @@ class RoomBuild:
         return x, z
 
     def guard_fits(self, x, z, half):
-        """A guard on a half cell (half) straddles this row and the next."""
+        """A guard on a half cell (half) straddles this row and the next. It starts
+        clear of the doorways but walks its whole route, past them, as in the original."""
         solid = {(p['x'], p['z']) for p in self.fields.get('boxes', [])}
         rows = (z, z + 1) if half else (z,)
-        return all(0 <= x < self.width and 0 <= r < self.depth and not self.blocked(x, r) and (x, r) not in solid
-                   and not self.near_door(x, r) for r in rows)
+        return all(0 <= x < self.width and 0 <= r < self.depth and not self.blocked(x, r) and (x, r) not in solid for r in rows)
 
     def clear_of_doors(self, ghost):
         x, z = self.inward(ghost['x'], ghost['z'], 'ghost')
@@ -307,19 +308,22 @@ class RoomBuild:
     def near_door(self, x, z):
         return any(abs(x - dx) <= 1 and abs(z - dz) <= 1 for dx, dz in self.doors)
 
-    def free_line(self, x, z, axis):
-        """The free run of floor through (x, z) along an axis, kept a cell clear of the doorways."""
+    def sway(self, x, z, level, axis):
+        """A moving block's two ends. Its handler (0xB6B1 along y, 0xB6B9 along x)
+        steers it, a pixel a frame, after a target that runs 0..15 and back on
+        the frame counter: it sways half a cell either side of where it stands,
+        into the cells beside it that are open at its level."""
         step = (1, 0) if axis == 'x' else (0, 1)
 
-        def ok(a, b):
-            return 0 <= a < self.width and 0 <= b < self.depth and not self.blocked(a, b) and not self.near_door(a, b)
+        def open_at(a, b):
+            ball_there = any(p['x'] == a and p['z'] == b and p['height'] == level for p in self.fields.get('spikedBalls', []))
+            return 0 <= a < self.width and 0 <= b < self.depth and self.columns.get((a, b), 0) <= level and not ball_there
 
-        lo = hi = (x, z)
-        while ok(lo[0] - step[0], lo[1] - step[1]):
-            lo = (lo[0] - step[0], lo[1] - step[1])
-        while ok(hi[0] + step[0], hi[1] + step[1]):
-            hi = (hi[0] + step[0], hi[1] + step[1])
-        return [lo, hi] if lo != hi else None
+        back = 0.5 if open_at(x - step[0], z - step[1]) else 0
+        on = 0.5 if open_at(x + step[0], z + step[1]) else 0
+        if back == on == 0:
+            return None
+        return (cell_at(x - back * step[0], z - back * step[1]), cell_at(x + on * step[0], z + on * step[1]))
 
     def free_cells(self):
         taken = set(self.columns) | self.doors
@@ -415,10 +419,11 @@ class Walkable:
                 self.floor_spikes.add((sp['x'], sp['z']))
         for fl in f.get('flames', []):
             self.hazards.setdefault((fl['x'], fl['z']), []).append(fl['height'])
+        # Spiked balls are walked under while they hang: they let go one at a
+        # time, a second or so apart, so a room of them is crossed before they
+        # are down (and in odd-numbered rooms they wait for a pick-up there).
         for b in f.get('spikedBalls', []):
-            # The one that drops lets go in the end, and lies where it lands.
-            cell = (b['x'], b['z'])
-            self.hazards.setdefault(cell, []).append(self.ground_under(cell, b['height']) if b.get('drops') else b['height'])
+            self.hazards.setdefault((b['x'], b['z']), []).append(b['height'])
 
     def ground_under(self, cell, height):
         """What something falling from a height in this cell comes to rest on."""
@@ -517,7 +522,9 @@ def place_charms(builds, exits, starts):
     for start in starts:
         if CAULDRON not in walkable_rooms(builds, exits, start):
             raise SystemExit(f'the cauldron cannot be reached on foot from {name_of(start)}')
-    candidates = [r for r in builds if r in on_foot and r != CAULDRON and r not in near_start and from_cauldron.get(r, 0) > 2 and reachable_cells(builds[r])]
+    balls = rooms_with_spiked_balls(builds)
+    candidates = [r for r in builds if r in on_foot and r != CAULDRON and r not in near_start and r not in balls
+                  and from_cauldron.get(r, 0) > 2 and reachable_cells(builds[r])]
     # A day's walk: far enough from the cauldron to matter, near enough that a
     # charm can be fetched and brought back within a day or so.
     near_enough = [r for r in candidates if from_cauldron[r] <= NEAR_ENOUGH]
@@ -552,6 +559,11 @@ def rooms_short_of_wanderers(builds, exits):
                 seen.add(target)
                 queue.append(target)
     return seen
+
+
+def rooms_with_spiked_balls(builds):
+    """Rooms whose spiked balls come down on whoever lingers (or, waiting, on whoever picks a charm up there)."""
+    return {r for r, b in builds.items() if b.fields.get('spikedBalls')}
 
 
 def reachable_cells(build):

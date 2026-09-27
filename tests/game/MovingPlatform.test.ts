@@ -6,6 +6,8 @@ import { SIMULATION_DT } from '../../src/engine/GameLoop'
 import { runFrames } from './frames'
 import { Category } from '../../src/engine/categories'
 
+const HIS_SIZE = new THREE.Vector3(0.8, 1.6, 0.8)
+
 function platform(): MovingPlatform {
   return new MovingPlatform({ x: 3, z: 5 }, { x: 7, z: 5 }, 1)
 }
@@ -60,6 +62,25 @@ describe('MovingPlatform', () => {
     const below = new THREE.Vector3(3, 0, 5)
     ride(p, below, 3)
     expect(below.x).toBe(3)
+  })
+
+  it('waits while he stands in its way, without pushing him, and moves on once he steps clear', () => {
+    const p = platform()
+    const him = new THREE.Vector3(4.5, 0, 5)
+    runFrames(p, 8, { playerPosition: him, playerExtents: HIS_SIZE })
+    expect(p.position.x).toBe(3)
+    expect(him.x).toBe(4.5)
+    him.z = 7
+    runFrames(p, 8, { playerPosition: him, playerExtents: HIS_SIZE })
+    expect(p.position.x).toBe(3 + 8 * PLATFORM_STEP)
+  })
+
+  it('a block high up is one block thick and passes over his head', () => {
+    const high = new MovingPlatform({ x: 3, z: 5 }, { x: 7, z: 5 }, 4)
+    expect(high.bottom).toBe(3)
+    const him = new THREE.Vector3(4.5, 0, 5)
+    runFrames(high, 8, { playerPosition: him, playerExtents: HIS_SIZE })
+    expect(high.position.x).toBe(4)
   })
 
   it('moves at the original moving block speed, one pixel a frame: an eighth of a unit', () => {

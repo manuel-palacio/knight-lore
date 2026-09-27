@@ -207,9 +207,11 @@ describe('room contents', () => {
     }
   })
 
-  it('keeps guard and ball paths off the doorways and the cells beside them, so entering a room is never a death', () => {
+  // A guard walks its whole route, past the doorways as in the original, but
+  // never starts beside one.
+  it('starts guards, and keeps balls, off the doorways and the cells beside them, so entering a room is never a death', () => {
     for (const s of ROOM_SPECS) {
-      const points = [...(s.pathGuards ?? []).flatMap((g) => g.path), ...(s.balls ?? []), ...(s.hoppers ?? [])].flatMap(coveredCells)
+      const points = [...(s.pathGuards ?? []).map((g) => g.path[0]!), ...(s.balls ?? []), ...(s.hoppers ?? [])].flatMap(coveredCells)
       for (const p of points) {
         for (const door of doorsOf(s)) expect(beside(p, door.cell), `${s.id} path point ${p.x},${p.z} by the ${door.direction} door`).toBe(false)
       }

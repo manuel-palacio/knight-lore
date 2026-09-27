@@ -14,7 +14,7 @@ import { CauldronSpirit } from '../../game/CauldronSpirit'
 import { Wizard } from '../../game/Wizard'
 import { Flame } from '../../game/Flame'
 import { Portcullis } from '../../game/Portcullis'
-import { SpikedBall } from '../../game/SpikedBall'
+import { DropTurn, SpikedBall } from '../../game/SpikedBall'
 import { FloatingBlock } from '../../game/FloatingBlock'
 import { addPickup } from './items'
 import { FULL_SIZE, entryFor, type RoomSpec } from './roomSpecs'
@@ -45,7 +45,8 @@ export function buildRoomFromSpec(spec: RoomSpec, sizeOf: (id: string) => RoomSi
     }
     for (const g of spec.pathGuards ?? []) room.add(new PathGuard(g.path.map(cellCentre)))
     for (const p of spec.portcullises ?? []) room.add(new Portcullis(p.from, p.to, room.tileSize))
-    for (const b of spec.spikedBalls ?? []) room.add(new SpikedBall(b, b.height, room.tileSize, { drops: b.drops, waits: b.waits }))
+    const dropTurn = new DropTurn()
+    for (const b of spec.spikedBalls ?? []) room.add(new SpikedBall(b, b.height, room.tileSize, { waits: b.waits, turn: dropTurn }))
     for (const b of spec.floatingBlocks ?? []) room.add(new FloatingBlock(b.x, b.z, b.bottom, room.tileSize))
     for (const b of spec.boxes ?? []) room.add(new PushableBox(b.kind, cellCentre(b), b.height))
     for (const v of spec.vanishing ?? []) room.add(new VanishingBlock(v.x, v.z, v.height, room.tileSize))

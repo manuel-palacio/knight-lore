@@ -1,6 +1,7 @@
 import type { RoomTint } from './shell'
 import type { ItemId } from './items'
 import type { BoxKind } from '../../game/PushableBox'
+import type { DecorKind } from '../../engine/ColumnLooks'
 
 // Data-driven rooms. A spec is pure data (unit-tested for map integrity);
 // buildRoomFromSpec turns it into a Room. Cells are 0..7 on the 8x8 grid.
@@ -22,6 +23,8 @@ export interface RoomSpec {
   exits: { direction: Direction; target: string }[]
   spawn: Cell
   platforms?: (Cell & { height: number })[]
+  // Blocks drawn as themselves: a hedge or a gargoyle at a level of a column.
+  decor?: (Cell & { height: number; kind: DecorKind })[]
   // A spike with a height sits on top of a block that tall.
   spikes?: (Cell & { height?: number })[]
   // Only a room's first spiked ball drops (`drops`), and in the original's
@@ -108,6 +111,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     exits: [{ direction: 'east', target: 'map--6--8' }, { direction: 'west', target: 'map--8--8' }],
     spawn: { x: 5, z: 0 },
     platforms: [{ x: 3, z: 0, height: 2 }, { x: 3, z: 3, height: 2 }, { x: 4, z: 0, height: 2 }, { x: 4, z: 3, height: 2 }],
+    decor: [{ x: 3, z: 3, height: 1, kind: 'gargoyle' }, { x: 4, z: 3, height: 1, kind: 'gargoyle' }, { x: 3, z: 0, height: 1, kind: 'gargoyle' }, { x: 4, z: 0, height: 1, kind: 'gargoyle' }],
     pathGuards: [{ path: [{ x: 4, z: 1.5 }, { x: 2, z: 1.5 }, { x: 5, z: 1.5 }] }],
     ghosts: [{ x: 2, z: 2 }],
   },
@@ -141,11 +145,11 @@ export const ROOM_SPECS: RoomSpec[] = [
     exits: [{ direction: 'south', target: 'map-0--7' }, { direction: 'east', target: 'map-1--8' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 3, z: 3, height: 4 }],
+    decor: [{ x: 3, z: 3, height: 0, kind: 'hedge' }, { x: 3, z: 3, height: 1, kind: 'hedge' }, { x: 3, z: 3, height: 2, kind: 'hedge' }, { x: 3, z: 3, height: 3, kind: 'hedge' }],
     floatingBlocks: [{ x: 1, z: 1, bottom: 1 }],
     spikes: [{ x: 3, z: 4 }, { x: 2, z: 3 }, { x: 4, z: 3 }, { x: 3, z: 2 }],
     hoppers: [{ x: 1, z: 1, height: 0 }],
     spikedBalls: [{ x: 3, z: 4, height: 1, drops: true }, { x: 2, z: 3, height: 1 }, { x: 4, z: 3, height: 1 }, { x: 3, z: 2, height: 1 }],
-    pickups: [{ x: 4, z: 4, item: 'goblet' }],
   },
   {
     id: 'map-1--8', tint: 'yellow',
@@ -159,6 +163,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     exits: [{ direction: 'east', target: 'map-3--8' }, { direction: 'west', target: 'map-1--8' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 2, z: 4, height: 3 }, { x: 4, z: 4, height: 3 }],
+    decor: [{ x: 2, z: 4, height: 0, kind: 'hedge' }, { x: 2, z: 4, height: 1, kind: 'hedge' }, { x: 2, z: 4, height: 2, kind: 'hedge' }, { x: 4, z: 4, height: 0, kind: 'hedge' }, { x: 4, z: 4, height: 1, kind: 'hedge' }, { x: 4, z: 4, height: 2, kind: 'hedge' }],
     spikes: [{ x: 2, z: 5 }, { x: 3, z: 5 }, { x: 3, z: 5, height: 1 }, { x: 4, z: 5 }, { x: 2, z: 3 }, { x: 3, z: 3 }, { x: 3, z: 3, height: 1 }, { x: 4, z: 3 }],
     boxes: [{ x: 6, z: 1, height: 0, kind: 'table' }],
   },
@@ -231,7 +236,6 @@ export const ROOM_SPECS: RoomSpec[] = [
     platforms: [],
     spikes: [{ x: 0, z: 5 }, { x: 1, z: 5 }, { x: 2, z: 5 }, { x: 3, z: 5 }, { x: 0, z: 2 }, { x: 1, z: 2 }, { x: 2, z: 2 }, { x: 3, z: 2 }],
     hoppers: [{ x: 1, z: 3, height: 0 }],
-    pickups: [{ x: 1, z: 4, item: 'crystal-ball' }],
   },
   {
     id: 'map-5--7', tint: 'yellow', width: 4,
@@ -346,7 +350,6 @@ export const ROOM_SPECS: RoomSpec[] = [
     platforms: [{ x: 2, z: 5, height: 1 }],
     movingPlatforms: [{ from: { x: 2, z: 2 }, to: { x: 2, z: 4 }, height: 1 }],
     ghosts: [{ x: 3, z: 4 }, { x: 0, z: 3 }],
-    pickups: [{ x: 1, z: 3, item: 'life' }],
   },
   {
     id: 'map-0--5', tint: 'purple', width: 4,
@@ -356,13 +359,13 @@ export const ROOM_SPECS: RoomSpec[] = [
     floatingBlocks: [{ x: 0, z: 0, bottom: 3 }, { x: 0, z: 3, bottom: 3 }, { x: 0, z: 6, bottom: 3 }, { x: 0, z: 7, bottom: 1 }, { x: 1, z: 0, bottom: 3 }, { x: 2, z: 0, bottom: 3 }],
     spikes: [{ x: 0, z: 5 }, { x: 0, z: 4 }, { x: 0, z: 3 }, { x: 0, z: 2 }, { x: 0, z: 1 }],
     vanishing: [{ x: 0, z: 5, height: 4 }, { x: 0, z: 4, height: 4 }, { x: 0, z: 2, height: 4 }, { x: 0, z: 1, height: 4 }],
-    pickups: [{ x: 1, z: 3, item: 'crystal-ball' }],
   },
   {
     id: 'map-7--5', tint: 'purple',
     exits: [{ direction: 'south', target: 'map-7--4' }, { direction: 'north', target: 'map-7--6' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 0, z: 3, height: 1 }, { x: 1, z: 3, height: 1 }, { x: 2, z: 3, height: 2 }, { x: 5, z: 3, height: 2 }, { x: 6, z: 3, height: 1 }, { x: 7, z: 3, height: 1 }],
+    decor: [{ x: 0, z: 3, height: 0, kind: 'hedge' }, { x: 1, z: 3, height: 0, kind: 'hedge' }, { x: 2, z: 3, height: 0, kind: 'hedge' }, { x: 2, z: 3, height: 1, kind: 'hedge' }, { x: 5, z: 3, height: 0, kind: 'hedge' }, { x: 5, z: 3, height: 1, kind: 'hedge' }, { x: 6, z: 3, height: 0, kind: 'hedge' }, { x: 7, z: 3, height: 0, kind: 'hedge' }],
     spikes: [{ x: 0, z: 3, height: 1 }, { x: 1, z: 3, height: 1 }, { x: 2, z: 3, height: 2 }, { x: 5, z: 3, height: 2 }, { x: 6, z: 3, height: 1 }, { x: 7, z: 3, height: 1 }],
     portcullises: [{ from: { x: 3, z: 3 }, to: { x: 4, z: 3 } }],
   },
@@ -379,6 +382,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     exits: [{ direction: 'east', target: 'map--6--4' }, { direction: 'west', target: 'map--8--4' }],
     spawn: { x: 3, z: 0 },
     platforms: [{ x: 2, z: 0, height: 2 }, { x: 2, z: 3, height: 2 }, { x: 4, z: 0, height: 2 }, { x: 4, z: 3, height: 2 }, { x: 6, z: 0, height: 2 }, { x: 6, z: 3, height: 2 }],
+    decor: [{ x: 2, z: 0, height: 1, kind: 'gargoyle' }, { x: 4, z: 0, height: 1, kind: 'gargoyle' }, { x: 6, z: 0, height: 1, kind: 'gargoyle' }, { x: 2, z: 3, height: 1, kind: 'gargoyle' }, { x: 4, z: 3, height: 1, kind: 'gargoyle' }, { x: 6, z: 3, height: 1, kind: 'gargoyle' }],
     flames: [{ x: 5, z: 0, height: 0 }, { x: 3, z: 3, height: 0 }],
   },
   {
@@ -420,14 +424,17 @@ export const ROOM_SPECS: RoomSpec[] = [
     exits: [{ direction: 'east', target: 'map--1--4' }, { direction: 'west', target: 'map--3--4' }],
     spawn: { x: 3, z: 0 },
     platforms: [{ x: 3, z: 1, height: 2 }, { x: 3, z: 2, height: 2 }, { x: 4, z: 0, height: 2 }, { x: 4, z: 3, height: 2 }, { x: 5, z: 1, height: 2 }, { x: 5, z: 2, height: 2 }],
+    decor: [{ x: 5, z: 2, height: 1, kind: 'gargoyle' }, { x: 5, z: 1, height: 1, kind: 'gargoyle' }, { x: 3, z: 2, height: 1, kind: 'gargoyle' }, { x: 3, z: 1, height: 1, kind: 'gargoyle' }],
     vanishing: [{ x: 4, z: 2, height: 3 }, { x: 4, z: 2, height: 4 }, { x: 4, z: 1, height: 3 }, { x: 4, z: 1, height: 4 }],
     spikedBalls: [{ x: 4, z: 2, height: 0, drops: true }, { x: 4, z: 1, height: 0 }],
+    pickups: [{ x: 2, z: 1, item: 'crystal-ball' }],
   },
   {
     id: 'map--1--4', tint: 'purple',
     exits: [{ direction: 'south', target: 'map--1--3' }, { direction: 'north', target: 'map--1--5' }, { direction: 'west', target: 'map--2--4' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
+    pickups: [{ x: 3, z: 3, item: 'life' }],
   },
   {
     id: 'map-0--4', tint: 'yellow', width: 4,
@@ -436,7 +443,6 @@ export const ROOM_SPECS: RoomSpec[] = [
     platforms: [{ x: 2, z: 1, height: 3 }, { x: 2, z: 5, height: 3 }, { x: 3, z: 4, height: 1 }, { x: 3, z: 5, height: 2 }],
     floatingBlocks: [{ x: 1, z: 0, bottom: 3 }, { x: 2, z: 0, bottom: 3 }, { x: 2, z: 1, bottom: 3 }],
     spikes: [{ x: 1, z: 1 }, { x: 2, z: 2 }],
-    pickups: [{ x: 1, z: 3, item: 'life' }],
   },
   {
     id: 'map-7--4', tint: 'yellow',
@@ -474,6 +480,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     exits: [{ direction: 'south', target: 'map-6--2' }, { direction: 'east', target: 'map-7--3' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 1, z: 2, height: 1 }, { x: 1, z: 5, height: 1 }, { x: 2, z: 1, height: 1 }, { x: 2, z: 6, height: 1 }, { x: 5, z: 1, height: 1 }, { x: 5, z: 6, height: 1 }, { x: 6, z: 2, height: 1 }, { x: 6, z: 5, height: 1 }],
+    decor: [{ x: 2, z: 6, height: 0, kind: 'hedge' }, { x: 5, z: 6, height: 0, kind: 'hedge' }, { x: 1, z: 5, height: 0, kind: 'hedge' }, { x: 6, z: 5, height: 0, kind: 'hedge' }, { x: 1, z: 2, height: 0, kind: 'hedge' }, { x: 6, z: 2, height: 0, kind: 'hedge' }, { x: 2, z: 1, height: 0, kind: 'hedge' }, { x: 5, z: 1, height: 0, kind: 'hedge' }],
   },
   {
     id: 'map-7--3', tint: 'purple',
@@ -487,7 +494,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     spawn: { x: 2, z: 0 },
     platforms: [{ x: 1, z: 0, height: 1 }, { x: 1, z: 1, height: 1 }, { x: 1, z: 4, height: 1 }, { x: 1, z: 5, height: 1 }, { x: 2, z: 1, height: 1 }, { x: 2, z: 4, height: 1 }, { x: 2, z: 5, height: 1 }],
     boxes: [{ x: 1, z: 4, height: 1, kind: 'chest' }],
-    pickups: [{ x: 1, z: 3, item: 'goblet' }],
+    pickups: [{ x: 1, z: 3, item: 'boot' }],
   },
   {
     id: 'map--1--2', tint: 'green', width: 4,
@@ -511,6 +518,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     exits: [{ direction: 'south', target: 'map-2--1' }, { direction: 'east', target: 'map-3--2' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
+    pickups: [{ x: 3, z: 3, item: 'boot' }],
   },
   {
     id: 'map-3--2', tint: 'green', depth: 4,
@@ -519,7 +527,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     platforms: [{ x: 4, z: 1, height: 2 }, { x: 4, z: 2, height: 2 }],
     floatingBlocks: [{ x: 7, z: 1, bottom: 3 }, { x: 7, z: 2, bottom: 3 }],
     flames: [{ x: 6, z: 0, height: 3 }, { x: 5, z: 3, height: 3 }],
-    pickups: [{ x: 3, z: 1, item: 'boot' }],
+    pickups: [{ x: 3, z: 1, item: 'goblet' }],
   },
   {
     id: 'map-4--2', tint: 'purple', depth: 4,
@@ -528,27 +536,31 @@ export const ROOM_SPECS: RoomSpec[] = [
     platforms: [],
     boxes: [{ x: 3, z: 3, height: 0, kind: 'chest' }, { x: 3, z: 2, height: 0, kind: 'chest' }, { x: 3, z: 1, height: 0, kind: 'chest' }, { x: 3, z: 0, height: 0, kind: 'chest' }, { x: 3, z: 3, height: 1, kind: 'chest' }, { x: 3, z: 2, height: 1, kind: 'chest' }, { x: 3, z: 1, height: 1, kind: 'chest' }, { x: 3, z: 0, height: 1, kind: 'chest' }],
     spikedBalls: [{ x: 3, z: 3, height: 6, drops: true }, { x: 3, z: 2, height: 6 }, { x: 3, z: 1, height: 6 }, { x: 3, z: 0, height: 6 }, { x: 3, z: 3, height: 7 }, { x: 3, z: 2, height: 7 }, { x: 3, z: 1, height: 7 }, { x: 3, z: 0, height: 7 }],
+    pickups: [{ x: 4, z: 1, item: 'teacup' }],
   },
   {
     id: 'map-5--2', tint: 'yellow',
     exits: [{ direction: 'east', target: 'map-6--2' }, { direction: 'west', target: 'map-4--2' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 4, z: 2, height: 4 }, { x: 4, z: 5, height: 4 }],
+    decor: [{ x: 4, z: 2, height: 0, kind: 'hedge' }, { x: 4, z: 5, height: 0, kind: 'hedge' }, { x: 4, z: 2, height: 1, kind: 'hedge' }, { x: 4, z: 5, height: 1, kind: 'hedge' }, { x: 4, z: 2, height: 2, kind: 'hedge' }, { x: 4, z: 3, height: 2, kind: 'hedge' }, { x: 4, z: 4, height: 2, kind: 'hedge' }, { x: 4, z: 5, height: 2, kind: 'hedge' }, { x: 4, z: 2, height: 3, kind: 'gargoyle' }, { x: 4, z: 5, height: 3, kind: 'gargoyle' }],
     floatingBlocks: [{ x: 4, z: 3, bottom: 2 }, { x: 4, z: 4, bottom: 2 }],
     boxes: [{ x: 1, z: 1, height: 0, kind: 'table' }],
-    pickups: [{ x: 3, z: 3, item: 'boot' }],
+    pickups: [{ x: 3, z: 3, item: 'gem' }],
   },
   {
     id: 'map-6--2', tint: 'purple',
     exits: [{ direction: 'east', target: 'map-7--2' }, { direction: 'north', target: 'map-6--3' }, { direction: 'west', target: 'map-5--2' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
+    pickups: [{ x: 3, z: 3, item: 'goblet' }],
   },
   {
     id: 'map-7--2', tint: 'yellow',
     exits: [{ direction: 'north', target: 'map-7--3' }, { direction: 'west', target: 'map-6--2' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 5, z: 5, height: 2 }, { x: 6, z: 5, height: 2 }, { x: 7, z: 5, height: 2 }],
+    decor: [{ x: 5, z: 5, height: 0, kind: 'hedge' }, { x: 6, z: 5, height: 0, kind: 'hedge' }, { x: 7, z: 5, height: 0, kind: 'hedge' }, { x: 5, z: 5, height: 1, kind: 'gargoyle' }, { x: 6, z: 5, height: 1, kind: 'gargoyle' }, { x: 7, z: 5, height: 1, kind: 'gargoyle' }],
     spikedBalls: [{ x: 5, z: 7, height: 4, drops: true, waits: true }, { x: 5, z: 6, height: 4 }, { x: 5, z: 7, height: 5 }, { x: 5, z: 6, height: 5 }],
   },
   {
@@ -558,6 +570,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     platforms: [{ x: 0, z: 5, height: 2 }, { x: 1, z: 5, height: 2 }, { x: 2, z: 6, height: 2 }, { x: 2, z: 7, height: 2 }],
     spikes: [{ x: 1, z: 7 }, { x: 0, z: 6 }, { x: 1, z: 6 }],
     vanishing: [{ x: 0, z: 7, height: 3 }, { x: 1, z: 7, height: 3 }, { x: 0, z: 6, height: 3 }, { x: 1, z: 6, height: 3 }],
+    pickups: [{ x: 3, z: 3, item: 'gem' }],
   },
   {
     id: 'map--3--1', tint: 'purple', depth: 4,
@@ -565,6 +578,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 3, z: 2, height: 1 }, { x: 4, z: 1, height: 1 }],
     spikes: [{ x: 4, z: 2 }, { x: 3, z: 1 }],
+    pickups: [{ x: 2, z: 1, item: 'teacup' }],
   },
   {
     id: 'map--2--1', tint: 'yellow', depth: 4,
@@ -611,13 +625,13 @@ export const ROOM_SPECS: RoomSpec[] = [
     exits: [{ direction: 'south', target: 'map--5-1' }, { direction: 'east', target: 'map--4-0' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
-    pickups: [{ x: 3, z: 3, item: 'teacup' }],
   },
   {
     id: 'map--4-0', tint: 'cyan', depth: 4,
     exits: [{ direction: 'east', target: 'map--3-0' }, { direction: 'west', target: 'map--5-0' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 2, z: 0, height: 3 }, { x: 2, z: 3, height: 3 }, { x: 5, z: 0, height: 3 }, { x: 5, z: 3, height: 3 }],
+    decor: [{ x: 2, z: 3, height: 2, kind: 'gargoyle' }, { x: 5, z: 3, height: 2, kind: 'gargoyle' }, { x: 2, z: 0, height: 2, kind: 'gargoyle' }, { x: 5, z: 0, height: 2, kind: 'gargoyle' }],
     balls: [{ x: 5, z: 1.5, height: 0 }, { x: 2, z: 1.5, height: 2 }],
   },
   {
@@ -658,6 +672,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     exits: [{ direction: 'east', target: 'map-2-0' }, { direction: 'west', target: 'room-001' }],
     spawn: { x: 3, z: 0 },
     platforms: [{ x: 4, z: 0, height: 4 }, { x: 4, z: 1, height: 1 }, { x: 4, z: 2, height: 1 }, { x: 4, z: 3, height: 4 }],
+    decor: [{ x: 4, z: 3, height: 3, kind: 'gargoyle' }, { x: 4, z: 0, height: 3, kind: 'gargoyle' }],
     flames: [{ x: 4, z: 2, height: 1 }],
   },
   {
@@ -681,6 +696,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     spikes: [{ x: 2, z: 3, height: 2 }, { x: 5, z: 3, height: 2 }, { x: 2, z: 0, height: 2 }, { x: 5, z: 0, height: 2 }],
     portcullises: [{ from: { x: 2, z: 0 }, to: { x: 2, z: 3 } }, { from: { x: 5, z: 0 }, to: { x: 5, z: 3 } }],
     pathGuards: [{ path: [{ x: 3, z: 1.5 }, { x: 4, z: 1.5 }] }],
+    pickups: [{ x: 3, z: 0, item: 'poison' }],
   },
   {
     id: 'map-5-0', tint: 'cyan',
@@ -690,6 +706,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     floatingBlocks: [{ x: 3, z: 5, bottom: 3 }, { x: 3, z: 6, bottom: 3 }, { x: 3, z: 7, bottom: 3 }, { x: 4, z: 5, bottom: 1 }, { x: 4, z: 7, bottom: 2 }, { x: 4, z: 7, bottom: 3 }, { x: 5, z: 5, bottom: 3 }, { x: 5, z: 6, bottom: 3 }, { x: 5, z: 7, bottom: 3 }],
     spikes: [{ x: 4, z: 4 }],
     balls: [{ x: 4, z: 4.5, height: 3 }],
+    pickups: [{ x: 3, z: 3, item: 'wine-bottle' }],
   },
   {
     id: 'map-6-0', tint: 'purple', depth: 4,
@@ -710,14 +727,15 @@ export const ROOM_SPECS: RoomSpec[] = [
     exits: [{ direction: 'south', target: 'map--5-2' }, { direction: 'north', target: 'map--5-0' }],
     spawn: { x: 2, z: 0 },
     platforms: [{ x: 0, z: 3, height: 4 }, { x: 1, z: 3, height: 1 }, { x: 2, z: 3, height: 1 }, { x: 3, z: 3, height: 4 }],
+    decor: [{ x: 0, z: 3, height: 3, kind: 'gargoyle' }, { x: 3, z: 3, height: 3, kind: 'gargoyle' }],
     flames: [{ x: 1, z: 3, height: 1 }],
-    pickups: [{ x: 1, z: 4, item: 'gem' }],
   },
   {
     id: 'map--1-1', tint: 'green', width: 4,
     exits: [{ direction: 'south', target: 'map--1-2' }, { direction: 'north', target: 'map--1-0' }],
     spawn: { x: 2, z: 0 },
     platforms: [{ x: 0, z: 3, height: 2 }, { x: 1, z: 3, height: 2 }, { x: 2, z: 3, height: 2 }, { x: 3, z: 3, height: 2 }],
+    decor: [{ x: 0, z: 3, height: 1, kind: 'gargoyle' }, { x: 1, z: 3, height: 1, kind: 'gargoyle' }, { x: 2, z: 3, height: 1, kind: 'gargoyle' }, { x: 3, z: 3, height: 1, kind: 'gargoyle' }],
   },
   {
     id: 'map-0-1', tint: 'purple', width: 4,
@@ -736,6 +754,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     floatingBlocks: [{ x: 1, z: 0, bottom: 3 }, { x: 2, z: 0, bottom: 3 }],
     spikes: [{ x: 2, z: 3 }, { x: 3, z: 3 }],
     movingPlatforms: [{ from: { x: 3, z: 2 }, to: { x: 3, z: 5 }, height: 4 }, { from: { x: 0, z: 3 }, to: { x: 1, z: 3 }, height: 4 }],
+    pickups: [{ x: 1, z: 3, item: 'life' }],
   },
   {
     id: 'map-7-1', tint: 'cyan', width: 4,
@@ -776,13 +795,14 @@ export const ROOM_SPECS: RoomSpec[] = [
     floatingBlocks: [{ x: 0, z: 1, bottom: 1 }, { x: 0, z: 2, bottom: 2 }],
     spikes: [{ x: 0, z: 5, height: 2 }, { x: 1, z: 4, height: 2 }],
     fallingBlocks: [{ x: 0, z: 4, height: 4 }],
+    pickups: [{ x: 3, z: 3, item: 'poison' }],
   },
   {
     id: 'map-3-2', tint: 'green',
     exits: [{ direction: 'south', target: 'map-3-3' }, { direction: 'north', target: 'map-3-1' }, { direction: 'west', target: 'map-2-2' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
-    pickups: [{ x: 3, z: 3, item: 'poison' }],
+    pickups: [{ x: 3, z: 3, item: 'crystal-ball' }],
   },
   {
     id: 'map-7-2', tint: 'green', width: 4,
@@ -817,6 +837,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 3, z: 3, height: 3 }, { x: 3, z: 5, height: 3 }],
     spikes: [{ x: 2, z: 5 }, { x: 2, z: 4 }, { x: 2, z: 4, height: 1 }, { x: 2, z: 4, height: 2 }, { x: 2, z: 3 }, { x: 4, z: 5 }, { x: 4, z: 4 }, { x: 4, z: 4, height: 1 }, { x: 4, z: 4, height: 2 }, { x: 4, z: 3 }],
+    pickups: [{ x: 3, z: 2, item: 'wine-bottle' }],
   },
   {
     id: 'map-3-3', tint: 'yellow',
@@ -825,7 +846,6 @@ export const ROOM_SPECS: RoomSpec[] = [
     platforms: [],
     floatingBlocks: [{ x: 4, z: 4, bottom: 1 }, { x: 4, z: 4, bottom: 2 }],
     ghosts: [{ x: 4, z: 4 }],
-    pickups: [{ x: 3, z: 3, item: 'wine-bottle' }],
   },
   {
     id: 'map-7-3', tint: 'purple',
@@ -896,8 +916,8 @@ export const ROOM_SPECS: RoomSpec[] = [
     exits: [{ direction: 'south', target: 'map--2-6' }, { direction: 'east', target: 'map--1-5' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 4, z: 2, height: 3 }, { x: 4, z: 3, height: 1 }, { x: 4, z: 4, height: 1 }, { x: 4, z: 5, height: 4 }],
+    decor: [{ x: 4, z: 5, height: 0, kind: 'hedge' }, { x: 4, z: 5, height: 1, kind: 'hedge' }, { x: 4, z: 5, height: 2, kind: 'hedge' }, { x: 4, z: 5, height: 3, kind: 'hedge' }, { x: 4, z: 4, height: 0, kind: 'hedge' }, { x: 4, z: 3, height: 0, kind: 'hedge' }, { x: 4, z: 2, height: 0, kind: 'hedge' }, { x: 4, z: 2, height: 1, kind: 'hedge' }, { x: 4, z: 2, height: 2, kind: 'hedge' }],
     balls: [{ x: 5, z: 3.5, height: 1 }, { x: 3, z: 3.5, height: 0 }],
-    pickups: [{ x: 2, z: 3, item: 'teacup' }],
   },
   {
     id: 'map--1-5', tint: 'purple',
@@ -917,7 +937,6 @@ export const ROOM_SPECS: RoomSpec[] = [
     exits: [{ direction: 'south', target: 'map-1-6' }, { direction: 'west', target: 'map-0-5' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
-    pickups: [{ x: 3, z: 3, item: 'gem' }],
   },
   {
     id: 'map-5-5', tint: 'yellow',
@@ -977,15 +996,14 @@ export const ROOM_SPECS: RoomSpec[] = [
     spawn: { x: 4, z: 0 },
     platforms: [],
     spikes: [{ x: 3, z: 6 }, { x: 4, z: 6 }, { x: 1, z: 4 }, { x: 1, z: 3 }, { x: 6, z: 4 }, { x: 6, z: 3 }, { x: 3, z: 1 }, { x: 4, z: 1 }],
-    pickups: [{ x: 3, z: 3, item: 'poison' }],
   },
   {
     id: 'map-0-6', tint: 'yellow',
     exits: [{ direction: 'south', target: 'map-0-7' }, { direction: 'east', target: 'map-1-6' }, { direction: 'north', target: 'map-0-5' }, { direction: 'west', target: 'map--1-6' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 1, z: 4, height: 1 }, { x: 3, z: 2, height: 1 }, { x: 3, z: 4, height: 4 }, { x: 3, z: 6, height: 1 }, { x: 5, z: 4, height: 1 }],
+    decor: [{ x: 3, z: 6, height: 0, kind: 'hedge' }, { x: 1, z: 4, height: 0, kind: 'hedge' }, { x: 3, z: 4, height: 0, kind: 'hedge' }, { x: 3, z: 4, height: 1, kind: 'hedge' }, { x: 3, z: 4, height: 2, kind: 'hedge' }, { x: 3, z: 4, height: 3, kind: 'hedge' }, { x: 5, z: 4, height: 0, kind: 'hedge' }, { x: 3, z: 2, height: 0, kind: 'hedge' }],
     spikes: [{ x: 3, z: 5 }, { x: 4, z: 4 }, { x: 3, z: 3 }, { x: 2, z: 4 }],
-    pickups: [{ x: 4, z: 3, item: 'wine-bottle' }],
   },
   {
     id: 'map-1-6', tint: 'purple',
@@ -1042,6 +1060,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     exits: [{ direction: 'east', target: 'map--1-7' }, { direction: 'north', target: 'map--2-6' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 3, z: 3, height: 4 }],
+    decor: [{ x: 3, z: 3, height: 0, kind: 'hedge' }, { x: 3, z: 3, height: 1, kind: 'hedge' }, { x: 3, z: 3, height: 2, kind: 'hedge' }, { x: 3, z: 3, height: 3, kind: 'hedge' }],
     boxes: [{ x: 2, z: 2, height: 0, kind: 'chest' }, { x: 4, z: 6, height: 0, kind: 'table' }],
     vanishing: [{ x: 4, z: 3, height: 1 }],
   },
@@ -1050,6 +1069,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     exits: [{ direction: 'east', target: 'map-0-7' }, { direction: 'north', target: 'map--1-6' }, { direction: 'west', target: 'map--2-7' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 2, z: 2, height: 1 }, { x: 2, z: 3, height: 1 }, { x: 2, z: 4, height: 1 }, { x: 3, z: 2, height: 1 }, { x: 3, z: 4, height: 1 }, { x: 4, z: 2, height: 1 }, { x: 4, z: 3, height: 1 }, { x: 4, z: 4, height: 1 }],
+    decor: [{ x: 2, z: 4, height: 0, kind: 'hedge' }, { x: 3, z: 4, height: 0, kind: 'hedge' }, { x: 4, z: 4, height: 0, kind: 'hedge' }, { x: 2, z: 3, height: 0, kind: 'hedge' }, { x: 4, z: 3, height: 0, kind: 'hedge' }, { x: 2, z: 2, height: 0, kind: 'hedge' }, { x: 3, z: 2, height: 0, kind: 'hedge' }, { x: 4, z: 2, height: 0, kind: 'hedge' }],
     boxes: [{ x: 3, z: 3, height: 1, kind: 'chest' }],
     hoppers: [{ x: 3, z: 3, height: 0, randomHops: true }],
   },
@@ -1078,6 +1098,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     exits: [{ direction: 'east', target: 'map-7-7' }, { direction: 'west', target: 'map-5-7' }],
     spawn: { x: 5, z: 0 },
     platforms: [{ x: 3, z: 0, height: 1 }, { x: 3, z: 3, height: 1 }, { x: 4, z: 0, height: 1 }, { x: 4, z: 3, height: 1 }],
+    decor: [{ x: 3, z: 3, height: 0, kind: 'gargoyle' }, { x: 4, z: 3, height: 0, kind: 'gargoyle' }, { x: 3, z: 0, height: 0, kind: 'gargoyle' }, { x: 4, z: 0, height: 0, kind: 'gargoyle' }],
     spikes: [{ x: 5, z: 2 }, { x: 5, z: 1 }, { x: 2, z: 2 }, { x: 2, z: 1 }],
     balls: [{ x: 3.5, z: 1.5, height: 1 }],
   },

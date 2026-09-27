@@ -42,6 +42,9 @@ NEAR_ENOUGH = 8
 # Type 16 zeroes its own velocity before it moves (0xC4AA): pushed, it never
 # moves, a block like any other.
 BLOCK_TYPES = {0, 3, 4, 11, 16}
+# Blocks drawn with their own sprite: hedges (graphic 6) and gargoyles (22);
+# every other block type draws the block sprite (graphic 7).
+DECOR = {3: 'hedge', 4: 'gargoyle'}
 SPIKES, GHOST, SPARKLE = 5, 9, 25
 # Pushable (template flag bit 2): a table moves only while pushed (0xC4C3), a
 # chest slides on until stopped (0xC4B6).
@@ -176,6 +179,8 @@ class RoomBuild:
             return
         if kind in BLOCK_TYPES:
             self.stacks.setdefault(cell, set()).add(level)
+            if kind in DECOR:
+                self.put('decor', {'x': x, 'z': z, 'height': level, 'kind': DECOR[kind]})
         elif kind == SPIKES:
             self.put('spikes', {'x': x, 'z': z, **({'height': level} if level else {})})
         elif kind in BOXES:
@@ -518,6 +523,12 @@ def place_charms(builds, exits, starts):
     near_enough = [r for r in candidates if from_cauldron[r] <= NEAR_ENOUGH]
     if len(near_enough) >= 16:
         candidates = near_enough
+    # Ghosts and hopping balls wander, the ghosts about as fast as Sabreman:
+    # a charm is placed, where the castle allows, where it can be fetched
+    # without crossing one of their rooms.
+    calm = rooms_short_of_wanderers(builds, exits)
+    if len([r for r in candidates if r in calm]) >= 16:
+        candidates = [r for r in candidates if r in calm]
     candidates.sort(key=lambda r: (-from_cauldron[r], r))
     items = [c for c in CHARMS for _ in range(2)] + ['life', 'life']
     # Spread: take every n-th of the far-first ordering so charms are not bunched.
@@ -529,6 +540,18 @@ def place_charms(builds, exits, starts):
     for room_id, item in zip(chosen, order):
         x, z = reachable_cells(builds[room_id])[0]
         builds[room_id].put('pickups', {'x': x, 'z': z, 'item': item})
+
+
+def rooms_short_of_wanderers(builds, exits):
+    """The rooms reached from the cauldron without passing through a room with a ghost or a hopping ball."""
+    wandered = {r for r, b in builds.items() if b.fields.get('ghosts') or b.fields.get('hoppers')}
+    seen, queue = {CAULDRON}, deque([CAULDRON])
+    while queue:
+        for target in exits[queue.popleft()].values():
+            if target not in seen and target not in wandered:
+                seen.add(target)
+                queue.append(target)
+    return seen
 
 
 def reachable_cells(build):
@@ -560,7 +583,7 @@ def ts_value(value):
     return str(value)
 
 
-FIELD_ORDER = ['platforms', 'floatingBlocks', 'spikes', 'boxes', 'vanishing', 'fallingBlocks', 'movingPlatforms', 'portcullises',
+FIELD_ORDER = ['platforms', 'decor', 'floatingBlocks', 'spikes', 'boxes', 'vanishing', 'fallingBlocks', 'movingPlatforms', 'portcullises',
                'pathGuards', 'balls', 'hoppers', 'ghosts', 'spikedBalls', 'flames', 'pickups']
 
 

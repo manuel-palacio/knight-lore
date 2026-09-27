@@ -3,7 +3,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
-from castle import RoomBuild, Walkable  # noqa: E402
+from castle import CAULDRON, RoomBuild, Walkable, rooms_short_of_wanderers  # noqa: E402
 
 PLACED = {'half_x': False, 'half_y': False, 'lift': 0}
 
@@ -81,6 +81,20 @@ def test_a_collapsing_block_is_walked_under_never_stood_on():
     walk = Walkable(build([thing(22, 3, 3, 0), thing(22, 4, 3, 2)]))
     assert walk.standings((3, 3)) == []
     assert walk.standings((4, 3)) == [0]
+
+
+def test_hedges_and_gargoyles_are_blocks_drawn_as_themselves():
+    room = build([thing(0, 3, 3, 0), thing(4, 3, 3, 1), thing(3, 5, 5, 0)])
+    assert room.fields['platforms'] == [{'x': 3, 'z': 3, 'height': 2}, {'x': 5, 'z': 5, 'height': 1}]
+    assert room.fields['decor'] == [{'x': 3, 'z': 3, 'height': 1, 'kind': 'gargoyle'}, {'x': 5, 'z': 5, 'height': 0, 'kind': 'hedge'}]
+
+
+def test_rooms_past_a_ghost_are_not_short_of_wanderers():
+    # The cauldron, then a room with a ghost, then a quiet room beyond it; and a quiet room the other way.
+    ghost, beyond, quiet = CAULDRON + 1, CAULDRON + 2, CAULDRON - 1
+    builds = {CAULDRON: build([]), ghost: build([thing(9, 3, 3)]), beyond: build([]), quiet: build([])}
+    exits = {CAULDRON: {'east': ghost, 'west': quiet}, ghost: {'west': CAULDRON, 'east': beyond}, beyond: {'west': ghost}, quiet: {'east': CAULDRON}}
+    assert rooms_short_of_wanderers(builds, exits) == {CAULDRON, quiet}
 
 
 if __name__ == '__main__':

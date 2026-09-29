@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { Pickup, CHARM_HEIGHT } from '../../src/game/Pickup'
+import { Pickup, CHARM_HEIGHT, CHARM_HOVER } from '../../src/game/Pickup'
 import { Room } from '../../src/game/Room'
+import { Grid } from '../../src/engine/Grid'
+import { FloatingBlock } from '../../src/game/FloatingBlock'
+import { runFrames } from './frames'
 
 describe('Pickup', () => {
   it('deactivates immediately on collect', () => {
@@ -69,6 +72,35 @@ describe('Pickup as a stepping stone', () => {
     it('is out of reach a stride away, or far below him', () => {
       expect(charm.isWithinReachOf({ x: 6, y: 0, z: 4 })).toBe(false)
       expect(charm.isWithinReachOf({ x: 4, y: 3, z: 4 })).toBe(false)
+    })
+  })
+
+  describe('falling', () => {
+    const room = (grid = new Grid(8, 8), entities: unknown[] = []) => ({ grid, tileSize: 2, entities })
+
+    it('falls from where it was let go in the air to the floor, as the original drops things', () => {
+      const charm = new Pickup('gem')
+      charm.position.set(5, 3 + CHARM_HOVER, 5)
+      runFrames(charm, 40, room())
+      expect(charm.position.y).toBeCloseTo(CHARM_HOVER, 9)
+    })
+
+    it('comes to rest on a block under it', () => {
+      const grid = new Grid(8, 8)
+      grid.setSolid(2, 2, true)
+      grid.setSupport(2, 2, 1)
+      const charm = new Pickup('gem')
+      charm.position.set(5, 3 + CHARM_HOVER, 5)
+      runFrames(charm, 40, room(grid))
+      expect(charm.position.y).toBeCloseTo(1 + CHARM_HOVER, 9)
+    })
+
+    it('stays where it lies on something that holds it, a floating block say', () => {
+      const block = new FloatingBlock(2, 2, 3, 2) // its top at 4
+      const charm = new Pickup('gem')
+      charm.position.set(5, 4 + CHARM_HOVER, 5)
+      runFrames(charm, 40, room(new Grid(8, 8), [block, charm]))
+      expect(charm.position.y).toBeCloseTo(4 + CHARM_HOVER, 9)
     })
   })
 })

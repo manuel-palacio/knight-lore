@@ -1,5 +1,7 @@
 import { Entity, type UpdateContext } from './Entity'
 import { Category } from '../engine/categories'
+import { FrameClock } from '../engine/StepClock'
+import { PIXELS_PER_BLOCK, fallOneStep, groundUnder, type GroundCtx } from './Gravity'
 
 // Subtle floor-bob so a static prop is findable on the black floor. Applied
 // at draw time only; the pickup-range check sees the authoritative position.
@@ -27,6 +29,8 @@ export class Pickup extends Entity {
   readonly spot: number | null
   collected = false
   private bobPhase = 0
+  private fallSpeedPx = 0
+  private readonly clock = new FrameClock()
 
   constructor(id: string, spot: number | null = null) {
     super()
@@ -36,8 +40,34 @@ export class Pickup extends Entity {
     this.extents.set(0.6, 0.6, 0.6)
   }
 
-  update(dt: number, _ctx: UpdateContext): void {
+  update(dt: number, ctx: UpdateContext): void {
     this.bobPhase += dt
+    if (this.clock.tick()) this.fall(ctx as GroundCtx & { entities?: Entity[] })
+  }
+
+  // Let go of in the air (the wolf drops what the man carried, mid-jump), it
+  // falls as the original's objects do, onto whatever is under it: the
+  // floor, a block, a box or another charm.
+  private fall(ctx: GroundCtx & { entities?: Entity[] }): void {
+    const bottom = this.position.y - CHARM_HOVER
+    const groundPx = Math.round(this.groundUnder(ctx, bottom) * PIXELS_PER_BLOCK)
+    const body = { heightPx: Math.round(bottom * PIXELS_PER_BLOCK), speedPx: this.fallSpeedPx }
+    if (body.heightPx <= groundPx) {
+      this.fallSpeedPx = 0
+      return
+    }
+    fallOneStep(body, groundPx)
+    this.fallSpeedPx = body.heightPx <= groundPx ? 0 : body.speedPx
+    this.position.y = body.heightPx / PIXELS_PER_BLOCK + CHARM_HOVER
+  }
+
+  private groundUnder(ctx: GroundCtx & { entities?: Entity[] }, bottom: number): number {
+    const floor = groundUnder(ctx, this.position.x, this.position.z, 0, bottom)
+    const holders = (ctx.entities ?? [])
+      .filter((e): e is Entity & { supportAt: (x: number, z: number, y: number) => number | null } => e !== this && 'supportAt' in e)
+      .map((e) => e.supportAt(this.position.x, this.position.z, bottom))
+      .filter((top): top is number => top !== null && top <= bottom + 1e-6)
+    return Math.max(floor, ...holders)
   }
 
   supportAt(x: number, z: number, actorY: number): number | null {

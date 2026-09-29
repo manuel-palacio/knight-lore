@@ -426,7 +426,12 @@ class Walkable:
             for cell in cells_between(m['from'], m['to']):
                 self.hanging.setdefault(cell, []).append(m['height'] - 1)
         if build.id == 'room-001':
-            self.floor_blocked.add((4, 4))
+            # The cauldron stands over the four middle cells, the wizard in (5,5).
+            self.floor_blocked |= {(3, 3), (3, 4), (4, 3), (4, 4), (5, 5)}
+        # A gargoyle kills at a touch: its top is not stood on (0xB7A3, 0xB85C).
+        for d in f.get('decor', []):
+            if d['kind'] == 'gargoyle':
+                self.hazards.setdefault((d['x'], d['z']), []).append(d['height'] + 1)
         for sp in f.get('spikes', []):
             if sp.get('height'):
                 self.hazards.setdefault((sp['x'], sp['z']), []).append(sp['height'])

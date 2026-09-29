@@ -171,6 +171,8 @@ class RoomSurfaces {
     // The cauldron stands where four cells meet, over all four; the wizard in one.
     if (spec.cauldron) for (const c of cellsUnder(spec.cauldron)) this.floorBlocked.add(key(c))
     if (spec.wizard) this.floorBlocked.add(key(cellAt(spec.wizard)))
+    // A gargoyle kills at a touch: its top is not stood on (see Gargoyle).
+    for (const d of spec.decor ?? []) if (d.kind === 'gargoyle') this.addHazard(d, d.height + 1)
     for (const s of spec.spikes ?? []) {
       if (s.height) this.addHazard(s, s.height)
       else this.floorSpikes.add(key(s))

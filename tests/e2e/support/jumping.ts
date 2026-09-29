@@ -2,6 +2,7 @@ import { Player, type PlayerCtx } from '../../../src/game/Player'
 import { GameState } from '../../../src/game/GameState'
 import { Spike } from '../../../src/game/SpikeGrid'
 import { Flame } from '../../../src/game/Flame'
+import { Gargoyle } from '../../../src/game/Gargoyle'
 import { blockFillsAt } from '../../../src/game/BlockSolids'
 import { SpikedBall } from '../../../src/game/SpikedBall'
 import { FallingBlock } from '../../../src/game/FallingBlock'
@@ -108,7 +109,7 @@ function lands(room: Room, start: { x: number; y: number; z: number }, along: { 
   const player = new Player()
   player.position.set(start.x, start.y, start.z)
   player.facing = along.x > 0 ? 'east' : along.x < 0 ? 'west' : along.z > 0 ? 'south' : 'north'
-  const hazards = room.entities.filter((e) => e instanceof Spike || e instanceof Flame || (e instanceof SpikedBall))
+  const hazards = room.entities.filter((e) => e instanceof Spike || e instanceof Flame || e instanceof SpikedBall || e instanceof Gargoyle)
   for (let tick = 0; tick < MAX_TICKS; tick++) {
     player.update(SIMULATION_DT, contextFor(room, player, tick === 0, held))
     if (hazards.some((h) => touchesHazard(player, h))) return false

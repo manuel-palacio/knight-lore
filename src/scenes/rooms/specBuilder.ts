@@ -12,6 +12,7 @@ import { PIXELS_PER_BLOCK } from '../../game/Gravity'
 import { Cauldron } from '../../game/Cauldron'
 import { CauldronSpirit } from '../../game/CauldronSpirit'
 import { Wizard } from '../../game/Wizard'
+import { Gargoyle } from '../../game/Gargoyle'
 import { Flame } from '../../game/Flame'
 import { Portcullis } from '../../game/Portcullis'
 import { DropTurn, SpikedBall } from '../../game/SpikedBall'
@@ -35,7 +36,10 @@ export function buildRoomFromSpec(spec: RoomSpec, sizeOf: (id: string) => RoomSi
     const room = buildRoomShell(spec.id, spec.tint, spec.width ?? FULL_ROOM_CELLS, spec.depth ?? FULL_ROOM_CELLS)
     for (const p of spec.platforms ?? []) addPlatform(room, p.x, p.z, p.height)
     room.backdrop = spec.backdrop ?? []
-    for (const d of spec.decor ?? []) room.addDecor(d.x, d.z, d.height, d.kind)
+    for (const d of spec.decor ?? []) {
+      room.addDecor(d.x, d.z, d.height, d.kind)
+      if (d.kind === 'gargoyle') room.add(new Gargoyle(d.x, d.z, d.height, room.tileSize))
+    }
     placeSpikes(room, spec.spikes ?? [])
     for (const g of spec.ghosts ?? []) room.add(new GhostEnemy(tileCenter(g.x), tileCenter(g.z)))
     for (const p of spec.pickups ?? []) addPickup(room, p.item, p.x, p.z, p.y)

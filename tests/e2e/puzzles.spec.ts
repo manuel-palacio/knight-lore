@@ -130,6 +130,28 @@ test('map--5--8: from block to block over the collapsing blocks, off a charm, bo
   }
 })
 
+// A wall two high across the room, topped with gargoyles, which kill at a
+// touch: not climbed, but jumped clean over, a held jump from a charm put
+// down before it.
+test('map--1-1: over the gargoyle wall from a charm, both ways', async ({ page }) => {
+  test.setTimeout(120_000)
+  for (const [from, to, near, far, beyond] of [
+    ['south', 'north', 5, 3, [2, 1, 0]],
+    ['north', 'south', 3, 5, [6, 7]],
+  ] as const) {
+    await startGame(page)
+    const room = spec('map--1-1')
+    await enterBy(page, room, from, 1)
+    const door = doorOf(room, from)
+    await walk(page, room, [...column(2, Array.from({ length: Math.abs(near - door.z) + 1 }, (_, i) => door.z + i * Math.sign(near - door.z)))])
+    await putDown(page)
+    const laid = withCharms(room, [floor(2, near)])
+    await walk(page, laid, [{ x: 2, z: near, y: 1 }, floor(2, far), ...column(2, [...beyond])])
+    await leaveBy(page, room, to)
+    expect((await debug(page)).lives).toBe(5)
+  }
+})
+
 // A row of tables two high with spiked balls on top: walking into the stack
 // before the door pushes it out of the row, and he goes round it to the door,
 // under the balls it held up. They hang there until one lets go (any ball of

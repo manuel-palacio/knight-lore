@@ -2,6 +2,7 @@ import type { Entity } from './Entity'
 import { CauldronSpirit } from './CauldronSpirit'
 import { Spike } from './SpikeGrid'
 import { Portcullis } from './Portcullis'
+import { Gargoyle, touchesGargoyle } from './Gargoyle'
 
 // Whether it hurts him now, man or wolf: the cauldron's spirit once it has
 // turned, a gate as it comes down, everything else always.
@@ -18,8 +19,10 @@ interface Body {
 
 // Spikes hurt the feet, so only standing (or landing) on the bed counts: a
 // body brushing its edge, or jumping over it clear of the teeth, is safe.
-// Every other hazard hurts on any overlap of the two bodies.
+// A gargoyle hurts at a touch (see Gargoyle). Every other hazard hurts on any
+// overlap of the two bodies.
 export function touchesHazard(player: Body, hazard: Body): boolean {
+  if (hazard instanceof Gargoyle) return touchesGargoyle(player, hazard)
   if (player.position.y - hazard.position.y >= hazard.extents.y) return false
   if (hazard.position.y - player.position.y >= player.extents.y) return false
   const reachX = hazard instanceof Spike ? hazard.extents.x / 2 : (player.extents.x + hazard.extents.x) / 2

@@ -1,10 +1,10 @@
 import { Entity, type UpdateContext } from './Entity'
+import { topOverSquare } from './Holding'
 import { Category } from '../engine/categories'
 
 // A block that hangs in the air with nothing under it, as the original's
 // stepping stones and door lintels do: it holds from above, and can be walked
 // under. `bottom` is its underside, in blocks from the floor.
-const TOP_TOLERANCE = 0.5
 
 export class FloatingBlock extends Entity {
   readonly bottom: number
@@ -22,8 +22,7 @@ export class FloatingBlock extends Entity {
   }
 
   supportAt(x: number, z: number, actorY: number): number | null {
-    const inside = Math.abs(x - this.position.x) <= this.half && Math.abs(z - this.position.z) <= this.half
-    return inside && actorY >= this.top - TOP_TOLERANCE ? this.top : null
+    return topOverSquare(this.position, this.half, this.top, x, z, actorY)
   }
 
   update(_dt: number, _ctx: UpdateContext): void {}

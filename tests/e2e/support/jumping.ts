@@ -5,6 +5,7 @@ import { Flame } from '../../../src/game/Flame'
 import { blockFillsAt } from '../../../src/game/BlockSolids'
 import { SpikedBall } from '../../../src/game/SpikedBall'
 import { FallingBlock } from '../../../src/game/FallingBlock'
+import { isHolder } from '../../../src/game/Holding'
 import { PIXELS_PER_BLOCK } from '../../../src/game/Gravity'
 import { touchesHazard } from '../../../src/game/Hazards'
 import { SIMULATION_DT } from '../../../src/engine/GameLoop'
@@ -139,8 +140,8 @@ function contextFor(room: Room, player: Player, pressed: boolean, held: boolean)
 function supportAmong(room: Room, player: Player, x: number, z: number, y: number): number | null {
   let best: number | null = null
   for (const e of room.entities) {
-    if (e === player || !('supportAt' in e)) continue
-    const top = (e as unknown as { supportAt: (x: number, z: number, y: number) => number | null }).supportAt(x, z, y)
+    if (e === player || !isHolder(e)) continue
+    const top = e.supportAt(x, z, y)
     if (top !== null && (best === null || top > best)) best = top
   }
   return best

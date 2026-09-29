@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { topOverSquare, isStoodOn } from './Holding'
 import { Entity, type UpdateContext } from './Entity'
 import { Category } from '../engine/categories'
 import { FrameClock } from '../engine/StepClock'
@@ -9,8 +10,6 @@ import { FrameClock } from '../engine/StepClock'
 // frames after someone lands on it, and gone until the room is entered
 // again. Like a table, it only supports from above.
 export const VANISH_AFTER_FRAMES = 2
-const TOP_TOLERANCE = 0.5
-const RIDER_TOLERANCE = 0.05
 
 interface RiderCtx extends UpdateContext {
   playerPosition?: THREE.Vector3
@@ -39,9 +38,7 @@ export class VanishingBlock extends Entity {
 
   supportAt(x: number, z: number, actorY: number): number | null {
     if (!this.present) return null
-    const half = this.footprint / 2
-    const inside = Math.abs(x - this.position.x) <= half && Math.abs(z - this.position.z) <= half
-    return inside && actorY >= this.height - TOP_TOLERANCE ? this.height : null
+    return topOverSquare(this.position, this.footprint / 2, this.height, x, z, actorY)
   }
 
   override reset(): void {
@@ -59,6 +56,6 @@ export class VanishingBlock extends Entity {
   }
 
   private isStandingOn(rider: THREE.Vector3): boolean {
-    return this.supportAt(rider.x, rider.z, rider.y) !== null && Math.abs(rider.y - this.height) < RIDER_TOLERANCE
+    return isStoodOn(this, this.height, rider)
   }
 }

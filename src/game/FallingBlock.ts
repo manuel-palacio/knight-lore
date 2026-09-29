@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { topOverSquare, isStoodOn } from './Holding'
 import { Entity, type UpdateContext } from './Entity'
 import { Category } from '../engine/categories'
 import { FrameClock } from '../engine/StepClock'
@@ -9,8 +10,6 @@ import { PIXELS_PER_BLOCK, groundUnder, type GroundCtx } from './Gravity'
 // until it rests on what is under it. It stays where it stopped until the
 // room is entered again. Like a table, it only holds from above.
 export const SINK_PER_FRAME_PX = 1
-const TOP_TOLERANCE = 0.5
-const RIDER_TOLERANCE = 0.05
 
 interface RiderCtx extends GroundCtx {
   playerPosition?: THREE.Vector3
@@ -38,8 +37,7 @@ export class FallingBlock extends Entity {
   }
 
   supportAt(x: number, z: number, actorY: number): number | null {
-    const inside = Math.abs(x - this.position.x) <= this.half && Math.abs(z - this.position.z) <= this.half
-    return inside && actorY >= this.top - TOP_TOLERANCE ? this.top : null
+    return topOverSquare(this.position, this.half, this.top, x, z, actorY)
   }
 
   override reset(): void {
@@ -58,7 +56,7 @@ export class FallingBlock extends Entity {
   }
 
   private isStandingOn(rider: THREE.Vector3): boolean {
-    return this.supportAt(rider.x, rider.z, rider.y) !== null && Math.abs(rider.y - this.top) < RIDER_TOLERANCE
+    return isStoodOn(this, this.top, rider)
   }
 
   private restsOnGround(ctx: GroundCtx): boolean {

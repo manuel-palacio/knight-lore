@@ -72,7 +72,6 @@ export function isCompatibleSave(saved: { cureSequence: readonly string[]; charm
 }
 
 export class GameState {
-  inventory: string[] = []
   form: Form = 'human'
   transformTimer: number = HUMAN_DURATION
   currentRoomId = 'the-hall'
@@ -143,22 +142,9 @@ export class GameState {
   }
 
   onTransformed: () => void = () => {}
-  onTransformWhileCarrying: (id: string) => void = () => {}
+  // Night falls: the wolf can carry nothing, so what the man carried is let go of.
+  onNightfall: () => void = () => {}
   onLifeLost: () => void = () => {}
-
-  // Two charms of a kind can be carried at once: each is counted.
-  addItem(id: string): void {
-    this.inventory.push(id)
-  }
-
-  removeItem(id: string): void {
-    const at = this.inventory.indexOf(id)
-    if (at >= 0) this.inventory.splice(at, 1)
-  }
-
-  hasItem(id: string): boolean {
-    return this.inventory.includes(id)
-  }
 
   toggleForm(): void {
     this.form = this.form === 'human' ? 'werewolf' : 'human'
@@ -168,11 +154,7 @@ export class GameState {
   tickTransform(dt: number): void {
     this.transformTimer -= dt
     if (this.transformTimer <= 0) {
-      while (this.form === 'human' && this.inventory.length > 0) {
-        const id = this.inventory[0]!
-        this.removeItem(id)
-        this.onTransformWhileCarrying(id)
-      }
+      if (this.form === 'human') this.onNightfall()
       this.toggleForm()
       this.onTransformed()
       if (this.form === 'human') {
@@ -215,7 +197,6 @@ export class GameState {
   deliverCureItem(carrying: string | null): boolean {
     if (this.form !== 'human') return false
     if (carrying === null || carrying !== this.wantedItem) return false
-    this.removeItem(carrying)
     this.cureProgress += 1
     if (this.cureProgress >= this.cureSequence.length) this.won = true
     return true

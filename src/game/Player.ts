@@ -244,20 +244,16 @@ export class Player extends Entity {
   // let go of to make room, if his hands were full.
   tryPickup(charm: Pickup, state: GameState, onTaken: (letGo: Pickup | undefined) => void): void {
     if (state.form !== 'human') return
-    state.addItem(charm.id)
-    const letGo = this.satchel.take(charm)
-    if (letGo) state.removeItem(letGo.id)
-    onTaken(letGo)
+    onTaken(this.satchel.take(charm))
   }
 
   // As the original (0xC0DD): the charm carried longest goes down under his
   // feet and he stands on it, a block higher, when there is room over his
   // head. Returns the charm, to be laid where his feet were.
-  putDownUnderFoot(state: GameState, headroom: boolean): Pickup | undefined {
+  putDownUnderFoot(headroom: boolean): Pickup | undefined {
     if (!headroom || this.state !== 'grounded') return undefined
     const charm = this.satchel.putDownOldest()
     if (!charm) return undefined
-    state.removeItem(charm.id)
     this.position.y += CHARM_HEIGHT
     return charm
   }

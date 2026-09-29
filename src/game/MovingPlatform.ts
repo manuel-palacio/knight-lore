@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { topOverSquare, isStoodOn } from './Holding'
 import { Entity, type UpdateContext } from './Entity'
 import { Pickup, CHARM_HOVER } from './Pickup'
 import { PushableBox } from './PushableBox'
@@ -10,8 +11,6 @@ const FOOTPRINT = 2
 // The original's moving blocks (handlers at 0xB6B1 and 0xB6B9) move one pixel
 // a frame of its clock (FrameClock): an eighth of a unit.
 export const PLATFORM_STEP = 1 / 8
-const RIDER_TOLERANCE = 0.05
-const TOP_TOLERANCE = 0.5
 
 interface PlatformCtx extends UpdateContext {
   playerPosition?: THREE.Vector3
@@ -48,9 +47,7 @@ export class MovingPlatform extends Entity {
   // Only an actor near the top is supported, so the floor under a high
   // platform stays walkable.
   supportAt(x: number, z: number, actorY: number = this.height): number | null {
-    const half = FOOTPRINT / 2
-    const inside = Math.abs(x - this.position.x) <= half && Math.abs(z - this.position.z) <= half
-    return inside && actorY >= this.height - TOP_TOLERANCE ? this.height : null
+    return topOverSquare(this.position, FOOTPRINT / 2, this.height, x, z, actorY)
   }
 
   override reset(): void {
@@ -73,7 +70,7 @@ export class MovingPlatform extends Entity {
     const rider = ctx.playerPosition
     if (rider && ctx.playerExtents && this.wouldHit(rider, ctx.playerExtents, dx, dz)) return
     if (this.thingInTheWay(ctx.entities ?? [], dx, dz)) return
-    const riding = rider !== undefined && this.supportAt(rider.x, rider.z) !== null && Math.abs(rider.y - this.height) < RIDER_TOLERANCE
+    const riding = rider !== undefined && isStoodOn(this, this.height, rider)
     if (riding && rider && ctx.playerExtents && !this.roomForRider(ctx, rider, ctx.playerExtents, dx, dz)) return
     this.position.x += dx
     this.position.z += dz

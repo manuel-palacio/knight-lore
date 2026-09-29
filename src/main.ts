@@ -196,7 +196,7 @@ async function main(): Promise<void> {
   let flashFrames = 0
 
   // What he moves through and stands on in a room, and what he hears doing it.
-  function playerContext(room: Room): PlayerCtx & { playerPosition: THREE.Vector3; playerExtents: THREE.Vector3; boxes: PushableBox[] } {
+  function playerContext(room: Room): PlayerCtx & { playerPosition: THREE.Vector3; playerExtents: THREE.Vector3; boxes: PushableBox[]; carrying: string[] } {
     return {
       input,
       state,
@@ -207,6 +207,7 @@ async function main(): Promise<void> {
       dynamicSupport: (x: number, z: number, y: number) => dynamicSupportAt(room, x, z, y),
       dynamicSolid: (x: number, z: number, from: number, to: number) => blockFillsAt(room.entities, x, z, from, to),
       boxes: room.entities.filter((e): e is PushableBox => e instanceof PushableBox),
+      carrying: player.carrying,
       onLanded: () => beeper.play('land'),
       onJumped: () => beeper.play('jump'),
     }
@@ -379,13 +380,13 @@ async function main(): Promise<void> {
   // The wolf can carry nothing: at nightfall what the man carried falls at his feet.
   // Each goes under his feet as E puts one down, lifting him, where there is
   // room over his head; one on another, not all in the one place.
-  state.onTransformWhileCarrying = (id) => {
-    const charm = player.satchel.handOver(id)
-    if (!charm) return
-    const feet = player.position.clone()
-    if (hasHeadroom(activeRoom(), feet)) player.position.y += CHARM_HEIGHT
-    layCharm(charm, feet)
-    beeper.play('drop')
+  state.onNightfall = () => {
+    for (let charm = player.satchel.putDownOldest(); charm; charm = player.satchel.putDownOldest()) {
+      const feet = player.position.clone()
+      if (hasHeadroom(activeRoom(), feet)) player.position.y += CHARM_HEIGHT
+      layCharm(charm, feet)
+      beeper.play('drop')
+    }
   }
   // Death: white flash, and Sabreman dissolves into a cloud of stars where
   // he stood; then the room's movers go back to their starts, and he comes
@@ -424,7 +425,7 @@ async function main(): Promise<void> {
   // under his feet: he stands on it, a block higher (see Player).
   function tryPutDownPass(room: Room): void {
     const feet = player.position.clone()
-    const charm = player.putDownUnderFoot(state, hasHeadroom(room, feet))
+    const charm = player.putDownUnderFoot(hasHeadroom(room, feet))
     if (!charm) return
     layCharm(charm, feet)
     beeper.play('drop')

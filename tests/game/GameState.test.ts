@@ -2,28 +2,11 @@ import { describe, it, expect } from 'vitest'
 import { GameState, CURE_LENGTH, HUMAN_DURATION, WEREWOLF_DURATION, DUSK_WARNING, CURE_ORDER, DEALT_ITEMS, isCompatibleSave, itemAtSpot, type ItemId, type SavedGame } from '../../src/game/GameState'
 
 describe('GameState', () => {
-  it('starts as human with full timer and empty inventory', () => {
+  it('starts as human with full timer', () => {
     const s = new GameState()
     expect(s.form).toBe('human')
     expect(s.transformTimer).toBe(HUMAN_DURATION)
-    expect(s.inventory).toEqual([])
     expect(s.won).toBe(false)
-  })
-
-  it('inventory.has() returns true after add', () => {
-    const s = new GameState()
-    s.addItem('goblet')
-    expect(s.hasItem('goblet')).toBe(true)
-  })
-
-  it('inventory persists across simulated transformations', () => {
-    const s = new GameState()
-    s.addItem('goblet')
-    s.toggleForm()
-    expect(s.form).toBe('werewolf')
-    expect(s.hasItem('goblet')).toBe(true)
-    s.toggleForm()
-    expect(s.hasItem('goblet')).toBe(true)
   })
 
   it('toggleForm resets timer based on new form', () => {
@@ -101,7 +84,6 @@ describe('GameState', () => {
     s.loseLife()
     s.currentRoomId = 'room-009'
     const wanted = s.cureSequence[0]!
-    s.addItem(wanted)
     s.toggleForm()
     s.deliverCureItem(wanted)
     const restored = GameState.restore(s.serialize())
@@ -112,7 +94,6 @@ describe('GameState', () => {
     expect(restored.cureSequence).toEqual(s.cureSequence)
     expect(restored.cureProgress).toBe(1)
     expect(restored.currentRoomId).toBe('room-009')
-    expect(restored.inventory).toEqual([])
   })
 
   it('asks for the original\'s fourteen charms (0xC27D) in its order, read round from a seeded start', () => {
@@ -135,22 +116,17 @@ describe('GameState', () => {
     const s = new GameState()
     const [first, second] = s.cureSequence
     expect(s.wantedItem).toBe(first)
-    s.addItem(first!)
     expect(s.deliverCureItem(first!)).toBe(true)
     expect(s.cureProgress).toBe(1)
     expect(s.wantedItem).toBe(second)
-    expect(s.hasItem(first!)).toBe(false)
   })
 
   it('rejects wrong item, empty hands, and werewolf deliveries', () => {
     const s = new GameState()
     const wanted = s.cureSequence[0]
     const other = s.cureSequence.find((charm) => charm !== wanted)
-    s.addItem(other!)
     expect(s.deliverCureItem(other!)).toBe(false)
     expect(s.deliverCureItem(null)).toBe(false)
-    s.removeItem(other!)
-    s.addItem(wanted!)
     s.toggleForm() // werewolf
     expect(s.deliverCureItem(wanted!)).toBe(false)
     expect(s.cureProgress).toBe(0)
@@ -159,7 +135,6 @@ describe('GameState', () => {
   it('delivering every item in order wins and wantedItem becomes null', () => {
     const s = new GameState()
     for (const id of s.cureSequence) {
-      s.addItem(id)
       expect(s.deliverCureItem(id)).toBe(true)
     }
     expect(s.won).toBe(true)

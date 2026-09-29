@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { SpikedBall, DropTurn, DROP_CHANCE } from '../../src/game/SpikedBall'
 import { hazardHunts, touchesHazard } from '../../src/game/Hazards'
-import { GameState } from '../../src/game/GameState'
 import { Grid } from '../../src/engine/Grid'
 import type { UpdateContext } from '../../src/game/Entity'
 import { runFrames } from './frames'
@@ -82,13 +81,10 @@ describe('SpikedBall', () => {
   })
 
   it('in an odd-numbered room it waits until something is picked up or put down, and then for good', () => {
-    const state = new GameState(1)
     const ball = new SpikedBall({ x: 3, z: 2 }, 6, 2, { waits: true, random: always })
-    const ctx = { grid: new Grid(8, 8), tileSize: 2, state }
+    const ctx = { grid: new Grid(8, 8), tileSize: 2, carrying: [] as string[] }
     expect(new Set(run(ball, 20, ctx))).toEqual(new Set([72]))
-    state.addItem('gem')
-    run(ball, 1, ctx)
-    state.removeItem('gem')
+    run(ball, 1, { ...ctx, carrying: ['gem'] })
     expect(run(ball, 30, ctx).at(-1)).toBe(0)
   })
 

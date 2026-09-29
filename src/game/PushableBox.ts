@@ -1,4 +1,5 @@
 import { Entity, type UpdateContext } from './Entity'
+import { isHolder, type Holder } from './Holding'
 import { blockFillsAt } from './BlockSolids'
 import { Pickup } from './Pickup'
 import { Category } from '../engine/categories'
@@ -15,9 +16,6 @@ import { PIXELS_PER_BLOCK, PIXELS_PER_UNIT, fallOneStep, groundUnder, type Groun
 // table 12 across and 20 deep, a chest 18 across and 12 deep.
 export type BoxKind = 'table' | 'chest'
 
-interface Holder {
-  supportAt(x: number, z: number, actorY: number): number | null
-}
 
 const HALF_PX: Record<BoxKind, { x: number; z: number }> = { table: { x: 6, z: 10 }, chest: { x: 9, z: 6 } }
 const HEIGHT = 1
@@ -159,8 +157,8 @@ export class PushableBox extends Entity {
     const boxes = (ctx.boxes ?? []).filter((o) => o !== this && o.top <= this.bottom + EDGE && this.overlapsAcross(o)).map((o) => o.top)
     // Floating, falling, crumbling and moving blocks hold it up too.
     const blocks = (ctx.entities ?? [])
-      .filter((e) => !(e instanceof PushableBox) && !(e instanceof Pickup) && 'supportAt' in e)
-      .flatMap((e) => this.footprintAt(this.position.x, this.position.z).map((p) => (e as unknown as Holder).supportAt(p.x, p.z, this.bottom)))
+      .filter((e): e is Entity & Holder => !(e instanceof PushableBox) && !(e instanceof Pickup) && isHolder(e))
+      .flatMap((e) => this.footprintAt(this.position.x, this.position.z).map((p) => e.supportAt(p.x, p.z, this.bottom)))
       .filter((top): top is number => top !== null && top <= this.bottom + EDGE)
     const groundPx = Math.round(Math.max(floor, ...boxes, ...blocks) * PIXELS_PER_BLOCK)
     if (this.heightPx <= groundPx) return

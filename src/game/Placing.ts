@@ -1,14 +1,11 @@
 import type * as THREE from 'three'
+import { isHolder } from './Holding'
 import type { Entity } from './Entity'
 import type { Grid } from '../engine/Grid'
 import { CHARM_HEIGHT } from './Pickup'
 import { VanishingBlock } from './VanishingBlock'
 
 const EDGE = 1e-6
-
-interface Holder {
-  supportAt(x: number, z: number, actorY: number): number | null
-}
 
 // Whether he can be lifted a charm's height from where his feet are: nothing
 // may fill the space his body would rise into (a crumbled block is gone).
@@ -20,7 +17,7 @@ export function headroomToLiftOnto(entities: readonly Entity[], him: { extents: 
     const over = Math.abs(e.position.x - feet.x) < (e.extents.x + him.extents.x) / 2 &&
       Math.abs(e.position.z - feet.z) < (e.extents.z + him.extents.z) / 2
     if (!over) return false
-    const top = 'supportAt' in e ? (e as unknown as Holder).supportAt(feet.x, feet.z, Infinity) : null
+    const top = isHolder(e) ? e.supportAt(feet.x, feet.z, Infinity) : null
     const bottom = top !== null ? top - 1 : e.position.y
     const height = top !== null ? 1 : e.extents.y
     return bottom < to && bottom + height > from + EDGE

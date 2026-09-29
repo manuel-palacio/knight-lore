@@ -21,23 +21,13 @@ describe('Werewolf transformation', () => {
     expect(count).toBe(1)
   })
 
-  it('transforming while carrying drops the item', () => {
+  it('tells of nightfall, when the man lets go of what he carries (the wolf can carry nothing)', () => {
     const s = new GameState()
-    s.addItem('goblet')
-    let dropped: string | null = null
-    s.onTransformWhileCarrying = (id: string) => { dropped = id }
+    let nightfalls = 0
+    s.onNightfall = () => { nightfalls++ }
     s.tickTransform(HUMAN_DURATION + 0.001)
-    expect(dropped).toBe('goblet')
-    expect(s.hasItem('goblet')).toBe(false)
-  })
-
-  it('transforming drops everything carried: the wolf carries nothing', () => {
-    const s = new GameState()
-    for (const id of ['goblet', 'gem', 'gem']) s.addItem(id)
-    const dropped: string[] = []
-    s.onTransformWhileCarrying = (id: string) => { dropped.push(id) }
-    s.tickTransform(HUMAN_DURATION + 0.001)
-    expect(dropped).toEqual(['goblet', 'gem', 'gem'])
-    expect(s.inventory).toEqual([])
+    expect(nightfalls).toBe(1)
+    s.tickTransform(WEREWOLF_DURATION + 0.001) // daybreak is not nightfall
+    expect(nightfalls).toBe(1)
   })
 })

@@ -2,7 +2,6 @@ import { Entity, type UpdateContext } from './Entity'
 import { Category } from '../engine/categories'
 import { FrameClock } from '../engine/StepClock'
 import { PIXELS_PER_BLOCK, fallOneStep, groundUnder, type GroundCtx } from './Gravity'
-import type { GameState } from './GameState'
 
 // The original's spiked ball (the room table's t18, and t19, the same ball
 // hung four blocks higher; handler at 0xB7A9): a hazard in the middle of its
@@ -25,7 +24,8 @@ export class DropTurn {
 }
 
 interface BallCtx extends GroundCtx {
-  state?: GameState
+  // What he carries: in odd rooms the balls wait for a pick-up or a put-down.
+  carrying?: readonly string[]
   dynamicSupport?: (x: number, z: number, y: number) => number | null
 }
 
@@ -94,7 +94,7 @@ export class SpikedBall extends Entity {
 
   private mayLetGo(ctx: BallCtx): boolean {
     if (!this.heldBack) return true
-    const carried = (ctx.state?.inventory ?? []).join()
+    const carried = (ctx.carrying ?? []).join()
     this.carriedWhenEntered ??= carried
     this.heldBack = carried === this.carriedWhenEntered
     return !this.heldBack

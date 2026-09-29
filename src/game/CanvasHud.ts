@@ -25,7 +25,7 @@ export interface HudImages {
 export class CanvasHud {
   constructor(private readonly images: HudImages, private readonly tintFrame: (hue: number) => HTMLCanvasElement) {}
 
-  draw(ctx: CanvasRenderingContext2D, top: number, state: GameState, carrying: string[], roomTint: number): void {
+  draw(ctx: CanvasRenderingContext2D, top: number, state: GameState, satchelSlots: (string | null)[], roomTint: number): void {
     // Drawn over the room: its near corner shows between the scrolls, as in the original.
     ctx.drawImage(this.tintFrame(roomTint), 0, top)
     ctx.drawImage(this.images.scroll, 0, top)
@@ -33,7 +33,8 @@ export class CanvasHud {
     ctx.drawImage(this.images.hero, HERO.x, top + HERO.y)
     drawDigits(ctx, String(state.lives).padStart(2, '0'), LIVES.x, top + LIVES.y, '#fff')
     drawDigits(ctx, String(Math.min(state.dayCount, 40)).padStart(2, '0'), DAY.x, top + DAY.y, '#fff')
-    carrying.forEach((id, i) => this.drawItem(ctx, id, CARRY.x + i * CARRY.apart, top + CARRY.y, 1))
+    // The satchel's slots left to right, an empty one left blank (0xBF56).
+    satchelSlots.forEach((id, i) => { if (id) this.drawItem(ctx, id, CARRY.x + i * CARRY.apart, top + CARRY.y, 1) })
     this.drawDial(ctx, top, state)
   }
 

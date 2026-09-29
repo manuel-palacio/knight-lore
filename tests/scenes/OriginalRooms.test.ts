@@ -12,7 +12,9 @@ describe('rooms from the original room table', () => {
     expect(cauldron.exits.map((e) => e.direction).sort()).toEqual(['east', 'north', 'south', 'west'])
     expect(cells(cauldron.platforms)).toEqual(['1,2', '1,5', '2,1', '2,6', '5,1', '5,6', '6,2', '6,5'])
     expect(cauldron.platforms!.every((p) => p.height === 1)).toBe(true)
-    expect(cauldron.cauldron).toEqual({ x: 4, z: 4, height: 0 })
+    // Background parts 0x8D at (0x80,0x80) and 0x9E at (0x98,0x68): the room's middle, and beside it.
+    expect(cauldron.cauldron).toEqual({ x: 8, z: 8 })
+    expect(cauldron.wizard).toEqual({ x: 11, z: 11 })
   })
 
   it('the cage (0x87, west of the cauldron): spiked blocks at the corners, grilles between them', () => {

@@ -95,7 +95,9 @@ describe('the castle', () => {
     const room = withCauldron[0]!
     expect(room.id).toBe('room-001')
     expect(room.wizard).toBeDefined()
-    expect(inRoom(room, room.cauldron!) && inRoom(room, room.wizard!)).toBe(true)
+    // In room units, two to a cell.
+    const inside = (at: { x: number; z: number }) => at.x > 0 && at.x < 2 * widthOf(room) && at.z > 0 && at.z < 2 * depthOf(room)
+    expect(inside(room.cauldron!) && inside(room.wizard!)).toBe(true)
   })
 })
 

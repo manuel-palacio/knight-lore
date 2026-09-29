@@ -1,20 +1,35 @@
 import type * as THREE from 'three'
-import { deliveryEffect } from '../engine/effects'
+import { deliveryEffect, pushEffect } from '../engine/effects'
 import type { Beeper } from '../engine/Beeper'
-import { Cauldron } from './Cauldron'
+import { Cauldron, CAULDRON_TOP } from './Cauldron'
 import { CHARM_HOVER, Pickup } from './Pickup'
+import { SinkingCharm } from './SinkingCharm'
 import { headroomToLiftOnto, insideRoom } from './Placing'
 import { touchesHazard } from './Hazards'
+import { EPS } from '../engine/epsilons'
 import type { GameState } from './GameState'
 import type { Player } from './Player'
 import type { Room } from './Room'
 
-// What E does with charms: into the cauldron, else picked up, else put down.
+// A room holds at most two charms on its floor (the object slots at 0x5C48
+// and 0x5C68), and the cauldron's room one, its second slot being the
+// sparkle over the cauldron (0xB8A9): with no slot free, E puts nothing down
+// (0xC081).
+const CHARMS_ON_A_FLOOR = 2
+const CHARMS_BY_THE_CAULDRON = 1
+
+// What E does with charms (0xC00E): picks one up, else puts one down; put
+// down up on the cauldron, it goes into it.
 export class CharmHands {
   constructor(private readonly player: Player, private readonly state: GameState, private readonly beeper: Beeper) {}
 
   use(room: Room): void {
-    if (!this.deliver(room) && !this.pickUp(room)) this.putDown(room)
+    if (!this.pickUp(room)) this.putDown(room)
+  }
+
+  // While a charm goes into the cauldron he can do nothing (0xD022, 0x5BC4).
+  delivering(room: Room): boolean {
+    return room.entities.some((e) => e instanceof SinkingCharm)
   }
 
   // The extra life (graphic 0x67, handler 0xC1AB) is taken by touching it,
@@ -24,21 +39,24 @@ export class CharmHands {
     if (life) this.takeExtraLife(room, life)
   }
 
-  private deliver(room: Room): boolean {
-    const cauldron = room.entities.find((e): e is Cauldron => e instanceof Cauldron)
-    if (!cauldron || !cauldron.isInRange(this.player.position)) return false
-    const { satchel } = this.player
-    const wanted = this.state.wantedItem
-    const charm = wanted ? satchel.handOver(wanted) : undefined
-    if (!charm || !this.state.deliverCureItem(charm.id)) {
-      if (charm) satchel.take(charm)
-      if (!satchel.isEmpty) this.beeper.play('wrong')
-      return false
+  // A charm on its way into the cauldron glides with a sound (0xC232), and
+  // once it has sunk to the floor the cauldron takes it (0xC245): the one it
+  // wants next brews the cure, a wrong one is lost, gone from the castle.
+  settleDeliveries(room: Room): void {
+    for (const e of room.entities) {
+      if (!(e instanceof SinkingCharm)) continue
+      if (e.moved) this.beeper.playEffect(pushEffect(e.position, room.grid))
+      if (e.sunk) this.takeIntoCauldron(room, e)
     }
+  }
+
+  private takeIntoCauldron(room: Room, sinking: SinkingCharm): void {
+    room.remove(sinking)
+    const { charm } = sinking
     if (charm.spot !== null) this.state.usedSpots.push(charm.spot)
+    if (!this.state.deliverCureItem(charm.id)) return
     if (this.state.won) this.beeper.play('win')
     else this.beeper.playEffect(deliveryEffect(charm.id))
-    return true
   }
 
   // A charm in reach is picked up; with his hands full, the charm carried
@@ -64,14 +82,30 @@ export class CharmHands {
     this.beeper.play('pickup')
   }
 
-  // Puts down the charm carried longest, under his feet: he stands on it, a
-  // block higher (see Player).
+  // Puts down what is in the satchel's last slot under his feet (see Player),
+  // where the room has a place for it.
   private putDown(room: Room): void {
+    if (this.charmsOnTheFloor(room) >= this.floorRoom(room)) return
     const feet = this.player.position.clone()
     const charm = this.player.putDownUnderFoot(this.hasHeadroom(room, feet))
-    if (!charm) return
-    this.lay(room, charm, feet)
     this.beeper.play('drop')
+    if (!charm) return
+    const cauldron = room.entities.find((e): e is Cauldron => e instanceof Cauldron)
+    if (cauldron && feet.y >= CAULDRON_TOP - EPS.STEP) this.dropIntoCauldron(room, charm, feet, cauldron)
+    else this.lay(room, charm, feet)
+  }
+
+  private charmsOnTheFloor(room: Room): number {
+    return room.entities.filter((e) => (e instanceof Pickup && !e.collected) || e instanceof SinkingCharm).length
+  }
+
+  private floorRoom(room: Room): number {
+    return room.entities.some((e) => e instanceof Cauldron) ? CHARMS_BY_THE_CAULDRON : CHARMS_ON_A_FLOOR
+  }
+
+  private dropIntoCauldron(room: Room, charm: Pickup, at: THREE.Vector3, cauldron: Cauldron): void {
+    charm.dropAt(at.x, at.y + CHARM_HOVER, at.z)
+    room.add(new SinkingCharm(charm, cauldron.position))
   }
 
   private hasHeadroom(room: Room, feet: THREE.Vector3): boolean {

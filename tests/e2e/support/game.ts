@@ -6,6 +6,8 @@ import { itemAtSpot } from '../../../src/game/GameState'
 import { centreOf, guardTrack, safeToCross, safeUnderBall, shouldWalkOn, sightingBefore, walkerTrack, type Point, type Sighting } from './crossing'
 import { PIXELS_PER_BLOCK } from '../../../src/game/Gravity'
 import { TICKS_PER_FRAME, TICKS_PER_STEP } from '../../../src/engine/StepClock'
+import { SATCHEL_SIZE } from '../../../src/game/Satchel'
+import { CAULDRON_TOP } from '../../../src/game/Cauldron'
 
 // Drives the dev build through its window hooks (__dbg, __room, __pos,
 // __timer) and the real keyboard. Only `vite` dev exposes the hooks.
@@ -27,6 +29,8 @@ export interface Debug {
   platforms: { x: number; z: number }[]
   carrying: string[]
   delivered: number
+  // A charm is on its way into the cauldron.
+  delivering: boolean
   lives: number
   day: number
   won: boolean
@@ -305,15 +309,19 @@ async function walkRun(page: Page, run: Cell[], endAt?: { x: number; z: number }
 }
 
 // A jump is committed: from the take-off point planJump found (or, with no
-// room to plan in, where he stands with Space held), facing the way, Space
-// down, and up again at once for a low jump or once he is past the top of a
-// high one (held on, he would jump again as he lands).
+// room to plan in, where he stands with Space held), facing the way.
 async function jumpTo(page: Page, path: Step[], into: number, spec?: RoomSpec, plan?: JumpPlan): Promise<void> {
   const from = path[into - 1]!
   const to = path[into]!
   const facing = to.x > from.x ? 'east' : to.x < from.x ? 'west' : to.z > from.z ? 'south' : 'north'
   const held = spec && plan ? await takeOffFor(page, spec, path, into, plan) : true
   await face(page, facing)
+  await jump(page, held)
+}
+
+// Space down, and up again at once for a low jump or once he is past the top
+// of a high one (held on, he would jump again as he lands); then down.
+async function jump(page: Page, held: boolean): Promise<void> {
   if (held) await page.keyboard.down('Space')
   else await page.keyboard.press('Space')
   try {
@@ -372,4 +380,35 @@ export async function roomHolding(page: Page, wanted: (item: string) => boolean)
   const found = (await dealtCharms(page)).filter((c) => wanted(c.item)).sort((a, b) => a.height - b.height)[0]
   if (!found) throw new Error('no such charm dealt')
   return found.room
+}
+
+// E puts down what is in the satchel's last slot; with that slot empty it
+// only shifts the satchel along, so a charm can take up to three presses.
+export async function putDown(page: Page): Promise<void> {
+  const before = (await debug(page)).carrying.length
+  for (let press = 0; press < SATCHEL_SIZE; press++) {
+    await page.keyboard.press('KeyE')
+    const down = await expect.poll(async () => (await debug(page)).carrying.length, { timeout: 400 }).toBeLessThan(before).then(() => true, () => false)
+    if (down) return
+  }
+  throw new Error('E put nothing down')
+}
+
+// From the floor a cell and a half south of the cauldron's middle, a held
+// jump north lands up on it, two blocks high.
+export const CAULDRON_TAKE_OFF = { dx: 1, dz: 3 }
+
+export async function jumpOntoCauldron(page: Page): Promise<void> {
+  await face(page, 'north')
+  await jump(page, true)
+  expect((await debug(page)).pos.y).toBe(CAULDRON_TOP)
+}
+
+// Up on the cauldron, puts the charm down into it, and waits for it to sink.
+export async function deliver(page: Page): Promise<void> {
+  const { cauldron } = await debug(page)
+  if (!cauldron) throw new Error('no cauldron here')
+  await standAt(page, { x: cauldron.x - 0.5, y: CAULDRON_TOP, z: cauldron.z - 0.5 })
+  await putDown(page)
+  await expect.poll(async () => (await debug(page)).delivering, { timeout: 10_000 }).toBe(false)
 }

@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
-import { debug, enterRoom, face, holdDaylight, roomHolding, standAt, startGame } from './support/game'
+import { debug, enterRoom, face, holdDaylight, putDown, roomHolding, standAt, startGame } from './support/game'
 
 // The transformation is a seizure: Sabreman cannot move while it plays out
 // (about two seconds), and comes out of it the wolf. What he carries stays
@@ -44,7 +44,6 @@ test('the wolf picks up a charm and puts it down again', async ({ page }) => {
 
   // Put down where there is room over his head for it.
   await enterRoom(page, 'map--4--4', { x: 8, z: 8 })
-  await page.keyboard.press('KeyE')
-  await expect.poll(async () => (await debug(page)).carrying).toEqual([])
+  await putDown(page)
   expect((await debug(page)).pickups.map((p) => p.id)).toContain(charm.id)
 })

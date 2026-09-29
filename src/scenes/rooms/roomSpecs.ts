@@ -56,8 +56,10 @@ export interface RoomSpec {
   // Balls bounce where they stand, a cell or half a cell across (x or z ends in .5).
   balls?: (Cell & { height: number })[]
   hoppers?: (Cell & { height: number; randomHops?: boolean })[]
-  cauldron?: Cell & { height: number }
-  wizard?: Cell
+  // Where the original has them, in room units (not cells): the cauldron
+  // stands where four cells meet.
+  cauldron?: { x: number; z: number }
+  wizard?: { x: number; z: number }
   flames?: (Cell & { height: number; axis: FlameAxis })[]
   // Grilles that rise and fall across a line of cells (see Portcullis).
   portcullises?: { from: Cell; to: Cell }[]
@@ -748,8 +750,8 @@ export const ROOM_SPECS: RoomSpec[] = [
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 1, z: 2, height: 1 }, { x: 1, z: 5, height: 1 }, { x: 2, z: 1, height: 1 }, { x: 2, z: 6, height: 1 }, { x: 5, z: 1, height: 1 }, { x: 5, z: 6, height: 1 }, { x: 6, z: 2, height: 1 }, { x: 6, z: 5, height: 1 }],
     backdrop: [{ graphic: 2, x: 141, y: 196, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 3, x: 115, y: 196, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 2, x: 196, y: 115, z: 128, flip: false, dx: -7, dy: -3 }, { graphic: 3, x: 196, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 2, x: 141, y: 59, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 3, x: 115, y: 59, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 2, x: 59, y: 115, z: 128, flip: false, dx: -7, dy: -3 }, { graphic: 3, x: 59, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 13, x: 63, y: 184, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 14, x: 71, y: 192, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 73, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 192, z: 128, flip: true, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 73, z: 172, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 192, z: 172, flip: true, dx: -8, dy: -4 }, { graphic: 10, x: 92, y: 192, z: 128, flip: true, dx: -20, dy: -1 }, { graphic: 11, x: 63, y: 92, z: 152, flip: false, dx: -12, dy: -2 }, { graphic: 12, x: 63, y: 160, z: 152, flip: false, dx: -8, dy: -4 }, { graphic: 11, x: 164, y: 192, z: 152, flip: true, dx: -12, dy: -2 }, { graphic: 10, x: 63, y: 109, z: 177, flip: false, dx: -20, dy: -1 }, { graphic: 12, x: 96, y: 192, z: 160, flip: true, dx: -8, dy: -4 }, { graphic: 10, x: 144, y: 192, z: 176, flip: true, dx: -20, dy: -1 }],
-    cauldron: { x: 4, z: 4, height: 0 },
-    wizard: { x: 4, z: 2 },
+    cauldron: { x: 8, z: 8 },
+    wizard: { x: 11, z: 11 },
   },
   {
     id: 'map-1-0', tint: 'cyan', depth: 4,

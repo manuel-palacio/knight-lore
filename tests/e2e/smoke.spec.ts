@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { START_ROOMS } from '../../src/scenes/rooms/roomSpecs'
-import { debug, enterRoom, face, roomHolding, standAt, startGame, walkPath, walkUntil } from './support/game'
+import { debug, deliver, enterRoom, face, roomHolding, standAt, startGame, walkPath, walkUntil } from './support/game'
 import { doorOf, findFloorPath } from './support/roomPath'
 import { specById } from './support/specs'
 
@@ -47,8 +47,7 @@ test('the wanted charm can be picked up and delivered to the cauldron', async ({
 
   const cauldronRoom = await enterRoom(page, 'room-001')
   if (!cauldronRoom.cauldron) throw new Error('no cauldron in room-001')
-  await standAt(page, { ...cauldronRoom.cauldron, z: cauldronRoom.cauldron.z + 1.2 })
-  await page.keyboard.press('KeyE')
-  await expect.poll(async () => (await debug(page)).delivered).toBe(1)
+  await deliver(page)
+  expect((await debug(page)).delivered).toBe(1)
   expect((await debug(page)).carrying).toEqual([])
 })

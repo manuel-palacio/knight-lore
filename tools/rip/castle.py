@@ -550,6 +550,16 @@ def walkable_rooms(builds, exits, start):
 ACTING_GRAPHICS = {0x08, 0x8D, 0x8E, 0x90, 0x9E}
 
 
+CAULDRON_GRAPHIC, WIZARD_GRAPHIC = 0x8D, 0x9E
+
+
+def acting_place(room_id, graphic):
+    """Where a background part that acts stands, in the room's units (8
+    pixels each, x from 0x40, z from 0xC0 down the original's y)."""
+    part = next(p for p in backdrop_parts(memory, ROOMS[room_id]['background']) if p['graphic'] == graphic)
+    return f"{{ x: {(part['x'] - 0x40) / 8:g}, z: {(0xC0 - part['y']) / 8:g} }}"
+
+
 def backdrop_of(memory, room):
     """The room's walls, arches, gates and hedges as the original draws them (see backdrop.py)."""
     return [p for p in backdrop_parts(memory, room['background']) if p['graphic'] not in ACTING_GRAPHICS]
@@ -619,7 +629,8 @@ def spec_text(room_id, build):
         if values or field == 'platforms':
             lines.append(f'    {field}: {ts_value(values or [])},')
     if room_id == CAULDRON:
-        lines += ['    cauldron: { x: 4, z: 4, height: 0 },', '    wizard: { x: 4, z: 2 },']
+        cauldron, wizard = (acting_place(room_id, graphic) for graphic in (CAULDRON_GRAPHIC, WIZARD_GRAPHIC))
+        lines += [f'    cauldron: {cauldron},', f'    wizard: {wizard},']
     if getattr(build, 'puzzle', False):
         lines.append('    puzzle: true,')
     return '  {\n' + '\n'.join(lines) + '\n  },'

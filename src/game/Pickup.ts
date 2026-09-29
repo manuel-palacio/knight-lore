@@ -46,7 +46,7 @@ export class Pickup extends Entity {
     if (this.clock.tick()) this.fall(ctx as GroundCtx & { entities?: Entity[] })
   }
 
-  // Let go of in the air (the wolf drops what the man carried, mid-jump), it
+  // With nothing under it (let go of in the air, or what held it gone), it
   // falls as the original's objects do, onto whatever is under it: the
   // floor, a block, a box or another charm.
   private fall(ctx: GroundCtx & { entities?: Entity[] }): void {

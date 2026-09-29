@@ -18,6 +18,7 @@ import { Portcullis } from '../game/Portcullis'
 import { FloatingBlock } from '../game/FloatingBlock'
 import { SpikedBall } from '../game/SpikedBall'
 import { Flame, FLAME_FRAMES } from '../game/Flame'
+import { SinkingCharm } from '../game/SinkingCharm'
 import type { Entity } from '../game/Entity'
 import type { Room } from '../game/Room'
 import type { Sprites, Tints } from './Sprites'
@@ -58,6 +59,10 @@ export class SceneDynamics {
       return [stripFrame(hue(source), 1, 0, e.position.x, e.position.y + e.bobOffset, e.position.z, false, DRAWN_LOWER.charm)]
     }
     if (e instanceof Cauldron) return this.cauldron(e, room, charmShown)
+    if (e instanceof SinkingCharm) {
+      const source = this.sprites.items.get(e.charm.id)
+      return source ? [stripFrame(hue(source), 1, 0, e.position.x, e.position.y, e.position.z, false, DRAWN_LOWER.charm)] : []
+    }
     if (e instanceof Spike) return [spikeBedDynamic(hue(this.sprites.spikes), e.position.x, e.position.y, e.position.z)]
     if (e instanceof GhostEnemy || e instanceof CauldronSpirit) {
       if (e instanceof CauldronSpirit && !e.risen) return []

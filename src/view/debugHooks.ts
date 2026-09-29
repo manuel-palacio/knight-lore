@@ -10,6 +10,7 @@ import { SpikedBall } from '../game/SpikedBall'
 import { PushableBox } from '../game/PushableBox'
 import { FallingBlock } from '../game/FallingBlock'
 import { Portcullis } from '../game/Portcullis'
+import { SinkingCharm } from '../game/SinkingCharm'
 import type { Entity } from '../game/Entity'
 import type { GameState } from '../game/GameState'
 import type { Player } from '../game/Player'
@@ -86,6 +87,7 @@ function snapshot(game: DebuggedGame): Record<string, unknown> {
       .filter((e): e is Portcullis => e instanceof Portcullis)
       .map((e) => ({ cells: e.cells, state: e.state, blocking: e.blocking, openFramesLeft: e.openFramesLeft })),
     delivered: state.cureProgress,
+    delivering: entities.some((e) => e instanceof SinkingCharm),
     lives: state.lives,
     won: state.won,
     timer: state.transformTimer,

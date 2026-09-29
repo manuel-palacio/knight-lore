@@ -9,7 +9,7 @@ export interface Note {
   duration: number
 }
 
-export type SoundName = 'tick' | 'ticky' | 'gameStart' | 'title' | 'jump' | 'land' | 'pickup' | 'drop' | 'door' | 'win' | 'wrong' | 'day'
+export type SoundName = 'tick' | 'ticky' | 'gameStart' | 'title' | 'jump' | 'land' | 'pickup' | 'drop' | 'door' | 'win' | 'day'
 
 const note = (frequency: number, duration: number): Note => ({ frequency, duration })
 
@@ -23,7 +23,6 @@ export const SOUNDS: Record<SoundName, Note[]> = {
   pickup: PICK_UP_EFFECT,
   drop: PICK_UP_EFFECT,
   door: [note(392, 0.05), note(523, 0.07)],
-  wrong: [note(220, 0.06), note(180, 0.1)],
   day: [note(784, 0.08), note(1047, 0.16)],
   win: CURE_TUNE,
 }

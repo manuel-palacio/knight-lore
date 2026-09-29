@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test'
 import { entryFor, oppositeOf, type Direction, type RoomSpec } from '../../src/scenes/rooms/roomSpecs'
-import { debug, enterRoom, face, give, holdDaylight, startGame, tileCentre, walkPath, walkUntil } from './support/game'
+import { debug, enterRoom, face, give, holdDaylight, putDown as putDownCharm, startGame, tileCentre, walkPath, walkUntil } from './support/game'
 import { dangersOf, doorOf, type Step } from './support/roomPath'
 import { SOLVED_PUZZLES } from './support/puzzles'
 import { specById } from './support/specs'
@@ -28,9 +28,8 @@ async function enterBy(page: Page, room: RoomSpec, door: Direction, charms = 0):
 // Only standing: having just walked off a charm, he may still be dropping to the floor.
 async function putDown(page: Page): Promise<void> {
   await expect.poll(async () => (await debug(page)).state).toBe('grounded')
-  const { pos, carrying } = await debug(page)
-  await page.keyboard.press('KeyE')
-  await expect.poll(async () => (await debug(page)).carrying.length).toBe(carrying.length - 1)
+  const { pos } = await debug(page)
+  await putDownCharm(page)
   expect((await debug(page)).pos.y).toBe(pos.y + 1)
 }
 
@@ -74,6 +73,9 @@ for (const id of ['map--5-4', 'map-5-6'] as const) {
     await startGame(page)
     const room = spec(id)
     await overTheWall(page, room, 'south', 'north', { approach: column(2, [7]), first: floor(2, 6), second: floor(2, 5), wall: { x: 2, z: 4, y: 3 }, beyond: column(2, [3, 2, 1, 0]) })
+    // The two charms of the way over still lie in the room, filling it (two a room):
+    // the way back is crossed afresh.
+    await startGame(page)
     await overTheWall(page, room, 'north', 'south', { approach: column(2, [0, 1]), first: floor(2, 2), second: floor(2, 3), wall: { x: 2, z: 4, y: 3 }, beyond: column(2, [5, 6, 7]) })
   })
 }
@@ -86,6 +88,9 @@ test('map-7-1: over the wall at its one cell without spikes, with two charms, bo
     approach: [floor(2, 7), floor(1, 7), floor(0, 7)], first: floor(0, 6), second: floor(0, 5), wall: { x: 0, z: 4, y: 3 },
     beyond: [floor(0, 3), floor(1, 3), floor(2, 3), floor(2, 2), floor(2, 1), floor(2, 0)],
   })
+  // The two charms of the way over still lie in the room, filling it (two a room):
+  // the way back is crossed afresh.
+  await startGame(page)
   await overTheWall(page, room, 'north', 'south', {
     approach: [floor(2, 0), floor(1, 0), floor(0, 0), floor(0, 1)], first: floor(0, 2), second: floor(0, 3), wall: { x: 0, z: 4, y: 3 },
     beyond: [floor(0, 5), floor(1, 5), floor(2, 5), floor(2, 6), floor(2, 7)],
@@ -97,6 +102,9 @@ test('map--1--3: onto a block of the diagonal with two charms, and down the othe
   await startGame(page)
   const room = spec('map--1--3')
   await overTheWall(page, room, 'south', 'north', { approach: column(2, [7, 6]), first: floor(2, 5), second: floor(2, 4), wall: { x: 2, z: 3, y: 3 }, beyond: column(2, [2, 1, 0]) })
+  // The two charms of the way over still lie in the room, filling it (two a room):
+  // the way back is crossed afresh.
+  await startGame(page)
   await overTheWall(page, room, 'north', 'south', { approach: column(2, [0]), first: floor(2, 1), second: floor(2, 2), wall: { x: 2, z: 3, y: 3 }, beyond: column(2, [4, 5, 6, 7]) })
 })
 

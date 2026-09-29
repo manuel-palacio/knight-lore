@@ -241,14 +241,20 @@ export class Player extends Entity {
     onTaken(this.satchel.take(charm))
   }
 
-  // As the original (0xC0DD): the charm carried longest goes down under his
-  // feet and he stands on it, a block higher, when there is room over his
-  // head. Returns the charm, to be laid where his feet were.
+  // As the original (0xC0B2-0xC0F8): the charm in the satchel's last slot
+  // goes down under his feet and he stands on it, a block higher, when there
+  // is room over his head; with the last slot empty the satchel only shifts
+  // along. Returns the charm, to be laid where his feet were.
   putDownUnderFoot(headroom: boolean): Pickup | undefined {
-    if (!headroom || this.state !== 'grounded') return undefined
-    const charm = this.satchel.putDownOldest()
-    if (!charm) return undefined
+    if (this.state !== 'grounded') return undefined
+    if (!this.satchel.nextDown) return this.satchel.putDown()
+    if (!headroom) return undefined
+    const charm = this.satchel.putDown()
     this.position.y += CHARM_HEIGHT
     return charm
+  }
+
+  get satchelSlots(): (string | null)[] {
+    return this.satchel.slotIds
   }
 }

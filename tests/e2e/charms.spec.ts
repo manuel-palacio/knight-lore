@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test'
 
 const CHARM_HOVER = 0.4
-import { debug, enterRoom, give, holdDaylight, roomHolding, standAt, startGame } from './support/game'
+import { debug, enterRoom, give, holdDaylight, putDown, roomHolding, standAt, startGame } from './support/game'
 import { specById } from './support/specs'
 
 // A room with room over his head in its middle, to put a charm down in.
@@ -24,8 +24,7 @@ test('a charm put down in another room stays in the room where it was put down',
   const charm = await pickUpCharmIn(page, charmRoomId)
 
   await enterRoom(page, OPEN_ROOM, { x: 8, z: 8 })
-  await page.keyboard.press('KeyE')
-  await expect.poll(async () => (await debug(page)).carrying).toEqual([])
+  await putDown(page)
   expect((await debug(page)).pickups.map((p) => p.id)).toContain(charm)
 
   await enterRoom(page, charmRoomId)
@@ -50,12 +49,11 @@ test('the extra life is taken by touching it, without E, not carried, and does n
   expect(back.pickups.map((p) => p.id)).not.toContain('life')
 })
 
-test('E puts the carried charm down under his feet, and he stands on it a block higher', async ({ page }) => {
+test('E puts the carried charm down under his feet (after shifting the satchel along), and he stands on it a block higher', async ({ page }) => {
   await startGame(page)
   const charm = await pickUpCharmIn(page, await roomHolding(page, (item) => item !== 'life'))
   const before = (await debug(page)).pos
-  await page.keyboard.press('KeyE')
-  await expect.poll(async () => (await debug(page)).carrying).toEqual([])
+  await putDown(page)
   const after = await debug(page)
   expect(after.pos.y).toBe(before.y + 1)
   expect(after.state).toBe('grounded')
@@ -71,8 +69,7 @@ test('jumping off a charm he put down, E takes it back up in mid-air', async ({ 
   await holdDaylight(page)
   const charm = 'gem'
   await give(page, [charm])
-  await page.keyboard.press('KeyE')
-  await expect.poll(async () => (await debug(page)).carrying).toEqual([])
+  await putDown(page)
   const onCharm = (await debug(page)).pos.y
   await page.keyboard.down('Space')
   await expect.poll(async () => (await debug(page)).pos.y, { intervals: [10] }).toBeGreaterThan(onCharm + 1)

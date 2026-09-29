@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test'
 import { JUMP_EFFECT, PICK_UP_EFFECT, deliveryEffect, seizureEffect } from '../../src/engine/effects'
-import { debug, enterRoom, give, holdDaylight, standAt, startGame } from './support/game'
+import { debug, deliver, enterRoom, give, holdDaylight, putDown, startGame } from './support/game'
 import { recordTones, recorded } from './support/audio'
 
 // The original's effects as the game plays them (effects.ts). The recorder
@@ -31,8 +31,7 @@ test('putting a charm down and picking it up each sound the original pick-up (0x
   await begin(page)
   await give(page, ['gem'])
   let before = (await recorded(page)).played.length
-  await page.keyboard.press('KeyE')
-  await expect.poll(async () => (await debug(page)).carrying).toEqual([])
+  await putDown(page)
   await expect.poll(() => heardSince(page, before)).toContain(opening(PICK_UP_EFFECT))
   before = (await recorded(page)).played.length
   await page.keyboard.press('KeyE')
@@ -53,12 +52,11 @@ test('a charm going into the cauldron sounds the original delivery (0xC2A5)', as
   await startGame(page)
   const { wanted } = await debug(page)
   await give(page, [wanted!])
-  const cauldronRoom = await enterRoom(page, 'room-001')
+  await enterRoom(page, 'room-001')
   await holdDaylight(page)
-  await standAt(page, { ...cauldronRoom.cauldron!, z: cauldronRoom.cauldron!.z + 1.2 })
   const before = (await recorded(page)).played.length
-  await page.keyboard.press('KeyE')
-  await expect.poll(async () => (await debug(page)).delivered).toBe(1)
+  await deliver(page)
+  expect((await debug(page)).delivered).toBe(1)
   await expect.poll(() => heardSince(page, before)).toContain(opening(deliveryEffect(wanted!)))
 })
 
@@ -67,8 +65,7 @@ test('muted (M), none of them sounds', async ({ page }) => {
   await page.keyboard.press('KeyM')
   await give(page, ['gem'])
   const before = (await recorded(page)).played.length
-  await page.keyboard.press('KeyE')
-  await expect.poll(async () => (await debug(page)).carrying).toEqual([])
+  await putDown(page)
   await page.keyboard.press('Space')
   await page.evaluate(() => (window as unknown as { __t: () => void }).__t())
   await page.waitForTimeout(500)

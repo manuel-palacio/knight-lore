@@ -369,7 +369,7 @@ describe('Player pickup', () => {
     const { player } = setupRoom()
     let letGo: Pickup | undefined
     for (const id of ['gem', 'boot', 'teacup', 'poison']) player.tryPickup(new Pickup(id), (l) => { letGo = l })
-    expect(player.carrying).toEqual(['boot', 'teacup', 'poison'])
+    expect(player.carrying).toEqual(['poison', 'teacup', 'boot'])
     expect(letGo?.id).toBe('gem')
   })
 })
@@ -378,11 +378,18 @@ describe('Player pickup', () => {
 describe('Player putting a charm down under his feet', () => {
   it('stands on it a block higher, carrying one less', () => {
     const { player } = setupRoom()
-    player.tryPickup(new Pickup('gem'), () => {})
-    player.tryPickup(new Pickup('boot'), () => {})
+    for (const id of ['gem', 'boot', 'teacup']) player.tryPickup(new Pickup(id), () => {})
     expect(player.putDownUnderFoot(true)?.id).toBe('gem')
     expect(player.position.y).toBe(CHARM_HEIGHT)
-    expect(player.carrying).toEqual(['boot'])
+    expect(player.carrying).toEqual(['teacup', 'boot'])
+  })
+
+  it('with the satchel\'s last slot empty, only shifts the satchel along (0xC0B2)', () => {
+    const { player } = setupRoom()
+    player.tryPickup(new Pickup('gem'), () => {})
+    expect(player.putDownUnderFoot(true)).toBeUndefined()
+    expect(player.satchelSlots).toEqual([null, 'gem', null])
+    expect(player.position.y).toBe(0)
   })
 
   it('does not with something over his head, nor in the air', () => {

@@ -41,6 +41,7 @@ const ROOM_CENTRE = (FULL_ROOM_CELLS * 2) / 2
 const SCREEN_W = 256
 const SCREEN_H = 192
 const PIXEL_SCALE = 4
+const NO_INPUT = { isDown: () => false, wasPressed: () => false }
 
 async function main(): Promise<void> {
   const container = document.getElementById('app')
@@ -302,7 +303,8 @@ async function main(): Promise<void> {
     wipe.tick(dt)
     if (transitioning || wipe.active) return
     const room = activeRoom()
-    const ctx = playerContext(room)
+    // While a charm goes into the cauldron he stands, whatever is pressed (0xD022).
+    const ctx = hands.delivering(room) ? { ...playerContext(room), input: NO_INPUT } : playerContext(room)
     if (!look.morphing && !dying()) player.update(dt, ctx)
     const stepped = player.stepsTaken !== lastStepCount
     lastStepCount = player.stepsTaken
@@ -315,7 +317,8 @@ async function main(): Promise<void> {
     boxSoundPass(room)
     if (stepped) pushPass(room)
     resolveActorOverlap(room)
-    if (!dying() && !look.morphing && input.wasPressed('KeyE')) hands.use(room)
+    if (!dying() && !look.morphing && !hands.delivering(room) && input.wasPressed('KeyE')) hands.use(room)
+    hands.settleDeliveries(room)
     if (!dying()) hands.takeLifeTouched(room)
     hazardPass(room)
     if (!dying()) exitPass()
@@ -336,7 +339,7 @@ async function main(): Promise<void> {
     }
     renderer.render(room, [...scene.of(room, charmOverCauldron(state.wantedItem, state.form)), look.dynamic(player, sparkle, room.tint)])
     const ctx = renderer.canvas.getContext('2d')
-    if (ctx) hud.draw(ctx, SCREEN_H - HUD_HEIGHT, state, player.carrying, room.tint)
+    if (ctx) hud.draw(ctx, SCREEN_H - HUD_HEIGHT, state, player.satchelSlots, room.tint)
     if (paused) drawPaused()
     if (state.isDusk && !look.morphing) drawDusk()
     if (flashFrames > 0) {

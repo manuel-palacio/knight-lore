@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test'
 import { ROOM_SPECS, oppositeOf, type RoomSpec } from '../../src/scenes/rooms/roomSpecs'
 import { CHARM_HOVER } from '../../src/game/Pickup'
-import { dealtCharms, debug, face, startGame, walkPath, walkUntil, type Cell, type Debug } from './support/game'
+import { dealtCharms, debug, face, jumpOntoCauldron, putDown, startGame, walkPath, walkUntil, type Cell, type Debug } from './support/game'
 import { dangersOf, doorOf, findFloorPath } from './support/roomPath'
 
 // A whole game played with the keyboard alone, on the real day clock: fetch
@@ -10,8 +10,8 @@ import { dangersOf, doorOf, findFloorPath } from './support/roomPath'
 //   npm run test:playthrough
 
 const CAULDRON_ROOM = 'room-001'
+// The take-off south of the cauldron (see CAULDRON_TAKE_OFF).
 const BESIDE_CAULDRON: Cell = { x: 4, z: 5 }
-const DELIVERY_REACH = 1.6
 const MAX_ATTEMPTS_PER_LEG = 4
 // Seconds of daylight a crossing needs, with the seizure to spare: a room
 // takes three to five seconds to walk, turns included.
@@ -127,16 +127,15 @@ async function pickUp(page: Page, charm: { id: string; x: number; y: number; z: 
   await expect.poll(async () => (await debug(page)).carrying).toContain(charm.id)
 }
 
+// Up onto the cauldron with a held jump from the floor south of it, and the
+// charm put down there goes in.
 async function deliver(page: Page): Promise<void> {
   const state = await debug(page)
-  const cauldron = state.cauldron!
   await walkPath(page, findFloorPath(specOf(state.room), cellOf(state), BESIDE_CAULDRON), dangersOf(specOf(state.room)))
-  await face(page, 'north')
-  await walkUntil(page, (s) => s.pos.z <= cauldron.z + DELIVERY_REACH)
   if (await nightfallStopsErrand(page)) return
-  const delivered = state.delivered
-  await page.keyboard.press('KeyE')
-  await expect.poll(async () => (await debug(page)).delivered).toBe(delivered + 1)
+  await jumpOntoCauldron(page)
+  await putDown(page)
+  await expect.poll(async () => (await debug(page)).delivered, { timeout: 10_000 }).toBe(state.delivered + 1)
 }
 
 async function waitForNextMorning(page: Page): Promise<void> {

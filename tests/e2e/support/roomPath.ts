@@ -16,6 +16,8 @@ export function doorOf(spec: RoomSpec, direction: Direction): Cell {
 }
 
 const key = (c: Cell) => `${c.x},${c.z}`
+// Room units to a cell.
+const TILE_UNITS = 2
 // A search node: where he stands, and the way he came (a high jump needs a run-up).
 interface Node {
   at: Step
@@ -166,7 +168,9 @@ class RoomSurfaces {
     // A moving block is solid to his whole body wherever it sways: every cell
     // of its track holds it, stood on (it carries him) or under with head room.
     for (const m of spec.movingPlatforms ?? []) for (const c of cellsBetween(m.from, m.to)) this.hang(c, m.height - 1)
-    if (spec.cauldron) this.floorBlocked.add(key(spec.cauldron))
+    // The cauldron stands where four cells meet, over all four; the wizard in one.
+    if (spec.cauldron) for (const c of cellsUnder(spec.cauldron)) this.floorBlocked.add(key(c))
+    if (spec.wizard) this.floorBlocked.add(key(cellAt(spec.wizard)))
     for (const s of spec.spikes ?? []) {
       if (s.height) this.addHazard(s, s.height)
       else this.floorSpikes.add(key(s))
@@ -373,4 +377,17 @@ function rebuild(end: Node): Step[] {
   const path: Step[] = []
   for (let node: Node | null = end; node; node = node.from) path.unshift(node.at)
   return path
+}
+
+// The cell a point in room units lies in.
+function cellAt(at: { x: number; z: number }): Cell {
+  return { x: Math.floor(at.x / TILE_UNITS), z: Math.floor(at.z / TILE_UNITS) }
+}
+
+// The cells touching a point: four where cells meet, else the one it is in.
+function cellsUnder(at: { x: number; z: number }): Cell[] {
+  const near = 0.01
+  const xs = [...new Set([at.x - near, at.x + near].map((x) => Math.floor(x / TILE_UNITS)))]
+  const zs = [...new Set([at.z - near, at.z + near].map((z) => Math.floor(z / TILE_UNITS)))]
+  return xs.flatMap((x) => zs.map((z) => ({ x, z })))
 }

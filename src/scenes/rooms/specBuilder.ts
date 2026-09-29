@@ -57,12 +57,10 @@ export function buildRoomFromSpec(spec: RoomSpec, sizeOf: (id: string) => RoomSi
     for (const b of spec.balls ?? []) room.add(new BouncingBall(cellCentre(b), b.height, bounceTop))
     for (const h of spec.hoppers ?? []) room.add(new HoppingBall(cellCentre(h), h.height, { randomHops: h.randomHops }))
     if (spec.cauldron) {
-      const cauldron = new Cauldron()
-      cauldron.position.set(tileCenter(spec.cauldron.x), spec.cauldron.height, tileCenter(spec.cauldron.z))
-      room.add(cauldron)
-      room.add(new CauldronSpirit(tileCenter(spec.cauldron.x), tileCenter(spec.cauldron.z)))
+      room.add(new Cauldron(spec.cauldron.x, spec.cauldron.z))
+      room.add(new CauldronSpirit(spec.cauldron.x, spec.cauldron.z))
     }
-    if (spec.wizard) room.add(new Wizard(tileCenter(spec.wizard.x), tileCenter(spec.wizard.z)))
+    if (spec.wizard) room.add(new Wizard(spec.wizard.x, spec.wizard.z))
     for (const f of spec.flames ?? []) room.add(new Flame(tileCenter(f.x), f.height, tileCenter(f.z), f.axis))
     for (const e of spec.exits) {
       const target = sizeOf(e.target)

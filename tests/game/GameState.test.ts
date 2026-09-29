@@ -9,6 +9,11 @@ describe('GameState', () => {
     expect(s.won).toBe(false)
   })
 
+  it('a day and a night each last 392 of the original frames (0xC397: 49 steps of 8), 19.6 s at 20 a second', () => {
+    expect(HUMAN_DURATION).toBeCloseTo(19.6, 9)
+    expect(WEREWOLF_DURATION).toBe(HUMAN_DURATION)
+  })
+
   it('toggleForm resets timer based on new form', () => {
     const s = new GameState()
     s.toggleForm()
@@ -121,15 +126,15 @@ describe('GameState', () => {
     expect(s.wantedItem).toBe(second)
   })
 
-  it('rejects wrong item, empty hands, and werewolf deliveries', () => {
+  it('a wrong charm does not go towards the cure; the wanted one does, from the wolf too (0xC245)', () => {
     const s = new GameState()
     const wanted = s.cureSequence[0]
     const other = s.cureSequence.find((charm) => charm !== wanted)
     expect(s.deliverCureItem(other!)).toBe(false)
-    expect(s.deliverCureItem(null)).toBe(false)
-    s.toggleForm() // werewolf
-    expect(s.deliverCureItem(wanted!)).toBe(false)
     expect(s.cureProgress).toBe(0)
+    s.toggleForm() // werewolf
+    expect(s.deliverCureItem(wanted!)).toBe(true)
+    expect(s.cureProgress).toBe(1)
   })
 
   it('delivering every item in order wins and wantedItem becomes null', () => {

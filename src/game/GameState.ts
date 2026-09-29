@@ -1,14 +1,16 @@
 import { mulberry32 } from '../engine/Random'
+import { TICKS_PER_FRAME } from '../engine/StepClock'
 import { endSummary, type EndSummary } from './EndSummary'
 import type { Facing } from './Facing'
 
 export type Form = 'human' | 'werewolf'
 
-// A day is long enough to carry a charm from the far branches to the cauldron
-// (about ten rooms); nights are shorter because the wolf can neither pick up
-// nor deliver. Forty days come to about an hour of play.
-export const HUMAN_DURATION = 60
-export const WEREWOLF_DURATION = 30
+// Day and night are the same length: every 8 frames the sun (or moon) moves
+// a step along the scroll, 0xB0 to 0xE1, then the other rises (0xC397): 392
+// frames, on the original's clock (FrameClock).
+const HALF_DAY_FRAMES = (0xe1 - 0xb0) * 8
+export const HUMAN_DURATION = (HALF_DAY_FRAMES * TICKS_PER_FRAME) / 60
+export const WEREWOLF_DURATION = HUMAN_DURATION
 
 const TOTAL_DAYS = 40
 export const DUSK_WARNING = 5
@@ -191,9 +193,10 @@ export class GameState {
     }
   }
 
-  deliverCureItem(carrying: string | null): boolean {
-    if (this.form !== 'human') return false
-    if (carrying === null || carrying !== this.wantedItem) return false
+  // The cauldron takes a charm, man's or wolf's alike (0xC245): true when it
+  // was the one wanted next, and the cure goes on.
+  deliverCureItem(charm: string): boolean {
+    if (charm !== this.wantedItem) return false
     this.cureProgress += 1
     if (this.cureProgress >= this.cureSequence.length) this.won = true
     return true

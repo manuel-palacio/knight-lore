@@ -95,6 +95,16 @@ describe('Pickup as a stepping stone', () => {
       expect(charm.position.y).toBeCloseTo(1 + CHARM_HOVER, 9)
     })
 
+    it('stays on a block it lies on the corner of, where four cells meet (map--1--6\'s spot)', () => {
+      const grid = new Grid(8, 8)
+      grid.setSolid(3, 3, true)
+      grid.setSupport(3, 3, 1)
+      const charm = new Pickup('gem')
+      charm.position.set(8, 1 + CHARM_HOVER, 8)
+      runFrames(charm, 40, room(grid))
+      expect(charm.position.y).toBeCloseTo(1 + CHARM_HOVER, 9)
+    })
+
     it('stays where it lies on something that holds it, a floating block say', () => {
       const block = new FloatingBlock(2, 2, 3, 2) // its top at 4
       const charm = new Pickup('gem')

@@ -62,10 +62,10 @@ export class Pickup extends Entity {
   }
 
   private groundUnder(ctx: GroundCtx & { entities?: Entity[] }, bottom: number): number {
-    const floor = groundUnder(ctx, this.position.x, this.position.z, 0, bottom)
+    const floor = groundUnder(ctx, this.position.x, this.position.z, this.extents.x / 2, bottom)
     const holders = (ctx.entities ?? [])
       .filter((e): e is Entity & { supportAt: (x: number, z: number, y: number) => number | null } => e !== this && 'supportAt' in e)
-      .map((e) => e.supportAt(this.position.x, this.position.z, bottom))
+      .flatMap((e) => this.footprint().map((p) => e.supportAt(p.x, p.z, bottom)))
       .filter((top): top is number => top !== null && top <= bottom + 1e-6)
     return Math.max(floor, ...holders)
   }
@@ -75,6 +75,12 @@ export class Pickup extends Entity {
     const inside = Math.abs(x - this.position.x) <= FOOTPRINT_HALF && Math.abs(z - this.position.z) <= FOOTPRINT_HALF
     const top = this.position.y - CHARM_HOVER + CHARM_HEIGHT
     return inside && actorY >= top - TOP_TOLERANCE ? top : null
+  }
+
+  // Its corners and middle: it rests on whatever is under any of it.
+  private footprint(): { x: number; z: number }[] {
+    const half = this.extents.x / 2
+    return [[0, 0], [-1, -1], [-1, 1], [1, -1], [1, 1]].map(([dx, dz]) => ({ x: this.position.x + dx! * half, z: this.position.z + dz! * half }))
   }
 
   isWithinReachOf(feet: { x: number; y: number; z: number }): boolean {

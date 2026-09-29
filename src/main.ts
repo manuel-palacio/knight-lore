@@ -207,17 +207,20 @@ async function main(): Promise<void> {
   const continueHint = document.getElementById('continue-hint')
   if (continueHint && saved) continueHint.style.display = 'block'
   playTitleTune()
-  const begin = (resume: boolean): void => {
-    if (!intro || intro.style.display === 'none') return
+  // True when this began the game.
+  const begin = (resume: boolean): boolean => {
+    if (!intro || intro.style.display === 'none') return false
     intro.style.display = 'none'
     hideSoundHint()
     beeper.stop()
     beeper.play('gameStart')
     if (resume && saved) resumeSavedGame(saved)
     else clearSave()
+    return true
   }
   window.addEventListener('keydown', (e) => {
-    begin(e.code === 'KeyC')
+    // The key that began the game is not also a jump or a step.
+    if (begin(e.code === 'KeyC')) input.forget(e.code)
     if (e.code === 'KeyR' && (state.gameOver || state.won)) location.reload()
   })
 
@@ -266,6 +269,8 @@ async function main(): Promise<void> {
 
   function resumeSavedGame(save: SavedGame): void {
     state.apply(save)
+    // Drawn in the form the game is in.
+    visualForm = transformTarget = state.form
     transitioning = true
     manager.transitionTo(save.currentRoomId, 9, 1).then((room) => {
       placePlayerAtSpawn(room)
@@ -352,9 +357,14 @@ async function main(): Promise<void> {
   }
 
   // The wolf can carry nothing: at nightfall what the man carried falls at his feet.
+  // Each goes under his feet as E puts one down, lifting him, where there is
+  // room over his head; one on another, not all in the one place.
   state.onTransformWhileCarrying = (id) => {
     const charm = player.satchel.handOver(id)
-    if (charm) layCharm(charm, player.position)
+    if (!charm) return
+    const feet = player.position.clone()
+    if (hasHeadroom(activeRoom(), feet)) player.position.y += CHARM_HEIGHT
+    layCharm(charm, feet)
     beeper.play('drop')
   }
   // Death: white flash, and Sabreman dissolves into a cloud of stars where
@@ -468,7 +478,7 @@ async function main(): Promise<void> {
   }
 
   function hazardPass(room: Room): void {
-    if (player.isInvulnerable || dying()) return
+    if (player.isInvulnerable || dying() || state.won) return
     for (const e of room.entities) {
       if (!e.active || !e.hasCategory(Category.HAZARD) || !hazardHunts(e, state.form)) continue
       if (touchesHazard(player, e)) {
@@ -701,10 +711,14 @@ async function main(): Promise<void> {
   const loop = new GameLoop()
   loop.onUpdate((dt) => {
     input.update()
+    // Nothing happens behind the title screen.
+    if (titleShowing()) return
     if (input.wasPressed('KeyP')) paused = !paused
     if (input.wasPressed('KeyM')) beeper.toggleMute()
     if (paused) return
     if ((state.gameOver || state.won) && !dying()) {
+      // The game is over: there is nothing to go on with.
+      clearSave()
       playGameOverTuneOnce()
       overlays.render(state)
       return
@@ -737,11 +751,13 @@ async function main(): Promise<void> {
     boxSoundPass(room)
     if (stepped) pushPass(room)
     resolveActorOverlap(room)
-    if (!dying() && input.wasPressed('KeyE') && !tryDeliverPass(room) && !tryPickupPass(room)) tryPutDownPass(room)
+    if (!dying() && !morphing() && input.wasPressed('KeyE') && !tryDeliverPass(room) && !tryPickupPass(room)) tryPutDownPass(room)
     hazardPass(room)
     if (!dying()) exitPass()
     sparklePass()
-    state.tickTransform(dt)
+    // Night falls, or day breaks, only once he is on the ground: never
+    // frozen in mid-air through the seizure.
+    if (player.state === 'grounded' && !dying()) state.tickTransform(dt)
     updateCharacter(dt)
     overlays.render(state)
   })

@@ -38,4 +38,12 @@ describe('Input with a gamepad', () => {
     expect(input.wasPressed('KeyE')).toBe(true)
     expect(input.wasPressed('KeyP')).toBe(true)
   })
+
+  it('forgets a press already put to another use, so it does not count as pressed', () => {
+    const input = new Input(() => null)
+    input.hold('Space')
+    input.forget('Space')
+    input.update()
+    expect(input.wasPressed('Space')).toBe(false)
+  })
 })

@@ -88,6 +88,11 @@ export class Input {
     this.touchDown.delete(code)
   }
 
+  // A press already put to another use (the key that ends the title screen).
+  forget(code: string): void {
+    this.pressedQueued.delete(code)
+  }
+
   wasPressed(code: string): boolean {
     return this.pressedThisTick.has(code)
   }

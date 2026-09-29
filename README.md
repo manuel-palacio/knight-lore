@@ -55,9 +55,9 @@ npm run build             # tsc + vite build into dist/
 
 **Assets.** Sprites come from three sources, all in `public/sprites`:
 
-- `rip/` holds 99 sprites decoded from the game's own memory: format is a two-byte header (width in bytes, height) followed by rows of mask and pixel byte pairs, stored bottom-up, with animation pointer tables at 0x7140. `rip/index.json` records the addresses. Ghost, ball, cauldron, spikes, flame, the charms, and the hedges, gargoyles, tables and chests are drawn from these (`tools/rip/objects.py`); every other block type draws the original's one block sprite, as the original does.
-- Sabreman, the wolf and the guard are the original's own sprites: an upper body (the guard's hood) drawn over a pair of walking legs, four frames each, walked 0 1 2 3 2 1 as the original's animation table does. The legs are the four-frame strips the first rip filed as `creature1-*` (the man's, and the guard's) and `creature2-*` (the wolf's); how far below the body they sit was measured by fitting both sprites to frames of the original. The transformation is the four full-body poses at 0xac28-0xae98. `tools/rip/characters.py` composes all the strips.
-- `map.png` at the repo root is Paul Dunn's complete map of the original. The castle was first read off it (`tools/map`, `docs/MAP.md`); it is now built from the original's own room table, and the map is kept as a reference.
+- `rip/` holds sprites decoded from the game's own memory (and `rip/backdrop/` the rooms' walls, arches, gates and hedges, `tools/rip/backdrop.py`): format is a two-byte header (width in bytes, height) followed by rows of mask and pixel byte pairs, stored bottom-up, with animation pointer tables at 0x7140. `rip/index.json` records the addresses. Ghost, ball, cauldron, spikes, flame, the charms, and the hedges, gargoyles, tables and chests are drawn from these (`tools/rip/objects.py`); every other block type draws the original's one block sprite, as the original does.
+- Sabreman, the wolf and the guard are the original's own sprites: an upper body (the guard's hood) drawn over a pair of walking legs, four frames each, walked 0 1 2 3 2 1 as the original's animation table does. How far below the body the legs sit was measured by fitting both sprites to frames of the original. The transformation is the four full-body poses at 0xac28-0xae98. `tools/rip/characters.py` composes all the strips.
+- `map.png` at the repo root is Paul Dunn's complete map of the original. The castle was first read off it; it is now built from the original's own room table, and the map is kept as a reference.
 
 `tools/rip` loads the memory snapshot (`z80.py`), decodes its sprites (`sprite.py`), composes the character strips, decodes the original's room table (`rooms.py`: all 128 rooms with their doors, sizes and objects; see #11), and extracts the tunes into `src/engine/tunes.ts` (`music.py`): the beeper player at 0xB2C5 reads a byte per note, six bits of pitch from the table at 0xB332 and two of length.
 
@@ -85,14 +85,14 @@ src/game       entities (player, guards, ghosts, platforms, ...), game state, HU
 src/scenes     room specs and the spec builder
 public/sprites sprite strips, ripped originals under rip/, charms under items/
 tests          vitest suites mirroring src; tests/e2e holds the playwright specs
-tools          memory-snapshot rippers and the castle generator (tools/rip); the earlier map readers (tools/map); Python
-docs           map, gameplay notes, physics notes, playtest log
+tools          memory-snapshot rippers and the castle generator (tools/rip); Python
+docs           gameplay notes, physics notes, playtest log
 reference      local only (git-ignored): recordings, the memory snapshot, frames used for extraction
 ```
 
 ## Status and next steps
 
-The game has been won start to finish by the playthrough bot, on day 25 with every life left. See `NEXT_ISSUES.md` for the worked issue list and `docs/PLAYTEST.md` for what the playtests found. Known deviation: the original lets at most two charms lie in a room at once (one in the cauldron room); here any number can.
+A playthrough bot plays a whole game with the keyboard (`npm run test:playthrough`); open work is tracked in GitHub issues, and `docs/PLAYTEST.md` records what the playtests found. Known deviation: the original lets at most two charms lie in a room at once (one in the cauldron room); here any number can.
 
 ## Sources
 

@@ -107,3 +107,13 @@ describe('SinkingCharm', () => {
     expect(sinking.position.y).toBe(0)
   })
 })
+
+describe('CharmHands in a doorway', () => {
+  it('E does nothing with any of him past the room edge, under an arch (0xC019)', () => {
+    const { room, player, hands } = setUp()
+    player.tryPickup(new Pickup('gem'), () => {})
+    player.position.set(8, 0, 0.3)
+    putDownAlone(hands, room)
+    expect(player.satchelSlots).toEqual(['gem', null, null])
+  })
+})

@@ -117,7 +117,7 @@ export class Player extends Entity {
   // jumps again as soon as he lands.
   private latchJumpRequest(ctx: PlayerCtx): void {
     const jump = ctx.input.isDown('Space') || ctx.input.wasPressed('Space')
-    if (this.state !== 'grounded' || !jump) return
+    if (this.state !== 'grounded' || !jump || this.inDoorway(ctx)) return
     this.state = 'jumping'
     this.riseSpeedPx = JUMP_SPEED_PX
     ctx.onJumped()
@@ -140,6 +140,8 @@ export class Player extends Entity {
   // jump; in a fall only while walking on), then up or down.
   private frameInTheAir(ctx: PlayerCtx): void {
     if (this.state === 'jumping' || ctx.input.isDown('ArrowUp')) this.walkForward(ctx, AIR_STRIDE)
+    // Carried into a doorway, a jump rises no further (0xC86D).
+    if (this.inDoorway(ctx) && this.riseSpeedPx > 0) this.riseSpeedPx = 0
     const holding = this.state === 'jumping' && this.riseSpeedPx >= 0 && ctx.input.isDown('Space')
     this.riseSpeedPx -= holding ? 1 : 2
     const risen = this.position.y + this.riseSpeedPx / PIXELS_PER_BLOCK
@@ -228,6 +230,16 @@ export class Player extends Entity {
   private highestBlockUnderFootprint(ctx: PlayerCtx): number {
     return Math.max(...this.footprintPoints(this.position.x, this.position.z).map((p) =>
       ctx.grid.supportHeight(Math.floor(p.x / ctx.tileSize), Math.floor(p.z / ctx.tileSize))))
+  }
+
+  // Any of him past the room's edge, under an arch (0xC87A): there he cannot
+  // jump, nor pick up or put down (0xC019).
+  inDoorway(ctx: { grid: Grid; tileSize: number }): boolean {
+    const half = this.extents.x / 2
+    const width = ctx.grid.width * ctx.tileSize
+    const depth = ctx.grid.depth * ctx.tileSize
+    const { x, z } = this.position
+    return x - half < 0 || x + half > width || z - half < 0 || z + half > depth
   }
 
   get carrying(): string[] {

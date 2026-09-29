@@ -176,6 +176,31 @@ describe('Player jump', () => {
     expect(jumped).toBe(1)
   })
 
+  it('cannot jump with any of him past the room edge, under an arch (0xC87A)', () => {
+    const { grid, state, player } = setupRoom()
+    player.position.set(8, 0, 0.3)
+    player.facing = 'north'
+    tick(player, ctx(grid, state, { jump: true }))
+    expect(player.state).toBe('grounded')
+    player.position.set(8, 0, 0.5)
+    tick(player, ctx(grid, state, { jump: true }))
+    expect(player.state).toBe('jumping')
+  })
+
+  it('a jump carried into a doorway rises no further (0xC86D)', () => {
+    const { grid, state, player } = setupRoom()
+    grid.openDoorway('north')
+    player.position.set(8, 0, 1.2)
+    player.facing = 'north'
+    tick(player, ctx(grid, state, { jump: true, space: true }))
+    let peak = 0
+    for (let i = 0; i < 200 && player.state !== 'grounded'; i++) {
+      tick(player, ctx(grid, state, { space: true }))
+      peak = Math.max(peak, player.position.y)
+    }
+    expect(peak).toBeLessThan(28 / 12)
+  })
+
   it('with the key held he jumps again as soon as he lands (0xC948 reads it held)', () => {
     const { grid, state, player } = setupRoom()
     let jumped = 0

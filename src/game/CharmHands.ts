@@ -24,6 +24,7 @@ export class CharmHands {
   constructor(private readonly player: Player, private readonly state: GameState, private readonly beeper: Beeper) {}
 
   use(room: Room): void {
+    if (this.player.inDoorway(room)) return
     if (!this.pickUp(room)) this.putDown(room)
   }
 

@@ -16,12 +16,21 @@ test('the corridor cannot be crossed while the gate is shut, and can once it has
   await startGame(page)
   await enterRoom(page, GATED)
   await holdDaylight(page)
+  await expect.poll(async () => (await debug(page)).gates[0]!.state, { timeout: 30_000, intervals: [20] }).toBe('shut')
   await face(page, 'south')
   await page.keyboard.down('ArrowUp')
-  await page.waitForTimeout(1_500)
-  const held = await debug(page)
+  // Walking on until he stops, while the gate is still down: at the grille.
+  let last = -1
+  const held = await expect
+    .poll(async () => {
+      const now = await debug(page)
+      const stopped = Math.abs(now.pos.z - last) < 1e-6
+      last = now.pos.z
+      return stopped && now.gates[0]!.state === 'shut'
+    }, { timeout: 10_000, intervals: [150] })
+    .toBe(true)
+    .then(() => debug(page))
   await page.keyboard.up('ArrowUp')
-  expect(held.gates[0]!.state).toBe('shut')
   // Held short of the grille, which runs across the middle of its row.
   expect(held.pos.z).toBeLessThan(GRILLE_Z)
 

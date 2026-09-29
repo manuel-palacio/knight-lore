@@ -69,3 +69,12 @@ test('Sabreman is drawn in the room\'s colour', async ({ page }) => {
   await holdDaylight(page)
   await expect.poll(() => litPixels(page, ABOVE_THE_HUD, redderThanGreen)).toBe(0)
 })
+
+test('the page has a favicon: Sabreman\'s head, a PNG it can load', async ({ page }) => {
+  await page.goto('/')
+  const href = await page.locator('link[rel="icon"]').getAttribute('href')
+  expect(href).toBe('/favicon.png')
+  const icon = await page.request.get(href!)
+  expect(icon.ok()).toBe(true)
+  expect(icon.headers()['content-type']).toBe('image/png')
+})

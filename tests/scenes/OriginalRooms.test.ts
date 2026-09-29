@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { ROOM_SPECS } from '../../src/scenes/rooms/roomSpecs'
+import { specById } from '../e2e/support/specs'
 
 // Rooms generated from the original's room table (tools/rip/castle.py),
 // checked against what the original is known to hold.
-const room = (id: string) => ROOM_SPECS.find((s) => s.id === id)!
+const room = (id: string) => specById(id)
 const cells = (list: { x: number; z: number }[] = []) => list.map((c) => `${c.x},${c.z}`).sort()
 
 describe('rooms from the original room table', () => {

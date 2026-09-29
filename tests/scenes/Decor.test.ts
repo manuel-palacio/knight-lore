@@ -3,10 +3,11 @@ import { ROOM_SPECS } from '../../src/scenes/rooms/roomSpecs'
 import { buildRoomFromSpec } from '../../src/scenes/rooms/specBuilder'
 import { columnSegments } from '../../src/engine/ColumnLooks'
 import { GameState } from '../../src/game/GameState'
+import { specById } from '../e2e/support/specs'
 
 // Hedges (the room table's t3, graphic 6) and gargoyles (t4, graphic 22) are
 // blocks drawn with their own sprites, as the original draws them.
-const room = (id: string) => buildRoomFromSpec(ROOM_SPECS.find((s) => s.id === id)!)(new GameState())
+const room = (id: string) => buildRoomFromSpec(specById(id))(new GameState())
 
 describe('rooms with hedges and gargoyles', () => {
   it('a garden room builds with its hedges, and draws those levels as hedges, not the plain block', async () => {

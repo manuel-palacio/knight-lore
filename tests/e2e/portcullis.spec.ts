@@ -1,12 +1,12 @@
 import { test, expect } from '@playwright/test'
-import { ROOM_SPECS } from '../../src/scenes/rooms/roomSpecs'
 import { debug, enterRoom, face, holdDaylight, standAt, startGame, tileCentre, walkPath, walkUntil } from './support/game'
 import { dangersOf, doorOf, findFloorPath } from './support/roomPath'
+import { specById } from './support/specs'
 
 // The gate across the corridor map--1--2 (the original's room 0x67): it
 // rests shut, rises, waits, and drops. A guard paces the row past it.
 const GATED = 'map--1--2'
-const spec = ROOM_SPECS.find((s) => s.id === GATED)!
+const spec = specById(GATED)
 const GATE_ROW = spec.portcullises![0]!.from.z
 const DOOR_AXIS_X = tileCentre(doorOf(spec, 'south').x)
 const GRILLE_Z = tileCentre(GATE_ROW)

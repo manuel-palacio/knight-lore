@@ -1,15 +1,15 @@
 import { test, expect, type Page } from '@playwright/test'
-import { ROOM_SPECS } from '../../src/scenes/rooms/roomSpecs'
 import { debug, enterRoom, startGame } from './support/game'
+import { specById } from './support/specs'
 
 // The original's end screen after a loss and after a win (see EndSummary):
 // days, quest done, charms, rating, and a win first has the potion verse.
 
 async function visitTwoMoreRooms(page: Page): Promise<void> {
   const start = (await debug(page)).room
-  const here = ROOM_SPECS.find((s) => s.id === start)!
+  const here = specById(start)
   await enterRoom(page, here.exits[0]!.target)
-  const next = ROOM_SPECS.find((s) => s.id === here.exits[0]!.target)!
+  const next = specById(here.exits[0]!.target)
   await enterRoom(page, next.exits.find((e) => e.target !== here.id)?.target ?? here.id)
 }
 

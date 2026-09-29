@@ -1,8 +1,8 @@
 import { test, expect, type Page } from '@playwright/test'
-import { ROOM_SPECS } from '../../src/scenes/rooms/roomSpecs'
 
 const CHARM_HOVER = 0.4
 import { debug, enterRoom, give, holdDaylight, roomHolding, standAt, startGame } from './support/game'
+import { specById } from './support/specs'
 
 async function pickUpCharmIn(page: Page, roomId: string): Promise<string> {
   const room = await enterRoom(page, roomId)
@@ -23,7 +23,7 @@ async function fallNight(page: Page): Promise<void> {
 test('a charm dropped at nightfall stays in the room where it fell', async ({ page }) => {
   await startGame(page)
   const charmRoomId = await roomHolding(page, (item) => item !== 'life')
-  const charmRoom = ROOM_SPECS.find((s) => s.id === charmRoomId)!
+  const charmRoom = specById(charmRoomId)
   const charm = await pickUpCharmIn(page, charmRoom.id)
   const elsewhere = charmRoom.exits[0]!.target
 
@@ -39,7 +39,7 @@ test('a charm dropped at nightfall stays in the room where it fell', async ({ pa
 test('the extra life is taken at once, not carried, and does not come back', async ({ page }) => {
   await startGame(page)
   const lifeRoomId = await roomHolding(page, (item) => item === 'life')
-  const lifeRoom = ROOM_SPECS.find((s) => s.id === lifeRoomId)!
+  const lifeRoom = specById(lifeRoomId)
   const room = await enterRoom(page, lifeRoom.id)
   await holdDaylight(page)
   const life = room.pickups.find((p) => p.id === 'life')!

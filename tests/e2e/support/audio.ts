@@ -1,5 +1,6 @@
 import { type Page } from '@playwright/test'
 import { GAME_START_TUNE, TITLE_TUNE } from '../../../src/engine/tunes'
+import { openTitle as openPlainTitle } from './game'
 
 // The original's tunes. Oscillators are recorded through a wrapped
 // AudioContext, since the test cannot listen: each started note's frequency,
@@ -51,6 +52,5 @@ export const startOpening = GAME_START_TUNE.slice(0, 4).map((n) => n.frequency)
 
 export async function openTitle(page: Page, holdSoundUntilGesture = false): Promise<void> {
   await recordTones(page, holdSoundUntilGesture)
-  await page.goto('/')
-  await page.waitForFunction(() => '__dbg' in window)
+  await openPlainTitle(page)
 }

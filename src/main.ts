@@ -10,11 +10,10 @@ import { Player, type Facing, type PlayerCtx } from './game/Player'
 import { FACING_VECTOR } from './game/Facing'
 import { STEP_LENGTH, TICKS_PER_FRAME, TICKS_PER_STEP } from './engine/StepClock'
 import { EPS } from './engine/epsilons'
-import { deliveryEffect, seizureEffect, dissolveEffect, pushEffect, rematerialiseEffect } from './engine/effects'
+import { seizureEffect, dissolveEffect, pushEffect, rematerialiseEffect } from './engine/effects'
 import { TouchPad } from './engine/TouchPad'
 import { bindTouchControls, showTouchControlsWhenTouched } from './engine/TouchControls'
-import { CHARM_HEIGHT, CHARM_HOVER, Pickup } from './game/Pickup'
-import { Cauldron, charmOverCauldron } from './game/Cauldron'
+import { charmOverCauldron } from './game/Cauldron'
 import { PushableBox } from './game/PushableBox'
 import { Category } from './engine/categories'
 import { Room } from './game/Room'
@@ -25,9 +24,9 @@ import { Transition } from './game/Transition'
 import { loadSave, writeSave, clearSave } from './engine/SaveSlot'
 import { Beeper, footstepSound } from './engine/Beeper'
 import { Sparkle } from './game/Sparkle'
+import { CharmHands } from './game/CharmHands'
 import { blockFillsAt } from './game/BlockSolids'
 import { shovedClearOf } from './game/Shove'
-import { headroomToLiftOnto, insideRoom } from './game/Placing'
 import { FULL_ROOM_CELLS } from './engine/OriginalPixels'
 import { isHolder } from './game/Holding'
 import { loadSprites, Tints } from './view/Sprites'
@@ -169,17 +168,8 @@ async function main(): Promise<void> {
     })
   }
 
-  // The wolf can carry nothing: at nightfall what the man carried falls at his feet.
-  // Each goes under his feet as E puts one down, lifting him, where there is
-  // room over his head; one on another, not all in the one place.
-  state.onNightfall = () => {
-    for (let charm = player.satchel.putDownOldest(); charm; charm = player.satchel.putDownOldest()) {
-      const feet = player.position.clone()
-      if (hasHeadroom(activeRoom(), feet)) player.position.y += CHARM_HEIGHT
-      layCharm(charm, feet)
-      beeper.play('drop')
-    }
-  }
+  const hands = new CharmHands(player, state, beeper)
+  state.onNightfall = () => hands.putDownAll(activeRoom())
   // Death: white flash, and Sabreman dissolves into a cloud of stars where
   // he stood; then the room's movers go back to their starts, and he comes
   // back out of the stars at the door he came in through (see Sparkle).
@@ -211,73 +201,6 @@ async function main(): Promise<void> {
     if (!state.gameOver || gameOverTunePlayed) return
     gameOverTunePlayed = true
     beeper.play('title')
-  }
-
-  // E with nothing in reach to pick up puts down the charm carried longest,
-  // under his feet: he stands on it, a block higher (see Player).
-  function tryPutDownPass(room: Room): void {
-    const feet = player.position.clone()
-    const charm = player.putDownUnderFoot(hasHeadroom(room, feet))
-    if (!charm) return
-    layCharm(charm, feet)
-    beeper.play('drop')
-  }
-
-  function hasHeadroom(room: Room, feet: THREE.Vector3): boolean {
-    return headroomToLiftOnto(room.entities.filter((e) => e !== player), player, feet)
-  }
-
-  function layCharm(charm: Pickup, at: THREE.Vector3): void {
-    const room = activeRoom()
-    const inside = insideRoom(at, room.grid, room.tileSize, charm.extents.x / 2)
-    charm.dropAt(inside.x, at.y + CHARM_HOVER, inside.z)
-    room.add(charm)
-  }
-
-  // E by a charm picks it up; with his hands full, the charm carried longest
-  // is left where the new one lay. True when there was a charm to pick up.
-  function tryPickupPass(room: Room): boolean {
-    for (const e of room.entities) {
-      if (!(e instanceof Pickup) || e.collected) continue
-      if (!e.isWithinReachOf(player.position)) continue
-      if (e.id === 'life') {
-        takeExtraLife(room, e)
-        return true
-      }
-      const where = e.position.clone().setY(e.position.y - CHARM_HOVER)
-      player.tryPickup(e, state, (letGo) => {
-        beeper.play('pickup')
-        e.collect()
-        room.remove(e)
-        if (letGo) layCharm(letGo, where)
-      })
-      return true
-    }
-    return false
-  }
-
-  function takeExtraLife(room: Room, life: Pickup): void {
-    state.gainLife()
-    if (life.spot !== null) state.usedSpots.push(life.spot)
-    life.collect()
-    room.remove(life)
-    beeper.play('pickup')
-  }
-
-  function tryDeliverPass(room: Room): boolean {
-    const cauldron = room.entities.find((e): e is Cauldron => e instanceof Cauldron)
-    if (!cauldron || !cauldron.isInRange(player.position)) return false
-    const wanted = state.wantedItem
-    const charm = wanted ? player.satchel.handOver(wanted) : undefined
-    if (!charm || !state.deliverCureItem(charm.id)) {
-      if (charm) player.satchel.take(charm)
-      if (!player.satchel.isEmpty) beeper.play('wrong')
-      return false
-    }
-    if (charm.spot !== null) state.usedSpots.push(charm.spot)
-    if (state.won) beeper.play('win')
-    else beeper.playEffect(deliveryEffect(charm.id))
-    return true
   }
 
   function hazardPass(room: Room): void {
@@ -393,7 +316,7 @@ async function main(): Promise<void> {
     boxSoundPass(room)
     if (stepped) pushPass(room)
     resolveActorOverlap(room)
-    if (!dying() && !look.morphing && input.wasPressed('KeyE') && !tryDeliverPass(room) && !tryPickupPass(room)) tryPutDownPass(room)
+    if (!dying() && !look.morphing && input.wasPressed('KeyE')) hands.use(room)
     hazardPass(room)
     if (!dying()) exitPass()
     sparklePass()

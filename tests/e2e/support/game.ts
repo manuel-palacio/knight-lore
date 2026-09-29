@@ -68,6 +68,11 @@ export function debug(page: Page): Promise<Debug> {
   return page.evaluate(() => (window as unknown as Hooks).__dbg())
 }
 
+export async function openTitle(page: Page): Promise<void> {
+  await page.goto('/')
+  await page.waitForFunction(() => '__dbg' in window)
+}
+
 export async function startGame(page: Page): Promise<void> {
   await page.goto('/')
   await expect(page.locator('#intro')).toBeVisible()

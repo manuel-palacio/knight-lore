@@ -1,8 +1,9 @@
 import { test, expect, type Page } from '@playwright/test'
-import { ROOM_SPECS, entryFor, oppositeOf, type Direction, type RoomSpec } from '../../src/scenes/rooms/roomSpecs'
+import { entryFor, oppositeOf, type Direction, type RoomSpec } from '../../src/scenes/rooms/roomSpecs'
 import { debug, enterRoom, face, give, holdDaylight, startGame, tileCentre, walkPath, walkUntil } from './support/game'
 import { dangersOf, doorOf, type Step } from './support/roomPath'
 import { SOLVED_PUZZLES } from './support/puzzles'
+import { specById } from './support/specs'
 
 // The puzzle rooms (tools/rip/castle.py marks them: some door cannot be
 // reached on foot), each crossed both ways with the keyboard, as the
@@ -11,7 +12,7 @@ import { SOLVED_PUZZLES } from './support/puzzles'
 // it a block higher, a held jump rises two more with a run-up, and walking
 // into a table pushes it.
 
-const spec = (id: (typeof SOLVED_PUZZLES)[number]) => ROOM_SPECS.find((s) => s.id === id)!
+const spec = (id: (typeof SOLVED_PUZZLES)[number]) => specById(id)
 
 // The room as the jump planner should see it once charms lie in it.
 function withCharms(room: RoomSpec, cells: Step[]): RoomSpec {

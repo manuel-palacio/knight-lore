@@ -1,16 +1,12 @@
 import { test, expect, type Page } from '@playwright/test'
-import { debug, enterRoom, face, give, holdDaylight, startGame } from './support/game'
-import { ROOM_SPECS, entryFor } from '../../src/scenes/rooms/roomSpecs'
+import { debug, enterRoom, face, give, holdDaylight, openTitle, startGame } from './support/game'
+import { entryFor } from '../../src/scenes/rooms/roomSpecs'
+import { specById } from './support/specs'
 
 // Things that happen at unusual moments: behind the title screen, at
 // nightfall in mid-jump, in the seizure, on continuing a saved game.
 const SAVE_KEY = 'knight-lore.save'
 type Hooks = { __t: () => void; __timer: (s: number) => void; __lose: () => void; __dbg: () => { timer: number } }
-
-async function openTitle(page: Page): Promise<void> {
-  await page.goto('/')
-  await page.waitForFunction(() => '__dbg' in window)
-}
 
 test('nothing happens behind the title screen: the day does not pass', async ({ page }) => {
   await openTitle(page)
@@ -75,7 +71,7 @@ test('a continued game puts him back where he came into the room, facing the sam
 })
 
 test('coming into map--4--2 from the south, he stands on the block beside the doorway, not half inside it', async ({ page }) => {
-  const room = ROOM_SPECS.find((r) => r.id === 'map--4--2')!
+  const room = specById('map--4--2')
   await startGame(page)
   await enterRoom(page, room.id, entryFor('north', room.width ?? 8, room.depth ?? 8))
   await expect.poll(async () => (await debug(page)).pos.y).toBe(1)

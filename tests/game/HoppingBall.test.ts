@@ -2,17 +2,12 @@ import { describe, it, expect } from 'vitest'
 import * as THREE from 'three'
 import { HoppingBall, HOP_SPEED_PX, HOP_ACROSS_PX } from '../../src/game/HoppingBall'
 import { GameState } from '../../src/game/GameState'
+import { night } from './states'
 import { Grid } from '../../src/engine/Grid'
 import { runFrames } from './frames'
 
 function run(ball: HoppingBall, frames: number, extra: object): void {
   runFrames(ball, frames, { grid: new Grid(8, 8), tileSize: 2, ...extra })
-}
-
-function night(): GameState {
-  const state = new GameState(1)
-  state.toggleForm()
-  return state
 }
 
 const alongX = () => 0.2

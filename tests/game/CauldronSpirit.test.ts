@@ -2,17 +2,12 @@ import { describe, it, expect } from 'vitest'
 import * as THREE from 'three'
 import { CauldronSpirit, RISE_SECONDS } from '../../src/game/CauldronSpirit'
 import { GameState } from '../../src/game/GameState'
+import { night } from './states'
 import { hazardHunts } from '../../src/game/Hazards'
 import { Room } from '../../src/game/Room'
 
 function ctx(state: GameState, px: number, pz: number) {
   return { state, playerPosition: new THREE.Vector3(px, 0, pz) }
-}
-
-function night(): GameState {
-  const state = new GameState(1)
-  state.toggleForm()
-  return state
 }
 
 describe('CauldronSpirit', () => {

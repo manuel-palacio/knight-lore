@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test'
-import { ROOM_SPECS, START_ROOMS } from '../../src/scenes/rooms/roomSpecs'
+import { START_ROOMS } from '../../src/scenes/rooms/roomSpecs'
 import { debug, enterRoom, face, roomHolding, standAt, startGame, walkPath, walkUntil } from './support/game'
 import { doorOf, findFloorPath } from './support/roomPath'
+import { specById } from './support/specs'
 
 // End-to-end smoke: the game loads, starts, lets you walk between rooms, and
 // runs the cure loop once.
@@ -24,7 +25,7 @@ test('Sabreman begins in the middle of the start room, as in the original', asyn
 test('walking out through a door of the start room enters the next room', async ({ page }) => {
   await startGame(page)
   const startRoom = (await debug(page)).room
-  const spec = ROOM_SPECS.find((s) => s.id === startRoom)!
+  const spec = specById(startRoom)
   const exit = spec.exits[0]!
   const here = (await debug(page)).pos
   await walkPath(page, findFloorPath(spec, { x: Math.floor(here.x / 2), z: Math.floor(here.z / 2) }, doorOf(spec, exit.direction)))

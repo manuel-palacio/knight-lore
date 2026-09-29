@@ -31,6 +31,7 @@ export interface Debug {
   delivered: number
   // A charm is on its way into the cauldron.
   delivering: boolean
+  followers: { x: number; z: number }[]
   lives: number
   day: number
   won: boolean

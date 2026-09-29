@@ -50,7 +50,7 @@ BLOCK_TYPES = {0, 3, 4, 11, 16}
 # Blocks drawn with their own sprite: hedges (graphic 6) and gargoyles (22);
 # every other block type draws the block sprite (graphic 7).
 DECOR = {3: 'hedge', 4: 'gargoyle'}
-SPIKES, GHOST, SPARKLE = 5, 9, 25
+SPIKES, GHOST, FOLLOWER = 5, 9, 25
 # Pushable (template flag bit 2): a table moves only while pushed (0xC4C3), a
 # chest slides on until stopped (0xC4B6).
 BOXES = {6: 'chest', 7: 'table'}
@@ -174,7 +174,7 @@ class RoomBuild:
     def add(self, obj):
         kind, level = obj['type'], obj['z']
         cell = self.cell(obj)
-        if cell is None or kind == SPARKLE:
+        if cell is None:
             return
         x, z = cell
         if cell in self.doors and level == 0 and kind not in GHOST_LIKE:
@@ -190,6 +190,8 @@ class RoomBuild:
             self.put('boxes', {'x': x, 'z': z, 'height': level, 'kind': BOXES[kind]})
         elif kind == GHOST:
             self.put('ghosts', {'x': x, 'z': z})
+        elif kind == FOLLOWER:
+            self.put('followers', {'x': x, 'z': z, 'height': level})
         elif kind in FLAMES:
             self.put('flames', {'x': x, 'z': z, 'height': level, 'axis': FLAMES[kind]})
         elif kind == CRUMBLING:
@@ -617,7 +619,7 @@ def ts_value(value):
 
 
 FIELD_ORDER = ['platforms', 'decor', 'floatingBlocks', 'spikes', 'boxes', 'vanishing', 'fallingBlocks', 'movingPlatforms', 'portcullises',
-               'pathGuards', 'balls', 'hoppers', 'ghosts', 'spikedBalls', 'flames', 'charmSpots', 'backdrop']
+               'pathGuards', 'balls', 'hoppers', 'ghosts', 'followers', 'spikedBalls', 'flames', 'charmSpots', 'backdrop']
 
 
 def spec_text(room_id, build):

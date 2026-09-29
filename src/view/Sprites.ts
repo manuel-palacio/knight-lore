@@ -67,6 +67,8 @@ export async function loadSprites() {
       wizard: await loadImage('/sprites/wizard.png'),
       flame: await loadImage('/sprites/rip/flame.png'),
       stars: await loadImage('/sprites/rip/stars.png'),
+      // The hunting sparkle cloud, graphics 0xA4-0xA7.
+      sparkle: await loadImage('/sprites/rip/sparkle.png'),
     },
     monsters: {
       ghost: await loadImage('/sprites/rip/ghost.png'),

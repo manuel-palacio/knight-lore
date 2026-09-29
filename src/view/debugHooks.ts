@@ -11,6 +11,7 @@ import { PushableBox } from '../game/PushableBox'
 import { FallingBlock } from '../game/FallingBlock'
 import { Portcullis } from '../game/Portcullis'
 import { SinkingCharm } from '../game/SinkingCharm'
+import { Follower } from '../game/Follower'
 import type { Entity } from '../game/Entity'
 import type { GameState } from '../game/GameState'
 import type { Player } from '../game/Player'
@@ -45,6 +46,11 @@ export function installDebugHooks(game: DebuggedGame): void {
   hooks.__give = (ids: string[]) => {
     for (const id of ids) player.tryPickup(new Pickup(id), () => {})
   }
+  // Takes the sparkle clouds out of the room, for walks that test its layout.
+  hooks.__noFollowers = () => {
+    const room = game.activeRoom()
+    for (const e of room.entities.filter((e) => e instanceof Follower)) room.remove(e)
+  }
   hooks.__pos = (x: number, y: number, z: number) => {
     player.position.set(x, y, z)
   }
@@ -74,6 +80,7 @@ function snapshot(game: DebuggedGame): Record<string, unknown> {
     monsters: entities
       .filter((e) => e instanceof PathGuard || e instanceof Flame || e instanceof BouncingBall || e instanceof GhostEnemy || e instanceof HoppingBall)
       .map((e) => ({ kind: monsterKind(e), x: e.position.x, y: e.position.y, z: e.position.z })),
+    followers: entities.filter((e) => e instanceof Follower).map((e) => ({ x: e.position.x, z: e.position.z })),
     spikedBalls: entities
       .filter((e) => e instanceof SpikedBall)
       .map((e) => ({ x: e.position.x, y: e.position.y, z: e.position.z })),

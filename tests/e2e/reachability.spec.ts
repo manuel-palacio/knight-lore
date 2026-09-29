@@ -53,6 +53,9 @@ for (const spec of ROOM_SPECS) {
       for (let attempt = 1; ; attempt++) {
         if ((await debug(page)).lives < 2) await startGame(page)
         await enterRoom(page, spec.id, entryFor(oppositeOf(entrance.direction), spec.width ?? 8, spec.depth ?? 8))
+        // A sparkle cloud makes for him and is stepped round, which the walker
+        // cannot do: the room's layout is walked without it (see followers.spec.ts).
+        if (spec.followers) await page.evaluate(() => (window as unknown as { __noFollowers: () => void }).__noFollowers())
         await holdDaylight(page)
         const lives = (await debug(page)).lives
         const failure = await leg().then(

@@ -30,6 +30,10 @@ SNAPSHOT = 'reference/KnightLore.z80'
 OUT = 'public/sprites/rip'
 SPRITE_TABLE = 0x7112
 OBJECTS = {'spiked-ball.png': 63, 'hedge.png': 6, 'gargoyle.png': 22, 'chest.png': 85, 'table.png': 84}
+# Animated objects, a strip of their graphics: the sparkle cloud that hunts
+# (graphics 0xA4-0xA7, cycled every frame by 0xB98C): the cauldron's turned
+# on the wolf, and the followers of the room table's t25.
+STRIPS = {'sparkle.png': [0xA4, 0xA5, 0xA6, 0xA7]}
 # Arch halves, garden gates, the lintel block, wall slabs and columns, hedges.
 BACKDROP_GRAPHICS = [0x02, 0x03, 0x04, 0x05, 0x07, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x80, 0x81, 0x82]
 MASKED_AGAIN = ['spikes', 'cage', 'ball', 'ghost', 'cauldron', 'stars',
@@ -40,6 +44,15 @@ MASKED_AGAIN = ['spikes', 'cage', 'ball', 'ghost', 'cauldron', 'stars',
 def sprite_address(memory, graphic):
     entry = SPRITE_TABLE + 2 * graphic
     return memory[entry] | memory[entry + 1] << 8
+
+
+def rip_strip(memory, name, graphics):
+    cells = [decode(memory, sprite_address(memory, g)) for g in graphics]
+    width, height = max(c.width for c in cells), max(c.height for c in cells)
+    strip = Image.new('RGBA', (width * len(cells), height), (0, 0, 0, 0))
+    for i, cell in enumerate(cells):
+        strip.paste(cell, (i * width, height - cell.height), cell)
+    strip.save(os.path.join(OUT, name))
 
 
 def rip_again_with_mask(memory, name, entry):
@@ -56,6 +69,8 @@ if __name__ == '__main__':
     memory = load_memory(SNAPSHOT)
     for name, graphic in OBJECTS.items():
         decode(memory, sprite_address(memory, graphic)).save(os.path.join(OUT, name))
+    for name, graphics in STRIPS.items():
+        rip_strip(memory, name, graphics)
     os.makedirs(os.path.join(OUT, 'backdrop'), exist_ok=True)
     for graphic in BACKDROP_GRAPHICS:
         decode(memory, sprite_address(memory, graphic)).save(os.path.join(OUT, 'backdrop', f'{graphic}.png'))

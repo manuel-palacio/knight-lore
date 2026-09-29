@@ -19,6 +19,7 @@ import { FloatingBlock } from '../game/FloatingBlock'
 import { SpikedBall } from '../game/SpikedBall'
 import { Flame, FLAME_FRAMES } from '../game/Flame'
 import { SinkingCharm } from '../game/SinkingCharm'
+import { Follower } from '../game/Follower'
 import type { Entity } from '../game/Entity'
 import type { Room } from '../game/Room'
 import type { Sprites, Tints } from './Sprites'
@@ -28,6 +29,9 @@ import type { Sprites, Tints } from './Sprites'
 // 0xC4D8, 0xC4F2, 0xC506).
 export const DRAWN_LOWER = { man: 6, wolf: 7, block: 8, charm: 4, ghost: 6, flame: 4, stars: 4, cauldron: 12 }
 const GHOST_DRAW_HEIGHT = 0.3
+// The hunting sparkle cloud's four graphics, a new one each frame (0xB98C).
+const SPARKLE_FRAMES = 4
+const SPARKLE_FRAME_MS = 50
 
 // Draws everything in a room but him, in the room's hue.
 export class SceneDynamics {
@@ -64,9 +68,12 @@ export class SceneDynamics {
       return source ? [stripFrame(hue(source), 1, 0, e.position.x, e.position.y, e.position.z, false, DRAWN_LOWER.charm)] : []
     }
     if (e instanceof Spike) return [spikeBedDynamic(hue(this.sprites.spikes), e.position.x, e.position.y, e.position.z)]
-    if (e instanceof GhostEnemy || e instanceof CauldronSpirit) {
-      if (e instanceof CauldronSpirit && !e.risen) return []
+    if (e instanceof GhostEnemy) {
       return [stripFrame(this.monster('ghost', room), 4, Math.floor(performance.now() / 150) % 4, e.position.x, GHOST_DRAW_HEIGHT, e.position.z, false, DRAWN_LOWER.ghost)]
+    }
+    if (e instanceof CauldronSpirit || e instanceof Follower) {
+      if (e instanceof CauldronSpirit && !e.risen) return []
+      return [stripFrame(hue(this.sprites.setPieces.sparkle), SPARKLE_FRAMES, Math.floor(performance.now() / SPARKLE_FRAME_MS) % SPARKLE_FRAMES, e.position.x, e.position.y, e.position.z, false, DRAWN_LOWER.ghost)]
     }
     if (e instanceof PathGuard) {
       // Seen from the front or from behind over the man's legs, mirrored as he is.

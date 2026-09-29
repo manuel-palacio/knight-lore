@@ -13,6 +13,7 @@ import { Cauldron } from '../../game/Cauldron'
 import { CauldronSpirit } from '../../game/CauldronSpirit'
 import { Wizard } from '../../game/Wizard'
 import { Gargoyle } from '../../game/Gargoyle'
+import { Follower } from '../../game/Follower'
 import { Flame } from '../../game/Flame'
 import { Portcullis } from '../../game/Portcullis'
 import { DropTurn, SpikedBall } from '../../game/SpikedBall'
@@ -42,6 +43,7 @@ export function buildRoomFromSpec(spec: RoomSpec, sizeOf: (id: string) => RoomSi
     }
     placeSpikes(room, spec.spikes ?? [])
     for (const g of spec.ghosts ?? []) room.add(new GhostEnemy(tileCenter(g.x), tileCenter(g.z)))
+    for (const f of spec.followers ?? []) room.add(new Follower(tileCenter(f.x), f.height, tileCenter(f.z)))
     for (const p of spec.pickups ?? []) addPickup(room, p.item, p.x, p.z, p.y)
     for (const s of spec.charmSpots ?? []) {
       if (!state.usedSpots.includes(s.spot)) addPickup(room, itemAtSpot(s.spot, state.charmDeal), s.x, s.z, s.height + CHARM_HOVER, s.spot)

@@ -58,6 +58,8 @@ export interface RoomSpec {
   hoppers?: (Cell & { height: number; randomHops?: boolean })[]
   // Where the original has them, in room units (not cells): the cauldron
   // stands where four cells meet.
+  // The sparkle clouds that make for him (room table t25; see Follower).
+  followers?: (Cell & { height: number })[]
   cauldron?: { x: number; z: number }
   wizard?: { x: number; z: number }
   flames?: (Cell & { height: number; axis: FlameAxis })[]
@@ -544,6 +546,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 1, z: 2, height: 1 }, { x: 1, z: 5, height: 1 }, { x: 2, z: 1, height: 1 }, { x: 2, z: 6, height: 1 }, { x: 5, z: 1, height: 1 }, { x: 5, z: 6, height: 1 }, { x: 6, z: 2, height: 1 }, { x: 6, z: 5, height: 1 }],
     decor: [{ x: 2, z: 1, height: 0, kind: 'hedge' }, { x: 5, z: 1, height: 0, kind: 'hedge' }, { x: 1, z: 2, height: 0, kind: 'hedge' }, { x: 6, z: 2, height: 0, kind: 'hedge' }, { x: 1, z: 5, height: 0, kind: 'hedge' }, { x: 6, z: 5, height: 0, kind: 'hedge' }, { x: 2, z: 6, height: 0, kind: 'hedge' }, { x: 5, z: 6, height: 0, kind: 'hedge' }],
+    followers: [{ x: 5, z: 2, height: 0 }],
     charmSpots: [{ spot: 25, x: 3.5, z: 3.5, height: 0 }],
     backdrop: [{ graphic: 4, x: 141, y: 196, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 5, x: 115, y: 196, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 4, x: 196, y: 115, z: 128, flip: false, dx: 1, dy: -3 }, { graphic: 5, x: 196, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 128, x: 63, y: 73, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 129, x: 63, y: 88, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 130, x: 63, y: 104, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 128, x: 63, y: 152, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 129, x: 63, y: 168, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 130, x: 63, y: 184, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 128, x: 72, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 129, x: 88, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 130, x: 104, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 128, x: 152, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 129, x: 168, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 130, x: 184, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 128, x: 63, y: 120, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 129, x: 63, y: 136, z: 128, flip: false, dx: -8, dy: -2 }],
   },
@@ -651,6 +654,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 3, z: 1, height: 1 }, { x: 4, z: 2, height: 1 }],
     spikes: [{ x: 4, z: 1 }, { x: 3, z: 2 }],
+    followers: [{ x: 3, z: 0, height: 0 }],
     backdrop: [{ graphic: 2, x: 196, y: 115, z: 128, flip: false, dx: -7, dy: -3 }, { graphic: 3, x: 196, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 2, x: 59, y: 115, z: 128, flip: false, dx: -7, dy: -3 }, { graphic: 3, x: 59, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 13, x: 63, y: 152, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 14, x: 71, y: 160, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 99, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 160, z: 128, flip: true, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 99, z: 172, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 160, z: 172, flip: true, dx: -8, dy: -4 }, { graphic: 13, x: 63, y: 152, z: 168, flip: false, dx: -8, dy: -4 }, { graphic: 14, x: 71, y: 160, z: 168, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 160, z: 208, flip: true, dx: -8, dy: -4 }, { graphic: 10, x: 128, y: 160, z: 128, flip: true, dx: -20, dy: -1 }, { graphic: 10, x: 63, y: 126, z: 176, flip: false, dx: -20, dy: -1 }, { graphic: 11, x: 96, y: 160, z: 144, flip: true, dx: -12, dy: -2 }, { graphic: 10, x: 96, y: 160, z: 184, flip: true, dx: -20, dy: -1 }, { graphic: 12, x: 160, y: 160, z: 176, flip: true, dx: -8, dy: -4 }],
   },
   {
@@ -1095,6 +1099,7 @@ export const ROOM_SPECS: RoomSpec[] = [
     spawn: { x: 2, z: 0 },
     platforms: [],
     spikes: [{ x: 0, z: 0 }, { x: 3, z: 0 }, { x: 1, z: 2 }, { x: 2, z: 2 }, { x: 1, z: 5 }, { x: 2, z: 5 }, { x: 0, z: 7 }, { x: 3, z: 7 }],
+    followers: [{ x: 2, z: 3, height: 0 }],
     backdrop: [{ graphic: 2, x: 141, y: 196, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 3, x: 115, y: 196, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 2, x: 141, y: 59, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 3, x: 115, y: 59, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 13, x: 95, y: 184, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 14, x: 103, y: 192, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 95, y: 72, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 157, y: 192, z: 128, flip: true, dx: -8, dy: -4 }, { graphic: 13, x: 95, y: 184, z: 168, flip: false, dx: -8, dy: -4 }, { graphic: 14, x: 103, y: 192, z: 168, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 95, y: 72, z: 172, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 157, y: 192, z: 172, flip: true, dx: -8, dy: -4 }, { graphic: 15, x: 95, y: 72, z: 208, flip: false, dx: -8, dy: -4 }, { graphic: 10, x: 95, y: 144, z: 128, flip: false, dx: -20, dy: -1 }, { graphic: 10, x: 132, y: 192, z: 176, flip: true, dx: -20, dy: -1 }, { graphic: 11, x: 95, y: 96, z: 144, flip: false, dx: -12, dy: -2 }, { graphic: 10, x: 95, y: 104, z: 184, flip: false, dx: -20, dy: -1 }, { graphic: 12, x: 95, y: 160, z: 176, flip: false, dx: -8, dy: -4 }],
   },
   {

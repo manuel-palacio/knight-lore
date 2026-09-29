@@ -71,6 +71,7 @@ describe('RoomManager', () => {
     expect(manager.exitAt(8, 15.6)).toBeNull() // at the edge, not yet in the doorway
     expect(manager.exitAt(8, 16.8)?.targetRoomId).toBe('room-b') // south door, under the arch
     expect(manager.exitAt(9, 16.8)?.targetRoomId).toBe('room-b') // still inside the doorway
+    expect(manager.exitAt(9.6, 16.8)?.targetRoomId).toBe('room-b') // come in to the side, against the arch's jamb
     expect(manager.exitAt(3, 16.8)).toBeNull() // beyond the south edge but through the wall
     expect(manager.exitAt(8, -0.8)).toBeNull() // north edge has no exit
     expect(manager.exitAt(-0.8, 8)).toBeNull()

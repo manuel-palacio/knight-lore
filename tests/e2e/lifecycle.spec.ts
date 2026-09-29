@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
-import { debug, enterRoom, face, give, holdDaylight, openTitle, startGame } from './support/game'
+import { debug, enterRoom, face, give, holdDaylight, openTitle, standAt, startGame } from './support/game'
 import { entryFor } from '../../src/scenes/rooms/roomSpecs'
 import { specById } from './support/specs'
 
@@ -99,4 +99,17 @@ test('E does nothing while he is in the seizure', async ({ page }) => {
   await page.keyboard.press('KeyE')
   await page.waitForTimeout(200)
   expect((await debug(page)).carrying).toEqual(['gem'])
+})
+
+test('walking into a doorway well to the side of its middle still takes him through, not into the arch for good', async ({ page }) => {
+  const room = specById('map--1--1')
+  const north = room.exits.find((e) => e.direction === 'north')!
+  await startGame(page)
+  await enterRoom(page, room.id, { x: 8, z: 8 })
+  await holdDaylight(page)
+  await standAt(page, { x: 8 + 1.5, y: 0, z: 1.5 })
+  await face(page, 'north')
+  await page.keyboard.down('ArrowUp')
+  await expect.poll(async () => (await debug(page)).room, { timeout: 5_000 }).toBe(north.target)
+  await page.keyboard.up('ArrowUp')
 })

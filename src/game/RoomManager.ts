@@ -5,8 +5,6 @@ export type RoomBuilder = (state: GameState) => Promise<Room>
 
 // He goes through once he is under the arch, this far past the room's edge.
 const UNDER_THE_ARCH = 0.75
-// Doorways sit mid-edge; only that span leads out, the rest of the edge is wall.
-const DOOR_HALF_SPAN = 1.4
 
 export class RoomManager {
   active: Room | null = null
@@ -38,8 +36,11 @@ export class RoomManager {
     const depth = this.active.grid.depth * this.active.tileSize
     const midX = width / 2
     const midZ = depth / 2
-    const inDoorX = Math.abs(x - midX) <= DOOR_HALF_SPAN
-    const inDoorZ = Math.abs(z - midZ) <= DOOR_HALF_SPAN
+    // A doorway is the two cells beyond the middle of its edge (Grid.openDoorway):
+    // anywhere in them leads out, however far to the side he came in.
+    const doorHalfSpan = this.active.tileSize
+    const inDoorX = Math.abs(x - midX) < doorHalfSpan
+    const inDoorZ = Math.abs(z - midZ) < doorHalfSpan
     for (const exit of this.active.exits) {
       if (exit.direction === 'north' && z < -UNDER_THE_ARCH && inDoorX) return exit
       if (exit.direction === 'south' && z > depth + UNDER_THE_ARCH && inDoorX) return exit

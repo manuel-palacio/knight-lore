@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { PushableBox } from '../../src/game/PushableBox'
+import { FloatingBlock } from '../../src/game/FloatingBlock'
 import { Grid } from '../../src/engine/Grid'
 import { runFrames } from './frames'
 
@@ -101,5 +102,23 @@ describe('PushableBox', () => {
     runFrames(chest, 5, room([chest]))
     chest.reset()
     expect(chest.position.x).toBe(7)
+  })
+
+  it('rests on floating blocks under it, not sinking through them (map--7--6\'s chest)', () => {
+    const blocks = [new FloatingBlock(2, 1, 2, 2), new FloatingBlock(3, 1, 2, 2)] // tops at 3
+    const chest = new PushableBox('chest', { x: 6, z: 3 }, 3)
+    runFrames(chest, 20, { ...room([chest]), entities: [...blocks, chest] })
+    expect(chest.bottom).toBe(3)
+  })
+
+  it('stops against a floating block it is pushed into, as against any block', () => {
+    const block = new FloatingBlock(4, 3, 0, 2) // cell (4, 3), from the floor to level 1
+    const table = new PushableBox('table', { x: 7, z: 7 }, 0)
+    const ctx = { ...room([table]), entities: [block, table] }
+    for (let i = 0; i < 20; i++) {
+      table.push(east)
+      runFrames(table, 1, ctx)
+    }
+    expect(table.position.x + table.halfX).toBeLessThanOrEqual(8 + 1e-6)
   })
 })

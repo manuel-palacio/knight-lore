@@ -1,4 +1,6 @@
 import { Entity, type UpdateContext } from './Entity'
+import { blockFillsAt } from './BlockSolids'
+import { Pickup } from './Pickup'
 import { Category } from '../engine/categories'
 import { FrameClock } from '../engine/StepClock'
 import { PIXELS_PER_BLOCK, PIXELS_PER_UNIT, fallOneStep, groundUnder, type GroundCtx } from './Gravity'
@@ -13,6 +15,10 @@ import { PIXELS_PER_BLOCK, PIXELS_PER_UNIT, fallOneStep, groundUnder, type Groun
 // table 12 across and 20 deep, a chest 18 across and 12 deep.
 export type BoxKind = 'table' | 'chest'
 
+interface Holder {
+  supportAt(x: number, z: number, actorY: number): number | null
+}
+
 const HALF_PX: Record<BoxKind, { x: number; z: number }> = { table: { x: 6, z: 10 }, chest: { x: 9, z: 6 } }
 const HEIGHT = 1
 const EDGE = 1e-6
@@ -24,6 +30,7 @@ export interface Heading {
 
 interface BoxCtx extends GroundCtx {
   boxes?: PushableBox[]
+  entities?: Entity[]
 }
 
 export class PushableBox extends Entity {
@@ -122,7 +129,15 @@ export class PushableBox extends Entity {
         }
       }
     }
+    if (this.footprintAt(x, z).some((p) => blockFillsAt(ctx.entities ?? [], p.x, p.z, this.bottom + EDGE, this.top - EDGE))) return false
     return !(ctx.boxes ?? []).some((other) => other !== this && this.overlaps(other, x, z))
+  }
+
+  // Its corners, the middles of its sides and its middle, at a place.
+  private footprintAt(x: number, z: number): { x: number; z: number }[] {
+    const hx = this.halfX - EDGE
+    const hz = this.halfZ - EDGE
+    return [-1, 0, 1].flatMap((sx) => [-1, 0, 1].map((sz) => ({ x: x + sx * hx, z: z + sz * hz })))
   }
 
   private overlaps(other: PushableBox, x: number, z: number): boolean {
@@ -140,9 +155,14 @@ export class PushableBox extends Entity {
 
   // Under gravity, down onto the floor, a block or another box.
   private fall(ctx: BoxCtx): void {
-    const floor = groundUnder(ctx, this.position.x, this.position.z, Math.max(this.halfX, this.halfZ), this.bottom)
+    const floor = Math.max(...this.footprintAt(this.position.x, this.position.z).map((p) => groundUnder(ctx, p.x, p.z, 0, this.bottom)))
     const boxes = (ctx.boxes ?? []).filter((o) => o !== this && o.top <= this.bottom + EDGE && this.overlapsAcross(o)).map((o) => o.top)
-    const groundPx = Math.round(Math.max(floor, ...boxes) * PIXELS_PER_BLOCK)
+    // Floating, falling, crumbling and moving blocks hold it up too.
+    const blocks = (ctx.entities ?? [])
+      .filter((e) => !(e instanceof PushableBox) && !(e instanceof Pickup) && 'supportAt' in e)
+      .flatMap((e) => this.footprintAt(this.position.x, this.position.z).map((p) => (e as unknown as Holder).supportAt(p.x, p.z, this.bottom)))
+      .filter((top): top is number => top !== null && top <= this.bottom + EDGE)
+    const groundPx = Math.round(Math.max(floor, ...boxes, ...blocks) * PIXELS_PER_BLOCK)
     if (this.heightPx <= groundPx) return
     fallOneStep(this, groundPx)
     this.position.y = this.bottom

@@ -44,6 +44,7 @@ import { Beeper, footstepSound } from './engine/Beeper'
 import { dissolveEffect, pushEffect, rematerialiseEffect } from './engine/effects'
 import { Sparkle } from './game/Sparkle'
 import { blockFillsAt } from './game/BlockSolids'
+import { shovedClearOf } from './game/Shove'
 import { HeadTurn } from './game/HeadTurn'
 import { projectToScreen, isoDepth, FULL_ROOM_CELLS } from './engine/IsoProjection'
 
@@ -573,13 +574,8 @@ async function main(): Promise<void> {
     for (const e of room.entities) {
       if (!e.active || !e.hasCategory(Category.ACTOR_BODY)) continue
       if (e instanceof Portcullis && !e.blocking) continue
-      const dx = player.position.x - e.position.x
-      const dz = player.position.z - e.position.z
-      const overlapX = (player.extents.x + e.extents.x) / 2 - Math.abs(dx)
-      const overlapZ = (player.extents.z + e.extents.z) / 2 - Math.abs(dz)
-      if (overlapX <= 0 || overlapZ <= 0) continue
-      if (overlapX < overlapZ) player.position.x += dx >= 0 ? overlapX : -overlapX
-      else player.position.z += dz >= 0 ? overlapZ : -overlapZ
+      const to = shovedClearOf(player, e, room)
+      if (to) player.position.set(to.x, player.position.y, to.z)
     }
   }
 

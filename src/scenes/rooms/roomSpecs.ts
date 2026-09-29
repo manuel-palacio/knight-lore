@@ -4,6 +4,7 @@ import type { BoxKind } from '../../game/PushableBox'
 import type { DecorKind } from '../../engine/ColumnLooks'
 import type { FlameAxis } from '../../game/Flame'
 import type { BackdropPart } from '../../engine/Backdrop'
+import { FULL_ROOM_CELLS } from '../../engine/OriginalPixels'
 
 // Data-driven rooms. A spec is pure data (unit-tested for map integrity);
 // buildRoomFromSpec turns it into a Room. Cells are 0..7 on the 8x8 grid.
@@ -68,11 +69,10 @@ export function oppositeOf(direction: Direction): Direction {
   return OPPOSITE[direction]
 }
 
-export const FULL_SIZE = 8
 const TILE_UNITS = 2
 
 // A doorway is the middle cell of its edge.
-export function doorCell(direction: Direction, width = FULL_SIZE, depth = FULL_SIZE): Cell {
+export function doorCell(direction: Direction, width = FULL_ROOM_CELLS, depth = FULL_ROOM_CELLS): Cell {
   const midX = Math.floor(width / 2)
   const midZ = Math.floor(depth / 2)
   switch (direction) {
@@ -85,7 +85,7 @@ export function doorCell(direction: Direction, width = FULL_SIZE, depth = FULL_S
 
 // Walking out through a door lands you just inside the opposite edge of the
 // room you enter, on its door axis (width and depth are that room's).
-export function entryFor(direction: Direction, width = FULL_SIZE, depth = FULL_SIZE): { x: number; z: number } {
+export function entryFor(direction: Direction, width = FULL_ROOM_CELLS, depth = FULL_ROOM_CELLS): { x: number; z: number } {
   // Doorways are centred on their wall, on the line between two cells.
   const axisX = (width * TILE_UNITS) / 2
   const axisZ = (depth * TILE_UNITS) / 2

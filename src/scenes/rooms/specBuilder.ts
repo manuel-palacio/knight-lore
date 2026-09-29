@@ -19,7 +19,8 @@ import { FloatingBlock } from '../../game/FloatingBlock'
 import { addPickup } from './items'
 import { itemAtSpot } from '../../game/GameState'
 import { CHARM_HOVER } from '../../game/Pickup'
-import { FULL_SIZE, entryFor, type RoomSpec } from './roomSpecs'
+import { entryFor, type RoomSpec } from './roomSpecs'
+import { FULL_ROOM_CELLS } from '../../engine/OriginalPixels'
 import type { RoomBuilder } from '../../game/RoomManager'
 
 export interface RoomSize {
@@ -31,7 +32,7 @@ export interface RoomSize {
 // axis of the room it leads to.
 export function buildRoomFromSpec(spec: RoomSpec, sizeOf: (id: string) => RoomSize = fullSize): RoomBuilder {
   return async (state) => {
-    const room = buildRoomShell(spec.id, spec.tint, spec.width ?? FULL_SIZE, spec.depth ?? FULL_SIZE)
+    const room = buildRoomShell(spec.id, spec.tint, spec.width ?? FULL_ROOM_CELLS, spec.depth ?? FULL_ROOM_CELLS)
     for (const p of spec.platforms ?? []) addPlatform(room, p.x, p.z, p.height)
     room.backdrop = spec.backdrop ?? []
     for (const d of spec.decor ?? []) room.addDecor(d.x, d.z, d.height, d.kind)
@@ -84,5 +85,5 @@ function cellCentre(cell: { x: number; z: number }): { x: number; z: number } {
 }
 
 function fullSize(): RoomSize {
-  return { width: FULL_SIZE, depth: FULL_SIZE }
+  return { width: FULL_ROOM_CELLS, depth: FULL_ROOM_CELLS }
 }

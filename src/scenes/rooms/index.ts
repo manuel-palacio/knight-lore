@@ -1,9 +1,10 @@
 import type { RoomBuilder } from '../../game/RoomManager'
-import { FULL_SIZE, ROOM_SPECS, START_ROOMS } from './roomSpecs'
+import { ROOM_SPECS, START_ROOMS } from './roomSpecs'
+import { FULL_ROOM_CELLS } from '../../engine/OriginalPixels'
 import { buildRoomFromSpec } from './specBuilder'
 
-const SIZES = new Map(ROOM_SPECS.map((s) => [s.id, { width: s.width ?? FULL_SIZE, depth: s.depth ?? FULL_SIZE }]))
-const sizeOf = (id: string) => SIZES.get(id) ?? { width: FULL_SIZE, depth: FULL_SIZE }
+const SIZES = new Map(ROOM_SPECS.map((s) => [s.id, { width: s.width ?? FULL_ROOM_CELLS, depth: s.depth ?? FULL_ROOM_CELLS }]))
+const sizeOf = (id: string) => SIZES.get(id) ?? { width: FULL_ROOM_CELLS, depth: FULL_ROOM_CELLS }
 
 export const ROOM_BUILDERS = new Map<string, RoomBuilder>([
   ...ROOM_SPECS.map((spec) => [spec.id, buildRoomFromSpec(spec, sizeOf)] as const),

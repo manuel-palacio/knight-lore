@@ -3,6 +3,8 @@
 // coordinate system (x east, z south, y up; `tile` world units per tile). Screen
 // space is canvas pixels before any integer upscale.
 
+import { FULL_ROOM_CELLS, PIXELS_PER_BLOCK } from './OriginalPixels'
+
 export interface IsoConfig {
   tile: number // world units per tile (matches simulation TILE)
   tileW: number // screen width of one tile diamond
@@ -17,15 +19,13 @@ export interface IsoConfig {
 // ROOM_ORIGIN_Y down the 256x192 screen, so that the room's own wall
 // sprites (see Backdrop) and everything else land where the original has them.
 const ROOM_ORIGIN_Y = 39
-const BLOCK_HEIGHT_PX = 12
 
 export function filmationConfig(width: number, _height: number): IsoConfig {
-  return { tile: 2, tileW: 32, tileH: 16, heightScale: BLOCK_HEIGHT_PX, originX: width / 2, originY: ROOM_ORIGIN_Y }
+  return { tile: 2, tileW: 32, tileH: 16, heightScale: PIXELS_PER_BLOCK, originX: width / 2, originY: ROOM_ORIGIN_Y }
 }
 
 // The screen shift that stands a room smaller than 8x8 in the middle, where
 // the original draws its narrow rooms: half the missing tiles along each axis.
-export const FULL_ROOM_CELLS = 8
 
 export function roomScreenOffset(width: number, depth: number, cfg: IsoConfig): { dx: number; dy: number } {
   const u = (FULL_ROOM_CELLS - width) / 2

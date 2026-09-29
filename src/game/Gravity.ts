@@ -3,8 +3,7 @@ import type { Grid } from '../engine/Grid'
 // The original counts heights in pixels, 12 to a block, and 8 pixels make
 // one of our units across the floor (a 16-pixel cell is 2 units). What it
 // does a frame is done a frame of FrameClock.
-export const PIXELS_PER_BLOCK = 12
-export const PIXELS_PER_UNIT = 8
+export { PIXELS_PER_BLOCK, PIXELS_PER_UNIT } from '../engine/OriginalPixels'
 
 export interface GroundCtx {
   grid?: Grid

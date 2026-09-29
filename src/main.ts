@@ -175,6 +175,7 @@ async function main(): Promise<void> {
   const wipe = new Transition(WIPE_SECONDS)
   let paused = false
   let lastStepCount = 0
+  let lastFrameWalked = 0
   let transitioning = false
 
   // Character visual state (2D): form lags state.form across a short flicker.
@@ -306,7 +307,7 @@ async function main(): Promise<void> {
     }
     hooks.__dbg = () => ({
       steps: player.stepsTaken,
-      frame: selectCharacterFrame(player.facing, player.stepsTaken, charMoving, player.state !== 'grounded', visualForm, headTurn.glance),
+      frame: selectCharacterFrame(player.facing, player.framesWalked, charMoving, player.state !== 'grounded', visualForm, headTurn.glance),
       form: visualForm,
       room: state.currentRoomId,
     wanted: state.wantedItem,
@@ -594,7 +595,7 @@ async function main(): Promise<void> {
   function characterDynamic(): Dynamic {
     if (dying()) return spriteDynamic(starsSprite())
     if (morphing()) return spriteDynamic(transformSprite())
-    const selected = selectCharacterFrame(player.facing, player.stepsTaken, charMoving, player.state !== 'grounded', visualForm, headTurn.glance)
+    const selected = selectCharacterFrame(player.facing, player.framesWalked, charMoving, player.state !== 'grounded', visualForm, headTurn.glance)
     const sheet = inHue(strips[visualForm][selected.view], activeRoom().tint)
     const frameW = sheet.width / STRIP_CELLS[visualForm]
     const sprite: SpriteDraw = {
@@ -726,9 +727,10 @@ async function main(): Promise<void> {
     }
     if (!morphing() && !dying()) player.update(dt, ctx)
     const stepped = player.stepsTaken !== lastStepCount
-    if (stepped) {
-      lastStepCount = player.stepsTaken
-      const footstep = footstepSound(player.stepsTaken)
+    lastStepCount = player.stepsTaken
+    if (player.framesWalked !== lastFrameWalked) {
+      lastFrameWalked = player.framesWalked
+      const footstep = footstepSound(player.framesWalked)
       if (footstep) beeper.play(footstep)
     }
     room.update(dt, ctx)

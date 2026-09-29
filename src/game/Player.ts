@@ -24,7 +24,8 @@ export type { Facing }
 export const JUMP_SPEED_PX = 8
 const AIR_STRIDE = (STEP_LENGTH * TICKS_PER_FRAME) / TICKS_PER_STEP
 // Steps of grace after a respawn so a guard camping the door cannot chain kills.
-export const INVULNERABLE_STEPS = 24
+const GRACE_SECONDS = 2
+export const INVULNERABLE_STEPS = (GRACE_SECONDS * 60) / TICKS_PER_STEP
 
 export interface PlayerCtx extends UpdateContext {
   grid: Grid
@@ -57,6 +58,11 @@ export class Player extends Entity {
     super()
     this.categories = [Category.ACTOR_BODY]
     this.extents.set(0.8, 1.6, 0.8)
+  }
+
+  // The original's frames he has walked: its legs change once a frame, every three pixels.
+  get framesWalked(): number {
+    return Math.floor((this.stepsTaken * TICKS_PER_STEP) / TICKS_PER_FRAME)
   }
 
   get isInvulnerable(): boolean {

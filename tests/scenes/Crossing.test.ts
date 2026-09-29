@@ -70,7 +70,7 @@ describe('safeUnderBall', () => {
 describe('shouldWalkOn', () => {
   const me = { x: 5, z: 12 }
   const north = { x: 0, z: -1 }
-  // Seen 250 ms (three steps) apart: a ghost drifting a third of a unit a step.
+  // Seen 250 ms apart: a ghost drifting a unit in that time.
   const seen = (before: Point, now: Point): [Sighting, Sighting] => [{ at: 750, wanderers: [now] }, { at: 500, wanderers: [before] }]
 
   it('walks on while the ghost drifts away from where he is going', () => {

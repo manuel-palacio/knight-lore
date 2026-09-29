@@ -24,7 +24,9 @@ const JUMP_STRIDE = WALK_STRIDE
 const GUARD_STRIDE = GUARD_STEP * (TICKS_PER_STEP / TICKS_PER_FRAME)
 // Both bodies are 0.8 across: they touch closer than 0.8, and a margin.
 const TOUCH = 0.8 + 0.1
-const LATE_BY_STEPS = 4
+// He may set off up to a third of a second later than foreseen (the test
+// driving the keys is that slow at worst), however many steps that is.
+const LATE_BY_STEPS = Math.ceil(333 / ((1000 * TICKS_PER_STEP) / 60))
 const ON_LEG = 1e-6
 
 export function centreOf(cell: Cell): Point {
@@ -155,7 +157,7 @@ function approach(value: number, target: number, stride: number): number {
 // into one sooner than standing still would.
 const STEP_MS = (1000 * TICKS_PER_STEP) / 60
 const LOOK_BACK_MS = 150
-const DODGE_HORIZON_STEPS = 10
+const DODGE_HORIZON_STEPS = Math.ceil(830 / STEP_MS)
 // A ghost is 0.9 across and he 0.8: they touch closer than 0.85, and a margin.
 const WANDERER_TOUCH = 0.85 + 0.25
 

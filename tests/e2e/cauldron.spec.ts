@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test'
 import { debug, enterRoom, standAt, startGame } from './support/game'
 
-// Melkhior's room is no place for the wolf: a spirit rises from the cauldron
-// at night. By day the room is safe.
+// Melkhior's room is no place for the wolf: the sparkle over the cauldron
+// turns on him the moment he is in the room, and is faster than he is.
+// By day the room is safe for the man.
 
 async function nightfall(page: import('@playwright/test').Page): Promise<void> {
   await page.evaluate(() => (window as unknown as { __timer: (s: number) => void }).__timer(0.05))
@@ -15,6 +16,15 @@ test('the wolf left standing in the cauldron room loses a life', async ({ page }
   await nightfall(page)
   await standAt(page, { x: 3, y: 0, z: 13 })
   await expect.poll(async () => (await debug(page)).lives, { timeout: 10_000 }).toBeLessThan(5)
+})
+
+test('the wolf coming into the cauldron room is caught as soon as his grace on coming in is over', async ({ page }) => {
+  await startGame(page)
+  await nightfall(page)
+  await page.evaluate(() => (window as unknown as { __timer: (s: number) => void }).__timer(9_999))
+  await enterRoom(page, 'room-001')
+  await standAt(page, { x: 3, y: 0, z: 13 })
+  await expect.poll(async () => (await debug(page)).lives, { timeout: 4_000 }).toBeLessThan(5)
 })
 
 test('the man can stand in the cauldron room all day', async ({ page }) => {

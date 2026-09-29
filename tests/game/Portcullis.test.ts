@@ -60,10 +60,9 @@ describe('Portcullis', () => {
 
   it('crushes only while it falls', () => {
     const gate = across()
-    expect(hazardHunts(gate, 'human')).toBe(false)
+    expect(hazardHunts(gate)).toBe(false)
     runUntil(gate, (g) => g.state === 'falling')
-    expect(hazardHunts(gate, 'human')).toBe(true)
-    expect(hazardHunts(gate, 'werewolf')).toBe(true)
+    expect(hazardHunts(gate)).toBe(true)
   })
 
   it('lies along either axis', () => {

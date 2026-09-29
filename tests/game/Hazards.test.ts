@@ -6,15 +6,10 @@ import { Spike } from '../../src/game/SpikeGrid'
 import { Portcullis } from '../../src/game/Portcullis'
 
 describe('hazardHunts', () => {
-  it('guards, ghosts and spikes hurt both forms', () => {
-    const guard = new PathGuard([{ x: 1, z: 1 }, { x: 5, z: 1 }])
-    const ghost = new GhostEnemy(4, 4)
-    const spike = new Spike(2, 2, 2)
-    for (const form of ['human', 'werewolf'] as const) {
-      expect(hazardHunts(guard, form)).toBe(true)
-      expect(hazardHunts(ghost, form)).toBe(true)
-      expect(hazardHunts(spike, form)).toBe(true)
-    }
+  it('guards, ghosts and spikes always hurt', () => {
+    expect(hazardHunts(new PathGuard([{ x: 1, z: 1 }, { x: 5, z: 1 }]))).toBe(true)
+    expect(hazardHunts(new GhostEnemy(4, 4))).toBe(true)
+    expect(hazardHunts(new Spike(2, 2, 2))).toBe(true)
   })
 })
 

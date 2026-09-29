@@ -1,12 +1,12 @@
 import * as THREE from 'three'
 import { Entity, type UpdateContext } from './Entity'
 import { Category } from '../engine/categories'
+import { FrameClock } from '../engine/StepClock'
+import { PIXELS_PER_UNIT } from './Gravity'
 import type { GameState } from './GameState'
 
-// Longer than the 2.2 s transformation, so a man caught delivering at dusk
-// comes out of the seizure with a moment to run.
-export const RISE_SECONDS = 3
-const SPIRIT_SPEED = 1.76
+// 4 pixels a frame along each axis (0xB942), faster than his 3.
+export const SPIRIT_STEP = 4 / PIXELS_PER_UNIT
 const FLOAT_HEIGHT = 0.8
 
 interface SpiritCtx extends UpdateContext {
@@ -14,13 +14,15 @@ interface SpiritCtx extends UpdateContext {
   playerPosition: THREE.Vector3
 }
 
-// The cauldron room is no place for the wolf: at nightfall a spirit rises
-// out of the cauldron and drifts straight at him through anything, faster
-// than he can walk. By day it is sunk in the cauldron, unseen, and it ignores
-// the man.
+// The cauldron room is no place for the wolf. The sparkle over the cauldron
+// (graphic 0xA0, handler 0xB8DA) looks each frame at what he is, and the
+// first frame he is the wolf (0xB8FD) it turns (graphic 0xA4, handler 0xB92C)
+// and makes straight for him (0xB965), through anything. Turned, it stays so,
+// by day as by night, until the room is set up again.
 export class CauldronSpirit extends Entity {
+  risen = false
   private readonly home: { x: number; z: number }
-  private nightElapsed = 0
+  private readonly clock = new FrameClock()
 
   constructor(x: number, z: number) {
     super()
@@ -30,33 +32,24 @@ export class CauldronSpirit extends Entity {
     this.position.set(x, FLOAT_HEIGHT, z)
   }
 
-  get risen(): boolean {
-    return this.nightElapsed >= RISE_SECONDS
-  }
-
   override reset(): void {
+    this.risen = false
     this.position.set(this.home.x, FLOAT_HEIGHT, this.home.z)
   }
 
-  update(dt: number, ctxRaw: UpdateContext): void {
+  update(_dt: number, ctxRaw: UpdateContext): void {
+    if (!this.clock.tick()) return
     const ctx = ctxRaw as SpiritCtx
-    if (ctx.state.form !== 'werewolf') {
-      if (this.risen) this.reset()
-      this.nightElapsed = 0
-      return
-    }
-    const wasRisen = this.risen
-    this.nightElapsed += dt
-    if (wasRisen) this.chase(dt, ctx.playerPosition)
+    if (this.risen) this.chase(ctx.playerPosition)
+    else this.risen = ctx.state.form === 'werewolf'
   }
 
-  private chase(dt: number, player: THREE.Vector3): void {
-    const dx = player.x - this.position.x
-    const dz = player.z - this.position.z
-    const dist = Math.hypot(dx, dz)
-    if (dist < 1e-3) return
-    const step = Math.min(SPIRIT_SPEED * dt, dist)
-    this.position.x += (dx / dist) * step
-    this.position.z += (dz / dist) * step
+  private chase(player: THREE.Vector3): void {
+    this.position.x += stepToward(this.position.x, player.x)
+    this.position.z += stepToward(this.position.z, player.z)
   }
+}
+
+function stepToward(from: number, to: number): number {
+  return Math.sign(to - from) * Math.min(SPIRIT_STEP, Math.abs(to - from))
 }

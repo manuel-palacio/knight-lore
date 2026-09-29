@@ -26,8 +26,7 @@ describe('SpikedBall', () => {
     expect(ball.position.x).toBe(7)
     expect(ball.position.z).toBe(5)
     expect(ball.position.y).toBe(1)
-    expect(hazardHunts(ball, 'human')).toBe(true)
-    expect(hazardHunts(ball, 'werewolf')).toBe(true)
+    expect(hazardHunts(ball)).toBe(true)
   })
 
   it('hurts Sabreman walking into it at its height, not passing under a high one', () => {

@@ -22,8 +22,7 @@ describe('GhostEnemy', () => {
   it('is a hazard that hurts the man as much as the wolf', () => {
     const g = new GhostEnemy(8, 8)
     expect(g.hasCategory(Category.HAZARD)).toBe(true)
-    expect(hazardHunts(g, 'human')).toBe(true)
-    expect(hazardHunts(g, 'werewolf')).toBe(true)
+    expect(hazardHunts(g)).toBe(true)
   })
 
   it('drifts on a diagonal three or four pixels a frame on each axis (table at 0xC64E)', () => {

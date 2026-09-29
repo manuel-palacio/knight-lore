@@ -1,12 +1,12 @@
 import type { Entity } from './Entity'
-import type { Form } from './GameState'
 import { CauldronSpirit } from './CauldronSpirit'
 import { Spike } from './SpikeGrid'
 import { Portcullis } from './Portcullis'
 
-// Some of the castle's monsters only go for the wolf; everything else hurts both.
-export function hazardHunts(hazard: Entity, form: Form): boolean {
-  if (hazard instanceof CauldronSpirit) return hazard.risen && form === 'werewolf'
+// Whether it hurts him now, man or wolf: the cauldron's spirit once it has
+// turned, a gate as it comes down, everything else always.
+export function hazardHunts(hazard: Entity): boolean {
+  if (hazard instanceof CauldronSpirit) return hazard.risen
   if (hazard instanceof Portcullis) return hazard.crushing
   return true
 }

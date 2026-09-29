@@ -44,6 +44,7 @@ import { dissolveEffect, pushEffect, rematerialiseEffect } from './engine/effect
 import { Sparkle } from './game/Sparkle'
 import { blockFillsAt } from './game/BlockSolids'
 import { shovedClearOf } from './game/Shove'
+import { headroomToLiftOnto, insideRoom } from './game/Placing'
 import { HeadTurn } from './game/HeadTurn'
 import { projectToScreen, isoDepth, FULL_ROOM_CELLS } from './engine/IsoProjection'
 
@@ -429,25 +430,15 @@ async function main(): Promise<void> {
     beeper.play('drop')
   }
 
-  // Nothing may hang in the block over his head that he is lifted into.
   function hasHeadroom(room: Room, feet: THREE.Vector3): boolean {
-    const from = feet.y + CHARM_HEIGHT
-    const to = from + player.extents.y
-    return !room.entities.some((e) => {
-      if (e === player || !e.active) return false
-      const over = Math.abs(e.position.x - feet.x) < (e.extents.x + player.extents.x) / 2 &&
-        Math.abs(e.position.z - feet.z) < (e.extents.z + player.extents.z) / 2
-      if (!over) return false
-      const top = 'supportAt' in e ? (e as { supportAt: (x: number, z: number, y: number) => number | null }).supportAt(feet.x, feet.z, Infinity) : null
-      const bottom = top !== null ? top - 1 : e.position.y
-      const height = top !== null ? 1 : e.extents.y
-      return bottom < to && bottom + height > from + 1e-6
-    })
+    return headroomToLiftOnto(room.entities.filter((e) => e !== player), player, feet)
   }
 
   function layCharm(charm: Pickup, at: THREE.Vector3): void {
-    charm.dropAt(at.x, at.y + CHARM_HOVER, at.z)
-    activeRoom().add(charm)
+    const room = activeRoom()
+    const inside = insideRoom(at, room.grid, room.tileSize, charm.extents.x / 2)
+    charm.dropAt(inside.x, at.y + CHARM_HOVER, inside.z)
+    room.add(charm)
   }
 
   // E by a charm picks it up; with his hands full, the charm carried longest

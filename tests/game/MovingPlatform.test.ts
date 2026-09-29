@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import * as THREE from 'three'
 import { MovingPlatform, PLATFORM_STEP } from '../../src/game/MovingPlatform'
+import { Pickup, CHARM_HOVER } from '../../src/game/Pickup'
+import { Grid } from '../../src/engine/Grid'
 import { TICKS_PER_FRAME } from '../../src/engine/StepClock'
 import { SIMULATION_DT } from '../../src/engine/GameLoop'
 import { runFrames } from './frames'
@@ -85,5 +87,23 @@ describe('MovingPlatform', () => {
 
   it('moves at the original moving block speed, one pixel a frame: an eighth of a unit', () => {
     expect(PLATFORM_STEP).toBe(1 / 8)
+  })
+
+  it('waits for a charm lying in its way, as for anything the original\'s collision meets', () => {
+    const p = platform()
+    const charm = new Pickup('gem')
+    charm.position.set(6, 0 + CHARM_HOVER, 5) // on its way from x 3 to x 7
+    runFrames(p, 40, { entities: [p, charm] })
+    expect(p.position.x).toBeLessThanOrEqual(6 - 1 - 0.3 + 1e-6)
+  })
+
+  it('waits rather than carry its rider into a column', () => {
+    const grid = new Grid(8, 8)
+    grid.setSolid(4, 2, true)
+    grid.setSupport(4, 2, 2) // a column two high in cell (4, 2): x 8 to 10, z 4 to 6
+    const p = platform()
+    const rider = new THREE.Vector3(3.9, 1, 5) // on its east edge, heading east
+    runFrames(p, 60, { grid, tileSize: 2, playerPosition: rider, playerExtents: new THREE.Vector3(0.8, 1.6, 0.8) })
+    expect(rider.x + 0.4).toBeLessThanOrEqual(8 + 1e-6)
   })
 })

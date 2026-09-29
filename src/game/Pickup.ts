@@ -23,6 +23,10 @@ const REACH_ACROSS = 1.6
 const REACH_ABOVE = 1.8
 const REACH_BELOW = 2.5
 
+interface Holder {
+  supportAt(x: number, z: number, actorY: number): number | null
+}
+
 export class Pickup extends Entity {
   readonly id: string
   // The castle's charm spot it was dealt to (see itemAtSpot), or null.
@@ -64,7 +68,7 @@ export class Pickup extends Entity {
   private groundUnder(ctx: GroundCtx & { entities?: Entity[] }, bottom: number): number {
     const floor = groundUnder(ctx, this.position.x, this.position.z, this.extents.x / 2, bottom)
     const holders = (ctx.entities ?? [])
-      .filter((e): e is Entity & { supportAt: (x: number, z: number, y: number) => number | null } => e !== this && 'supportAt' in e)
+      .filter((e): e is Entity & Holder => e !== this && 'supportAt' in e)
       .flatMap((e) => this.footprint().map((p) => e.supportAt(p.x, p.z, bottom)))
       .filter((top): top is number => top !== null && top <= bottom + 1e-6)
     return Math.max(floor, ...holders)
@@ -75,6 +79,19 @@ export class Pickup extends Entity {
     const inside = Math.abs(x - this.position.x) <= FOOTPRINT_HALF && Math.abs(z - this.position.z) <= FOOTPRINT_HALF
     const top = this.position.y - CHARM_HOVER + CHARM_HEIGHT
     return inside && actorY >= top - TOP_TOLERANCE ? top : null
+  }
+
+  // Inside a block or a box (one back where it began, round it): up onto its top.
+  liftOutOfWhatHolds(ctx: GroundCtx & { entities?: Entity[] }): void {
+    const bottom = this.position.y - CHARM_HOVER
+    const overlaps = (top: number) => top > bottom + 1e-6 && top - 1 < bottom + CHARM_HEIGHT
+    const grid = this.footprint().map((p) => (ctx.grid && ctx.tileSize ? ctx.grid.supportHeight(Math.floor(p.x / ctx.tileSize), Math.floor(p.z / ctx.tileSize)) : 0))
+    const held = (ctx.entities ?? [])
+      .filter((e): e is Entity & Holder => e !== this && !(e instanceof Pickup) && 'supportAt' in e)
+      .flatMap((e) => this.footprint().map((p) => e.supportAt(p.x, p.z, Infinity)))
+      .filter((top): top is number => top !== null)
+    const tops = [...grid.filter((top) => top > bottom + 1e-6), ...held.filter(overlaps)]
+    if (tops.length) this.position.y = Math.max(...tops) + CHARM_HOVER
   }
 
   // Its corners and middle: it rests on whatever is under any of it.

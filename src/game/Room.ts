@@ -1,5 +1,6 @@
 import type { BackdropPart } from '../engine/Backdrop'
 import { Entity, type UpdateContext } from './Entity'
+import { Pickup } from './Pickup'
 import { Grid } from '../engine/Grid'
 import type { DecorKind } from '../engine/ColumnLooks'
 
@@ -55,6 +56,10 @@ export class Room {
   // After a death: everything that moves goes back to its starting place.
   reset(): void {
     for (const e of this.entities) e.reset()
+    // A block or a box back where it began may have come up around a charm
+    // left in its place: the charm goes up onto its top.
+    const ctx = { grid: this.grid, tileSize: TILE_SIZE, entities: this.entities }
+    for (const e of this.entities) if (e instanceof Pickup && !e.collected) e.liftOutOfWhatHolds(ctx)
   }
 
   setSpawn(x: number, z: number): void {

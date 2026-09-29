@@ -1,5 +1,8 @@
 import * as THREE from 'three'
 import { Entity, type UpdateContext } from './Entity'
+import { Pickup, CHARM_HOVER } from './Pickup'
+import { PushableBox } from './PushableBox'
+import type { Grid } from '../engine/Grid'
 import { Category } from '../engine/categories'
 import { FrameClock } from '../engine/StepClock'
 
@@ -13,6 +16,9 @@ const TOP_TOLERANCE = 0.5
 interface PlatformCtx extends UpdateContext {
   playerPosition?: THREE.Vector3
   playerExtents?: THREE.Vector3
+  entities?: Entity[]
+  grid?: Grid
+  tileSize?: number
 }
 
 // A one-block slab shuttling between two points on one axis, one stride a
@@ -66,13 +72,30 @@ export class MovingPlatform extends Entity {
     const dz = Math.sign(target.z - this.position.z) * PLATFORM_STEP
     const rider = ctx.playerPosition
     if (rider && ctx.playerExtents && this.wouldHit(rider, ctx.playerExtents, dx, dz)) return
+    if (this.thingInTheWay(ctx.entities ?? [], dx, dz)) return
     const riding = rider !== undefined && this.supportAt(rider.x, rider.z) !== null && Math.abs(rider.y - this.height) < RIDER_TOLERANCE
+    if (riding && rider && ctx.playerExtents && !this.roomForRider(ctx, rider, ctx.playerExtents, dx, dz)) return
     this.position.x += dx
     this.position.z += dz
     if (riding && rider) {
       rider.x += dx
       rider.z += dz
     }
+  }
+
+  // A charm or a box in its way, at its height, stops it as he does.
+  private thingInTheWay(entities: readonly Entity[], dx: number, dz: number): boolean {
+    return entities.some((e) => (e instanceof Pickup ? !e.collected : e instanceof PushableBox) &&
+      this.wouldHit(e instanceof Pickup ? e.position.clone().setY(e.position.y - CHARM_HOVER) : e.position, e.extents, dx, dz))
+  }
+
+  // Carrying him on into a block or a column is as much in its way.
+  private roomForRider(ctx: PlatformCtx, rider: THREE.Vector3, size: THREE.Vector3, dx: number, dz: number): boolean {
+    const { grid, tileSize } = ctx
+    if (!grid || !tileSize) return true
+    const half = size.x / 2 - 1e-6
+    return [-half, half].every((ox) => [-half, half].every((oz) =>
+      grid.supportHeight(Math.floor((rider.x + dx + ox) / tileSize), Math.floor((rider.z + dz + oz) / tileSize)) <= rider.y + 1e-6))
   }
 
   private wouldHit(body: THREE.Vector3, size: THREE.Vector3, dx: number, dz: number): boolean {

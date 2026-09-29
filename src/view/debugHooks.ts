@@ -42,7 +42,7 @@ export function installDebugHooks(game: DebuggedGame): void {
   hooks.__room = (id: string, entryX?: number, entryZ?: number) => game.enterRoom(id, entryX, entryZ)
   // Puts charms in his hands, as if carried in from other rooms.
   hooks.__give = (ids: string[]) => {
-    for (const id of ids) player.tryPickup(new Pickup(id), state, () => {})
+    for (const id of ids) player.tryPickup(new Pickup(id), () => {})
   }
   hooks.__pos = (x: number, y: number, z: number) => {
     player.position.set(x, y, z)

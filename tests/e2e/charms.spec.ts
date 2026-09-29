@@ -4,6 +4,9 @@ const CHARM_HOVER = 0.4
 import { debug, enterRoom, give, holdDaylight, roomHolding, standAt, startGame } from './support/game'
 import { specById } from './support/specs'
 
+// A room with room over his head in its middle, to put a charm down in.
+const OPEN_ROOM = 'map--4--4'
+
 async function pickUpCharmIn(page: Page, roomId: string): Promise<string> {
   const room = await enterRoom(page, roomId)
   await holdDaylight(page)
@@ -15,25 +18,20 @@ async function pickUpCharmIn(page: Page, roomId: string): Promise<string> {
   return charm.id
 }
 
-async function fallNight(page: Page): Promise<void> {
-  await page.evaluate(() => (window as unknown as { __timer: (s: number) => void }).__timer(0.05))
-  await expect.poll(async () => (await debug(page)).form).toBe('werewolf')
-}
-
-test('a charm dropped at nightfall stays in the room where it fell', async ({ page }) => {
+test('a charm put down in another room stays in the room where it was put down', async ({ page }) => {
   await startGame(page)
   const charmRoomId = await roomHolding(page, (item) => item !== 'life')
-  const charmRoom = specById(charmRoomId)
-  const charm = await pickUpCharmIn(page, charmRoom.id)
-  const elsewhere = charmRoom.exits[0]!.target
+  const charm = await pickUpCharmIn(page, charmRoomId)
 
-  await enterRoom(page, elsewhere)
-  await fallNight(page)
+  await enterRoom(page, OPEN_ROOM, { x: 8, z: 8 })
+  await page.keyboard.press('KeyE')
   await expect.poll(async () => (await debug(page)).carrying).toEqual([])
   expect((await debug(page)).pickups.map((p) => p.id)).toContain(charm)
 
-  await enterRoom(page, charmRoom.id)
+  await enterRoom(page, charmRoomId)
   expect((await debug(page)).pickups.map((p) => p.id)).not.toContain(charm)
+  await enterRoom(page, OPEN_ROOM, { x: 8, z: 8 })
+  expect((await debug(page)).pickups.map((p) => p.id)).toContain(charm)
 })
 
 test('the extra life is taken at once, not carried, and does not come back', async ({ page }) => {

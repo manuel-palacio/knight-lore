@@ -90,15 +90,6 @@ test('night does not fall on him in mid-jump: it waits until he is down', async 
   await expect.poll(async () => (await debug(page)).night).toBe(true)
 })
 
-test('at nightfall the charms he carries go under his feet one on another, not all in one place', async ({ page }) => {
-  await startGame(page)
-  await enterRoom(page, 'map--4--4', { x: 8, z: 8 })
-  await holdDaylight(page)
-  await give(page, ['gem', 'boot'])
-  await page.evaluate(() => (window as unknown as Hooks).__timer(0.01))
-  await expect.poll(async () => (await debug(page)).pickups.map((p) => p.y).sort()).toEqual([0.4, 1.4])
-})
-
 test('E does nothing while he is in the seizure', async ({ page }) => {
   await startGame(page)
   await enterRoom(page, 'map--4--4', { x: 8, z: 8 })

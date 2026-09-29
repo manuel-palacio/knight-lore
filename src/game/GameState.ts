@@ -142,8 +142,6 @@ export class GameState {
   }
 
   onTransformed: () => void = () => {}
-  // Night falls: the wolf can carry nothing, so what the man carried is let go of.
-  onNightfall: () => void = () => {}
   onLifeLost: () => void = () => {}
 
   toggleForm(): void {
@@ -154,7 +152,6 @@ export class GameState {
   tickTransform(dt: number): void {
     this.transformTimer -= dt
     if (this.transformTimer <= 0) {
-      if (this.form === 'human') this.onNightfall()
       this.toggleForm()
       this.onTransformed()
       if (this.form === 'human') {

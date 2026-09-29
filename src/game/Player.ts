@@ -240,10 +240,10 @@ export class Player extends Entity {
     return this.satchel.ids
   }
 
-  // The man takes a charm (the wolf cannot); `onTaken` is handed the one he
-  // let go of to make room, if his hands were full.
-  tryPickup(charm: Pickup, state: GameState, onTaken: (letGo: Pickup | undefined) => void): void {
-    if (state.form !== 'human') return
+  // He takes a charm, man or wolf alike: both forms' handlers call the
+  // original's pick-up (0xC00E). `onTaken` is handed the one he let go of to
+  // make room, if his hands were full.
+  tryPickup(charm: Pickup, onTaken: (letGo: Pickup | undefined) => void): void {
     onTaken(this.satchel.take(charm))
   }
 

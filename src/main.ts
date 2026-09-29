@@ -169,7 +169,6 @@ async function main(): Promise<void> {
   }
 
   const hands = new CharmHands(player, state, beeper)
-  state.onNightfall = () => hands.putDownAll(activeRoom())
   // Death: white flash, and Sabreman dissolves into a cloud of stars where
   // he stood; then the room's movers go back to their starts, and he comes
   // back out of the stars at the door he came in through (see Sparkle).

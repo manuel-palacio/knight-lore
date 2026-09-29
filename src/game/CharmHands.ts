@@ -2,31 +2,18 @@ import type * as THREE from 'three'
 import { deliveryEffect } from '../engine/effects'
 import type { Beeper } from '../engine/Beeper'
 import { Cauldron } from './Cauldron'
-import { CHARM_HEIGHT, CHARM_HOVER, Pickup } from './Pickup'
+import { CHARM_HOVER, Pickup } from './Pickup'
 import { headroomToLiftOnto, insideRoom } from './Placing'
 import type { GameState } from './GameState'
 import type { Player } from './Player'
 import type { Room } from './Room'
 
-// What E does with charms: into the cauldron, else picked up, else put down;
-// and at nightfall, everything he carries put down.
+// What E does with charms: into the cauldron, else picked up, else put down.
 export class CharmHands {
   constructor(private readonly player: Player, private readonly state: GameState, private readonly beeper: Beeper) {}
 
   use(room: Room): void {
     if (!this.deliver(room) && !this.pickUp(room)) this.putDown(room)
-  }
-
-  // The wolf can carry nothing: at nightfall what the man carried falls at his feet.
-  // Each goes under his feet as E puts one down, lifting him, where there is
-  // room over his head; one on another, not all in the one place.
-  putDownAll(room: Room): void {
-    for (let charm = this.player.satchel.putDownOldest(); charm; charm = this.player.satchel.putDownOldest()) {
-      const feet = this.player.position.clone()
-      if (this.hasHeadroom(room, feet)) this.player.position.y += CHARM_HEIGHT
-      this.lay(room, charm, feet)
-      this.beeper.play('drop')
-    }
   }
 
   private deliver(room: Room): boolean {
@@ -56,7 +43,7 @@ export class CharmHands {
       return true
     }
     const where = charm.position.clone().setY(charm.position.y - CHARM_HOVER)
-    this.player.tryPickup(charm, this.state, (letGo) => {
+    this.player.tryPickup(charm, (letGo) => {
       this.beeper.play('pickup')
       charm.collect()
       room.remove(charm)

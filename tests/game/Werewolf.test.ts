@@ -20,14 +20,4 @@ describe('Werewolf transformation', () => {
     expect(s.form).toBe('werewolf')
     expect(count).toBe(1)
   })
-
-  it('tells of nightfall, when the man lets go of what he carries (the wolf can carry nothing)', () => {
-    const s = new GameState()
-    let nightfalls = 0
-    s.onNightfall = () => { nightfalls++ }
-    s.tickTransform(HUMAN_DURATION + 0.001)
-    expect(nightfalls).toBe(1)
-    s.tickTransform(WEREWOLF_DURATION + 0.001) // daybreak is not nightfall
-    expect(nightfalls).toBe(1)
-  })
 })

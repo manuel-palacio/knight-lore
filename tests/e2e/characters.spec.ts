@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { debug, enterRoom, face, holdDaylight, startGame, standAt } from './support/game'
+import { STRIP_CELLS } from '../../src/game/CharacterFrame'
 
 // Sabreman and the wolf drawn from the original's sprites, a screenshot per
 // facing and form for review against the original (see #7).
@@ -23,8 +24,18 @@ for (const form of ['human', 'werewolf'] as const) {
   })
 }
 
-test('the title screen shows Sabreman standing', async ({ page }) => {
+test('the title screen shows the man and the wolf standing, one whole frame of each strip', async ({ page }) => {
   await page.goto('/')
+  for (const form of ['man', 'wolf'] as const) {
+    const figure = page.locator(`#intro .hero .${form}`)
+    await expect(figure).toBeVisible()
+    const look = await figure.evaluate((el) => {
+      const style = getComputedStyle(el)
+      return { width: el.getBoundingClientRect().width, sheetWidth: parseFloat(style.backgroundSize), x: parseFloat(style.backgroundPositionX) }
+    })
+    expect(look.sheetWidth / look.width).toBe(STRIP_CELLS[form === 'man' ? 'human' : 'werewolf'])
+    expect(look.x).toBe(0)
+  }
   await page.locator('#intro .hero').screenshot({ path: 'test-results/characters/title-hero.png' })
 })
 

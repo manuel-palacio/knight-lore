@@ -2,6 +2,7 @@ import { Player, type PlayerCtx } from '../../../src/game/Player'
 import { GameState } from '../../../src/game/GameState'
 import { Spike } from '../../../src/game/SpikeGrid'
 import { Flame } from '../../../src/game/Flame'
+import { blockFillsAt } from '../../../src/game/BlockSolids'
 import { SpikedBall } from '../../../src/game/SpikedBall'
 import { FallingBlock } from '../../../src/game/FallingBlock'
 import { PIXELS_PER_BLOCK } from '../../../src/game/Gravity'
@@ -129,6 +130,7 @@ function contextFor(room: Room, player: Player, pressed: boolean, held: boolean)
     tileSize: room.tileSize,
     input: { isDown: (code) => code === 'Space' && held, wasPressed: (code) => code === 'Space' && pressed },
     dynamicSupport: (x, z, y) => supportAmong(room, player, x, z, y),
+    dynamicSolid: (x, z, from, to) => blockFillsAt(room.entities, x, z, from, to),
     onLanded: () => {},
     onJumped: () => {},
   }

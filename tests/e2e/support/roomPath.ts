@@ -142,6 +142,8 @@ class RoomSurfaces {
   // A collapsing block is gone two frames after it is stood on: it can be
   // walked under, never stood on.
   private readonly overhead = new Map<string, number[]>()
+  // The tops of falling blocks: stood on, they sink.
+  private readonly sinking = new Map<string, number[]>()
   private readonly floorBlocked = new Set<string>()
   private readonly floorSpikes = new Set<string>()
   private readonly hazardHeights = new Map<string, number[]>()
@@ -156,8 +158,14 @@ class RoomSurfaces {
     }
     for (const b of spec.floatingBlocks ?? []) this.hang(b, b.bottom)
     // A falling block sinks only while stood on.
-    for (const v of spec.fallingBlocks ?? []) this.hang(v, v.height - 1)
+    for (const v of spec.fallingBlocks ?? []) {
+      this.hang(v, v.height - 1)
+      this.sinking.set(key(v), [...(this.sinking.get(key(v)) ?? []), v.height])
+    }
     for (const v of spec.vanishing ?? []) this.overhead.set(key(v), [...(this.overhead.get(key(v)) ?? []), v.height - 1])
+    // A moving block is solid to his whole body wherever it sways: every cell
+    // of its track holds it, stood on (it carries him) or under with head room.
+    for (const m of spec.movingPlatforms ?? []) for (const c of cellsBetween(m.from, m.to)) this.hang(c, m.height - 1)
     if (spec.cauldron) this.floorBlocked.add(key(spec.cauldron))
     for (const s of spec.spikes ?? []) {
       if (s.height) this.addHazard(s, s.height)
@@ -179,8 +187,29 @@ class RoomSurfaces {
     return this.neighbours(at).flatMap((n) => {
       const inLine = cameFrom !== null && cameFrom.y === at.y && n.x - at.x === at.x - cameFrom.x && n.z - at.z === at.z - cameFrom.z
       const reach = at.y + (inLine ? HIGH_CLIMB : CLIMB)
-      return this.standings(n).filter((y) => y <= reach).map((y) => ({ ...n, y }))
+      return this.standings(n).filter((y) => y <= reach && (y < at.y ? this.dropsInto(n, at.y, y) : y === at.y || this.climbsFrom(at, y))).map((y) => ({ ...n, y }))
     })
+  }
+
+  // Walking off a ledge he goes into the next cell at the ledge's height and
+  // drops to where he lands: nothing may hang there across his body, nor
+  // catch him on the way down.
+  private dropsInto(to: Cell, ledge: number, landing: number): boolean {
+    const over = [...(this.hanging.get(key(to)) ?? []), ...(this.overhead.get(key(to)) ?? [])]
+    return over.every((bottom) => bottom + 1 <= landing || bottom >= ledge + HEADROOM)
+  }
+
+  // A climb needs firm footing: not a falling block, which sinks under him
+  // as he makes ready to jump (see FallingBlock).
+  private climbsFrom(from: Step, to: number): boolean {
+    return !(this.sinking.get(key(from)) ?? []).includes(from.y) && this.headroomToClimb(from, to)
+  }
+
+  // A climb rises from where he stands to his landing height: nothing may
+  // hang over him on the way up (the blocks are solid to his whole body).
+  private headroomToClimb(from: Step, to: number): boolean {
+    const over = [...(this.hanging.get(key(from)) ?? []), ...(this.overhead.get(key(from)) ?? [])]
+    return over.every((bottom) => bottom < from.y || bottom >= to + HEADROOM)
   }
 
   // A jump over one cell whose dangers all lie on the floor (spikes, a

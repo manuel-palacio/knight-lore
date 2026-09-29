@@ -212,6 +212,43 @@ describe('Player jump', () => {
   })
 })
 
+describe('Player at the edge of a block', () => {
+  it('stays up on a block while any of him is over it, not dropping into it when his middle passes the edge', () => {
+    const { grid, state, player } = setupRoom()
+    grid.setSolid(1, 2, true)
+    grid.setSupport(1, 2, 1)
+    // On the block's east edge (x 2 to 4), his middle just past it, over the floor at x 4.3.
+    player.position.set(4.3, 1, 5)
+    const c = ctx(grid, state)
+    step(player, c, 4)
+    expect(player.position.y).toBe(1)
+    expect(player.state).toBe('grounded')
+  })
+})
+
+describe('Player against a floating block', () => {
+  // A block hanging from level 1 to 2 in the cell ahead (x 4 to 6, z 6 to 8).
+  const hanging = (x: number, z: number, from: number, to: number) => x > 4 && x < 6 && z > 6 && z < 8 && from < 2 && to > 1
+
+  it('cannot walk into a block hanging at his chest', () => {
+    const { grid, state, player } = setupRoom()
+    player.position.set(5, 0, 4)
+    const c = { ...ctx(grid, state, { up: true }), dynamicSolid: hanging }
+    step(player, c, 12)
+    expect(player.position.z).toBeLessThan(6 - 0.4 + 1e-6)
+  })
+
+  it('stops rising when his head meets a block above him', () => {
+    const { grid, state, player } = setupRoom()
+    player.position.set(5, 0, 7)
+    // A row of blocks from level 2 to 3 along the way a jump carries him (south).
+    const overhead = (x: number, z: number, from: number, to: number) => Math.abs(x - 5) < 1 && z > 6 && from < 3 && to > 2
+    const c = { ...ctx(grid, state, { jump: true, space: true }), dynamicSolid: overhead }
+    for (let i = 0; i < 40; i++) tick(player, c)
+    expect(player.position.y + 1.6).toBeLessThanOrEqual(2 + 1e-6)
+  })
+})
+
 describe('Player on dynamic supports', () => {
   const lift = (x: number, z: number, top: number) => (px: number, pz: number, _py: number) =>
     Math.abs(px - x) <= 1 && Math.abs(pz - z) <= 1 ? top : null

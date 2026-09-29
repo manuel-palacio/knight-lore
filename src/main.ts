@@ -43,6 +43,7 @@ import { loadSave, writeSave, clearSave } from './engine/SaveSlot'
 import { Beeper, footstepSound } from './engine/Beeper'
 import { dissolveEffect, pushEffect, rematerialiseEffect } from './engine/effects'
 import { Sparkle } from './game/Sparkle'
+import { blockFillsAt } from './game/BlockSolids'
 import { HeadTurn } from './game/HeadTurn'
 import { projectToScreen, isoDepth, FULL_ROOM_CELLS } from './engine/IsoProjection'
 
@@ -718,6 +719,7 @@ async function main(): Promise<void> {
       playerPosition: player.position,
       playerExtents: player.extents,
       dynamicSupport: (x: number, z: number, y: number) => dynamicSupportAt(room, x, z, y),
+      dynamicSolid: (x: number, z: number, from: number, to: number) => blockFillsAt(room.entities, x, z, from, to),
       boxes: room.entities.filter((e) => e instanceof PushableBox),
       onLanded: () => beeper.play('land'),
       onJumped: () => beeper.play('jump'),

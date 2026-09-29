@@ -3,7 +3,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
-from castle import RoomBuild, Walkable, charm_spots, charm_table  # noqa: E402
+from castle import RoomBuild, cells_between, Walkable, charm_spots, charm_table  # noqa: E402
 from z80 import load_memory  # noqa: E402
 
 PLACED = {'half_x': False, 'half_y': False, 'lift': 0}
@@ -139,6 +139,11 @@ def test_the_charm_spots_are_the_originals_32_at_0x6ff2():
     assert spots[0xB4] == [{'spot': 26, 'x': 3, 'z': 3, 'height': 4}], spots[0xB4]
     # x and y 0x80 lie half way between cells 3 and 4.
     assert spots[0x5E] == [{'spot': 25, 'x': 3.5, 'z': 3.5, 'height': 0}], spots[0x5E]
+
+
+def test_cells_between_steps_short_to_an_end_half_way_between_cells():
+    # map--4--3's moving block sways from z 4.5 to 5: rows 4 and 5, not on to 5.5 and past.
+    assert cells_between({'x': 2, 'z': 4.5}, {'x': 2, 'z': 5}) == [(2, 4), (2, 5)]
 
 
 if __name__ == '__main__':

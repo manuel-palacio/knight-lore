@@ -33,6 +33,9 @@ export interface PlayerCtx extends UpdateContext {
   input: { isDown: (code: string) => boolean; wasPressed: (code: string) => boolean }
   // Height of any moving support under a point, or null. Grid support is static.
   dynamicSupport?: (x: number, z: number, actorY: number) => number | null
+  // True where a block that is not part of the room's floor (floating,
+  // falling, crumbling, moving) fills any of the height from `from` to `to` over a point.
+  dynamicSolid?: (x: number, z: number, from: number, to: number) => boolean
   onLanded: () => void
   onJumped: () => void
 }
@@ -120,7 +123,9 @@ export class Player extends Entity {
     if (this.state === 'jumping' || ctx.input.isDown('ArrowUp')) this.walkForward(ctx, AIR_STRIDE)
     const holding = this.state === 'jumping' && this.riseSpeedPx >= 0 && ctx.input.isDown('Space')
     this.riseSpeedPx -= holding ? 1 : 2
-    this.position.y += this.riseSpeedPx / PIXELS_PER_BLOCK
+    const risen = this.position.y + this.riseSpeedPx / PIXELS_PER_BLOCK
+    if (this.riseSpeedPx > 0 && this.bodyMeetsBlockAt(ctx, this.position.x, this.position.z, risen)) this.riseSpeedPx = 0
+    else this.position.y = risen
     this.tryLand(ctx)
   }
 
@@ -143,6 +148,7 @@ export class Player extends Entity {
     const targetX = this.position.x + dir.x * stride
     const targetZ = this.position.z + dir.z * stride
     if (this.highestUnderFootprint(ctx, targetX, targetZ) > this.position.y + EPS.STEP) return
+    if (this.bodyMeetsBlockAt(ctx, targetX, targetZ, this.position.y)) return
     const resolved = resolveHorizontal(
       { x: this.position.x, z: this.position.z },
       { x: targetX, z: targetZ },
@@ -160,11 +166,23 @@ export class Player extends Entity {
   // him though a gap between them lines up with it, and he lands on a box's
   // edge.
   private highestUnderFootprint(ctx: PlayerCtx, x: number, z: number): number {
+    return Math.max(...this.footprintPoints(x, z).map((p) => this.dynamicSupportAt(ctx, p.x, p.z)))
+  }
+
+  // Any of him, feet (above a step) to head, inside a floating, falling, crumbling or moving block.
+  private bodyMeetsBlockAt(ctx: PlayerCtx, x: number, z: number, feet: number): boolean {
+    const solid = ctx.dynamicSolid
+    if (!solid) return false
+    return this.footprintPoints(x, z).some((p) => solid(p.x, p.z, feet + EPS.STEP, feet + this.extents.y))
+  }
+
+  // His corners, the middles of his sides and his middle.
+  private footprintPoints(x: number, z: number): { x: number; z: number }[] {
     const box = this.aabb(x, z)
     const inset = EPS.OVERLAP
     const xs = [box.minX + inset, x, box.maxX - inset]
     const zs = [box.minZ + inset, z, box.maxZ - inset]
-    return Math.max(...xs.flatMap((px) => zs.map((pz) => this.dynamicSupportAt(ctx, px, pz))))
+    return xs.flatMap((px) => zs.map((pz) => ({ x: px, z: pz })))
   }
 
   private dynamicSupportAt(ctx: PlayerCtx, x: number, z: number): number {
@@ -177,10 +195,14 @@ export class Player extends Entity {
     return { minX: x - hw, maxX: x + hw, minZ: z - hd, maxZ: z + hd }
   }
 
+  // Held up by the highest block, box or charm any of his footprint is over, as the original's bounding box is.
   private supportAt(ctx: PlayerCtx): number {
-    const cx = Math.floor(this.position.x / ctx.tileSize)
-    const cz = Math.floor(this.position.z / ctx.tileSize)
-    return Math.max(ctx.grid.supportHeight(cx, cz), this.highestUnderFootprint(ctx, this.position.x, this.position.z))
+    return Math.max(this.highestBlockUnderFootprint(ctx), this.highestUnderFootprint(ctx, this.position.x, this.position.z))
+  }
+
+  private highestBlockUnderFootprint(ctx: PlayerCtx): number {
+    return Math.max(...this.footprintPoints(this.position.x, this.position.z).map((p) =>
+      ctx.grid.supportHeight(Math.floor(p.x / ctx.tileSize), Math.floor(p.z / ctx.tileSize))))
   }
 
   get carrying(): string[] {

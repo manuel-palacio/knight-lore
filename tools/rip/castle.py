@@ -376,12 +376,13 @@ def covered_cells(point):
 
 
 def cells_between(a, b):
-    """Every cell from a to b, stepping one cell at a time, both cells of a half-cell line."""
+    """Every cell from a to b, stepping one cell at a time (the last step short
+    where an end is half way between cells), both cells of a half-cell line."""
     x, z = a['x'], a['z']
     out = covered_cells({'x': x, 'z': z})
     while (x, z) != (b['x'], b['z']):
-        x += (b['x'] > x) - (b['x'] < x)
-        z += (b['z'] > z) - (b['z'] < z)
+        x += max(-1, min(1, b['x'] - x))
+        z += max(-1, min(1, b['z'] - z))
         out += covered_cells({'x': x, 'z': z})
     return list(dict.fromkeys(out))
 
@@ -412,10 +413,18 @@ class Walkable:
         self.overhead = {}
         for b in f.get('floatingBlocks', []):
             self.hanging.setdefault((b['x'], b['z']), []).append(b['bottom'])
+        # A falling block sinks only while stood on: no footing to climb from.
+        self.sinking = {}
         for v in f.get('fallingBlocks', []):
             self.hanging.setdefault((v['x'], v['z']), []).append(v['height'] - 1)
+            self.sinking.setdefault((v['x'], v['z']), []).append(v['height'])
         for v in f.get('vanishing', []):
             self.overhead.setdefault((v['x'], v['z']), []).append(v['height'] - 1)
+        # A moving block is solid to his whole body wherever it sways: every
+        # cell of its track holds it, stood on (it carries him) or under with head room.
+        for m in f.get('movingPlatforms', []):
+            for cell in cells_between(m['from'], m['to']):
+                self.hanging.setdefault(cell, []).append(m['height'] - 1)
         if build.id == 'room-001':
             self.floor_blocked.add((4, 4))
         for sp in f.get('spikes', []):
@@ -447,6 +456,21 @@ class Walkable:
         heights += [b + 1 for b in hanging if b >= base]
         return [y for y in heights if not any(y <= h < y + HEADROOM for h in self.hazards.get(c, []))]
 
+    def drops_into(self, cell, ledge, landing):
+        """Walking off a ledge he goes in at its height and drops: nothing may hang
+        there across his body, nor catch him on the way down."""
+        over = self.hanging.get(cell, []) + self.overhead.get(cell, [])
+        return all(b + 1 <= landing or b >= ledge + HEADROOM for b in over)
+
+    def climbs_from(self, cell, feet, landing):
+        """Firm footing (not a falling block, sinking under him) and room overhead."""
+        return feet not in self.sinking.get(cell, []) and self.headroom_to_climb(cell, feet, landing)
+
+    def headroom_to_climb(self, cell, feet, landing):
+        """Nothing hangs over him on the way up: the blocks are solid to his whole body."""
+        over = self.hanging.get(cell, []) + self.overhead.get(cell, [])
+        return all(b < feet or b >= landing + HEADROOM for b in over)
+
     def jumpable(self, c):
         """A floor cell whose dangers all lie on the floor (spikes, a spiked ball
         lying there), with nothing over them for a jump to run into."""
@@ -468,7 +492,9 @@ class Walkable:
             for dx, dz in STEPS:
                 if self.inside(x + dx, z + dz):
                     reach = y + (HIGH_CLIMB if came == (x - dx, z - dz, y) else CLIMB)
-                    nexts += [(x + dx, z + dz, t) for t in self.standings((x + dx, z + dz)) if t <= reach]
+                    nexts += [(x + dx, z + dz, t) for t in self.standings((x + dx, z + dz))
+                              if t <= reach and (self.drops_into((x + dx, z + dz), y, t) if t < y
+                                                 else t == y or self.climbs_from((x, z), y, t))]
                 # A held jump carries about five units: over one cell, or over two
                 # of spikes (a spiked ball stands too tall for the ends of so long a jump).
                 for span in (1, 2):

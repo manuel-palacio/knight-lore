@@ -23,11 +23,10 @@ export type { Facing }
 // pixels a frame. Man and wolf jump alike. Nothing moves between ticks.
 export const JUMP_SPEED_PX = 8
 const AIR_STRIDE = (STEP_LENGTH * TICKS_PER_FRAME) / TICKS_PER_STEP
-// Steps of grace after a respawn so a guard camping the door cannot chain kills.
-const TURN_REPEAT_SECONDS = 0.25
-const TURN_REPEAT_STEPS = Math.round((TURN_REPEAT_SECONDS * 60) / TICKS_PER_STEP)
-const GRACE_SECONDS = 2
-export const INVULNERABLE_STEPS = (GRACE_SECONDS * 60) / TICKS_PER_STEP
+// Held, a turn repeats every third frame (0xC8F2: a turn sets a two-frame
+// wait), as near as the step clock comes to it.
+const TURN_REPEAT_FRAMES = 3
+const TURN_REPEAT_STEPS = Math.ceil((TURN_REPEAT_FRAMES * TICKS_PER_FRAME) / TICKS_PER_STEP)
 
 export interface PlayerCtx extends UpdateContext {
   grid: Grid
@@ -51,7 +50,6 @@ export class Player extends Entity {
 
   private readonly clock = new StepClock()
   private readonly frameClock = new FrameClock()
-  private invulnerableSteps = 0
   private tappedKeys = new Set<string>()
   private readonly stepsSinceTurn = new Map<string, number>()
   // Pixels a frame upwards while in the air; negative on the way down.
@@ -68,16 +66,11 @@ export class Player extends Entity {
     return Math.floor((this.stepsTaken * TICKS_PER_STEP) / TICKS_PER_FRAME)
   }
 
-  get isInvulnerable(): boolean {
-    return this.invulnerableSteps > 0
-  }
-
   respawnAt(x: number, z: number, facing: Facing): void {
     this.position.set(x, 0, z)
     this.facing = facing
     this.state = 'grounded'
     this.riseSpeedPx = 0
-    this.invulnerableSteps = INVULNERABLE_STEPS
   }
 
   update(_dt: number, ctxRaw: UpdateContext): void {
@@ -89,7 +82,6 @@ export class Player extends Entity {
       if (frame) this.frameInTheAir(ctx)
     }
     if (!this.clock.tick()) return
-    if (this.invulnerableSteps > 0) this.invulnerableSteps--
     if (this.state === 'grounded') this.stepGrounded(ctx)
     this.tappedKeys.clear()
   }
@@ -106,8 +98,7 @@ export class Player extends Entity {
     return ctx.input.isDown(code) || this.tappedKeys.has(code)
   }
 
-  // A press turns him at once; held, the turn repeats every quarter second,
-  // slow enough to stop on the facing wanted at the original's walking pace.
+  // A press turns him at once; held, the turn repeats (TURN_REPEAT_FRAMES).
   private turnWith(ctx: PlayerCtx, code: string, turns: number): void {
     if (!this.keyActive(ctx, code)) {
       this.stepsSinceTurn.delete(code)
@@ -122,8 +113,11 @@ export class Player extends Entity {
     }
   }
 
+  // The key is read as held, not pressed (0xC948), so with it held down he
+  // jumps again as soon as he lands.
   private latchJumpRequest(ctx: PlayerCtx): void {
-    if (this.state !== 'grounded' || !ctx.input.wasPressed('Space')) return
+    const jump = ctx.input.isDown('Space') || ctx.input.wasPressed('Space')
+    if (this.state !== 'grounded' || !jump) return
     this.state = 'jumping'
     this.riseSpeedPx = JUMP_SPEED_PX
     ctx.onJumped()

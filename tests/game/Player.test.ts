@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { Grid } from '../../src/engine/Grid'
-import { Player, STEP_LENGTH, TICKS_PER_STEP, INVULNERABLE_STEPS, JUMP_SPEED_PX } from '../../src/game/Player'
+import { Player, STEP_LENGTH, TICKS_PER_STEP, JUMP_SPEED_PX } from '../../src/game/Player'
 import { GameState } from '../../src/game/GameState'
 import { SIMULATION_DT } from '../../src/engine/GameLoop'
 import { Pickup, CHARM_HEIGHT } from '../../src/game/Pickup'
@@ -85,15 +85,15 @@ describe('Player facing', () => {
     expect(player.facing).toBe('west')
   })
 
-  it('held, turns once and then again every quarter second, so a facing can be picked', () => {
+  it('held, turns once and then again every third frame of the original (0xC8F2)', () => {
     const { grid, state, player } = setupRoom()
     const facings: string[] = []
     for (let t = 0; t < 60; t++) {
       tick(player, ctx(grid, state, { right: true }))
       if (facings.at(-1) !== player.facing) facings.push(player.facing)
     }
-    // South, then four turns in a second: west, north, east, south.
-    expect(facings.length - 1).toBe(4)
+    // Six turns in a second: a turn every 10 ticks, the nearest the step clock comes to 3 frames (9 ticks).
+    expect(facings.length - 1).toBe(6)
   })
 
   it('rotating does not move the player', () => {
@@ -174,6 +174,14 @@ describe('Player jump', () => {
     expect(jumped).toBe(1)
     tick(player, c)
     expect(jumped).toBe(1)
+  })
+
+  it('with the key held he jumps again as soon as he lands (0xC948 reads it held)', () => {
+    const { grid, state, player } = setupRoom()
+    let jumped = 0
+    const held = { ...ctx(grid, state, { space: true }), onJumped: () => { jumped++ } }
+    for (let i = 0; i < 400; i++) tick(player, held)
+    expect(jumped).toBeGreaterThan(2)
   })
 
   it('a tapped jump rises a block, 12 pixels: 6, 4 and 2 a frame', () => {
@@ -338,18 +346,13 @@ describe('Player placed at a door', () => {
 })
 
 describe('Player respawn', () => {
-  it('lands at the given spot facing the given way and is briefly invulnerable', () => {
-    const { grid, state, player } = setupRoom()
+  it('lands at the given spot facing the given way', () => {
+    const { player } = setupRoom()
     player.respawnAt(9, 1, 'north')
     expect(player.position.x).toBe(9)
     expect(player.position.z).toBe(1)
     expect(player.facing).toBe('north')
     expect(player.state).toBe('grounded')
-    expect(player.isInvulnerable).toBe(true)
-    step(player, ctx(grid, state), INVULNERABLE_STEPS - 1)
-    expect(player.isInvulnerable).toBe(true)
-    step(player, ctx(grid, state))
-    expect(player.isInvulnerable).toBe(false)
   })
 })
 

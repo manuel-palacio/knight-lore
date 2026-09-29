@@ -18,13 +18,13 @@ test('the wolf left standing in the cauldron room loses a life', async ({ page }
   await expect.poll(async () => (await debug(page)).lives, { timeout: 10_000 }).toBeLessThan(5)
 })
 
-test('the wolf coming into the cauldron room is caught as soon as his grace on coming in is over', async ({ page }) => {
+test('the wolf coming into the cauldron room is caught within a second and a half', async ({ page }) => {
   await startGame(page)
   await nightfall(page)
   await page.evaluate(() => (window as unknown as { __timer: (s: number) => void }).__timer(9_999))
   await enterRoom(page, 'room-001')
   await standAt(page, { x: 3, y: 0, z: 13 })
-  await expect.poll(async () => (await debug(page)).lives, { timeout: 4_000 }).toBeLessThan(5)
+  await expect.poll(async () => (await debug(page)).lives, { timeout: 1_500 }).toBeLessThan(5)
 })
 
 test('the man can stand in the cauldron room all day', async ({ page }) => {

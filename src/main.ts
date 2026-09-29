@@ -203,7 +203,7 @@ async function main(): Promise<void> {
   }
 
   function hazardPass(room: Room): void {
-    if (player.isInvulnerable || dying() || state.won) return
+    if (dying() || state.won) return
     for (const e of room.entities) {
       if (!e.active || !e.hasCategory(Category.HAZARD) || !hazardHunts(e)) continue
       if (touchesHazard(player, e)) {
@@ -316,6 +316,7 @@ async function main(): Promise<void> {
     if (stepped) pushPass(room)
     resolveActorOverlap(room)
     if (!dying() && !look.morphing && input.wasPressed('KeyE')) hands.use(room)
+    if (!dying()) hands.takeLifeTouched(room)
     hazardPass(room)
     if (!dying()) exitPass()
     sparklePass()

@@ -23,7 +23,7 @@ test('the title tune plays again when Sabreman loses his last life', async ({ pa
   const before = (await recorded(page)).played.length
   while ((await debug(page)).lives > 0) {
     const lives = (await debug(page)).lives
-    await page.waitForTimeout(2_500) // the grace after entering or dying runs out
+    await expect.poll(async () => (await debug(page)).dying).toBe(false)
     await standAt(page, { x: tileCentre(spike.x), y: 0, z: tileCentre(spike.z) })
     await expect.poll(async () => (await debug(page)).lives).toBeLessThan(lives)
   }

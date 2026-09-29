@@ -9,8 +9,8 @@ function eventsOver(sparkle: Sparkle, frames: number): SparkleEvent[] {
   return events
 }
 
-// The stars he dissolves into and comes back out of: graphics 0x78-0x7F
-// (handler 0xBEFE, a step every other frame) and 0x70-0x77 (0xBF2B, a step a frame).
+// The stars he dissolves into, graphics 0x70-0x77 (handler 0xBF2B, a step a
+// frame), and comes back out of, 0x78-0x7F (0xBEFE, a step every other frame).
 describe('Sparkle', () => {
   it('is idle until he loses a life', () => {
     const sparkle = new Sparkle()
@@ -18,31 +18,32 @@ describe('Sparkle', () => {
     expect(eventsOver(sparkle, 10)).toEqual([])
   })
 
-  it('grows from 0x78 to 0x7F a step every other frame, then has dissolved', () => {
+  it('dying, steps from 0x70 to 0x77 a step a frame (0xBF2B), then he is gone', () => {
     const sparkle = new Sparkle()
     sparkle.dissolve()
-    expect(sparkle.graphic).toBe(0x78)
-    const events = eventsOver(sparkle, 16)
-    expect(events.filter((e) => e.kind === 'step').map((e) => e.graphic)).toEqual([0x79, 0x7a, 0x7b, 0x7c, 0x7d, 0x7e, 0x7f])
+    expect(sparkle.graphic).toBe(0x70)
+    const events = eventsOver(sparkle, 8)
+    expect(events.filter((e) => e.kind === 'step').map((e) => e.graphic)).toEqual([0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77])
     expect(events.at(-1)).toEqual({ kind: 'dissolved' })
     expect(sparkle.phase).toBe('idle')
   })
 
-  it('shrinks from 0x70 to 0x77 a step a frame, then he is back', () => {
+  it('coming back, steps from 0x78 to 0x7F a step every other frame (0xBEFE), then he is back', () => {
     const sparkle = new Sparkle()
     sparkle.rematerialise()
-    const events = eventsOver(sparkle, 8)
-    expect(events.filter((e) => e.kind === 'step').map((e) => e.graphic)).toEqual([0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77])
+    expect(sparkle.graphic).toBe(0x78)
+    const events = eventsOver(sparkle, 16)
+    expect(events.filter((e) => e.kind === 'step').map((e) => e.graphic)).toEqual([0x79, 0x7a, 0x7b, 0x7c, 0x7d, 0x7e, 0x7f])
     expect(events.at(-1)).toEqual({ kind: 'rematerialised' })
   })
 
-  it('draws the stars thin to thick as he dissolves and thick to thin as he comes back', () => {
-    const growing = new Sparkle()
-    growing.dissolve()
-    expect(cellsSeen(growing, 16)).toEqual([0, 1, 2, 3, 4, 5, 4, 5])
-    const shrinking = new Sparkle()
-    shrinking.rematerialise()
-    expect(cellsSeen(shrinking, 8)).toEqual([5, 4, 5, 4, 3, 2, 1, 0])
+  it('draws the stars thick to thin as he dies and thin to thick as he comes back, as the graphics are', () => {
+    const dying = new Sparkle()
+    dying.dissolve()
+    expect(cellsSeen(dying, 8)).toEqual([5, 4, 5, 4, 3, 2, 1, 0])
+    const back = new Sparkle()
+    back.rematerialise()
+    expect(cellsSeen(back, 16)).toEqual([0, 1, 2, 3, 4, 5, 4, 5])
   })
 })
 

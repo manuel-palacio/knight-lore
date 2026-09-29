@@ -306,7 +306,8 @@ async function walkRun(page: Page, run: Cell[], endAt?: { x: number; z: number }
 
 // A jump is committed: from the take-off point planJump found (or, with no
 // room to plan in, where he stands with Space held), facing the way, Space
-// down, and up again at once for a low jump or once landed for a high one.
+// down, and up again at once for a low jump or once he is past the top of a
+// high one (held on, he would jump again as he lands).
 async function jumpTo(page: Page, path: Step[], into: number, spec?: RoomSpec, plan?: JumpPlan): Promise<void> {
   const from = path[into - 1]!
   const to = path[into]!
@@ -317,10 +318,16 @@ async function jumpTo(page: Page, path: Step[], into: number, spec?: RoomSpec, p
   else await page.keyboard.press('Space')
   try {
     await expect.poll(async () => (await debug(page)).state, { intervals: [20] }).not.toBe('grounded')
-    await expect.poll(async () => (await debug(page)).state, { intervals: [20] }).toBe('grounded')
+    let top = -Infinity
+    await expect.poll(async () => {
+      const { state, pos } = await debug(page)
+      top = Math.max(top, pos.y)
+      return state === 'grounded' || pos.y < top
+    }, { intervals: [20] }).toBe(true)
   } finally {
     await page.keyboard.up('Space')
   }
+  await expect.poll(async () => (await debug(page)).state, { intervals: [20] }).toBe('grounded')
 }
 
 // Walks to the planned take-off and settles, from where he stopped, whether

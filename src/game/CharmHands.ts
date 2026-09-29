@@ -4,6 +4,7 @@ import type { Beeper } from '../engine/Beeper'
 import { Cauldron } from './Cauldron'
 import { CHARM_HOVER, Pickup } from './Pickup'
 import { headroomToLiftOnto, insideRoom } from './Placing'
+import { touchesHazard } from './Hazards'
 import type { GameState } from './GameState'
 import type { Player } from './Player'
 import type { Room } from './Room'
@@ -14,6 +15,13 @@ export class CharmHands {
 
   use(room: Room): void {
     if (!this.deliver(room) && !this.pickUp(room)) this.putDown(room)
+  }
+
+  // The extra life (graphic 0x67, handler 0xC1AB) is taken by touching it,
+  // not with E, which only picks up the charms (0xC172).
+  takeLifeTouched(room: Room): void {
+    const life = room.entities.find((e): e is Pickup => e instanceof Pickup && e.id === 'life' && !e.collected && touchesHazard(this.player, e))
+    if (life) this.takeExtraLife(room, life)
   }
 
   private deliver(room: Room): boolean {
@@ -36,12 +44,8 @@ export class CharmHands {
   // A charm in reach is picked up; with his hands full, the charm carried
   // longest is left where the new one lay. True when there was a charm to pick up.
   private pickUp(room: Room): boolean {
-    const charm = room.entities.find((e): e is Pickup => e instanceof Pickup && !e.collected && e.isWithinReachOf(this.player.position))
+    const charm = room.entities.find((e): e is Pickup => e instanceof Pickup && e.id !== 'life' && !e.collected && e.isWithinReachOf(this.player.position))
     if (!charm) return false
-    if (charm.id === 'life') {
-      this.takeExtraLife(room, charm)
-      return true
-    }
     const where = charm.position.clone().setY(charm.position.y - CHARM_HOVER)
     this.player.tryPickup(charm, (letGo) => {
       this.beeper.play('pickup')

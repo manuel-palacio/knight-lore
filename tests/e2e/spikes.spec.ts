@@ -32,7 +32,6 @@ async function enter(page: import('@playwright/test').Page): Promise<void> {
 test('the spike row cannot be walked across: walking into it costs a life', async ({ page }) => {
   await startGame(page)
   await enter(page)
-  await page.waitForTimeout(2_500) // let the grace after entering the room run out
   await standAt(page, { x: tileCentre(barred.takeOff.x), y: 0, z: tileCentre(barred.takeOff.z) })
   await face(page, directionOf(barred.takeOff, barred.landing))
   await walkUntil(page, (s) => s.lives < 5)
@@ -57,7 +56,6 @@ test('a held jump taken from anywhere on the tile before the spikes clears them'
   test.setTimeout(120_000)
   await startGame(page)
   await enter(page)
-  await page.waitForTimeout(2_500)
   const facing = directionOf(barred.takeOff, barred.landing)
   const axis = barred.takeOff.x !== barred.landing.x ? 'x' : 'z'
   const sign = Math.sign(barred.landing[axis] - barred.takeOff[axis])

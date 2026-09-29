@@ -34,7 +34,7 @@ test('a charm put down in another room stays in the room where it was put down',
   expect((await debug(page)).pickups.map((p) => p.id)).toContain(charm)
 })
 
-test('the extra life is taken at once, not carried, and does not come back', async ({ page }) => {
+test('the extra life is taken by touching it, without E, not carried, and does not come back', async ({ page }) => {
   await startGame(page)
   const lifeRoomId = await roomHolding(page, (item) => item === 'life')
   const lifeRoom = specById(lifeRoomId)
@@ -42,7 +42,6 @@ test('the extra life is taken at once, not carried, and does not come back', asy
   await holdDaylight(page)
   const life = room.pickups.find((p) => p.id === 'life')!
   await standAt(page, life)
-  await page.keyboard.press('KeyE')
   await expect.poll(async () => (await debug(page)).lives).toBe(6)
   expect((await debug(page)).carrying).toEqual([])
 

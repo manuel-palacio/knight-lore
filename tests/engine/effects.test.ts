@@ -21,10 +21,10 @@ describe('pushEffect (0xB467)', () => {
   })
 })
 
-describe('dissolveEffect (0xB419)', () => {
+describe('rematerialiseEffect (0xB419)', () => {
   it('sweeps single cycles down from the graphic rotated left twice, low five bits, bits 0-1 set', () => {
     // 0x79 rotated left twice is 0xE5; its low five bits 0x05, with 0x03: 7 cycles.
-    const notes = dissolveEffect(0x79)
+    const notes = rematerialiseEffect(0x79)
     expect(notes).toHaveLength(7)
     // c = 7 first: 7 rotated left twice is 0x1C.
     expect(notes[0]!.frequency).toBeCloseTo(1 / period(0x1c), 6)
@@ -32,14 +32,14 @@ describe('dissolveEffect (0xB419)', () => {
   })
 })
 
-describe('rematerialiseEffect (0xB403)', () => {
+describe('dissolveEffect (0xB403)', () => {
   it('plays two cycles at each ROM byte from 0x1234, as many as the graphic complemented has in its low five bits', () => {
     // ~0x71 & 0x1F = 0x0E: fourteen bytes, the first 0xFB.
-    const notes = rematerialiseEffect(0x71)
+    const notes = dissolveEffect(0x71)
     expect(notes).toHaveLength(14)
     expect(notes[0]!.frequency).toBeCloseTo(1 / period(0xfb), 6)
     expect(notes[0]!.duration).toBeCloseTo(2 * period(0xfb), 9)
-    expect(rematerialiseEffect(0x77)).toHaveLength(8)
+    expect(dissolveEffect(0x77)).toHaveLength(8)
   })
 })
 

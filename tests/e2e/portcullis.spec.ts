@@ -47,7 +47,6 @@ test('a falling gate costs a life if Sabreman is under it', async ({ page }) => 
   await enterRoom(page, GATED)
   await holdDaylight(page)
   await expect.poll(async () => (await debug(page)).gates[0]!.state, { timeout: 30_000, intervals: [50] }).toBe('open')
-  await page.waitForTimeout(2_500) // the grace after entering the room runs out
   await standAt(page, { x: DOOR_AXIS_X, y: 0, z: GATE_ROW * 2 + 1 })
   await expect.poll(async () => (await debug(page)).lives, { timeout: 15_000 }).toBe(4)
 })

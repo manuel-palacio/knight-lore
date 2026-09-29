@@ -85,6 +85,17 @@ describe('Player facing', () => {
     expect(player.facing).toBe('west')
   })
 
+  it('held, turns once and then again every quarter second, so a facing can be picked', () => {
+    const { grid, state, player } = setupRoom()
+    const facings: string[] = []
+    for (let t = 0; t < 60; t++) {
+      tick(player, ctx(grid, state, { right: true }))
+      if (facings.at(-1) !== player.facing) facings.push(player.facing)
+    }
+    // South, then four turns in a second: west, north, east, south.
+    expect(facings.length - 1).toBe(4)
+  })
+
   it('rotating does not move the player', () => {
     const { grid, state, player } = setupRoom()
     step(player, ctx(grid, state, { right: true }), 4)

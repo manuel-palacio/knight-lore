@@ -24,6 +24,8 @@ export type { Facing }
 export const JUMP_SPEED_PX = 8
 const AIR_STRIDE = (STEP_LENGTH * TICKS_PER_FRAME) / TICKS_PER_STEP
 // Steps of grace after a respawn so a guard camping the door cannot chain kills.
+const TURN_REPEAT_SECONDS = 0.25
+const TURN_REPEAT_STEPS = Math.round((TURN_REPEAT_SECONDS * 60) / TICKS_PER_STEP)
 const GRACE_SECONDS = 2
 export const INVULNERABLE_STEPS = (GRACE_SECONDS * 60) / TICKS_PER_STEP
 
@@ -51,6 +53,7 @@ export class Player extends Entity {
   private readonly frameClock = new FrameClock()
   private invulnerableSteps = 0
   private tappedKeys = new Set<string>()
+  private readonly stepsSinceTurn = new Map<string, number>()
   // Pixels a frame upwards while in the air; negative on the way down.
   private riseSpeedPx = 0
 
@@ -103,6 +106,22 @@ export class Player extends Entity {
     return ctx.input.isDown(code) || this.tappedKeys.has(code)
   }
 
+  // A press turns him at once; held, the turn repeats every quarter second,
+  // slow enough to stop on the facing wanted at the original's walking pace.
+  private turnWith(ctx: PlayerCtx, code: string, turns: number): void {
+    if (!this.keyActive(ctx, code)) {
+      this.stepsSinceTurn.delete(code)
+      return
+    }
+    const since = this.stepsSinceTurn.get(code)
+    if (since === undefined || since >= TURN_REPEAT_STEPS) {
+      this.rotate(turns)
+      this.stepsSinceTurn.set(code, 1)
+    } else {
+      this.stepsSinceTurn.set(code, since + 1)
+    }
+  }
+
   private latchJumpRequest(ctx: PlayerCtx): void {
     if (this.state !== 'grounded' || !ctx.input.wasPressed('Space')) return
     this.state = 'jumping'
@@ -111,8 +130,8 @@ export class Player extends Entity {
   }
 
   private stepGrounded(ctx: PlayerCtx): void {
-    if (this.keyActive(ctx, 'ArrowRight')) this.rotate(1)
-    if (this.keyActive(ctx, 'ArrowLeft')) this.rotate(-1)
+    this.turnWith(ctx, 'ArrowRight', 1)
+    this.turnWith(ctx, 'ArrowLeft', -1)
     if (this.keyActive(ctx, 'ArrowUp')) {
       this.walkForward(ctx)
       this.stepsTaken++

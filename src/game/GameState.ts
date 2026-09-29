@@ -1,5 +1,6 @@
 import { mulberry32 } from '../engine/Random'
 import { endSummary, type EndSummary } from './EndSummary'
+import type { Facing } from './Facing'
 
 export type Form = 'human' | 'werewolf'
 
@@ -34,6 +35,12 @@ export function itemAtSpot(spot: number, deal: number): ItemId {
   return DEALT_ITEMS[(deal + spot) % DEALT_ITEMS.length]!
 }
 
+export interface RoomEntry {
+  x: number
+  z: number
+  facing: Facing
+}
+
 export type GameOverReason = 'days' | 'lives'
 
 // Everything needed to pick a run back up. Carried items are not saved: the
@@ -48,6 +55,8 @@ export interface SavedGame {
   cureSequence: Charm[]
   // Where the deal of charms round the castle started (see itemAtSpot).
   charmDeal: number
+  // Where he came into the room, and which way he faced: he goes on from there.
+  entry: RoomEntry
   // Spots whose charm was delivered or whose extra life was taken.
   usedSpots: number[]
   // Rooms he has been in, for the end screen's rating; missing in older saves.
@@ -56,10 +65,10 @@ export interface SavedGame {
 
 // Saves from earlier versions drew a different cure; continuing one would
 // ask for charms the castle no longer holds.
-export function isCompatibleSave(saved: { cureSequence: readonly string[]; charmDeal?: number }): boolean {
+export function isCompatibleSave(saved: { cureSequence: readonly string[]; charmDeal?: number; entry?: RoomEntry }): boolean {
   const charms: readonly string[] = CHARMS
   const cureOk = saved.cureSequence.length === CURE_LENGTH && saved.cureSequence.every((item) => charms.includes(item))
-  return cureOk && typeof saved.charmDeal === 'number'
+  return cureOk && typeof saved.charmDeal === 'number' && saved.entry !== undefined
 }
 
 export class GameState {
@@ -77,6 +86,8 @@ export class GameState {
   cureProgress = 0
   readonly cureSequence: Charm[]
   charmDeal: number
+  // Where he came into the current room (the middle of the start room at first).
+  entry: RoomEntry = { x: 8, z: 8, facing: 'south' }
   // Spots whose charm is used up (delivered, or an extra life taken): rooms are built without it.
   readonly usedSpots: number[] = []
   // Rooms he has been in, as the original marks them in its bitmap at 0x5BE8.
@@ -99,6 +110,7 @@ export class GameState {
       cureProgress: this.cureProgress,
       cureSequence: [...this.cureSequence],
       charmDeal: this.charmDeal,
+      entry: { ...this.entry },
       usedSpots: [...this.usedSpots],
       visitedRooms: [...this.visitedRooms],
     }
@@ -120,6 +132,7 @@ export class GameState {
     this.cureProgress = saved.cureProgress
     this.cureSequence.splice(0, this.cureSequence.length, ...saved.cureSequence)
     this.charmDeal = saved.charmDeal
+    this.entry = { ...saved.entry }
     this.usedSpots.splice(0, this.usedSpots.length, ...saved.usedSpots)
     this.visitedRooms.clear()
     for (const id of saved.visitedRooms ?? [saved.currentRoomId]) this.visitedRooms.add(id)

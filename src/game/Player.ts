@@ -220,6 +220,12 @@ export class Player extends Entity {
     return { minX: x - hw, maxX: x + hw, minZ: z - hd, maxZ: z + hd }
   }
 
+  // Put at a door (or back there after a death), he stands on whatever is
+  // under any of him: a block beside the doorway, say, not half inside it.
+  standOnWhatIsUnder(ctx: PlayerCtx): void {
+    this.position.y = Math.max(0, this.supportAt(ctx))
+  }
+
   // Held up by the highest block, box or charm any of his footprint is over, as the original's bounding box is.
   private supportAt(ctx: PlayerCtx): number {
     return Math.max(this.highestBlockUnderFootprint(ctx), this.highestUnderFootprint(ctx, this.position.x, this.position.z))

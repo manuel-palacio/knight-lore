@@ -207,6 +207,12 @@ describe('the charms dealt round the castle (0xC47E)', () => {
     expect(new Set(deals).size).toBe(8)
   })
 
+  it('keeps where and which way he came into the room through a save and continue', () => {
+    const state = new GameState(7)
+    state.entry = { x: 1, z: 8, facing: 'east' }
+    expect(GameState.restore(state.serialize()).entry).toEqual({ x: 1, z: 8, facing: 'east' })
+  })
+
   it('keeps the deal and the spots used up through a save and continue', () => {
     const state = new GameState(7)
     state.usedSpots.push(26)
@@ -228,6 +234,12 @@ describe('GameState.gainLife', () => {
 describe('isCompatibleSave', () => {
   it('accepts a save written by this version', () => {
     expect(isCompatibleSave(new GameState(3).serialize())).toBe(true)
+  })
+
+  it('rejects a save from before it kept where he came in', () => {
+    const old: Partial<SavedGame> = { ...new GameState(3).serialize() }
+    delete old.entry
+    expect(isCompatibleSave(old as SavedGame)).toBe(false)
   })
 
   it('rejects a save from before the charms were dealt round the original\'s spots', () => {

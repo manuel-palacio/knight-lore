@@ -326,6 +326,17 @@ describe('Player under a table', () => {
   })
 })
 
+describe('Player placed at a door', () => {
+  it('stands on a block his footprint is partly over, not half inside it (map--4--2 from the south)', () => {
+    const { grid, state, player } = setupRoom()
+    grid.setSolid(1, 7, true)
+    grid.setSupport(1, 7, 1)
+    player.respawnAt(4, 15, 'north')
+    player.standOnWhatIsUnder(ctx(grid, state))
+    expect(player.position.y).toBe(1)
+  })
+})
+
 describe('Player respawn', () => {
   it('lands at the given spot facing the given way and is briefly invulnerable', () => {
     const { grid, state, player } = setupRoom()

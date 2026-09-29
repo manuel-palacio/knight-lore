@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test'
 import { debug, enterRoom, face, give, holdDaylight, startGame } from './support/game'
+import { ROOM_SPECS, entryFor } from '../../src/scenes/rooms/roomSpecs'
 
 // Things that happen at unusual moments: behind the title screen, at
 // nightfall in mid-jump, in the seizure, on continuing a saved game.
@@ -58,6 +59,26 @@ test('a game saved at night goes on as the wolf, drawn as the wolf', async ({ pa
   await openTitle(page)
   await page.keyboard.press('KeyC')
   await expect.poll(async () => (await debug(page)).form).toBe('werewolf')
+})
+
+test('a continued game puts him back where he came into the room, facing the same way', async ({ page }) => {
+  await startGame(page)
+  await walkThroughADoor(page)
+  const save = await saveFrom(page, () => {})
+  const entry = save.entry as { x: number; z: number; facing: string }
+  await page.addInitScript(([key, value]) => localStorage.setItem(key, value), [SAVE_KEY, JSON.stringify(save)] as const)
+  await openTitle(page)
+  await page.keyboard.press('KeyC')
+  await expect.poll(async () => (await debug(page)).room).toBe(save.currentRoomId)
+  const back = await debug(page)
+  expect([back.pos.x, back.pos.z, back.facing]).toEqual([entry.x, entry.z, entry.facing])
+})
+
+test('coming into map--4--2 from the south, he stands on the block beside the doorway, not half inside it', async ({ page }) => {
+  const room = ROOM_SPECS.find((r) => r.id === 'map--4--2')!
+  await startGame(page)
+  await enterRoom(page, room.id, entryFor('north', room.width ?? 8, room.depth ?? 8))
+  await expect.poll(async () => (await debug(page)).pos.y).toBe(1)
 })
 
 test('night does not fall on him in mid-jump: it waits until he is down', async ({ page }) => {

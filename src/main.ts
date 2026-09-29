@@ -10,7 +10,7 @@ import { Portcullis } from './game/Portcullis'
 import { SpikedBall } from './game/SpikedBall'
 import { FloatingBlock } from './game/FloatingBlock'
 import { hazardHunts, touchesHazard } from './game/Hazards'
-import { Player, type Facing } from './game/Player'
+import { Player, type Facing, type PlayerCtx } from './game/Player'
 import { FACING_VECTOR } from './game/Facing'
 import { STEP_LENGTH, TICKS_PER_FRAME, TICKS_PER_STEP } from './engine/StepClock'
 import { EPS } from './engine/epsilons'
@@ -194,8 +194,26 @@ async function main(): Promise<void> {
   let entryFacing: Facing = 'south'
   let flashFrames = 0
 
+  // What he moves through and stands on in a room, and what he hears doing it.
+  function playerContext(room: Room): PlayerCtx & { playerPosition: THREE.Vector3; playerExtents: THREE.Vector3; boxes: PushableBox[] } {
+    return {
+      input,
+      state,
+      grid: room.grid,
+      tileSize: room.tileSize,
+      playerPosition: player.position,
+      playerExtents: player.extents,
+      dynamicSupport: (x: number, z: number, y: number) => dynamicSupportAt(room, x, z, y),
+      dynamicSolid: (x: number, z: number, from: number, to: number) => blockFillsAt(room.entities, x, z, from, to),
+      boxes: room.entities.filter((e): e is PushableBox => e instanceof PushableBox),
+      onLanded: () => beeper.play('land'),
+      onJumped: () => beeper.play('jump'),
+    }
+  }
+
   function placePlayerAtSpawn(room: Room): void {
     player.respawnAt(room.spawnX, room.spawnZ, entryFacing)
+    player.standOnWhatIsUnder(playerContext(room))
   }
 
   const startRoomId = pickStartRoom(Math.random())
@@ -272,7 +290,8 @@ async function main(): Promise<void> {
     // Drawn in the form the game is in.
     visualForm = transformTarget = state.form
     transitioning = true
-    manager.transitionTo(save.currentRoomId, 9, 1).then((room) => {
+    entryFacing = state.entry.facing
+    manager.transitionTo(save.currentRoomId, state.entry.x, state.entry.z).then((room) => {
       placePlayerAtSpawn(room)
       transitioning = false
     })
@@ -500,6 +519,7 @@ async function main(): Promise<void> {
       .transitionTo(exit.targetRoomId, exit.entryX, exit.entryZ)
       .then((room) => {
         entryFacing = exit.direction
+        state.entry = { x: exit.entryX, z: exit.entryZ, facing: exit.direction }
         room.reset()
         placePlayerAtSpawn(room)
         wipe.loaded()
@@ -726,19 +746,7 @@ async function main(): Promise<void> {
     wipe.tick(dt)
     if (transitioning || wipe.active) return
     const room = activeRoom()
-    const ctx = {
-      input,
-      state,
-      grid: room.grid,
-      tileSize: room.tileSize,
-      playerPosition: player.position,
-      playerExtents: player.extents,
-      dynamicSupport: (x: number, z: number, y: number) => dynamicSupportAt(room, x, z, y),
-      dynamicSolid: (x: number, z: number, from: number, to: number) => blockFillsAt(room.entities, x, z, from, to),
-      boxes: room.entities.filter((e) => e instanceof PushableBox),
-      onLanded: () => beeper.play('land'),
-      onJumped: () => beeper.play('jump'),
-    }
+    const ctx = playerContext(room)
     if (!morphing() && !dying()) player.update(dt, ctx)
     const stepped = player.stepsTaken !== lastStepCount
     lastStepCount = player.stepsTaken

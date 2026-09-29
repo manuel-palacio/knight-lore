@@ -5,12 +5,13 @@ import { drawOrder, type Box } from './DrawOrder'
 import { backdropScreenPlace, backdropWorldPlace, type BackdropPart } from './Backdrop'
 import { columnSegments, type DecorKind } from './ColumnLooks'
 
-// 2D Filmation renderer. Draws the simulation (grid solids + dynamic entities) as
-// monochrome isometric cubes plus character/item sprites, depth-sorted back-to-front
-// (painter's algorithm). One hue per room on a black void floor — the ZX look.
+// 2D Filmation renderer. Draws a room as the original does: its wall sprites,
+// its blocks and everything in it, sorted back to front (DrawOrder), in the
+// room's one ink on black.
 
 const TILE = 2
-const BLOCK_GRAPHIC = 7
+// The original's block sprite, which the rooms' columns are built of.
+export const BLOCK_GRAPHIC = 7
 // Where the original draws a block from its place (its handler, 0xC4E3).
 const BLOCK_DRAWN_LOWER = 8
 
@@ -31,11 +32,9 @@ const ACTOR_SIZE = { x: 0.8, y: 2, z: 0.8 }
 // How high the original's walls stand: 44 pixels, 12 a block.
 const WALL_HEIGHT = 44 / 12
 
+// The room's ink, for what is drawn in it that is not already its colour.
 export interface Shades {
   top: string
-  right: string
-  left: string
-  line: string
 }
 
 // CSS pixels kept clear either side of the play area for the touch controls.
@@ -117,15 +116,14 @@ export class IsoRenderer {
       if (sprite) items.push(backdropItem(part, sprite, room.grid.width, room.grid.depth))
     }
 
-    // Solid floor cells (static blocks) as cubes sized by support height.
+    // The room's blocks, a block sprite a level, each column up to its height.
     for (let gz = 0; gz < room.grid.depth; gz++) {
       for (let gx = 0; gx < room.grid.width; gx++) {
         if (!room.grid.isSolid(gx, gz)) continue
         const h = room.grid.supportHeight(gx, gz) || 1
         for (const s of columnSegments(h, (level) => room.decorAt?.(gx, gz, level))) {
-          if (s.look !== 'block') continue
-          if (!this.blockSprite) items.push(this.cube(gx, gz, s.bottom, s.top, shades))
-          else for (let level = s.bottom; level < s.top; level++) items.push(this.block(gx, gz, level, this.blockSprite))
+          if (s.look !== 'block' || !this.blockSprite) continue
+          for (let level = s.bottom; level < s.top; level++) items.push(this.block(gx, gz, level, this.blockSprite))
         }
       }
     }
@@ -156,7 +154,9 @@ export class IsoRenderer {
     this.ctx.putImageData(image, 0, 0)
   }
 
-  // Sorted as a cube is (see cube), drawn as the original draws it.
+  // Sorted by the cell's centre, not its near corner, so a tall column at the
+  // back never sorts over someone standing in front of it; drawn as the
+  // original's block.
   private block(gx: number, gz: number, level: number, sprite: HTMLImageElement): Renderable {
     const cx = (gx + 0.5) * TILE
     const cz = (gz + 0.5) * TILE
@@ -164,23 +164,6 @@ export class IsoRenderer {
     return { gx, gz, height: level + 1, depth: isoDepth(cx, level, cz), box: cellBox(gx, gz, level, level + 1), draw: (ctx, cfg) => blitSprite(ctx, cfg, draw) }
   }
 
-  private cube(gx: number, gz: number, bottom: number, top: number, shades: Shades): Renderable {
-    // Sort by the CELL CENTRE, not the near corner. A tall back-wall cube sorted
-    // by its near corner over-sorts (its corner x exceeds an actor standing in
-    // front of it on a lower z), drawing the wall OVER the actor — the player
-    // appears to vanish into the wall. Cell-centre depth keeps walls behind any
-    // in-bounds actor.
-    const cx = (gx + 0.5) * TILE
-    const cz = (gz + 0.5) * TILE
-    return {
-      gx,
-      gz,
-      height: top,
-      depth: isoDepth(cx, bottom, cz),
-      box: cellBox(gx, gz, bottom, top),
-      draw: (ctx, cfg) => drawIsoCube(ctx, cfg, gx, gz, bottom, top, shades),
-    }
-  }
 
 }
 
@@ -269,119 +252,6 @@ function blitSprite(ctx: CanvasRenderingContext2D, cfg: IsoConfig, s: SpriteDraw
   }
 }
 
-export interface Box3 {
-  x0: number
-  x1: number
-  z0: number
-  z1: number
-  y0: number
-  y1: number
-}
-
-// One iso box: top diamond + right (east, +x) and left (south, +z) faces with a
-// crisp outline. Corners A=far, B=right, C=near, D=left.
-// A floor block: an iso box with staggered brick courses hatched on its faces.
-function drawIsoCube(
-  ctx: CanvasRenderingContext2D,
-  cfg: IsoConfig,
-  gx: number,
-  gz: number,
-  bottom: number,
-  top: number,
-  shades: Shades,
-): void {
-  // The original's block: solid top, solid left face, checker-hatched right face.
-  const b: Box3 = { x0: gx * TILE, x1: (gx + 1) * TILE, z0: gz * TILE, z1: (gz + 1) * TILE, y0: bottom, y1: top }
-  const c = boxCorners(cfg, b)
-  fillQuad(ctx, [c.Bt, c.Ct, c.Cb, c.Bb], checker(ctx, shades.top))
-  fillQuad(ctx, [c.Dt, c.Ct, c.Cb, c.Db], shades.left)
-  fillQuad(ctx, [c.At, c.Bt, c.Ct, c.Dt], shades.top)
-  outlineBox(ctx, c, '#000', 1)
-}
-
-const checkers = new Map<string, CanvasPattern>()
-
-// One-pixel checkerboard of the hue on black, the Spectrum's dithered face.
-function checker(ctx: CanvasRenderingContext2D, color: string): CanvasPattern | string {
-  const cached = checkers.get(color)
-  if (cached) return cached
-  const tile = document.createElement('canvas')
-  tile.width = 2
-  tile.height = 2
-  const t = tile.getContext('2d')
-  if (!t) return color
-  t.fillStyle = '#000'
-  t.fillRect(0, 0, 2, 2)
-  t.fillStyle = color
-  t.fillRect(0, 0, 1, 1)
-  t.fillRect(1, 1, 1, 1)
-  const pattern = ctx.createPattern(tile, 'repeat')
-  if (!pattern) return color
-  checkers.set(color, pattern)
-  return pattern
-}
-
-interface BoxCorners {
-  At: ScreenPt; Bt: ScreenPt; Ct: ScreenPt; Dt: ScreenPt
-  Bb: ScreenPt; Cb: ScreenPt; Db: ScreenPt
-}
-
-type ScreenPt = { sx: number; sy: number }
-
-function boxCorners(cfg: IsoConfig, b: Box3): BoxCorners {
-  const top = (wx: number, wz: number) => projectToScreen(wx, b.y1, wz, cfg)
-  const bot = (wx: number, wz: number) => projectToScreen(wx, b.y0, wz, cfg)
-  return {
-    At: top(b.x0, b.z0), Bt: top(b.x1, b.z0), Ct: top(b.x1, b.z1), Dt: top(b.x0, b.z1),
-    Bb: bot(b.x1, b.z0), Cb: bot(b.x1, b.z1), Db: bot(b.x0, b.z1),
-  }
-}
-
-// Crisp silhouette + edges — this is what makes a box read as solid masonry.
-function outlineBox(ctx: CanvasRenderingContext2D, c: BoxCorners, color: string, width: number): void {
-  ctx.lineJoin = 'round'
-  ctx.strokeStyle = color
-  ctx.lineWidth = width
-  strokePath(ctx, [c.At, c.Bt, c.Ct, c.Dt], true)
-  line(ctx, c.Bt, c.Bb)
-  line(ctx, c.Ct, c.Cb)
-  line(ctx, c.Dt, c.Db)
-  line(ctx, c.Bb, c.Cb)
-  line(ctx, c.Cb, c.Db)
-}
-
-
-
-function line(ctx: CanvasRenderingContext2D, a: { sx: number; sy: number }, b: { sx: number; sy: number }): void {
-  ctx.beginPath()
-  ctx.moveTo(a.sx, a.sy)
-  ctx.lineTo(b.sx, b.sy)
-  ctx.stroke()
-}
-
-function strokePath(ctx: CanvasRenderingContext2D, pts: { sx: number; sy: number }[], close: boolean): void {
-  ctx.beginPath()
-  ctx.moveTo(pts[0]!.sx, pts[0]!.sy)
-  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i]!.sx, pts[i]!.sy)
-  if (close) ctx.closePath()
-  ctx.stroke()
-}
-
-function fillQuad(ctx: CanvasRenderingContext2D, pts: { sx: number; sy: number }[], color: string | CanvasPattern): void {
-  ctx.beginPath()
-  ctx.moveTo(pts[0]!.sx, pts[0]!.sy)
-  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i]!.sx, pts[i]!.sy)
-  ctx.closePath()
-  ctx.fillStyle = color
-  ctx.fill()
-}
-
-
-// Three brightness steps of the room hue (top brightest), plus a darker line.
 function toShades(tint: number): Shades {
-  const r = (tint >> 16) & 0xff
-  const g = (tint >> 8) & 0xff
-  const b = tint & 0xff
-  const shade = (f: number): string => `rgb(${Math.round(r * f)},${Math.round(g * f)},${Math.round(b * f)})`
-  return { top: shade(1.0), right: shade(0.62), left: shade(0.4), line: shade(0.22) }
+  return { top: `rgb(${(tint >> 16) & 0xff},${(tint >> 8) & 0xff},${tint & 0xff})` }
 }

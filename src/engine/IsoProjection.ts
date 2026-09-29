@@ -16,7 +16,7 @@ export interface IsoConfig {
 // screen, a block 12px high, and the room's far corner at the floor
 // ROOM_ORIGIN_Y down the 256x192 screen, so that the room's own wall
 // sprites (see Backdrop) and everything else land where the original has them.
-export const ROOM_ORIGIN_Y = 39
+const ROOM_ORIGIN_Y = 39
 const BLOCK_HEIGHT_PX = 12
 
 export function filmationConfig(width: number, _height: number): IsoConfig {
@@ -45,16 +45,6 @@ export function projectToScreen(wx: number, wy: number, wz: number, cfg: IsoConf
     sx: cfg.originX + (u - v) * (cfg.tileW / 2),
     sy: cfg.originY + (u + v) * (cfg.tileH / 2) - wy * cfg.heightScale,
   }
-}
-
-// Inverse of projectToScreen on the ground plane (y = 0). Screen y alone can't
-// recover height, so callers that need a 3D point must supply the plane.
-export function screenToWorldGround(sx: number, sy: number, cfg: IsoConfig): { x: number; z: number } {
-  const a = (sx - cfg.originX) / (cfg.tileW / 2) // u - v
-  const b = (sy - cfg.originY) / (cfg.tileH / 2) // u + v  (at y = 0)
-  const u = (a + b) / 2
-  const v = (b - a) / 2
-  return { x: u * cfg.tile, z: v * cfg.tile }
 }
 
 // Painter's-algorithm sort key: larger = nearer the camera, drawn later (on top).

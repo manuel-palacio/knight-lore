@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { Room } from '../../src/game/Room'
 import { Pickup } from '../../src/game/Pickup'
-import { PatrolEnemy } from '../../src/game/PatrolEnemy'
 import { MovingPlatform } from '../../src/game/MovingPlatform'
 import { PathGuard } from '../../src/game/PathGuard'
 import { TICKS_PER_FRAME } from '../../src/engine/StepClock'
@@ -38,14 +37,5 @@ describe('Room', () => {
     expect(guard.position.x).toBe(3)
     expect(guard.position.z).toBe(3)
     expect(guard.facing).toBe('east')
-  })
-
-  it('patrol enemy honors a custom speed', () => {
-    const slow = new PatrolEnemy({ x: 0, z: 0 }, { x: 10, z: 0 }, 0.5)
-    slow.update(1, {})
-    expect(slow.position.x).toBeCloseTo(0.5, 5)
-    const normal = new PatrolEnemy({ x: 0, z: 0 }, { x: 10, z: 0 })
-    normal.update(1, {})
-    expect(normal.position.x).toBeCloseTo(1.6, 5)
   })
 })

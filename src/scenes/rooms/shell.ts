@@ -1,6 +1,5 @@
 import { Room } from '../../game/Room'
 import { StaticBlock } from '../../game/StaticBlock'
-import { PatrolEnemy } from '../../game/PatrolEnemy'
 
 export const TILE = 2
 
@@ -31,17 +30,6 @@ export function addPlatform(room: Room, gridX: number, gridZ: number, height: nu
   const block = new StaticBlock(gridX, gridZ, height)
   block.placeOnGrid(room.grid, TILE)
   room.add(block)
-}
-
-export function addPatrolEnemy(
-  room: Room,
-  a: { x: number; z: number },
-  b: { x: number; z: number },
-  speed?: number,
-): PatrolEnemy {
-  const enemy = new PatrolEnemy(a, b, speed)
-  room.add(enemy)
-  return enemy
 }
 
 // 1.0 high so a 1.0 jump can climb it.

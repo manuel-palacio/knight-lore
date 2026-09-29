@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
   projectToScreen,
-  screenToWorldGround,
   isoDepth,
   roomScreenOffset,
   filmationConfig,
@@ -34,16 +33,6 @@ describe('IsoProjection.projectToScreen', () => {
 
   it('height (+y) raises the point on screen', () => {
     expect(projectToScreen(0, 1, 0, cfg)).toEqual({ sx: 100, sy: 84 })
-  })
-})
-
-describe('IsoProjection.screenToWorldGround', () => {
-  it('inverts projectToScreen on the ground plane (y = 0)', () => {
-    const world = { x: 6, z: 4 }
-    const screen = projectToScreen(world.x, 0, world.z, cfg)
-    const back = screenToWorldGround(screen.sx, screen.sy, cfg)
-    expect(back.x).toBeCloseTo(world.x)
-    expect(back.z).toBeCloseTo(world.z)
   })
 })
 

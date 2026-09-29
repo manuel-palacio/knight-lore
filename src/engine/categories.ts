@@ -11,15 +11,3 @@ export enum Category {
   EXIT_TRIGGER = 'EXIT_TRIGGER',
   DECORATIVE = 'DECORATIVE',
 }
-
-export function isSolid(c: Category): boolean {
-  return c === Category.SOLID_WORLD || c === Category.SOLID_DYNAMIC
-}
-
-export function isTrigger(c: Category): boolean {
-  return (
-    c === Category.PICKUP_TRIGGER ||
-    c === Category.INTERACTION_TRIGGER ||
-    c === Category.EXIT_TRIGGER
-  )
-}

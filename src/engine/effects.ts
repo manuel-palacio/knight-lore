@@ -31,7 +31,7 @@ export const PICK_UP_EFFECT: Note[] = [cycles(0x80, 0x10)]
 
 // The charms' graphic numbers (0x60 onward); dropped into the cauldron each
 // is given bit 3 (0xC0D4).
-export const CHARM_GRAPHICS: Record<string, number> = {
+const CHARM_GRAPHICS: Record<string, number> = {
   gem: 0x60, poison: 0x61, boot: 0x62, goblet: 0x63, teacup: 0x64, 'wine-bottle': 0x65, 'crystal-ball': 0x66,
 }
 

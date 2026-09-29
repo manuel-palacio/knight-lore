@@ -6,7 +6,7 @@ import type { GameState } from './GameState'
 // Longer than the 2.2 s transformation, so a man caught delivering at dusk
 // comes out of the seizure with a moment to run.
 export const RISE_SECONDS = 3
-export const SPIRIT_SPEED = 1.76
+const SPIRIT_SPEED = 1.76
 const FLOAT_HEIGHT = 0.8
 
 interface SpiritCtx extends UpdateContext {

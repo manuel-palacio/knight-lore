@@ -19,7 +19,7 @@ const GAMEPAD_BUTTONS: Record<number, string> = {
 
 export type GamepadSource = () => GamepadSnapshot | null
 
-export function browserGamepad(): GamepadSnapshot | null {
+function browserGamepad(): GamepadSnapshot | null {
   if (typeof navigator === 'undefined' || !navigator.getGamepads) return null
   const pad = Array.from(navigator.getGamepads()).find((p) => p !== null)
   if (!pad) return null

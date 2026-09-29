@@ -10,9 +10,9 @@ export type Form = 'human' | 'werewolf'
 export const HUMAN_DURATION = 60
 export const WEREWOLF_DURATION = 30
 
-export const TOTAL_DAYS = 40
+const TOTAL_DAYS = 40
 export const DUSK_WARNING = 5
-export const STARTING_LIVES = 5
+const STARTING_LIVES = 5
 // The seven kinds of charm. The cauldron asks for fourteen, each kind twice,
 // one at a time, in an order drawn at the start of each game like the original.
 export const CHARMS = ['goblet', 'gem', 'wine-bottle', 'crystal-ball', 'boot', 'teacup', 'poison'] as const
@@ -77,7 +77,6 @@ export class GameState {
   transformTimer: number = HUMAN_DURATION
   currentRoomId = 'the-hall'
   won = false
-  droppedItems: { id: string; x: number; z: number }[] = []
 
   lives = STARTING_LIVES
   dayCount = 1

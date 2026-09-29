@@ -20,7 +20,6 @@ import { bindTouchControls, showTouchControlsWhenTouched } from './engine/TouchC
 import { CHARM_HEIGHT, CHARM_HOVER, Pickup } from './game/Pickup'
 import { CHARM_OVER_CAULDRON, Cauldron, charmOverCauldron } from './game/Cauldron'
 import { Spike } from './game/SpikeGrid'
-import { PatrolEnemy } from './game/PatrolEnemy'
 import { GhostEnemy } from './game/GhostEnemy'
 import { CauldronSpirit } from './game/CauldronSpirit'
 import { MovingPlatform } from './game/MovingPlatform'
@@ -36,7 +35,7 @@ import { Room } from './game/Room'
 import { RoomManager } from './game/RoomManager'
 import { ROOM_BUILDERS, pickStartRoom } from './scenes/rooms/index'
 import { ROOM_SPECS } from './scenes/rooms/roomSpecs'
-import { IsoRenderer, spriteDynamic, blockColumnDynamic, type Dynamic, type SpriteDraw } from './engine/IsoRenderer'
+import { IsoRenderer, BLOCK_GRAPHIC, spriteDynamic, blockColumnDynamic, type Dynamic, type SpriteDraw } from './engine/IsoRenderer'
 import { selectCharacterFrame, STRIP_CELLS } from './game/CharacterFrame'
 import { Transition } from './game/Transition'
 import { loadSave, writeSave, clearSave } from './engine/SaveSlot'
@@ -347,7 +346,7 @@ async function main(): Promise<void> {
       platforms: activeRoom().entities.filter((e) => e instanceof MovingPlatform).map((e) => ({ x: e.position.x, z: e.position.z })),
       carrying: player.carrying,
       monsters: activeRoom().entities
-        .filter((e) => e instanceof PathGuard || e instanceof Flame || e instanceof BouncingBall || e instanceof PatrolEnemy || e instanceof GhostEnemy || e instanceof HoppingBall)
+        .filter((e) => e instanceof PathGuard || e instanceof Flame || e instanceof BouncingBall || e instanceof GhostEnemy || e instanceof HoppingBall)
         .map((e) => ({ kind: monsterKind(e), x: e.position.x, y: e.position.y, z: e.position.z })),
       spikedBalls: activeRoom().entities
         .filter((e) => e instanceof SpikedBall)
@@ -683,8 +682,6 @@ async function main(): Promise<void> {
       } else if (e instanceof GhostEnemy || e instanceof CauldronSpirit) {
         if (e instanceof CauldronSpirit && !e.risen) continue
         out.push(stripFrame(monster('ghost', room.tint), 4, Math.floor(performance.now() / 150) % 4, e.position.x, GHOST_DRAW_HEIGHT, e.position.z, false, DRAWN_LOWER.ghost))
-      } else if (e instanceof PatrolEnemy) {
-        out.push(stripFrame(monster('guardLeft', room.tint), 4, Math.floor(performance.now() / 120) % 4, e.position.x, 0, e.position.z, false, DRAWN_LOWER.man))
       } else if (e instanceof PathGuard) {
         // Seen from the front or from behind over the man's legs, mirrored as he is.
         const look = selectCharacterFrame(e.facing, e.stepsTaken, true)
@@ -840,8 +837,7 @@ function vanishingDynamic(v: VanishingBlock, blockSprite: HTMLImageElement): Dyn
 }
 
 // Every wall, arch, gate and hedge graphic the castle's rooms use, and the
-// block (graphic 7) the columns are built of (tools/rip/objects.py).
-const BLOCK_GRAPHIC = 7
+// block the columns are built of (tools/rip/objects.py).
 
 async function loadBackdropSprites(): Promise<Map<number, HTMLImageElement>> {
   const graphics = [...new Set([BLOCK_GRAPHIC, ...ROOM_SPECS.flatMap((r) => (r.backdrop ?? []).map((p) => p.graphic))])]
@@ -880,8 +876,5 @@ function spikeBedDynamic(x: number, y: number, z: number): Dynamic {
     },
   }
 }
-
-// A bed of thin needles across the tile, like the original's spike pits:
-// 1px verticals of varied height on a fixed pseudo-random spread per tile.
 
 main().catch((err) => console.error(err))

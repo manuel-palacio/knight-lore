@@ -1,4 +1,4 @@
-import { buildRoomShell, addPlatform, addPatrolEnemy, tileCenter } from './shell'
+import { buildRoomShell, addPlatform, tileCenter } from './shell'
 import { placeSpikes } from '../../game/SpikeGrid'
 import { GhostEnemy } from '../../game/GhostEnemy'
 import { MovingPlatform } from '../../game/MovingPlatform'
@@ -36,9 +36,6 @@ export function buildRoomFromSpec(spec: RoomSpec, sizeOf: (id: string) => RoomSi
     room.backdrop = spec.backdrop ?? []
     for (const d of spec.decor ?? []) room.addDecor(d.x, d.z, d.height, d.kind)
     placeSpikes(room, spec.spikes ?? [])
-    for (const g of spec.guards ?? []) {
-      addPatrolEnemy(room, { x: tileCenter(g.from.x), z: tileCenter(g.from.z) }, { x: tileCenter(g.to.x), z: tileCenter(g.to.z) }, g.speed)
-    }
     for (const g of spec.ghosts ?? []) room.add(new GhostEnemy(tileCenter(g.x), tileCenter(g.z)))
     for (const p of spec.pickups ?? []) addPickup(room, p.item, p.x, p.z, p.y)
     for (const s of spec.charmSpots ?? []) {

@@ -79,6 +79,16 @@ describe('the castle', () => {
     }
   })
 
+  it('puts every door where the original draws its arch or gate, on the same wall', () => {
+    // Arch and gate halves (graphics 2-5, and 7, a narrow room's lintel) at the
+    // original's edges: x under 0x48 west, over 0xB8 east; y over 0xB8 our north, under 0x48 our south.
+    const wallOf = (p: { x: number; y: number }) => (p.x < 0x48 ? 'west' : p.x > 0xb8 ? 'east' : p.y > 0xb8 ? 'north' : p.y < 0x48 ? 'south' : null)
+    for (const r of ROOM_SPECS) {
+      const arched = new Set((r.backdrop ?? []).filter((p) => [2, 3, 4, 5, 7].includes(p.graphic)).map(wallOf))
+      for (const e of r.exits) expect(arched.has(e.direction), `${r.id} ${e.direction} door`).toBe(true)
+    }
+  })
+
   it('has exactly one cauldron room, with the wizard beside the cauldron', () => {
     const withCauldron = ROOM_SPECS.filter((s) => s.cauldron)
     expect(withCauldron).toHaveLength(1)

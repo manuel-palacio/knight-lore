@@ -2,7 +2,7 @@ import { test, expect, type Page } from '@playwright/test'
 import { ROOM_SPECS } from '../../src/scenes/rooms/roomSpecs'
 
 const CHARM_HOVER = 0.4
-import { debug, enterRoom, holdDaylight, roomHolding, standAt, startGame } from './support/game'
+import { debug, enterRoom, give, holdDaylight, roomHolding, standAt, startGame } from './support/game'
 
 async function pickUpCharmIn(page: Page, roomId: string): Promise<string> {
   const room = await enterRoom(page, roomId)
@@ -69,7 +69,11 @@ test('E puts the carried charm down under his feet, and he stands on it a block 
 
 test('jumping off a charm he put down, E takes it back up in mid-air', async ({ page }) => {
   await startGame(page)
-  const charm = await pickUpCharmIn(page, await roomHolding(page, (item) => item !== 'life'))
+  // In the open middle of a start room, nothing overhead for the jump to meet.
+  await enterRoom(page, 'map--4--4', { x: 8, z: 8 })
+  await holdDaylight(page)
+  const charm = 'gem'
+  await give(page, [charm])
   await page.keyboard.press('KeyE')
   await expect.poll(async () => (await debug(page)).carrying).toEqual([])
   const onCharm = (await debug(page)).pos.y

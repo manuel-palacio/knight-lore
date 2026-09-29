@@ -33,11 +33,14 @@ CHARM_TABLE, CHARM_ENTRY, CHARM_PLACES = 0x6FF2, 9, 32
 # Where the original has a thing, in pixels: a cell 16 across from 0x48, the floor at 0x80.
 FIRST_CELL_PX, CELL_PX, FLOOR_PX = 0x48, 16, 0x80
 FULL, NARROW, NARROW_FROM = 8, 4, 2
-# 0-3 arches, 4-7 garden gates; a narrow room draws its east and north arches
-# in two pieces, 20/22 and 21/23.
-DOORS = {0: 'south', 1: 'east', 2: 'north', 3: 'west', 4: 'south', 5: 'east', 6: 'north', 7: 'west',
-         20: 'east', 22: 'east', 21: 'north', 23: 'north'}
-STEP = {'south': 16, 'east': 1, 'north': -16, 'west': -1}
+# 0-3 arches, 4-7 garden gates; a narrow room draws its east and south arches
+# in two pieces, 20/22 and 21/23. The walls are where the original draws the
+# arches (backdrop.py): its y runs the other way to our z, so the arch at its
+# far y edge (piece 0) is in our north wall, and through it lies the room
+# 16 on in the table.
+DOORS = {0: 'north', 1: 'east', 2: 'south', 3: 'west', 4: 'north', 5: 'east', 6: 'south', 7: 'west',
+         20: 'east', 22: 'east', 21: 'south', 23: 'south'}
+STEP = {'north': 16, 'east': 1, 'south': -16, 'west': -1}
 OPPOSITE = {'south': 'north', 'north': 'south', 'east': 'west', 'west': 'east'}
 TINT = {3: 'purple', 4: 'green', 5: 'cyan', 6: 'yellow'}
 

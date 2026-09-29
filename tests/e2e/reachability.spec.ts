@@ -69,6 +69,8 @@ for (const spec of ROOM_SPECS) {
         const lives = (await debug(page)).lives
         const item = itemAtSpot(charm.spot, (await debug(page)).deal)
         await walkPath(page, await clearestPath(page, findFloorPaths(spec, entryDoor, charm), dangersOf(spec)), dangersOf(spec))
+        // Down from a drop or off a sinking block before reaching for it.
+        await expect.poll(async () => (await debug(page)).state, { timeout: 10_000 }).toBe('grounded')
         await page.keyboard.press('KeyE')
         if (item === 'life') {
           await expect.poll(async () => (await debug(page)).lives, { message: 'extra life taken' }).toBe(lives + 1)

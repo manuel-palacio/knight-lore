@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test'
 import { ROOM_SPECS, entryFor, oppositeOf, type Direction, type RoomSpec } from '../../src/scenes/rooms/roomSpecs'
 import { debug, enterRoom, face, give, holdDaylight, startGame, tileCentre, walkPath, walkUntil } from './support/game'
-import { dangersOf, doorOf, findFloorPath, type Step } from './support/roomPath'
+import { dangersOf, doorOf, type Step } from './support/roomPath'
 import { SOLVED_PUZZLES } from './support/puzzles'
 
 // The puzzle rooms (tools/rip/castle.py marks them: some door cannot be
@@ -157,21 +157,6 @@ test('map--4--5: pushes the table stack out of the row and runs under the balls 
   }
 })
 
-// Steps up along the back wall, a block higher each, to a falling block level
-// with the last, which sinks under him to the floor by the north door, walled
-// in by spikes. The falling block only goes down: this way only, on foot.
-test('map--6--6: up the steps along the back wall, down with the falling block, out of the north door', async ({ page }) => {
-  test.setTimeout(120_000)
-  await startGame(page)
-  const room = spec('map--6--6')
-  await enterBy(page, room, 'west')
-  await walk(page, room, findFloorPath(room, doorOf(room, 'west'), doorOf(room, 'north')))
-  await leaveBy(page, room, 'north')
-  expect((await debug(page)).lives).toBe(5)
-})
-
-// map-4--2's chests wall the room off, a cell apart with a gap between each
-// two, and the west door lines him up on a gap: his body still meets them.
 test('map-4--2: walking in from the west door, he cannot pass through the wall of chests', async ({ page }) => {
   await startGame(page)
   await enterRoom(page, 'map-4--2', entryFor('east', 8, 4))

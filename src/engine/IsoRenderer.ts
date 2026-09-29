@@ -1,6 +1,7 @@
 import { projectToScreen, isoDepth, filmationConfig, roomScreenOffset, type IsoConfig } from './IsoProjection'
 import type { Grid } from './Grid'
 import { snapToInkAndPaper } from './InkAndPaper'
+import { drawOrder, type Box } from './DrawOrder'
 import { backdropScreenPlace, backdropWorldPlace, type BackdropPart } from './Backdrop'
 import { columnSegments, type DecorKind } from './ColumnLooks'
 
@@ -21,7 +22,14 @@ export interface Renderable {
   // Sort key uses the cell's NEAR corner (max x/z) so taller/closer things paint last.
   draw: (ctx: CanvasRenderingContext2D, cfg: IsoConfig) => void
   depth: number
+  // The room space it fills, for drawing it in turn (see DrawOrder).
+  box: Box
 }
+
+// How much room space a sprite fills when nothing says: about his size.
+const ACTOR_SIZE = { x: 0.8, y: 2, z: 0.8 }
+// How high the original's walls stand: 44 pixels, 12 a block.
+const WALL_HEIGHT = 44 / 12
 
 export interface Shades {
   top: string
@@ -124,19 +132,20 @@ export class IsoRenderer {
 
     // Dynamic visuals (character, items, enemies, set-pieces) at their world depth.
     for (const d of dynamics) {
+      const size = d.size ?? ACTOR_SIZE
       items.push({
         gx: d.x / TILE,
         gz: d.z / TILE,
         height: 0,
         depth: d.depth ?? isoDepth(d.x, d.y, d.z),
+        box: { x0: d.x - size.x / 2, x1: d.x + size.x / 2, z0: d.z - size.z / 2, z1: d.z + size.z / 2, y0: d.y, y1: d.y + size.y },
         draw: (c, cfg) => d.draw(c, cfg, shades),
       })
     }
 
-    items.sort((a, b) => a.depth - b.depth)
     const shift = roomScreenOffset(room.grid.width, room.grid.depth, this.cfg)
     const cfg = { ...this.cfg, originX: this.cfg.originX + shift.dx, originY: this.cfg.originY + shift.dy }
-    for (const it of items) it.draw(ctx, cfg)
+    for (const it of drawOrder(items)) it.draw(ctx, cfg)
     this.snapToRoomInk(room.tint)
   }
 
@@ -152,7 +161,7 @@ export class IsoRenderer {
     const cx = (gx + 0.5) * TILE
     const cz = (gz + 0.5) * TILE
     const draw = { image: sprite, frameX: 0, frameW: sprite.width, frameH: sprite.height, scale: 1, flip: false, x: cx, y: level, z: cz, drop: BLOCK_DRAWN_LOWER }
-    return { gx, gz, height: level + 1, depth: isoDepth(cx, level, cz), draw: (ctx, cfg) => blitSprite(ctx, cfg, draw) }
+    return { gx, gz, height: level + 1, depth: isoDepth(cx, level, cz), box: cellBox(gx, gz, level, level + 1), draw: (ctx, cfg) => blitSprite(ctx, cfg, draw) }
   }
 
   private cube(gx: number, gz: number, bottom: number, top: number, shades: Shades): Renderable {
@@ -168,6 +177,7 @@ export class IsoRenderer {
       gz,
       height: top,
       depth: isoDepth(cx, bottom, cz),
+      box: cellBox(gx, gz, bottom, top),
       draw: (ctx, cfg) => drawIsoCube(ctx, cfg, gx, gz, bottom, top, shades),
     }
   }
@@ -183,6 +193,8 @@ export interface Dynamic {
   // Optional explicit sort key — for a set-piece resting on a multi-cell platform
   // that would otherwise sort behind it. Defaults to isoDepth(x, y, z).
   depth?: number
+  // The room space it fills, centred on x and z, up from y; about his size if not given.
+  size?: { x: number; y: number; z: number }
   draw: (ctx: CanvasRenderingContext2D, cfg: IsoConfig, shades: Shades) => void
 }
 
@@ -202,6 +214,10 @@ export interface SpriteDraw {
 }
 
 // Build a Dynamic that blits a sprite frame anchored at its feet (world point).
+function cellBox(gx: number, gz: number, bottom: number, top: number): Box {
+  return { x0: gx * TILE, x1: (gx + 1) * TILE, z0: gz * TILE, z1: (gz + 1) * TILE, y0: bottom, y1: top }
+}
+
 // Drawn at its place on the whole screen, which a narrow room's shift leaves alone.
 function backdropItem(part: BackdropPart, sprite: HTMLImageElement, width: number, depth: number): Renderable {
   const at = backdropWorldPlace(part, width, depth)
@@ -211,6 +227,8 @@ function backdropItem(part: BackdropPart, sprite: HTMLImageElement, width: numbe
     gz: at.z / TILE,
     height: at.y,
     depth: isoDepth(at.x, at.y, at.z),
+    // A wall stands at its place, as thin as a line: behind the room, or in front of it.
+    box: { x0: at.x, x1: at.x, z0: at.z, z1: at.z, y0: at.y, y1: at.y + WALL_HEIGHT },
     draw: (ctx) => {
       if (!part.flip) return ctx.drawImage(sprite, left, top)
       ctx.save()
@@ -228,7 +246,7 @@ export function blockColumnDynamic(block: CanvasImageSource & { width: number; h
   const levels: number[] = []
   for (let y = bottom; y < top - 1e-6; y++) levels.push(y)
   const at = (y: number): SpriteDraw => ({ image: block, frameX: 0, frameW: block.width, frameH: block.height, scale: 1, flip: false, x, y, z, drop: BLOCK_DRAWN_LOWER })
-  return { x, y: bottom, z, draw: (ctx, cfg) => { for (const y of levels) blitSprite(ctx, cfg, at(y)) } }
+  return { x, y: bottom, z, size: { x: TILE, y: top - bottom, z: TILE }, draw: (ctx, cfg) => { for (const y of levels) blitSprite(ctx, cfg, at(y)) } }
 }
 
 export function spriteDynamic(s: SpriteDraw): Dynamic {

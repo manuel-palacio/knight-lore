@@ -109,7 +109,7 @@ export const START_ROOMS = ['map-7--6', 'map--4--4', 'map--5-3', 'map-7-0']
 export const ROOM_SPECS: RoomSpec[] = [
   {
     id: 'map--8--8', tint: 'purple',
-    exits: [{ direction: 'south', target: 'map--8--7' }, { direction: 'east', target: 'map--7--8' }],
+    exits: [{ direction: 'north', target: 'map--8--7' }, { direction: 'east', target: 'map--7--8' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 0, z: 5, height: 3 }, { x: 1, z: 5, height: 3 }, { x: 2, z: 6, height: 3 }, { x: 2, z: 7, height: 3 }],
     floatingBlocks: [{ x: 0, z: 6, bottom: 3 }, { x: 0, z: 7, bottom: 3 }, { x: 1, z: 7, bottom: 3 }],
@@ -129,7 +129,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--6--8', tint: 'purple',
-    exits: [{ direction: 'south', target: 'map--6--7' }, { direction: 'east', target: 'map--5--8' }, { direction: 'west', target: 'map--7--8' }],
+    exits: [{ direction: 'north', target: 'map--6--7' }, { direction: 'east', target: 'map--5--8' }, { direction: 'west', target: 'map--7--8' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
     backdrop: [{ graphic: 2, x: 141, y: 196, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 3, x: 115, y: 196, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 2, x: 196, y: 115, z: 128, flip: false, dx: -7, dy: -3 }, { graphic: 3, x: 196, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 2, x: 59, y: 115, z: 128, flip: false, dx: -7, dy: -3 }, { graphic: 3, x: 59, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 13, x: 63, y: 184, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 14, x: 71, y: 192, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 73, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 192, z: 128, flip: true, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 73, z: 172, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 192, z: 172, flip: true, dx: -8, dy: -4 }, { graphic: 10, x: 92, y: 192, z: 128, flip: true, dx: -20, dy: -1 }, { graphic: 11, x: 63, y: 92, z: 152, flip: false, dx: -12, dy: -2 }, { graphic: 12, x: 63, y: 160, z: 152, flip: false, dx: -8, dy: -4 }, { graphic: 11, x: 164, y: 192, z: 152, flip: true, dx: -12, dy: -2 }, { graphic: 10, x: 63, y: 109, z: 177, flip: false, dx: -20, dy: -1 }, { graphic: 12, x: 96, y: 192, z: 160, flip: true, dx: -8, dy: -4 }, { graphic: 10, x: 144, y: 192, z: 176, flip: true, dx: -20, dy: -1 }],
@@ -147,7 +147,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--4--8', tint: 'cyan',
-    exits: [{ direction: 'south', target: 'map--4--7' }, { direction: 'west', target: 'map--5--8' }],
+    exits: [{ direction: 'north', target: 'map--4--7' }, { direction: 'west', target: 'map--5--8' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
     floatingBlocks: [{ x: 3, z: 3, bottom: 1 }, { x: 3, z: 4, bottom: 2 }, { x: 3, z: 4, bottom: 3 }],
@@ -158,7 +158,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-0--8', tint: 'purple',
-    exits: [{ direction: 'south', target: 'map-0--7' }, { direction: 'east', target: 'map-1--8' }],
+    exits: [{ direction: 'north', target: 'map-0--7' }, { direction: 'east', target: 'map-1--8' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 3, z: 4, height: 4 }],
     decor: [{ x: 3, z: 4, height: 0, kind: 'hedge' }, { x: 3, z: 4, height: 1, kind: 'hedge' }, { x: 3, z: 4, height: 2, kind: 'hedge' }, { x: 3, z: 4, height: 3, kind: 'hedge' }],
@@ -206,7 +206,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-5--8', tint: 'green',
-    exits: [{ direction: 'south', target: 'map-5--7' }, { direction: 'east', target: 'map-6--8' }, { direction: 'west', target: 'map-4--8' }],
+    exits: [{ direction: 'north', target: 'map-5--7' }, { direction: 'east', target: 'map-6--8' }, { direction: 'west', target: 'map-4--8' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
     backdrop: [{ graphic: 2, x: 141, y: 196, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 3, x: 115, y: 196, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 2, x: 196, y: 115, z: 128, flip: false, dx: -7, dy: -3 }, { graphic: 3, x: 196, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 2, x: 59, y: 115, z: 128, flip: false, dx: -7, dy: -3 }, { graphic: 3, x: 59, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 13, x: 63, y: 184, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 14, x: 71, y: 192, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 73, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 192, z: 128, flip: true, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 73, z: 172, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 192, z: 172, flip: true, dx: -8, dy: -4 }, { graphic: 10, x: 92, y: 192, z: 128, flip: true, dx: -20, dy: -1 }, { graphic: 11, x: 63, y: 92, z: 152, flip: false, dx: -12, dy: -2 }, { graphic: 12, x: 63, y: 160, z: 152, flip: false, dx: -8, dy: -4 }, { graphic: 11, x: 164, y: 192, z: 152, flip: true, dx: -12, dy: -2 }, { graphic: 10, x: 63, y: 109, z: 177, flip: false, dx: -20, dy: -1 }, { graphic: 12, x: 96, y: 192, z: 160, flip: true, dx: -8, dy: -4 }, { graphic: 10, x: 144, y: 192, z: 176, flip: true, dx: -20, dy: -1 }],
@@ -221,7 +221,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-7--8', tint: 'green',
-    exits: [{ direction: 'south', target: 'map-7--7' }, { direction: 'west', target: 'map-6--8' }],
+    exits: [{ direction: 'north', target: 'map-7--7' }, { direction: 'west', target: 'map-6--8' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 3, z: 3, height: 2 }, { x: 3, z: 5, height: 2 }, { x: 4, z: 4, height: 1 }, { x: 5, z: 3, height: 2 }, { x: 5, z: 5, height: 2 }],
     floatingBlocks: [{ x: 3, z: 4, bottom: 1 }, { x: 4, z: 3, bottom: 1 }, { x: 4, z: 5, bottom: 1 }, { x: 5, z: 4, bottom: 1 }],
@@ -232,7 +232,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--8--7', tint: 'cyan', width: 4,
-    exits: [{ direction: 'south', target: 'map--8--6' }, { direction: 'north', target: 'map--8--8' }],
+    exits: [{ direction: 'north', target: 'map--8--6' }, { direction: 'south', target: 'map--8--8' }],
     spawn: { x: 2, z: 0 },
     platforms: [{ x: 0, z: 6, height: 1 }, { x: 1, z: 6, height: 1 }, { x: 2, z: 6, height: 1 }, { x: 3, z: 7, height: 1 }],
     floatingBlocks: [{ x: 1, z: 7, bottom: 3 }, { x: 2, z: 7, bottom: 3 }],
@@ -243,7 +243,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--6--7', tint: 'green', width: 4,
-    exits: [{ direction: 'south', target: 'map--6--6' }, { direction: 'north', target: 'map--6--8' }],
+    exits: [{ direction: 'north', target: 'map--6--6' }, { direction: 'south', target: 'map--6--8' }],
     spawn: { x: 2, z: 0 },
     platforms: [],
     spikedBalls: [{ x: 0, z: 0, height: 3 }, { x: 3, z: 0, height: 3 }, { x: 1, z: 1, height: 3 }, { x: 2, z: 1, height: 3 }, { x: 1, z: 2, height: 3 }, { x: 2, z: 2, height: 3 }, { x: 1, z: 3, height: 3 }, { x: 2, z: 3, height: 3 }, { x: 1, z: 4, height: 3 }, { x: 2, z: 4, height: 3 }, { x: 1, z: 5, height: 3 }, { x: 2, z: 5, height: 3 }, { x: 1, z: 6, height: 3 }, { x: 2, z: 6, height: 3 }, { x: 0, z: 7, height: 3 }, { x: 3, z: 7, height: 3 }],
@@ -251,7 +251,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--4--7', tint: 'yellow', width: 4,
-    exits: [{ direction: 'south', target: 'map--4--6' }, { direction: 'north', target: 'map--4--8' }],
+    exits: [{ direction: 'north', target: 'map--4--6' }, { direction: 'south', target: 'map--4--8' }],
     spawn: { x: 2, z: 0 },
     platforms: [],
     floatingBlocks: [{ x: 1, z: 7, bottom: 3 }, { x: 2, z: 7, bottom: 3 }],
@@ -261,7 +261,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-0--7', tint: 'cyan', width: 4,
-    exits: [{ direction: 'south', target: 'map-0--6' }, { direction: 'north', target: 'map-0--8' }],
+    exits: [{ direction: 'north', target: 'map-0--6' }, { direction: 'south', target: 'map-0--8' }],
     spawn: { x: 2, z: 0 },
     platforms: [],
     spikes: [{ x: 0, z: 2 }, { x: 1, z: 2 }, { x: 2, z: 2 }, { x: 3, z: 2 }, { x: 0, z: 5 }, { x: 1, z: 5 }, { x: 2, z: 5 }, { x: 3, z: 5 }],
@@ -270,7 +270,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-5--7', tint: 'yellow', width: 4,
-    exits: [{ direction: 'south', target: 'map-5--6' }, { direction: 'north', target: 'map-5--8' }],
+    exits: [{ direction: 'north', target: 'map-5--6' }, { direction: 'south', target: 'map-5--8' }],
     spawn: { x: 2, z: 0 },
     platforms: [{ x: 2, z: 1, height: 1 }, { x: 2, z: 2, height: 2 }, { x: 2, z: 3, height: 2 }, { x: 2, z: 6, height: 4 }],
     floatingBlocks: [{ x: 1, z: 7, bottom: 3 }, { x: 2, z: 7, bottom: 3 }],
@@ -280,7 +280,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-7--7', tint: 'purple', width: 4,
-    exits: [{ direction: 'south', target: 'map-7--6' }, { direction: 'north', target: 'map-7--8' }],
+    exits: [{ direction: 'north', target: 'map-7--6' }, { direction: 'south', target: 'map-7--8' }],
     spawn: { x: 2, z: 0 },
     platforms: [{ x: 0, z: 2, height: 1 }, { x: 0, z: 5, height: 1 }, { x: 3, z: 2, height: 1 }, { x: 3, z: 5, height: 1 }],
     spikes: [{ x: 0, z: 5, height: 1 }, { x: 1, z: 5 }, { x: 2, z: 5 }, { x: 3, z: 5, height: 1 }, { x: 0, z: 2, height: 1 }, { x: 1, z: 2 }, { x: 2, z: 2 }, { x: 3, z: 2, height: 1 }],
@@ -289,7 +289,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--8--6', tint: 'purple',
-    exits: [{ direction: 'south', target: 'map--8--5' }, { direction: 'east', target: 'map--7--6' }, { direction: 'north', target: 'map--8--7' }],
+    exits: [{ direction: 'north', target: 'map--8--5' }, { direction: 'east', target: 'map--7--6' }, { direction: 'south', target: 'map--8--7' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 0, z: 4, height: 1 }],
     floatingBlocks: [{ x: 3, z: 7, bottom: 3 }, { x: 4, z: 7, bottom: 3 }],
@@ -310,7 +310,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--6--6', tint: 'purple',
-    exits: [{ direction: 'north', target: 'map--6--7' }, { direction: 'west', target: 'map--7--6' }],
+    exits: [{ direction: 'south', target: 'map--6--7' }, { direction: 'west', target: 'map--7--6' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 0, z: 1, height: 1 }],
     floatingBlocks: [{ x: 0, z: 0, bottom: 1 }, { x: 1, z: 0, bottom: 2 }, { x: 2, z: 0, bottom: 3 }],
@@ -318,11 +318,10 @@ export const ROOM_SPECS: RoomSpec[] = [
     fallingBlocks: [{ x: 3, z: 0, height: 4 }],
     charmSpots: [{ spot: 13, x: 4, z: 0, height: 0 }],
     backdrop: [{ graphic: 2, x: 141, y: 59, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 3, x: 115, y: 59, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 2, x: 59, y: 115, z: 128, flip: false, dx: -7, dy: -3 }, { graphic: 3, x: 59, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 13, x: 63, y: 184, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 14, x: 71, y: 192, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 73, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 192, z: 128, flip: true, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 73, z: 172, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 192, z: 172, flip: true, dx: -8, dy: -4 }, { graphic: 10, x: 92, y: 192, z: 128, flip: true, dx: -20, dy: -1 }, { graphic: 11, x: 63, y: 92, z: 152, flip: false, dx: -12, dy: -2 }, { graphic: 12, x: 63, y: 160, z: 152, flip: false, dx: -8, dy: -4 }, { graphic: 11, x: 164, y: 192, z: 152, flip: true, dx: -12, dy: -2 }, { graphic: 10, x: 63, y: 109, z: 177, flip: false, dx: -20, dy: -1 }, { graphic: 12, x: 96, y: 192, z: 160, flip: true, dx: -8, dy: -4 }, { graphic: 10, x: 144, y: 192, z: 176, flip: true, dx: -20, dy: -1 }],
-    puzzle: true,
   },
   {
     id: 'map--4--6', tint: 'purple',
-    exits: [{ direction: 'south', target: 'map--4--5' }, { direction: 'north', target: 'map--4--7' }],
+    exits: [{ direction: 'north', target: 'map--4--5' }, { direction: 'south', target: 'map--4--7' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
     spikes: [{ x: 2, z: 7 }, { x: 5, z: 7 }, { x: 2, z: 6 }, { x: 7, z: 6 }, { x: 0, z: 5 }, { x: 5, z: 5 }, { x: 1, z: 4 }, { x: 3, z: 4 }, { x: 4, z: 4 }, { x: 7, z: 4 }, { x: 0, z: 2 }, { x: 2, z: 2 }, { x: 4, z: 2 }, { x: 6, z: 2 }, { x: 2, z: 0 }, { x: 5, z: 0 }],
@@ -330,7 +329,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--1--6', tint: 'yellow',
-    exits: [{ direction: 'south', target: 'map--1--5' }],
+    exits: [{ direction: 'north', target: 'map--1--5' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 3, z: 3, height: 1 }, { x: 3, z: 4, height: 1 }, { x: 4, z: 3, height: 1 }, { x: 4, z: 4, height: 1 }],
     ghosts: [{ x: 2, z: 5 }, { x: 5, z: 5 }, { x: 2, z: 2 }, { x: 5, z: 2 }],
@@ -339,7 +338,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-0--6', tint: 'yellow', width: 4,
-    exits: [{ direction: 'south', target: 'map-0--5' }, { direction: 'north', target: 'map-0--7' }],
+    exits: [{ direction: 'north', target: 'map-0--5' }, { direction: 'south', target: 'map-0--7' }],
     spawn: { x: 2, z: 0 },
     platforms: [],
     floatingBlocks: [{ x: 1, z: 7, bottom: 3 }, { x: 2, z: 7, bottom: 3 }],
@@ -349,7 +348,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-5--6', tint: 'green',
-    exits: [{ direction: 'east', target: 'map-6--6' }, { direction: 'north', target: 'map-5--7' }],
+    exits: [{ direction: 'east', target: 'map-6--6' }, { direction: 'south', target: 'map-5--7' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 3, z: 3, height: 3 }, { x: 3, z: 4, height: 2 }, { x: 3, z: 5, height: 1 }],
     floatingBlocks: [{ x: 7, z: 3, bottom: 3 }, { x: 7, z: 4, bottom: 3 }],
@@ -368,14 +367,14 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-7--6', tint: 'green',
-    exits: [{ direction: 'south', target: 'map-7--5' }, { direction: 'north', target: 'map-7--7' }, { direction: 'west', target: 'map-6--6' }],
+    exits: [{ direction: 'north', target: 'map-7--5' }, { direction: 'south', target: 'map-7--7' }, { direction: 'west', target: 'map-6--6' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
     backdrop: [{ graphic: 2, x: 141, y: 196, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 3, x: 115, y: 196, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 2, x: 141, y: 59, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 3, x: 115, y: 59, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 2, x: 59, y: 115, z: 128, flip: false, dx: -7, dy: -3 }, { graphic: 3, x: 59, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 13, x: 63, y: 184, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 14, x: 71, y: 192, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 73, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 192, z: 128, flip: true, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 73, z: 172, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 192, z: 172, flip: true, dx: -8, dy: -4 }, { graphic: 10, x: 92, y: 192, z: 128, flip: true, dx: -20, dy: -1 }, { graphic: 11, x: 63, y: 92, z: 152, flip: false, dx: -12, dy: -2 }, { graphic: 12, x: 63, y: 160, z: 152, flip: false, dx: -8, dy: -4 }, { graphic: 11, x: 164, y: 192, z: 152, flip: true, dx: -12, dy: -2 }, { graphic: 10, x: 63, y: 109, z: 177, flip: false, dx: -20, dy: -1 }, { graphic: 12, x: 96, y: 192, z: 160, flip: true, dx: -8, dy: -4 }, { graphic: 10, x: 144, y: 192, z: 176, flip: true, dx: -20, dy: -1 }],
   },
   {
     id: 'map--8--5', tint: 'cyan', width: 4,
-    exits: [{ direction: 'south', target: 'map--8--4' }, { direction: 'north', target: 'map--8--6' }],
+    exits: [{ direction: 'north', target: 'map--8--4' }, { direction: 'south', target: 'map--8--6' }],
     spawn: { x: 2, z: 0 },
     platforms: [],
     spikes: [{ x: 1, z: 1 }, { x: 2, z: 1 }, { x: 0, z: 2 }, { x: 3, z: 2 }, { x: 0, z: 3 }, { x: 3, z: 3 }, { x: 0, z: 4 }, { x: 3, z: 4 }, { x: 0, z: 5 }, { x: 3, z: 5 }, { x: 1, z: 6 }, { x: 2, z: 6 }],
@@ -384,7 +383,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--4--5', tint: 'yellow', width: 4,
-    exits: [{ direction: 'south', target: 'map--4--4' }, { direction: 'north', target: 'map--4--6' }],
+    exits: [{ direction: 'north', target: 'map--4--4' }, { direction: 'south', target: 'map--4--6' }],
     spawn: { x: 2, z: 0 },
     platforms: [],
     boxes: [{ x: 0, z: 4, height: 0, kind: 'table' }, { x: 1, z: 4, height: 0, kind: 'table' }, { x: 2, z: 4, height: 0, kind: 'table' }, { x: 3, z: 4, height: 0, kind: 'table' }, { x: 0, z: 4, height: 1, kind: 'table' }, { x: 1, z: 4, height: 1, kind: 'table' }, { x: 2, z: 4, height: 1, kind: 'table' }, { x: 3, z: 4, height: 1, kind: 'table' }],
@@ -394,7 +393,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--1--5', tint: 'cyan', width: 4,
-    exits: [{ direction: 'south', target: 'map--1--4' }, { direction: 'north', target: 'map--1--6' }],
+    exits: [{ direction: 'north', target: 'map--1--4' }, { direction: 'south', target: 'map--1--6' }],
     spawn: { x: 2, z: 0 },
     platforms: [{ x: 2, z: 2, height: 1 }],
     movingPlatforms: [{ from: { x: 2, z: 4.5 }, to: { x: 2, z: 5.5 }, height: 1 }],
@@ -403,7 +402,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-0--5', tint: 'purple', width: 4,
-    exits: [{ direction: 'south', target: 'map-0--4' }, { direction: 'north', target: 'map-0--6' }],
+    exits: [{ direction: 'north', target: 'map-0--4' }, { direction: 'south', target: 'map-0--6' }],
     spawn: { x: 2, z: 0 },
     platforms: [],
     floatingBlocks: [{ x: 0, z: 0, bottom: 1 }, { x: 0, z: 1, bottom: 3 }, { x: 0, z: 4, bottom: 3 }, { x: 0, z: 7, bottom: 3 }, { x: 1, z: 7, bottom: 3 }, { x: 2, z: 7, bottom: 3 }],
@@ -414,7 +413,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-7--5', tint: 'purple',
-    exits: [{ direction: 'south', target: 'map-7--4' }, { direction: 'north', target: 'map-7--6' }],
+    exits: [{ direction: 'north', target: 'map-7--4' }, { direction: 'south', target: 'map-7--6' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 0, z: 4, height: 1 }, { x: 1, z: 4, height: 1 }, { x: 2, z: 4, height: 2 }, { x: 5, z: 4, height: 2 }, { x: 6, z: 4, height: 1 }, { x: 7, z: 4, height: 1 }],
     decor: [{ x: 0, z: 4, height: 0, kind: 'hedge' }, { x: 1, z: 4, height: 0, kind: 'hedge' }, { x: 2, z: 4, height: 0, kind: 'hedge' }, { x: 2, z: 4, height: 1, kind: 'hedge' }, { x: 5, z: 4, height: 0, kind: 'hedge' }, { x: 5, z: 4, height: 1, kind: 'hedge' }, { x: 6, z: 4, height: 0, kind: 'hedge' }, { x: 7, z: 4, height: 0, kind: 'hedge' }],
@@ -424,7 +423,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--8--4', tint: 'yellow',
-    exits: [{ direction: 'east', target: 'map--7--4' }, { direction: 'north', target: 'map--8--5' }],
+    exits: [{ direction: 'east', target: 'map--7--4' }, { direction: 'south', target: 'map--8--5' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 6, z: 7, height: 1 }, { x: 7, z: 0, height: 1 }],
     floatingBlocks: [{ x: 0, z: 0, bottom: 2 }, { x: 3, z: 7, bottom: 3 }, { x: 4, z: 7, bottom: 3 }, { x: 7, z: 3, bottom: 3 }, { x: 7, z: 4, bottom: 3 }],
@@ -464,7 +463,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--4--4', tint: 'green',
-    exits: [{ direction: 'south', target: 'map--4--3' }, { direction: 'east', target: 'map--3--4' }, { direction: 'north', target: 'map--4--5' }, { direction: 'west', target: 'map--5--4' }],
+    exits: [{ direction: 'north', target: 'map--4--3' }, { direction: 'east', target: 'map--3--4' }, { direction: 'south', target: 'map--4--5' }, { direction: 'west', target: 'map--5--4' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
     backdrop: [{ graphic: 2, x: 141, y: 196, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 3, x: 115, y: 196, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 2, x: 196, y: 115, z: 128, flip: false, dx: -7, dy: -3 }, { graphic: 3, x: 196, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 2, x: 141, y: 59, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 3, x: 115, y: 59, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 2, x: 59, y: 115, z: 128, flip: false, dx: -7, dy: -3 }, { graphic: 3, x: 59, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 13, x: 63, y: 184, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 14, x: 71, y: 192, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 73, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 192, z: 128, flip: true, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 73, z: 172, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 192, z: 172, flip: true, dx: -8, dy: -4 }, { graphic: 10, x: 92, y: 192, z: 128, flip: true, dx: -20, dy: -1 }, { graphic: 11, x: 63, y: 92, z: 152, flip: false, dx: -12, dy: -2 }, { graphic: 12, x: 63, y: 160, z: 152, flip: false, dx: -8, dy: -4 }, { graphic: 11, x: 164, y: 192, z: 152, flip: true, dx: -12, dy: -2 }, { graphic: 10, x: 63, y: 109, z: 177, flip: false, dx: -20, dy: -1 }, { graphic: 12, x: 96, y: 192, z: 160, flip: true, dx: -8, dy: -4 }, { graphic: 10, x: 144, y: 192, z: 176, flip: true, dx: -20, dy: -1 }],
@@ -492,14 +491,14 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--1--4', tint: 'purple',
-    exits: [{ direction: 'south', target: 'map--1--3' }, { direction: 'north', target: 'map--1--5' }, { direction: 'west', target: 'map--2--4' }],
+    exits: [{ direction: 'north', target: 'map--1--3' }, { direction: 'south', target: 'map--1--5' }, { direction: 'west', target: 'map--2--4' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
     backdrop: [{ graphic: 2, x: 141, y: 196, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 3, x: 115, y: 196, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 2, x: 141, y: 59, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 3, x: 115, y: 59, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 2, x: 59, y: 115, z: 128, flip: false, dx: -7, dy: -3 }, { graphic: 3, x: 59, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 13, x: 63, y: 184, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 14, x: 71, y: 192, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 73, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 192, z: 128, flip: true, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 73, z: 172, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 192, z: 172, flip: true, dx: -8, dy: -4 }, { graphic: 10, x: 92, y: 192, z: 128, flip: true, dx: -20, dy: -1 }, { graphic: 11, x: 63, y: 92, z: 152, flip: false, dx: -12, dy: -2 }, { graphic: 12, x: 63, y: 160, z: 152, flip: false, dx: -8, dy: -4 }, { graphic: 11, x: 164, y: 192, z: 152, flip: true, dx: -12, dy: -2 }, { graphic: 10, x: 63, y: 109, z: 177, flip: false, dx: -20, dy: -1 }, { graphic: 12, x: 96, y: 192, z: 160, flip: true, dx: -8, dy: -4 }, { graphic: 10, x: 144, y: 192, z: 176, flip: true, dx: -20, dy: -1 }],
   },
   {
     id: 'map-0--4', tint: 'yellow', width: 4,
-    exits: [{ direction: 'south', target: 'map-0--3' }, { direction: 'north', target: 'map-0--5' }],
+    exits: [{ direction: 'north', target: 'map-0--3' }, { direction: 'south', target: 'map-0--5' }],
     spawn: { x: 2, z: 0 },
     platforms: [{ x: 2, z: 2, height: 3 }, { x: 3, z: 2, height: 2 }, { x: 3, z: 3, height: 1 }],
     floatingBlocks: [{ x: 1, z: 7, bottom: 3 }, { x: 2, z: 6, bottom: 3 }, { x: 2, z: 7, bottom: 3 }],
@@ -509,7 +508,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-7--4', tint: 'yellow',
-    exits: [{ direction: 'south', target: 'map-7--3' }, { direction: 'north', target: 'map-7--5' }],
+    exits: [{ direction: 'north', target: 'map-7--3' }, { direction: 'south', target: 'map-7--5' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
     spikedBalls: [{ x: 0, z: 4, height: 7, waits: true }, { x: 1, z: 4, height: 7, waits: true }, { x: 2, z: 4, height: 7, waits: true }, { x: 3, z: 4, height: 7, waits: true }, { x: 4, z: 4, height: 7, waits: true }, { x: 5, z: 4, height: 7, waits: true }, { x: 6, z: 4, height: 7, waits: true }, { x: 7, z: 4, height: 7, waits: true }, { x: 3, z: 7, height: 7, waits: true }, { x: 4, z: 7, height: 7, waits: true }, { x: 3, z: 0, height: 7, waits: true }, { x: 4, z: 0, height: 7, waits: true }],
@@ -517,7 +516,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--4--3', tint: 'cyan', width: 4,
-    exits: [{ direction: 'south', target: 'map--4--2' }, { direction: 'north', target: 'map--4--4' }],
+    exits: [{ direction: 'north', target: 'map--4--2' }, { direction: 'south', target: 'map--4--4' }],
     spawn: { x: 2, z: 0 },
     platforms: [{ x: 1, z: 1, height: 1 }, { x: 2, z: 6, height: 1 }],
     spikes: [{ x: 0, z: 4 }, { x: 0, z: 4, height: 1 }, { x: 3, z: 3 }, { x: 3, z: 3, height: 1 }],
@@ -527,7 +526,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--1--3', tint: 'cyan', width: 4,
-    exits: [{ direction: 'south', target: 'map--1--2' }, { direction: 'north', target: 'map--1--4' }],
+    exits: [{ direction: 'north', target: 'map--1--2' }, { direction: 'south', target: 'map--1--4' }],
     spawn: { x: 2, z: 0 },
     platforms: [{ x: 0, z: 5, height: 3 }, { x: 1, z: 4, height: 3 }, { x: 2, z: 3, height: 3 }, { x: 3, z: 2, height: 3 }],
     backdrop: [{ graphic: 2, x: 141, y: 196, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 3, x: 115, y: 196, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 2, x: 141, y: 59, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 3, x: 115, y: 59, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 13, x: 95, y: 184, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 14, x: 103, y: 192, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 95, y: 72, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 157, y: 192, z: 128, flip: true, dx: -8, dy: -4 }, { graphic: 13, x: 95, y: 184, z: 168, flip: false, dx: -8, dy: -4 }, { graphic: 14, x: 103, y: 192, z: 168, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 95, y: 72, z: 172, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 157, y: 192, z: 172, flip: true, dx: -8, dy: -4 }, { graphic: 15, x: 95, y: 72, z: 208, flip: false, dx: -8, dy: -4 }, { graphic: 10, x: 95, y: 144, z: 128, flip: false, dx: -20, dy: -1 }, { graphic: 10, x: 132, y: 192, z: 176, flip: true, dx: -20, dy: -1 }, { graphic: 11, x: 95, y: 96, z: 144, flip: false, dx: -12, dy: -2 }, { graphic: 10, x: 95, y: 104, z: 184, flip: false, dx: -20, dy: -1 }, { graphic: 12, x: 95, y: 160, z: 176, flip: false, dx: -8, dy: -4 }],
@@ -535,7 +534,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-0--3', tint: 'cyan', width: 4,
-    exits: [{ direction: 'south', target: 'map-0--2' }, { direction: 'north', target: 'map-0--4' }],
+    exits: [{ direction: 'north', target: 'map-0--2' }, { direction: 'south', target: 'map-0--4' }],
     spawn: { x: 2, z: 0 },
     platforms: [],
     floatingBlocks: [{ x: 3, z: 4, bottom: 1 }],
@@ -544,7 +543,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-6--3', tint: 'yellow',
-    exits: [{ direction: 'south', target: 'map-6--2' }, { direction: 'east', target: 'map-7--3' }],
+    exits: [{ direction: 'north', target: 'map-6--2' }, { direction: 'east', target: 'map-7--3' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 1, z: 2, height: 1 }, { x: 1, z: 5, height: 1 }, { x: 2, z: 1, height: 1 }, { x: 2, z: 6, height: 1 }, { x: 5, z: 1, height: 1 }, { x: 5, z: 6, height: 1 }, { x: 6, z: 2, height: 1 }, { x: 6, z: 5, height: 1 }],
     decor: [{ x: 2, z: 1, height: 0, kind: 'hedge' }, { x: 5, z: 1, height: 0, kind: 'hedge' }, { x: 1, z: 2, height: 0, kind: 'hedge' }, { x: 6, z: 2, height: 0, kind: 'hedge' }, { x: 1, z: 5, height: 0, kind: 'hedge' }, { x: 6, z: 5, height: 0, kind: 'hedge' }, { x: 2, z: 6, height: 0, kind: 'hedge' }, { x: 5, z: 6, height: 0, kind: 'hedge' }],
@@ -553,14 +552,14 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-7--3', tint: 'purple',
-    exits: [{ direction: 'south', target: 'map-7--2' }, { direction: 'north', target: 'map-7--4' }, { direction: 'west', target: 'map-6--3' }],
+    exits: [{ direction: 'north', target: 'map-7--2' }, { direction: 'south', target: 'map-7--4' }, { direction: 'west', target: 'map-6--3' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
     backdrop: [{ graphic: 4, x: 141, y: 196, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 5, x: 115, y: 196, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 4, x: 141, y: 59, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 5, x: 115, y: 59, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 4, x: 59, y: 115, z: 128, flip: false, dx: 1, dy: -3 }, { graphic: 5, x: 59, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 128, x: 63, y: 73, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 129, x: 63, y: 88, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 130, x: 63, y: 104, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 128, x: 63, y: 152, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 129, x: 63, y: 168, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 130, x: 63, y: 184, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 128, x: 72, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 129, x: 88, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 130, x: 104, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 128, x: 152, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 129, x: 168, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 130, x: 184, y: 192, z: 128, flip: true, dx: -8, dy: -2 }],
   },
   {
     id: 'map--4--2', tint: 'yellow', width: 4,
-    exits: [{ direction: 'south', target: 'map--4--1' }, { direction: 'north', target: 'map--4--3' }],
+    exits: [{ direction: 'north', target: 'map--4--1' }, { direction: 'south', target: 'map--4--3' }],
     spawn: { x: 2, z: 0 },
     platforms: [{ x: 1, z: 2, height: 1 }, { x: 1, z: 3, height: 1 }, { x: 1, z: 6, height: 1 }, { x: 1, z: 7, height: 1 }, { x: 2, z: 2, height: 1 }, { x: 2, z: 3, height: 1 }, { x: 2, z: 6, height: 1 }],
     boxes: [{ x: 1, z: 3, height: 1, kind: 'chest' }],
@@ -568,7 +567,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--1--2', tint: 'green', width: 4,
-    exits: [{ direction: 'south', target: 'map--1--1' }, { direction: 'north', target: 'map--1--3' }],
+    exits: [{ direction: 'north', target: 'map--1--1' }, { direction: 'south', target: 'map--1--3' }],
     spawn: { x: 2, z: 0 },
     platforms: [{ x: 0, z: 2, height: 1 }, { x: 3, z: 2, height: 1 }],
     spikes: [{ x: 0, z: 2, height: 1 }, { x: 3, z: 2, height: 1 }, { x: 0, z: 4 }, { x: 3, z: 4 }],
@@ -578,7 +577,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-0--2', tint: 'purple', width: 4,
-    exits: [{ direction: 'south', target: 'map-0--1' }, { direction: 'north', target: 'map-0--3' }],
+    exits: [{ direction: 'north', target: 'map-0--1' }, { direction: 'south', target: 'map-0--3' }],
     spawn: { x: 2, z: 0 },
     platforms: [{ x: 0, z: 0, height: 4 }, { x: 0, z: 1, height: 1 }, { x: 1, z: 1, height: 1 }, { x: 2, z: 1, height: 1 }, { x: 3, z: 0, height: 4 }, { x: 3, z: 1, height: 1 }],
     spikes: [{ x: 0, z: 1, height: 1 }, { x: 3, z: 1, height: 1 }],
@@ -587,7 +586,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-2--2', tint: 'yellow',
-    exits: [{ direction: 'south', target: 'map-2--1' }, { direction: 'east', target: 'map-3--2' }],
+    exits: [{ direction: 'north', target: 'map-2--1' }, { direction: 'east', target: 'map-3--2' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
     backdrop: [{ graphic: 2, x: 141, y: 196, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 3, x: 115, y: 196, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 2, x: 196, y: 115, z: 128, flip: false, dx: -7, dy: -3 }, { graphic: 3, x: 196, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 13, x: 63, y: 184, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 14, x: 71, y: 192, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 73, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 192, z: 128, flip: true, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 73, z: 172, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 192, z: 172, flip: true, dx: -8, dy: -4 }, { graphic: 10, x: 92, y: 192, z: 128, flip: true, dx: -20, dy: -1 }, { graphic: 11, x: 63, y: 92, z: 152, flip: false, dx: -12, dy: -2 }, { graphic: 12, x: 63, y: 160, z: 152, flip: false, dx: -8, dy: -4 }, { graphic: 11, x: 164, y: 192, z: 152, flip: true, dx: -12, dy: -2 }, { graphic: 10, x: 63, y: 109, z: 177, flip: false, dx: -20, dy: -1 }, { graphic: 12, x: 96, y: 192, z: 160, flip: true, dx: -8, dy: -4 }, { graphic: 10, x: 144, y: 192, z: 176, flip: true, dx: -20, dy: -1 }],
@@ -624,14 +623,14 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-6--2', tint: 'purple',
-    exits: [{ direction: 'east', target: 'map-7--2' }, { direction: 'north', target: 'map-6--3' }, { direction: 'west', target: 'map-5--2' }],
+    exits: [{ direction: 'east', target: 'map-7--2' }, { direction: 'south', target: 'map-6--3' }, { direction: 'west', target: 'map-5--2' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
     backdrop: [{ graphic: 4, x: 196, y: 115, z: 128, flip: false, dx: 1, dy: -3 }, { graphic: 5, x: 196, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 4, x: 141, y: 59, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 5, x: 115, y: 59, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 4, x: 59, y: 115, z: 128, flip: false, dx: 1, dy: -3 }, { graphic: 5, x: 59, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 128, x: 63, y: 73, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 129, x: 63, y: 88, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 130, x: 63, y: 104, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 128, x: 63, y: 152, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 129, x: 63, y: 168, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 130, x: 63, y: 184, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 128, x: 72, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 129, x: 88, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 130, x: 104, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 128, x: 152, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 129, x: 168, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 130, x: 184, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 128, x: 120, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 129, x: 136, y: 192, z: 128, flip: true, dx: -8, dy: -2 }],
   },
   {
     id: 'map-7--2', tint: 'yellow',
-    exits: [{ direction: 'north', target: 'map-7--3' }, { direction: 'west', target: 'map-6--2' }],
+    exits: [{ direction: 'south', target: 'map-7--3' }, { direction: 'west', target: 'map-6--2' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 5, z: 2, height: 2 }, { x: 6, z: 2, height: 2 }, { x: 7, z: 2, height: 2 }],
     decor: [{ x: 5, z: 2, height: 0, kind: 'hedge' }, { x: 6, z: 2, height: 0, kind: 'hedge' }, { x: 7, z: 2, height: 0, kind: 'hedge' }, { x: 5, z: 2, height: 1, kind: 'gargoyle' }, { x: 6, z: 2, height: 1, kind: 'gargoyle' }, { x: 7, z: 2, height: 1, kind: 'gargoyle' }],
@@ -641,7 +640,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--4--1', tint: 'green',
-    exits: [{ direction: 'east', target: 'map--3--1' }, { direction: 'north', target: 'map--4--2' }],
+    exits: [{ direction: 'east', target: 'map--3--1' }, { direction: 'south', target: 'map--4--2' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 0, z: 2, height: 2 }, { x: 1, z: 2, height: 2 }, { x: 2, z: 0, height: 2 }, { x: 2, z: 1, height: 2 }],
     spikes: [{ x: 1, z: 0 }, { x: 0, z: 1 }, { x: 1, z: 1 }],
@@ -668,14 +667,14 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--1--1', tint: 'purple',
-    exits: [{ direction: 'south', target: 'map--1-0' }, { direction: 'east', target: 'map-0--1' }, { direction: 'north', target: 'map--1--2' }, { direction: 'west', target: 'map--2--1' }],
+    exits: [{ direction: 'north', target: 'map--1-0' }, { direction: 'east', target: 'map-0--1' }, { direction: 'south', target: 'map--1--2' }, { direction: 'west', target: 'map--2--1' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
     backdrop: [{ graphic: 2, x: 141, y: 196, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 3, x: 115, y: 196, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 2, x: 196, y: 115, z: 128, flip: false, dx: -7, dy: -3 }, { graphic: 3, x: 196, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 2, x: 141, y: 59, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 3, x: 115, y: 59, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 2, x: 59, y: 115, z: 128, flip: false, dx: -7, dy: -3 }, { graphic: 3, x: 59, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 13, x: 63, y: 184, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 14, x: 71, y: 192, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 73, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 192, z: 128, flip: true, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 73, z: 172, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 192, z: 172, flip: true, dx: -8, dy: -4 }, { graphic: 10, x: 92, y: 192, z: 128, flip: true, dx: -20, dy: -1 }, { graphic: 11, x: 63, y: 92, z: 152, flip: false, dx: -12, dy: -2 }, { graphic: 12, x: 63, y: 160, z: 152, flip: false, dx: -8, dy: -4 }, { graphic: 11, x: 164, y: 192, z: 152, flip: true, dx: -12, dy: -2 }, { graphic: 10, x: 63, y: 109, z: 177, flip: false, dx: -20, dy: -1 }, { graphic: 12, x: 96, y: 192, z: 160, flip: true, dx: -8, dy: -4 }, { graphic: 10, x: 144, y: 192, z: 176, flip: true, dx: -20, dy: -1 }],
   },
   {
     id: 'map-0--1', tint: 'green',
-    exits: [{ direction: 'south', target: 'room-001' }, { direction: 'east', target: 'map-1--1' }, { direction: 'north', target: 'map-0--2' }, { direction: 'west', target: 'map--1--1' }],
+    exits: [{ direction: 'north', target: 'room-001' }, { direction: 'east', target: 'map-1--1' }, { direction: 'south', target: 'map-0--2' }, { direction: 'west', target: 'map--1--1' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
     spikes: [{ x: 1, z: 0 }, { x: 7, z: 0 }, { x: 5, z: 1 }, { x: 0, z: 2 }, { x: 4, z: 2 }, { x: 7, z: 2 }, { x: 3, z: 3 }, { x: 5, z: 4 }, { x: 1, z: 5 }, { x: 3, z: 5 }, { x: 2, z: 6 }, { x: 5, z: 6 }, { x: 6, z: 6 }],
@@ -694,7 +693,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-2--1', tint: 'cyan',
-    exits: [{ direction: 'north', target: 'map-2--2' }, { direction: 'west', target: 'map-1--1' }],
+    exits: [{ direction: 'south', target: 'map-2--2' }, { direction: 'west', target: 'map-1--1' }],
     spawn: { x: 3, z: 0 },
     platforms: [{ x: 0, z: 2, height: 1 }],
     floatingBlocks: [{ x: 0, z: 0, bottom: 2 }, { x: 0, z: 1, bottom: 1 }, { x: 1, z: 0, bottom: 2 }, { x: 7, z: 0, bottom: 3 }],
@@ -705,7 +704,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--5-0', tint: 'yellow',
-    exits: [{ direction: 'south', target: 'map--5-1' }, { direction: 'east', target: 'map--4-0' }],
+    exits: [{ direction: 'north', target: 'map--5-1' }, { direction: 'east', target: 'map--4-0' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
     backdrop: [{ graphic: 2, x: 141, y: 196, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 3, x: 115, y: 196, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 2, x: 196, y: 115, z: 128, flip: false, dx: -7, dy: -3 }, { graphic: 3, x: 196, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 13, x: 63, y: 184, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 14, x: 71, y: 192, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 73, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 192, z: 128, flip: true, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 73, z: 172, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 192, z: 172, flip: true, dx: -8, dy: -4 }, { graphic: 10, x: 92, y: 192, z: 128, flip: true, dx: -20, dy: -1 }, { graphic: 11, x: 63, y: 92, z: 152, flip: false, dx: -12, dy: -2 }, { graphic: 12, x: 63, y: 160, z: 152, flip: false, dx: -8, dy: -4 }, { graphic: 11, x: 164, y: 192, z: 152, flip: true, dx: -12, dy: -2 }, { graphic: 10, x: 63, y: 109, z: 177, flip: false, dx: -20, dy: -1 }, { graphic: 12, x: 96, y: 192, z: 160, flip: true, dx: -8, dy: -4 }, { graphic: 10, x: 144, y: 192, z: 176, flip: true, dx: -20, dy: -1 }],
@@ -740,7 +739,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--1-0', tint: 'cyan',
-    exits: [{ direction: 'south', target: 'map--1-1' }, { direction: 'east', target: 'room-001' }, { direction: 'north', target: 'map--1--1' }, { direction: 'west', target: 'map--2-0' }],
+    exits: [{ direction: 'north', target: 'map--1-1' }, { direction: 'east', target: 'room-001' }, { direction: 'south', target: 'map--1--1' }, { direction: 'west', target: 'map--2-0' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 2, z: 2, height: 1 }, { x: 2, z: 5, height: 1 }, { x: 5, z: 2, height: 1 }, { x: 5, z: 5, height: 1 }],
     spikes: [{ x: 2, z: 2, height: 1 }, { x: 5, z: 2, height: 1 }, { x: 2, z: 5, height: 1 }, { x: 5, z: 5, height: 1 }],
@@ -750,7 +749,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'room-001', tint: 'yellow',
-    exits: [{ direction: 'south', target: 'map-0-1' }, { direction: 'east', target: 'map-1-0' }, { direction: 'north', target: 'map-0--1' }, { direction: 'west', target: 'map--1-0' }],
+    exits: [{ direction: 'north', target: 'map-0-1' }, { direction: 'east', target: 'map-1-0' }, { direction: 'south', target: 'map-0--1' }, { direction: 'west', target: 'map--1-0' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 1, z: 2, height: 1 }, { x: 1, z: 5, height: 1 }, { x: 2, z: 1, height: 1 }, { x: 2, z: 6, height: 1 }, { x: 5, z: 1, height: 1 }, { x: 5, z: 6, height: 1 }, { x: 6, z: 2, height: 1 }, { x: 6, z: 5, height: 1 }],
     backdrop: [{ graphic: 2, x: 141, y: 196, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 3, x: 115, y: 196, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 2, x: 196, y: 115, z: 128, flip: false, dx: -7, dy: -3 }, { graphic: 3, x: 196, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 2, x: 141, y: 59, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 3, x: 115, y: 59, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 2, x: 59, y: 115, z: 128, flip: false, dx: -7, dy: -3 }, { graphic: 3, x: 59, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 13, x: 63, y: 184, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 14, x: 71, y: 192, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 73, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 192, z: 128, flip: true, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 73, z: 172, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 192, z: 172, flip: true, dx: -8, dy: -4 }, { graphic: 10, x: 92, y: 192, z: 128, flip: true, dx: -20, dy: -1 }, { graphic: 11, x: 63, y: 92, z: 152, flip: false, dx: -12, dy: -2 }, { graphic: 12, x: 63, y: 160, z: 152, flip: false, dx: -8, dy: -4 }, { graphic: 11, x: 164, y: 192, z: 152, flip: true, dx: -12, dy: -2 }, { graphic: 10, x: 63, y: 109, z: 177, flip: false, dx: -20, dy: -1 }, { graphic: 12, x: 96, y: 192, z: 160, flip: true, dx: -8, dy: -4 }, { graphic: 10, x: 144, y: 192, z: 176, flip: true, dx: -20, dy: -1 }],
@@ -776,7 +775,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-3-0', tint: 'cyan',
-    exits: [{ direction: 'south', target: 'map-3-1' }, { direction: 'east', target: 'map-4-0' }, { direction: 'west', target: 'map-2-0' }],
+    exits: [{ direction: 'north', target: 'map-3-1' }, { direction: 'east', target: 'map-4-0' }, { direction: 'west', target: 'map-2-0' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
     backdrop: [{ graphic: 2, x: 141, y: 196, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 3, x: 115, y: 196, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 2, x: 196, y: 115, z: 128, flip: false, dx: -7, dy: -3 }, { graphic: 3, x: 196, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 2, x: 59, y: 115, z: 128, flip: false, dx: -7, dy: -3 }, { graphic: 3, x: 59, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 13, x: 63, y: 184, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 14, x: 71, y: 192, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 73, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 192, z: 128, flip: true, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 73, z: 172, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 192, z: 172, flip: true, dx: -8, dy: -4 }, { graphic: 10, x: 92, y: 192, z: 128, flip: true, dx: -20, dy: -1 }, { graphic: 11, x: 63, y: 92, z: 152, flip: false, dx: -12, dy: -2 }, { graphic: 12, x: 63, y: 160, z: 152, flip: false, dx: -8, dy: -4 }, { graphic: 11, x: 164, y: 192, z: 152, flip: true, dx: -12, dy: -2 }, { graphic: 10, x: 63, y: 109, z: 177, flip: false, dx: -20, dy: -1 }, { graphic: 12, x: 96, y: 192, z: 160, flip: true, dx: -8, dy: -4 }, { graphic: 10, x: 144, y: 192, z: 176, flip: true, dx: -20, dy: -1 }],
@@ -813,14 +812,14 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-7-0', tint: 'yellow',
-    exits: [{ direction: 'south', target: 'map-7-1' }, { direction: 'west', target: 'map-6-0' }],
+    exits: [{ direction: 'north', target: 'map-7-1' }, { direction: 'west', target: 'map-6-0' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
     backdrop: [{ graphic: 2, x: 141, y: 196, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 3, x: 115, y: 196, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 2, x: 59, y: 115, z: 128, flip: false, dx: -7, dy: -3 }, { graphic: 3, x: 59, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 13, x: 63, y: 184, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 14, x: 71, y: 192, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 73, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 192, z: 128, flip: true, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 73, z: 172, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 192, z: 172, flip: true, dx: -8, dy: -4 }, { graphic: 10, x: 92, y: 192, z: 128, flip: true, dx: -20, dy: -1 }, { graphic: 11, x: 63, y: 92, z: 152, flip: false, dx: -12, dy: -2 }, { graphic: 12, x: 63, y: 160, z: 152, flip: false, dx: -8, dy: -4 }, { graphic: 11, x: 164, y: 192, z: 152, flip: true, dx: -12, dy: -2 }, { graphic: 10, x: 63, y: 109, z: 177, flip: false, dx: -20, dy: -1 }, { graphic: 12, x: 96, y: 192, z: 160, flip: true, dx: -8, dy: -4 }, { graphic: 10, x: 144, y: 192, z: 176, flip: true, dx: -20, dy: -1 }],
   },
   {
     id: 'map--5-1', tint: 'green', width: 4,
-    exits: [{ direction: 'south', target: 'map--5-2' }, { direction: 'north', target: 'map--5-0' }],
+    exits: [{ direction: 'north', target: 'map--5-2' }, { direction: 'south', target: 'map--5-0' }],
     spawn: { x: 2, z: 0 },
     platforms: [{ x: 0, z: 4, height: 4 }, { x: 1, z: 4, height: 1 }, { x: 2, z: 4, height: 1 }, { x: 3, z: 4, height: 4 }],
     decor: [{ x: 0, z: 4, height: 3, kind: 'gargoyle' }, { x: 3, z: 4, height: 3, kind: 'gargoyle' }],
@@ -829,7 +828,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--1-1', tint: 'green', width: 4,
-    exits: [{ direction: 'south', target: 'map--1-2' }, { direction: 'north', target: 'map--1-0' }],
+    exits: [{ direction: 'north', target: 'map--1-2' }, { direction: 'south', target: 'map--1-0' }],
     spawn: { x: 2, z: 0 },
     platforms: [{ x: 0, z: 4, height: 2 }, { x: 1, z: 4, height: 2 }, { x: 2, z: 4, height: 2 }, { x: 3, z: 4, height: 2 }],
     decor: [{ x: 0, z: 4, height: 1, kind: 'gargoyle' }, { x: 1, z: 4, height: 1, kind: 'gargoyle' }, { x: 2, z: 4, height: 1, kind: 'gargoyle' }, { x: 3, z: 4, height: 1, kind: 'gargoyle' }],
@@ -837,7 +836,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-0-1', tint: 'purple', width: 4,
-    exits: [{ direction: 'south', target: 'map-0-2' }, { direction: 'north', target: 'room-001' }],
+    exits: [{ direction: 'north', target: 'map-0-2' }, { direction: 'south', target: 'room-001' }],
     spawn: { x: 2, z: 0 },
     platforms: [{ x: 1, z: 1, height: 1 }, { x: 2, z: 6, height: 1 }],
     spikes: [{ x: 0, z: 3 }, { x: 1, z: 3 }, { x: 2, z: 3 }, { x: 3, z: 3 }, { x: 0, z: 4 }, { x: 1, z: 4 }, { x: 2, z: 4 }, { x: 3, z: 4 }],
@@ -847,7 +846,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-3-1', tint: 'purple', width: 4,
-    exits: [{ direction: 'south', target: 'map-3-2' }, { direction: 'north', target: 'map-3-0' }],
+    exits: [{ direction: 'north', target: 'map-3-2' }, { direction: 'south', target: 'map-3-0' }],
     spawn: { x: 2, z: 0 },
     platforms: [{ x: 3, z: 0, height: 2 }, { x: 3, z: 1, height: 4 }],
     floatingBlocks: [{ x: 1, z: 7, bottom: 3 }, { x: 2, z: 7, bottom: 3 }],
@@ -857,7 +856,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-7-1', tint: 'cyan', width: 4,
-    exits: [{ direction: 'south', target: 'map-7-2' }, { direction: 'north', target: 'map-7-0' }],
+    exits: [{ direction: 'north', target: 'map-7-2' }, { direction: 'south', target: 'map-7-0' }],
     spawn: { x: 2, z: 0 },
     platforms: [{ x: 0, z: 4, height: 3 }, { x: 1, z: 4, height: 3 }, { x: 2, z: 4, height: 3 }, { x: 3, z: 4, height: 3 }],
     spikes: [{ x: 1, z: 4, height: 3 }, { x: 2, z: 4, height: 3 }, { x: 3, z: 4, height: 3 }],
@@ -866,7 +865,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--5-2', tint: 'purple', width: 4,
-    exits: [{ direction: 'south', target: 'map--5-3' }, { direction: 'north', target: 'map--5-1' }],
+    exits: [{ direction: 'north', target: 'map--5-3' }, { direction: 'south', target: 'map--5-1' }],
     spawn: { x: 2, z: 0 },
     platforms: [{ x: 2, z: 1, height: 2 }, { x: 3, z: 0, height: 2 }],
     floatingBlocks: [{ x: 1, z: 7, bottom: 3 }, { x: 2, z: 7, bottom: 3 }, { x: 3, z: 1, bottom: 1 }],
@@ -877,14 +876,14 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--1-2', tint: 'purple',
-    exits: [{ direction: 'south', target: 'map--1-3' }, { direction: 'north', target: 'map--1-1' }],
+    exits: [{ direction: 'north', target: 'map--1-3' }, { direction: 'south', target: 'map--1-1' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
     backdrop: [{ graphic: 2, x: 141, y: 196, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 3, x: 115, y: 196, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 2, x: 141, y: 59, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 3, x: 115, y: 59, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 13, x: 63, y: 184, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 14, x: 71, y: 192, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 73, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 192, z: 128, flip: true, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 73, z: 172, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 192, z: 172, flip: true, dx: -8, dy: -4 }, { graphic: 10, x: 92, y: 192, z: 128, flip: true, dx: -20, dy: -1 }, { graphic: 11, x: 63, y: 92, z: 152, flip: false, dx: -12, dy: -2 }, { graphic: 12, x: 63, y: 160, z: 152, flip: false, dx: -8, dy: -4 }, { graphic: 11, x: 164, y: 192, z: 152, flip: true, dx: -12, dy: -2 }, { graphic: 10, x: 63, y: 109, z: 177, flip: false, dx: -20, dy: -1 }, { graphic: 12, x: 96, y: 192, z: 160, flip: true, dx: -8, dy: -4 }, { graphic: 10, x: 144, y: 192, z: 176, flip: true, dx: -20, dy: -1 }],
   },
   {
     id: 'map-0-2', tint: 'yellow',
-    exits: [{ direction: 'north', target: 'map-0-1' }],
+    exits: [{ direction: 'south', target: 'map-0-1' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 2, z: 1, height: 4 }, { x: 2, z: 2, height: 2 }, { x: 6, z: 1, height: 4 }, { x: 6, z: 5, height: 4 }],
     spikes: [{ x: 5, z: 1 }, { x: 6, z: 4 }],
@@ -893,7 +892,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-2-2', tint: 'purple',
-    exits: [{ direction: 'south', target: 'map-2-3' }, { direction: 'east', target: 'map-3-2' }],
+    exits: [{ direction: 'north', target: 'map-2-3' }, { direction: 'east', target: 'map-3-2' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 0, z: 2, height: 2 }, { x: 0, z: 4, height: 4 }, { x: 0, z: 7, height: 1 }, { x: 1, z: 3, height: 2 }],
     floatingBlocks: [{ x: 0, z: 5, bottom: 2 }, { x: 0, z: 6, bottom: 1 }],
@@ -903,14 +902,14 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-3-2', tint: 'green',
-    exits: [{ direction: 'south', target: 'map-3-3' }, { direction: 'north', target: 'map-3-1' }, { direction: 'west', target: 'map-2-2' }],
+    exits: [{ direction: 'north', target: 'map-3-3' }, { direction: 'south', target: 'map-3-1' }, { direction: 'west', target: 'map-2-2' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
     backdrop: [{ graphic: 2, x: 141, y: 196, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 3, x: 115, y: 196, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 2, x: 141, y: 59, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 3, x: 115, y: 59, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 2, x: 59, y: 115, z: 128, flip: false, dx: -7, dy: -3 }, { graphic: 3, x: 59, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 13, x: 63, y: 184, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 14, x: 71, y: 192, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 73, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 192, z: 128, flip: true, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 73, z: 172, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 192, z: 172, flip: true, dx: -8, dy: -4 }, { graphic: 10, x: 92, y: 192, z: 128, flip: true, dx: -20, dy: -1 }, { graphic: 11, x: 63, y: 92, z: 152, flip: false, dx: -12, dy: -2 }, { graphic: 12, x: 63, y: 160, z: 152, flip: false, dx: -8, dy: -4 }, { graphic: 11, x: 164, y: 192, z: 152, flip: true, dx: -12, dy: -2 }, { graphic: 10, x: 63, y: 109, z: 177, flip: false, dx: -20, dy: -1 }, { graphic: 12, x: 96, y: 192, z: 160, flip: true, dx: -8, dy: -4 }, { graphic: 10, x: 144, y: 192, z: 176, flip: true, dx: -20, dy: -1 }],
   },
   {
     id: 'map-7-2', tint: 'green', width: 4,
-    exits: [{ direction: 'south', target: 'map-7-3' }, { direction: 'north', target: 'map-7-1' }],
+    exits: [{ direction: 'north', target: 'map-7-3' }, { direction: 'south', target: 'map-7-1' }],
     spawn: { x: 2, z: 0 },
     platforms: [{ x: 1, z: 1, height: 1 }, { x: 1, z: 4, height: 1 }, { x: 2, z: 1, height: 1 }, { x: 2, z: 4, height: 1 }],
     boxes: [{ x: 2, z: 1, height: 1, kind: 'chest' }],
@@ -918,7 +917,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--5-3', tint: 'yellow',
-    exits: [{ direction: 'south', target: 'map--5-4' }, { direction: 'east', target: 'map--4-3' }, { direction: 'north', target: 'map--5-2' }],
+    exits: [{ direction: 'north', target: 'map--5-4' }, { direction: 'east', target: 'map--4-3' }, { direction: 'south', target: 'map--5-2' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
     backdrop: [{ graphic: 2, x: 141, y: 196, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 3, x: 115, y: 196, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 2, x: 196, y: 115, z: 128, flip: false, dx: -7, dy: -3 }, { graphic: 3, x: 196, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 2, x: 141, y: 59, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 3, x: 115, y: 59, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 13, x: 63, y: 184, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 14, x: 71, y: 192, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 73, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 192, z: 128, flip: true, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 73, z: 172, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 192, z: 172, flip: true, dx: -8, dy: -4 }, { graphic: 10, x: 92, y: 192, z: 128, flip: true, dx: -20, dy: -1 }, { graphic: 11, x: 63, y: 92, z: 152, flip: false, dx: -12, dy: -2 }, { graphic: 12, x: 63, y: 160, z: 152, flip: false, dx: -8, dy: -4 }, { graphic: 11, x: 164, y: 192, z: 152, flip: true, dx: -12, dy: -2 }, { graphic: 10, x: 63, y: 109, z: 177, flip: false, dx: -20, dy: -1 }, { graphic: 12, x: 96, y: 192, z: 160, flip: true, dx: -8, dy: -4 }, { graphic: 10, x: 144, y: 192, z: 176, flip: true, dx: -20, dy: -1 }],
@@ -934,7 +933,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--1-3', tint: 'green', width: 4,
-    exits: [{ direction: 'south', target: 'map--1-4' }, { direction: 'north', target: 'map--1-2' }],
+    exits: [{ direction: 'north', target: 'map--1-4' }, { direction: 'south', target: 'map--1-2' }],
     spawn: { x: 2, z: 0 },
     platforms: [{ x: 1, z: 1, height: 1 }, { x: 1, z: 6, height: 1 }, { x: 2, z: 1, height: 1 }, { x: 2, z: 6, height: 1 }],
     ghosts: [{ x: 1, z: 3 }, { x: 2, z: 4 }],
@@ -942,7 +941,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-2-3', tint: 'cyan',
-    exits: [{ direction: 'east', target: 'map-3-3' }, { direction: 'north', target: 'map-2-2' }],
+    exits: [{ direction: 'east', target: 'map-3-3' }, { direction: 'south', target: 'map-2-2' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 3, z: 2, height: 3 }, { x: 3, z: 4, height: 3 }],
     spikes: [{ x: 2, z: 2 }, { x: 2, z: 3 }, { x: 2, z: 3, height: 1 }, { x: 2, z: 3, height: 2 }, { x: 2, z: 4 }, { x: 4, z: 2 }, { x: 4, z: 3 }, { x: 4, z: 3, height: 1 }, { x: 4, z: 3, height: 2 }, { x: 4, z: 4 }],
@@ -951,7 +950,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-3-3', tint: 'yellow',
-    exits: [{ direction: 'north', target: 'map-3-2' }, { direction: 'west', target: 'map-2-3' }],
+    exits: [{ direction: 'south', target: 'map-3-2' }, { direction: 'west', target: 'map-2-3' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
     floatingBlocks: [{ x: 4, z: 3, bottom: 1 }, { x: 4, z: 3, bottom: 2 }],
@@ -961,7 +960,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-7-3', tint: 'purple',
-    exits: [{ direction: 'south', target: 'map-7-4' }, { direction: 'north', target: 'map-7-2' }],
+    exits: [{ direction: 'north', target: 'map-7-4' }, { direction: 'south', target: 'map-7-2' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 5, z: 0, height: 1 }],
     floatingBlocks: [{ x: 3, z: 7, bottom: 3 }, { x: 4, z: 7, bottom: 3 }, { x: 6, z: 0, bottom: 1 }, { x: 6, z: 0, bottom: 2 }, { x: 7, z: 0, bottom: 2 }],
@@ -971,7 +970,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--5-4', tint: 'purple', width: 4,
-    exits: [{ direction: 'south', target: 'map--5-5' }, { direction: 'north', target: 'map--5-3' }],
+    exits: [{ direction: 'north', target: 'map--5-5' }, { direction: 'south', target: 'map--5-3' }],
     spawn: { x: 2, z: 0 },
     platforms: [{ x: 0, z: 4, height: 3 }, { x: 1, z: 4, height: 3 }, { x: 2, z: 4, height: 3 }, { x: 3, z: 4, height: 3 }],
     backdrop: [{ graphic: 2, x: 141, y: 196, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 3, x: 115, y: 196, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 2, x: 141, y: 59, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 3, x: 115, y: 59, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 13, x: 95, y: 184, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 14, x: 103, y: 192, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 95, y: 72, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 157, y: 192, z: 128, flip: true, dx: -8, dy: -4 }, { graphic: 13, x: 95, y: 184, z: 168, flip: false, dx: -8, dy: -4 }, { graphic: 14, x: 103, y: 192, z: 168, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 95, y: 72, z: 172, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 157, y: 192, z: 172, flip: true, dx: -8, dy: -4 }, { graphic: 15, x: 95, y: 72, z: 208, flip: false, dx: -8, dy: -4 }, { graphic: 10, x: 95, y: 144, z: 128, flip: false, dx: -20, dy: -1 }, { graphic: 10, x: 132, y: 192, z: 176, flip: true, dx: -20, dy: -1 }, { graphic: 11, x: 95, y: 96, z: 144, flip: false, dx: -12, dy: -2 }, { graphic: 10, x: 95, y: 104, z: 184, flip: false, dx: -20, dy: -1 }, { graphic: 12, x: 95, y: 160, z: 176, flip: false, dx: -8, dy: -4 }],
@@ -979,7 +978,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--1-4', tint: 'cyan',
-    exits: [{ direction: 'south', target: 'map--1-5' }, { direction: 'north', target: 'map--1-3' }],
+    exits: [{ direction: 'north', target: 'map--1-5' }, { direction: 'south', target: 'map--1-3' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
     floatingBlocks: [{ x: 3, z: 4, bottom: 1 }],
@@ -988,7 +987,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-7-4', tint: 'green', width: 4,
-    exits: [{ direction: 'south', target: 'map-7-5' }, { direction: 'north', target: 'map-7-3' }],
+    exits: [{ direction: 'north', target: 'map-7-5' }, { direction: 'south', target: 'map-7-3' }],
     spawn: { x: 2, z: 0 },
     platforms: [],
     ghosts: [{ x: 2, z: 4 }],
@@ -996,7 +995,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--8-5', tint: 'cyan',
-    exits: [{ direction: 'south', target: 'map--8-6' }, { direction: 'east', target: 'map--7-5' }],
+    exits: [{ direction: 'north', target: 'map--8-6' }, { direction: 'east', target: 'map--7-5' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 3, z: 7, height: 1 }, { x: 4, z: 4, height: 4 }],
     floatingBlocks: [{ x: 0, z: 3, bottom: 3 }, { x: 0, z: 4, bottom: 3 }, { x: 0, z: 5, bottom: 3 }, { x: 0, z: 6, bottom: 3 }, { x: 0, z: 7, bottom: 3 }, { x: 1, z: 7, bottom: 2 }, { x: 2, z: 7, bottom: 1 }],
@@ -1015,7 +1014,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--6-5', tint: 'cyan',
-    exits: [{ direction: 'south', target: 'map--6-6' }, { direction: 'west', target: 'map--7-5' }],
+    exits: [{ direction: 'north', target: 'map--6-6' }, { direction: 'west', target: 'map--7-5' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 3, z: 7, height: 1 }, { x: 7, z: 3, height: 1 }],
     floatingBlocks: [{ x: 4, z: 7, bottom: 1 }, { x: 5, z: 7, bottom: 2 }, { x: 6, z: 6, bottom: 3 }, { x: 6, z: 7, bottom: 3 }, { x: 7, z: 4, bottom: 1 }, { x: 7, z: 5, bottom: 2 }, { x: 7, z: 6, bottom: 3 }, { x: 7, z: 7, bottom: 3 }],
@@ -1025,7 +1024,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--5-5', tint: 'cyan', width: 4,
-    exits: [{ direction: 'south', target: 'map--5-6' }, { direction: 'north', target: 'map--5-4' }],
+    exits: [{ direction: 'north', target: 'map--5-6' }, { direction: 'south', target: 'map--5-4' }],
     spawn: { x: 2, z: 0 },
     platforms: [{ x: 0, z: 2, height: 1 }, { x: 3, z: 2, height: 1 }],
     spikes: [{ x: 0, z: 2, height: 1 }, { x: 3, z: 2, height: 1 }, { x: 0, z: 4 }, { x: 3, z: 4 }],
@@ -1035,7 +1034,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--2-5', tint: 'yellow',
-    exits: [{ direction: 'south', target: 'map--2-6' }, { direction: 'east', target: 'map--1-5' }],
+    exits: [{ direction: 'north', target: 'map--2-6' }, { direction: 'east', target: 'map--1-5' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 4, z: 2, height: 4 }, { x: 4, z: 3, height: 1 }, { x: 4, z: 4, height: 1 }, { x: 4, z: 5, height: 3 }],
     decor: [{ x: 4, z: 2, height: 0, kind: 'hedge' }, { x: 4, z: 2, height: 1, kind: 'hedge' }, { x: 4, z: 2, height: 2, kind: 'hedge' }, { x: 4, z: 2, height: 3, kind: 'hedge' }, { x: 4, z: 3, height: 0, kind: 'hedge' }, { x: 4, z: 4, height: 0, kind: 'hedge' }, { x: 4, z: 5, height: 0, kind: 'hedge' }, { x: 4, z: 5, height: 1, kind: 'hedge' }, { x: 4, z: 5, height: 2, kind: 'hedge' }],
@@ -1045,7 +1044,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--1-5', tint: 'purple',
-    exits: [{ direction: 'south', target: 'map--1-6' }, { direction: 'east', target: 'map-0-5' }, { direction: 'north', target: 'map--1-4' }, { direction: 'west', target: 'map--2-5' }],
+    exits: [{ direction: 'north', target: 'map--1-6' }, { direction: 'east', target: 'map-0-5' }, { direction: 'south', target: 'map--1-4' }, { direction: 'west', target: 'map--2-5' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
     flames: [{ x: 3, z: 4, height: 0, axis: 'z' }, { x: 4, z: 3, height: 0, axis: 'z' }, { x: 3, z: 3, height: 0, axis: 'x' }, { x: 4, z: 4, height: 0, axis: 'x' }],
@@ -1053,21 +1052,21 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-0-5', tint: 'purple',
-    exits: [{ direction: 'south', target: 'map-0-6' }, { direction: 'east', target: 'map-1-5' }, { direction: 'west', target: 'map--1-5' }],
+    exits: [{ direction: 'north', target: 'map-0-6' }, { direction: 'east', target: 'map-1-5' }, { direction: 'west', target: 'map--1-5' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
     backdrop: [{ graphic: 4, x: 141, y: 196, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 5, x: 115, y: 196, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 4, x: 196, y: 115, z: 128, flip: false, dx: 1, dy: -3 }, { graphic: 5, x: 196, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 4, x: 59, y: 115, z: 128, flip: false, dx: 1, dy: -3 }, { graphic: 5, x: 59, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 128, x: 63, y: 73, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 129, x: 63, y: 88, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 130, x: 63, y: 104, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 128, x: 63, y: 152, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 129, x: 63, y: 168, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 130, x: 63, y: 184, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 128, x: 72, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 129, x: 88, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 130, x: 104, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 128, x: 152, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 129, x: 168, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 130, x: 184, y: 192, z: 128, flip: true, dx: -8, dy: -2 }],
   },
   {
     id: 'map-1-5', tint: 'yellow',
-    exits: [{ direction: 'south', target: 'map-1-6' }, { direction: 'west', target: 'map-0-5' }],
+    exits: [{ direction: 'north', target: 'map-1-6' }, { direction: 'west', target: 'map-0-5' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
     backdrop: [{ graphic: 4, x: 141, y: 196, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 5, x: 115, y: 196, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 4, x: 59, y: 115, z: 128, flip: false, dx: 1, dy: -3 }, { graphic: 5, x: 59, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 128, x: 63, y: 73, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 129, x: 63, y: 88, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 130, x: 63, y: 104, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 128, x: 63, y: 152, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 129, x: 63, y: 168, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 130, x: 63, y: 184, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 128, x: 72, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 129, x: 88, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 130, x: 104, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 128, x: 152, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 129, x: 168, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 130, x: 184, y: 192, z: 128, flip: true, dx: -8, dy: -2 }],
   },
   {
     id: 'map-5-5', tint: 'yellow',
-    exits: [{ direction: 'south', target: 'map-5-6' }, { direction: 'east', target: 'map-6-5' }],
+    exits: [{ direction: 'north', target: 'map-5-6' }, { direction: 'east', target: 'map-6-5' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 6, z: 3, height: 1 }, { x: 6, z: 4, height: 1 }, { x: 7, z: 2, height: 1 }, { x: 7, z: 5, height: 1 }],
     floatingBlocks: [{ x: 7, z: 3, bottom: 3 }, { x: 7, z: 4, bottom: 3 }],
@@ -1083,7 +1082,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-7-5', tint: 'yellow',
-    exits: [{ direction: 'south', target: 'map-7-6' }, { direction: 'north', target: 'map-7-4' }, { direction: 'west', target: 'map-6-5' }],
+    exits: [{ direction: 'north', target: 'map-7-6' }, { direction: 'south', target: 'map-7-4' }, { direction: 'west', target: 'map-6-5' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 3, z: 4, height: 4 }],
     floatingBlocks: [{ x: 2, z: 3, bottom: 3 }],
@@ -1094,7 +1093,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--8-6', tint: 'yellow', width: 4,
-    exits: [{ direction: 'south', target: 'map--8-7' }, { direction: 'north', target: 'map--8-5' }],
+    exits: [{ direction: 'north', target: 'map--8-7' }, { direction: 'south', target: 'map--8-5' }],
     spawn: { x: 2, z: 0 },
     platforms: [],
     spikes: [{ x: 0, z: 0 }, { x: 3, z: 0 }, { x: 1, z: 2 }, { x: 2, z: 2 }, { x: 1, z: 5 }, { x: 2, z: 5 }, { x: 0, z: 7 }, { x: 3, z: 7 }],
@@ -1102,7 +1101,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--6-6', tint: 'yellow', width: 4,
-    exits: [{ direction: 'south', target: 'map--6-7' }, { direction: 'north', target: 'map--6-5' }],
+    exits: [{ direction: 'north', target: 'map--6-7' }, { direction: 'south', target: 'map--6-5' }],
     spawn: { x: 2, z: 0 },
     platforms: [],
     spikedBalls: [{ x: 3, z: 7, height: 0 }, { x: 0, z: 6, height: 0 }, { x: 2, z: 6, height: 0 }, { x: 1, z: 5, height: 0 }, { x: 3, z: 5, height: 0 }, { x: 0, z: 4, height: 0 }, { x: 2, z: 4, height: 0 }, { x: 1, z: 3, height: 0 }, { x: 3, z: 3, height: 0 }, { x: 0, z: 2, height: 0 }, { x: 2, z: 2, height: 0 }, { x: 1, z: 1, height: 0 }, { x: 3, z: 1, height: 0 }, { x: 0, z: 0, height: 0 }],
@@ -1110,7 +1109,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--5-6', tint: 'yellow', width: 4,
-    exits: [{ direction: 'south', target: 'map--5-7' }, { direction: 'north', target: 'map--5-5' }],
+    exits: [{ direction: 'north', target: 'map--5-7' }, { direction: 'south', target: 'map--5-5' }],
     spawn: { x: 2, z: 0 },
     platforms: [],
     vanishing: [{ x: 0, z: 4, height: 4 }, { x: 3, z: 4, height: 4 }, { x: 0, z: 3, height: 4 }, { x: 3, z: 3, height: 4 }],
@@ -1120,14 +1119,14 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--2-6', tint: 'purple',
-    exits: [{ direction: 'south', target: 'map--2-7' }, { direction: 'east', target: 'map--1-6' }, { direction: 'north', target: 'map--2-5' }],
+    exits: [{ direction: 'north', target: 'map--2-7' }, { direction: 'east', target: 'map--1-6' }, { direction: 'south', target: 'map--2-5' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
     backdrop: [{ graphic: 4, x: 141, y: 196, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 5, x: 115, y: 196, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 4, x: 196, y: 115, z: 128, flip: false, dx: 1, dy: -3 }, { graphic: 5, x: 196, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 4, x: 141, y: 59, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 5, x: 115, y: 59, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 128, x: 63, y: 73, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 129, x: 63, y: 88, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 130, x: 63, y: 104, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 128, x: 63, y: 152, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 129, x: 63, y: 168, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 130, x: 63, y: 184, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 128, x: 72, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 129, x: 88, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 130, x: 104, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 128, x: 152, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 129, x: 168, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 130, x: 184, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 128, x: 63, y: 120, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 129, x: 63, y: 136, z: 128, flip: false, dx: -8, dy: -2 }],
   },
   {
     id: 'map--1-6', tint: 'yellow',
-    exits: [{ direction: 'south', target: 'map--1-7' }, { direction: 'east', target: 'map-0-6' }, { direction: 'north', target: 'map--1-5' }, { direction: 'west', target: 'map--2-6' }],
+    exits: [{ direction: 'north', target: 'map--1-7' }, { direction: 'east', target: 'map-0-6' }, { direction: 'south', target: 'map--1-5' }, { direction: 'west', target: 'map--2-6' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
     spikes: [{ x: 3, z: 1 }, { x: 4, z: 1 }, { x: 1, z: 3 }, { x: 1, z: 4 }, { x: 6, z: 3 }, { x: 6, z: 4 }, { x: 3, z: 6 }, { x: 4, z: 6 }],
@@ -1135,7 +1134,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-0-6', tint: 'yellow',
-    exits: [{ direction: 'south', target: 'map-0-7' }, { direction: 'east', target: 'map-1-6' }, { direction: 'north', target: 'map-0-5' }, { direction: 'west', target: 'map--1-6' }],
+    exits: [{ direction: 'north', target: 'map-0-7' }, { direction: 'east', target: 'map-1-6' }, { direction: 'south', target: 'map-0-5' }, { direction: 'west', target: 'map--1-6' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 1, z: 3, height: 1 }, { x: 3, z: 1, height: 1 }, { x: 3, z: 3, height: 4 }, { x: 3, z: 5, height: 1 }, { x: 5, z: 3, height: 1 }],
     decor: [{ x: 3, z: 1, height: 0, kind: 'hedge' }, { x: 1, z: 3, height: 0, kind: 'hedge' }, { x: 3, z: 3, height: 0, kind: 'hedge' }, { x: 3, z: 3, height: 1, kind: 'hedge' }, { x: 3, z: 3, height: 2, kind: 'hedge' }, { x: 3, z: 3, height: 3, kind: 'hedge' }, { x: 5, z: 3, height: 0, kind: 'hedge' }, { x: 3, z: 5, height: 0, kind: 'hedge' }],
@@ -1145,14 +1144,14 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-1-6', tint: 'purple',
-    exits: [{ direction: 'south', target: 'map-1-7' }, { direction: 'north', target: 'map-1-5' }, { direction: 'west', target: 'map-0-6' }],
+    exits: [{ direction: 'north', target: 'map-1-7' }, { direction: 'south', target: 'map-1-5' }, { direction: 'west', target: 'map-0-6' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
     backdrop: [{ graphic: 4, x: 141, y: 196, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 5, x: 115, y: 196, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 4, x: 141, y: 59, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 5, x: 115, y: 59, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 4, x: 59, y: 115, z: 128, flip: false, dx: 1, dy: -3 }, { graphic: 5, x: 59, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 128, x: 63, y: 73, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 129, x: 63, y: 88, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 130, x: 63, y: 104, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 128, x: 63, y: 152, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 129, x: 63, y: 168, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 130, x: 63, y: 184, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 128, x: 72, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 129, x: 88, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 130, x: 104, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 128, x: 152, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 129, x: 168, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 130, x: 184, y: 192, z: 128, flip: true, dx: -8, dy: -2 }],
   },
   {
     id: 'map-5-6', tint: 'green', width: 4,
-    exits: [{ direction: 'south', target: 'map-5-7' }, { direction: 'north', target: 'map-5-5' }],
+    exits: [{ direction: 'north', target: 'map-5-7' }, { direction: 'south', target: 'map-5-5' }],
     spawn: { x: 2, z: 0 },
     platforms: [{ x: 0, z: 4, height: 3 }, { x: 1, z: 4, height: 3 }, { x: 2, z: 4, height: 3 }, { x: 3, z: 4, height: 3 }],
     backdrop: [{ graphic: 2, x: 141, y: 196, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 3, x: 115, y: 196, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 2, x: 141, y: 59, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 3, x: 115, y: 59, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 13, x: 95, y: 184, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 14, x: 103, y: 192, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 95, y: 72, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 157, y: 192, z: 128, flip: true, dx: -8, dy: -4 }, { graphic: 13, x: 95, y: 184, z: 168, flip: false, dx: -8, dy: -4 }, { graphic: 14, x: 103, y: 192, z: 168, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 95, y: 72, z: 172, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 157, y: 192, z: 172, flip: true, dx: -8, dy: -4 }, { graphic: 15, x: 95, y: 72, z: 208, flip: false, dx: -8, dy: -4 }, { graphic: 10, x: 95, y: 144, z: 128, flip: false, dx: -20, dy: -1 }, { graphic: 10, x: 132, y: 192, z: 176, flip: true, dx: -20, dy: -1 }, { graphic: 11, x: 95, y: 96, z: 144, flip: false, dx: -12, dy: -2 }, { graphic: 10, x: 95, y: 104, z: 184, flip: false, dx: -20, dy: -1 }, { graphic: 12, x: 95, y: 160, z: 176, flip: false, dx: -8, dy: -4 }],
@@ -1160,14 +1159,14 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-7-6', tint: 'cyan', width: 4,
-    exits: [{ direction: 'south', target: 'map-7-7' }, { direction: 'north', target: 'map-7-5' }],
+    exits: [{ direction: 'north', target: 'map-7-7' }, { direction: 'south', target: 'map-7-5' }],
     spawn: { x: 2, z: 0 },
     platforms: [],
     backdrop: [{ graphic: 2, x: 141, y: 196, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 3, x: 115, y: 196, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 2, x: 141, y: 59, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 3, x: 115, y: 59, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 13, x: 95, y: 184, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 14, x: 103, y: 192, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 95, y: 72, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 157, y: 192, z: 128, flip: true, dx: -8, dy: -4 }, { graphic: 13, x: 95, y: 184, z: 168, flip: false, dx: -8, dy: -4 }, { graphic: 14, x: 103, y: 192, z: 168, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 95, y: 72, z: 172, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 157, y: 192, z: 172, flip: true, dx: -8, dy: -4 }, { graphic: 15, x: 95, y: 72, z: 208, flip: false, dx: -8, dy: -4 }, { graphic: 10, x: 95, y: 144, z: 128, flip: false, dx: -20, dy: -1 }, { graphic: 10, x: 132, y: 192, z: 176, flip: true, dx: -20, dy: -1 }, { graphic: 11, x: 95, y: 96, z: 144, flip: false, dx: -12, dy: -2 }, { graphic: 10, x: 95, y: 104, z: 184, flip: false, dx: -20, dy: -1 }, { graphic: 12, x: 95, y: 160, z: 176, flip: false, dx: -8, dy: -4 }],
   },
   {
     id: 'map--8-7', tint: 'cyan',
-    exits: [{ direction: 'east', target: 'map--7-7' }, { direction: 'north', target: 'map--8-6' }],
+    exits: [{ direction: 'east', target: 'map--7-7' }, { direction: 'south', target: 'map--8-6' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
     floatingBlocks: [{ x: 0, z: 0, bottom: 1 }, { x: 0, z: 2, bottom: 2 }, { x: 0, z: 5, bottom: 3 }, { x: 0, z: 7, bottom: 3 }, { x: 1, z: 7, bottom: 3 }, { x: 2, z: 7, bottom: 3 }, { x: 3, z: 7, bottom: 3 }, { x: 4, z: 7, bottom: 3 }, { x: 6, z: 0, bottom: 3 }, { x: 7, z: 0, bottom: 3 }, { x: 7, z: 3, bottom: 3 }, { x: 7, z: 4, bottom: 3 }],
@@ -1186,25 +1185,25 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--6-7', tint: 'cyan',
-    exits: [{ direction: 'east', target: 'map--5-7' }, { direction: 'north', target: 'map--6-6' }, { direction: 'west', target: 'map--7-7' }],
+    exits: [{ direction: 'east', target: 'map--5-7' }, { direction: 'south', target: 'map--6-6' }, { direction: 'west', target: 'map--7-7' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
     backdrop: [{ graphic: 2, x: 196, y: 115, z: 128, flip: false, dx: -7, dy: -3 }, { graphic: 3, x: 196, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 2, x: 141, y: 59, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 3, x: 115, y: 59, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 2, x: 59, y: 115, z: 128, flip: false, dx: -7, dy: -3 }, { graphic: 3, x: 59, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 13, x: 63, y: 184, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 14, x: 71, y: 192, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 73, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 192, z: 128, flip: true, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 73, z: 172, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 192, z: 172, flip: true, dx: -8, dy: -4 }, { graphic: 10, x: 92, y: 192, z: 128, flip: true, dx: -20, dy: -1 }, { graphic: 11, x: 63, y: 92, z: 152, flip: false, dx: -12, dy: -2 }, { graphic: 12, x: 63, y: 160, z: 152, flip: false, dx: -8, dy: -4 }, { graphic: 11, x: 164, y: 192, z: 152, flip: true, dx: -12, dy: -2 }, { graphic: 10, x: 63, y: 109, z: 177, flip: false, dx: -20, dy: -1 }, { graphic: 12, x: 96, y: 192, z: 160, flip: true, dx: -8, dy: -4 }, { graphic: 10, x: 144, y: 192, z: 176, flip: true, dx: -20, dy: -1 }],
   },
   {
     id: 'map--5-7', tint: 'purple',
-    exits: [{ direction: 'north', target: 'map--5-6' }, { direction: 'west', target: 'map--6-7' }],
-    spawn: { x: 4, z: 0 },
-    platforms: [{ x: 2, z: 0, height: 2 }, { x: 2, z: 1, height: 2 }, { x: 4, z: 1, height: 2 }],
-    floatingBlocks: [{ x: 3, z: 0, bottom: 2 }, { x: 3, z: 1, bottom: 2 }, { x: 4, z: 0, bottom: 1 }],
+    exits: [{ direction: 'south', target: 'map--5-6' }, { direction: 'west', target: 'map--6-7' }],
+    spawn: { x: 3, z: 0 },
+    platforms: [{ x: 2, z: 0, height: 2 }, { x: 2, z: 1, height: 2 }, { x: 4, z: 0, height: 2 }, { x: 4, z: 1, height: 2 }],
+    floatingBlocks: [{ x: 3, z: 0, bottom: 2 }, { x: 3, z: 1, bottom: 2 }],
     boxes: [{ x: 3, z: 2, height: 0, kind: 'chest' }, { x: 3, z: 2, height: 1, kind: 'chest' }],
-    ghosts: [{ x: 4, z: 2 }],
+    ghosts: [{ x: 3, z: 1 }],
     charmSpots: [{ spot: 9, x: 3, z: 0, height: 0 }],
     backdrop: [{ graphic: 2, x: 141, y: 59, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 3, x: 115, y: 59, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 2, x: 59, y: 115, z: 128, flip: false, dx: -7, dy: -3 }, { graphic: 3, x: 59, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 13, x: 63, y: 184, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 14, x: 71, y: 192, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 73, z: 128, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 192, z: 128, flip: true, dx: -8, dy: -4 }, { graphic: 15, x: 63, y: 73, z: 172, flip: false, dx: -8, dy: -4 }, { graphic: 15, x: 184, y: 192, z: 172, flip: true, dx: -8, dy: -4 }, { graphic: 10, x: 92, y: 192, z: 128, flip: true, dx: -20, dy: -1 }, { graphic: 11, x: 63, y: 92, z: 152, flip: false, dx: -12, dy: -2 }, { graphic: 12, x: 63, y: 160, z: 152, flip: false, dx: -8, dy: -4 }, { graphic: 11, x: 164, y: 192, z: 152, flip: true, dx: -12, dy: -2 }, { graphic: 10, x: 63, y: 109, z: 177, flip: false, dx: -20, dy: -1 }, { graphic: 12, x: 96, y: 192, z: 160, flip: true, dx: -8, dy: -4 }, { graphic: 10, x: 144, y: 192, z: 176, flip: true, dx: -20, dy: -1 }],
   },
   {
     id: 'map--2-7', tint: 'yellow',
-    exits: [{ direction: 'east', target: 'map--1-7' }, { direction: 'north', target: 'map--2-6' }],
+    exits: [{ direction: 'east', target: 'map--1-7' }, { direction: 'south', target: 'map--2-6' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 3, z: 4, height: 4 }],
     decor: [{ x: 3, z: 4, height: 0, kind: 'hedge' }, { x: 3, z: 4, height: 1, kind: 'hedge' }, { x: 3, z: 4, height: 2, kind: 'hedge' }, { x: 3, z: 4, height: 3, kind: 'hedge' }],
@@ -1215,7 +1214,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--1-7', tint: 'purple',
-    exits: [{ direction: 'east', target: 'map-0-7' }, { direction: 'north', target: 'map--1-6' }, { direction: 'west', target: 'map--2-7' }],
+    exits: [{ direction: 'east', target: 'map-0-7' }, { direction: 'south', target: 'map--1-6' }, { direction: 'west', target: 'map--2-7' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 2, z: 3, height: 1 }, { x: 2, z: 4, height: 1 }, { x: 2, z: 5, height: 1 }, { x: 3, z: 3, height: 1 }, { x: 3, z: 5, height: 1 }, { x: 4, z: 3, height: 1 }, { x: 4, z: 4, height: 1 }, { x: 4, z: 5, height: 1 }],
     decor: [{ x: 2, z: 3, height: 0, kind: 'hedge' }, { x: 3, z: 3, height: 0, kind: 'hedge' }, { x: 4, z: 3, height: 0, kind: 'hedge' }, { x: 2, z: 4, height: 0, kind: 'hedge' }, { x: 4, z: 4, height: 0, kind: 'hedge' }, { x: 2, z: 5, height: 0, kind: 'hedge' }, { x: 3, z: 5, height: 0, kind: 'hedge' }, { x: 4, z: 5, height: 0, kind: 'hedge' }],
@@ -1225,14 +1224,14 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-0-7', tint: 'purple',
-    exits: [{ direction: 'east', target: 'map-1-7' }, { direction: 'north', target: 'map-0-6' }, { direction: 'west', target: 'map--1-7' }],
+    exits: [{ direction: 'east', target: 'map-1-7' }, { direction: 'south', target: 'map-0-6' }, { direction: 'west', target: 'map--1-7' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
     backdrop: [{ graphic: 4, x: 196, y: 115, z: 128, flip: false, dx: 1, dy: -3 }, { graphic: 5, x: 196, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 4, x: 141, y: 59, z: 128, flip: true, dx: -17, dy: -2 }, { graphic: 5, x: 115, y: 59, z: 128, flip: true, dx: -7, dy: -2 }, { graphic: 4, x: 59, y: 115, z: 128, flip: false, dx: 1, dy: -3 }, { graphic: 5, x: 59, y: 141, z: 128, flip: false, dx: -9, dy: -3 }, { graphic: 128, x: 63, y: 73, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 129, x: 63, y: 88, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 130, x: 63, y: 104, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 128, x: 63, y: 152, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 129, x: 63, y: 168, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 130, x: 63, y: 184, z: 128, flip: false, dx: -8, dy: -2 }, { graphic: 128, x: 72, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 129, x: 88, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 130, x: 104, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 128, x: 152, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 129, x: 168, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 130, x: 184, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 128, x: 120, y: 192, z: 128, flip: true, dx: -8, dy: -2 }, { graphic: 129, x: 136, y: 192, z: 128, flip: true, dx: -8, dy: -2 }],
   },
   {
     id: 'map-1-7', tint: 'yellow',
-    exits: [{ direction: 'north', target: 'map-1-6' }, { direction: 'west', target: 'map-0-7' }],
+    exits: [{ direction: 'south', target: 'map-1-6' }, { direction: 'west', target: 'map-0-7' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
     spikedBalls: [{ x: 7, z: 0, height: 7, waits: true }, { x: 6, z: 0, height: 7, waits: true }, { x: 6, z: 1, height: 7, waits: true }, { x: 7, z: 1, height: 7, waits: true }, { x: 5, z: 0, height: 7, waits: true }, { x: 7, z: 2, height: 7, waits: true }, { x: 3, z: 7, height: 7, waits: true }, { x: 4, z: 7, height: 7, waits: true }, { x: 0, z: 4, height: 7, waits: true }, { x: 0, z: 3, height: 7, waits: true }],
@@ -1241,7 +1240,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-5-7', tint: 'yellow',
-    exits: [{ direction: 'east', target: 'map-6-7' }, { direction: 'north', target: 'map-5-6' }],
+    exits: [{ direction: 'east', target: 'map-6-7' }, { direction: 'south', target: 'map-5-6' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 0, z: 2, height: 1 }, { x: 1, z: 2, height: 1 }, { x: 2, z: 0, height: 1 }, { x: 2, z: 1, height: 1 }, { x: 2, z: 2, height: 1 }],
     floatingBlocks: [{ x: 0, z: 0, bottom: 2 }, { x: 0, z: 1, bottom: 1 }, { x: 1, z: 0, bottom: 1 }, { x: 1, z: 1, bottom: 1 }],
@@ -1260,7 +1259,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-7-7', tint: 'yellow',
-    exits: [{ direction: 'north', target: 'map-7-6' }, { direction: 'west', target: 'map-6-7' }],
+    exits: [{ direction: 'south', target: 'map-7-6' }, { direction: 'west', target: 'map-6-7' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
     spikes: [{ x: 6, z: 2 }, { x: 5, z: 1 }, { x: 7, z: 1 }, { x: 6, z: 0 }],

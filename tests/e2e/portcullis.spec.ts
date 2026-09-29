@@ -27,7 +27,8 @@ test('the corridor cannot be crossed while the gate is shut, and can once it has
 
   await walkPath(page, findFloorPath(spec, doorOf(spec, 'north'), doorOf(spec, 'south')), dangersOf(spec))
   await face(page, 'south')
-  await walkUntil(page, (s) => s.room === 'map--1--1')
+  const beyond = spec.exits.find((e) => e.direction === 'south')!.target
+  await walkUntil(page, (s) => s.room === beyond)
   expect((await debug(page)).lives).toBe(5)
 })
 

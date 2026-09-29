@@ -48,7 +48,8 @@ export type Sprites = Awaited<ReturnType<typeof loadSprites>>
 
 export async function loadSprites() {
   return {
-    transform: await loadImage('/sprites/sabreman-transform.png'),
+    // The seizure's four poses, graphics 0x5C-0x5F.
+    seizure: await loadImage('/sprites/sabreman-seizure.png'),
     strips: {
       human: {
         front: await loadImage('/sprites/sabreman-front.png'),

@@ -7,10 +7,12 @@ import type { Sparkle } from '../game/Sparkle'
 import { DRAWN_LOWER } from './SceneDynamics'
 import type { Sprites, Tints } from './Sprites'
 
-// Character strips are native ZX resolution, 24x36 cells per pose, drawn at
-// 1:1 canvas pixels so the sprite stays crisp. Cells per form: STRIP_CELLS.
-const TRANSFORM_FRAMES = 11
-const TRANSFORM_DURATION = 2.2 // 11 morph stages at the original's ~0.2s each
+// The seizure (0xC357): eight beats of four frames, each drawing one of the
+// four poses (graphics 0x5C-0x5F) at random, never the one just drawn, the
+// mirror turned each beat (0xC36C); then he is the other form (0xC377).
+const SEIZURE_BEATS = 8
+const SEIZURE_POSES = 4
+const TRANSFORM_DURATION = SEIZURE_BEATS * SEIZURE_BEAT
 const STAR_CELLS = 6
 
 // How he is drawn: the form drawn lags the game's across the transformation,
@@ -19,6 +21,7 @@ export class CharacterLook {
   form: CharacterForm = 'human'
   private transformElapsed = TRANSFORM_DURATION
   private transformTarget: CharacterForm = 'human'
+  private poses: number[] = []
   private moving = false
   private readonly headTurn = new HeadTurn()
 
@@ -33,9 +36,10 @@ export class CharacterLook {
     this.form = this.transformTarget = form
   }
 
-  transformInto(form: CharacterForm): void {
+  transformInto(form: CharacterForm, poses: number[]): void {
     this.transformElapsed = 0
     this.transformTarget = form
+    this.poses = poses
   }
 
   update(dt: number, walking: boolean): void {
@@ -66,23 +70,26 @@ export class CharacterLook {
     return { ...at(player), image: stars, frameX: sparkle.starCell * frameW, frameW, frameH: stars.height, flip: false, drop: DRAWN_LOWER.stars }
   }
 
-  // The morph strip was captured facing west; mirror it for the east-ish facings.
   private transforming(player: Player, hue: number): SpriteDraw {
-    const strip = this.sprites.transform
-    const progress = this.transformElapsed / TRANSFORM_DURATION
-    const stage = Math.min(TRANSFORM_FRAMES - 1, Math.floor(progress * TRANSFORM_FRAMES))
-    const frame = this.transformTarget === 'werewolf' ? stage : TRANSFORM_FRAMES - 1 - stage
-    const frameW = strip.width / TRANSFORM_FRAMES
-    const flip = player.facing === 'north' || player.facing === 'east'
-    return { ...at(player), image: this.tints.inHue(strip, hue), frameX: frame * frameW, frameW, frameH: strip.height, flip, drop: DRAWN_LOWER.man }
+    const strip = this.sprites.seizure
+    const beat = Math.min(SEIZURE_BEATS - 1, Math.floor(this.transformElapsed / SEIZURE_BEAT))
+    const frameW = strip.width / SEIZURE_POSES
+    const facingFlip = player.facing === 'north' || player.facing === 'east'
+    const flip = facingFlip !== (beat % 2 === 1)
+    return { ...at(player), image: this.tints.inHue(strip, hue), frameX: (this.poses[beat] ?? 0) * frameW, frameW, frameH: strip.height, flip, drop: DRAWN_LOWER.man }
   }
 }
 
-// The seizure's poses, one drawn at random on each fourth frame of it, as
-// the original draws them (0xC357), for as long as the transformation lasts.
-export function seizurePoses(): number[] {
-  const beats = Math.ceil(TRANSFORM_DURATION / SEIZURE_BEAT)
-  return Array.from({ length: beats }, () => Math.floor(Math.random() * 4))
+// The seizure's poses, one a beat, drawn and sounded (0xB472) alike: at
+// random, but never the pose just drawn (0xC362: the same one is turned to
+// its neighbour).
+export function seizurePoses(random: () => number = Math.random): number[] {
+  const poses: number[] = []
+  for (let beat = 0; beat < SEIZURE_BEATS; beat++) {
+    const pose = Math.floor(random() * SEIZURE_POSES)
+    poses.push(pose === poses.at(-1) ? pose ^ 1 : pose)
+  }
+  return poses
 }
 
 function at(player: Player): { x: number; y: number; z: number; scale: number } {

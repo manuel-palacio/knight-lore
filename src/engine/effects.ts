@@ -1,5 +1,6 @@
 import type { Note } from './Beeper'
 import { toOriginalPixels, type Place, type RoomCells } from './OriginalPixels'
+import { TICKS_PER_FRAME } from './StepClock'
 
 // The original's sound effects, played on its beeper routine (0xB4ED): one
 // square-wave cycle, the speaker on for B turns of a djnz loop and off for B
@@ -53,7 +54,7 @@ export function deliveryEffect(charm: string): Note[] {
 // The seizure (0xB472, called every fourth frame of it at 0xC34F): a sweep of
 // single cycles, pitch (c xor 0x55) + c for c counting down from 16, 24, 32
 // or 40, as the pose drawn that frame (graphics 0x5C-0x5F) has it.
-export const SEIZURE_BEAT = 4 / 8 // four of the original's frames, at eight a second
+export const SEIZURE_BEAT = (4 * TICKS_PER_FRAME) / 60 // four of the original's frames
 export function seizureEffect(poses: number[]): Note[] {
   return poses.flatMap((pose) => {
     const count = ((pose & 3) << 3) + 0x10

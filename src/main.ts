@@ -143,8 +143,9 @@ async function main(): Promise<void> {
   }
 
   state.onTransformed = () => {
-    look.transformInto(state.form)
-    beeper.playEffect(seizureEffect(seizurePoses()))
+    const poses = seizurePoses()
+    look.transformInto(state.form, poses)
+    beeper.playEffect(seizureEffect(poses))
     if (state.form === 'human') beeper.play('day')
   }
 

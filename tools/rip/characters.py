@@ -14,10 +14,11 @@ and 7, handler 0xCDDA) over whatever legs are walking: the man's and the
 wolf's strips follow their four frames with each glance over each of the
 four legs.
 
-The transformation is the four full-body poses at 0xac28-0xae98 (the man
-with arms raised, the man with his hat pulled down, the wolf in profile, the
-wolf with arms raised), mirrored and ordered as frames of the original show
-them, ending on the wolf walking away.
+The transformation (0xC357) draws the four full-body poses, graphics
+0x5C-0x5F at 0xac28-0xae98 (the man with arms raised, the man with his hat
+pulled down, the wolf in profile, the wolf with arms raised), one at random
+every fourth frame, mirrored in turn: the seizure strip is the four as they
+are.
 
 usage (from the repo root): uv run --with pillow python tools/rip/characters.py"""
 import os
@@ -49,10 +50,8 @@ STRIPS = {
 }
 
 
-# (pose address, mirrored) for each of the eleven stages, man to wolf.
-TRANSFORM = [(0xadb2, True), (0xadb2, True), (0xac28, False), (0xae98, True), (0xacea, False),
-             (0xadb2, True), (0xadb2, True), (0xae98, False), (0xac28, True), (0xadb2, False)]
-TRANSFORM_LAST = (0xa524, 0xa178, 20)  # the wolf seen from behind, mid-stride
+# Graphics 0x5C-0x5F.
+SEIZURE_POSES = [0xac28, 0xacea, 0xadb2, 0xae98]
 
 # Each view's two glances: graphics 0x26/0x27 (back), 0x2E/0x2F (front) for
 # the man, 0x46/0x47 and 0x4E/0x4F for the wolf.
@@ -78,10 +77,8 @@ def write_strip(memory, name, bodies, legs, drop):
     save_strip(walking + glancing, name)
 
 
-def write_transform(memory, name):
-    cells = [decode(memory, pose).transpose(Image.FLIP_LEFT_RIGHT) if mirrored else decode(memory, pose)
-             for pose, mirrored in TRANSFORM]
-    save_strip(cells + [compose(memory, *TRANSFORM_LAST)], name)
+def write_seizure(memory, name):
+    save_strip([decode(memory, pose) for pose in SEIZURE_POSES], name)
 
 
 def save_strip(cells, name):
@@ -96,4 +93,4 @@ if __name__ == '__main__':
     memory = load_memory(SNAPSHOT)
     for strip_name, (bodies, legs, drop) in STRIPS.items():
         write_strip(memory, strip_name, bodies, legs, drop)
-    write_transform(memory, 'sabreman-transform.png')
+    write_seizure(memory, 'sabreman-seizure.png')

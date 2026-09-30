@@ -1,6 +1,6 @@
 import { projectToScreen, isoDepth, filmationConfig, roomScreenOffset, type IsoConfig } from './IsoProjection'
 import type { Grid } from './Grid'
-import { snapToInkAndPaper } from './InkAndPaper'
+import { snapToInks } from './InkAndPaper'
 import { drawOrder, type Box } from './DrawOrder'
 import { backdropScreenPlace, backdropWorldPlace, type BackdropPart } from './Backdrop'
 import { columnSegments, type DecorKind } from './ColumnLooks'
@@ -94,16 +94,21 @@ export class IsoRenderer {
   // their sprites come in with the dynamics.
   // The original's wall, arch, gate and hedge sprites, by graphic number (see Backdrop).
   private backdropSprites = new Map<number, HTMLImageElement>()
+  // Draws a sprite in an ink: the room's pieces carry its colour whatever else
+  // is drawn in other inks (see snapToInks).
+  private inInk: (sprite: HTMLImageElement, ink: number) => CanvasImageSource & { width: number; height: number } = (sprite) => sprite
 
-  setBackdropSprites(sprites: Map<number, HTMLImageElement>): void {
+  setBackdropSprites(sprites: Map<number, HTMLImageElement>, inInk?: (sprite: HTMLImageElement, ink: number) => CanvasImageSource & { width: number; height: number }): void {
     this.backdropSprites = sprites
     this.blockSprite = sprites.get(BLOCK_GRAPHIC)
+    if (inInk) this.inInk = inInk
   }
 
   // The original's block (graphic 7), a level of a column each.
   private blockSprite: HTMLImageElement | undefined
 
-  render(room: { grid: Grid; tint: number; backdrop?: BackdropPart[]; decorAt?: (gx: number, gz: number, level: number) => DecorKind | undefined }, dynamics: Dynamic[]): void {
+  // `inks`: what the picture may be drawn in (see Palette), the room's one ink unless told.
+  render(room: { grid: Grid; tint: number; backdrop?: BackdropPart[]; decorAt?: (gx: number, gz: number, level: number) => DecorKind | undefined }, dynamics: Dynamic[], inks: number[] = [room.tint]): void {
     const ctx = this.ctx
     this.clear()
 
@@ -113,7 +118,7 @@ export class IsoRenderer {
     // Walls, arches, gates and hedges: the original's sprites where it draws them.
     for (const part of room.backdrop ?? []) {
       const sprite = this.backdropSprites.get(part.graphic)
-      if (sprite) items.push(backdropItem(part, sprite, room.grid.width, room.grid.depth))
+      if (sprite) items.push(backdropItem(part, this.inInk(sprite, room.tint), room.grid.width, room.grid.depth))
     }
 
     // The room's blocks, a block sprite a level, each column up to its height.
@@ -123,7 +128,7 @@ export class IsoRenderer {
         const h = room.grid.supportHeight(gx, gz) || 1
         for (const s of columnSegments(h, (level) => room.decorAt?.(gx, gz, level))) {
           if (s.look !== 'block' || !this.blockSprite) continue
-          for (let level = s.bottom; level < s.top; level++) items.push(this.block(gx, gz, level, this.blockSprite))
+          for (let level = s.bottom; level < s.top; level++) items.push(this.block(gx, gz, level, this.inInk(this.blockSprite, room.tint)))
         }
       }
     }
@@ -144,20 +149,20 @@ export class IsoRenderer {
     const shift = roomScreenOffset(room.grid.width, room.grid.depth, this.cfg)
     const cfg = { ...this.cfg, originX: this.cfg.originX + shift.dx, originY: this.cfg.originY + shift.dy }
     for (const it of drawOrder(items)) it.draw(ctx, cfg)
-    this.snapToRoomInk(room.tint)
+    this.snapToInks(inks)
   }
 
-  // One ink on black, as the Spectrum draws it: no shades, no soft edges.
-  private snapToRoomInk(tint: number): void {
+  // Ink on black, as the Spectrum draws it: no shades, no soft edges.
+  private snapToInks(inks: number[]): void {
     const image = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height)
-    snapToInkAndPaper(image.data, { r: (tint >> 16) & 0xff, g: (tint >> 8) & 0xff, b: tint & 0xff })
+    snapToInks(image.data, inks.map((ink) => ({ r: (ink >> 16) & 0xff, g: (ink >> 8) & 0xff, b: ink & 0xff })))
     this.ctx.putImageData(image, 0, 0)
   }
 
   // Sorted by the cell's centre, not its near corner, so a tall column at the
   // back never sorts over someone standing in front of it; drawn as the
   // original's block.
-  private block(gx: number, gz: number, level: number, sprite: HTMLImageElement): Renderable {
+  private block(gx: number, gz: number, level: number, sprite: CanvasImageSource & { width: number; height: number }): Renderable {
     const cx = (gx + 0.5) * TILE
     const cz = (gz + 0.5) * TILE
     const draw = { image: sprite, frameX: 0, frameW: sprite.width, frameH: sprite.height, scale: 1, flip: false, x: cx, y: level, z: cz, drop: BLOCK_DRAWN_LOWER }
@@ -202,7 +207,7 @@ function cellBox(gx: number, gz: number, bottom: number, top: number): Box {
 }
 
 // Drawn at its place on the whole screen, which a narrow room's shift leaves alone.
-function backdropItem(part: BackdropPart, sprite: HTMLImageElement, width: number, depth: number): Renderable {
+function backdropItem(part: BackdropPart, sprite: CanvasImageSource & { width: number; height: number }, width: number, depth: number): Renderable {
   const at = backdropWorldPlace(part, width, depth)
   const { left, top } = backdropScreenPlace(part, sprite.height)
   return {

@@ -78,3 +78,36 @@ test('the page has a favicon: Sabreman\'s head, a PNG it can load', async ({ pag
   expect(icon.ok()).toBe(true)
   expect(icon.headers()['content-type']).toBe('image/png')
 })
+
+// Colours: the original's (one ink to a room) by default; O switches to the
+// map's, with what hurts red and what he takes white (see Palette).
+async function redPixels(page: Page): Promise<number> {
+  return page.evaluate(() => {
+    const canvas = document.querySelector('canvas')!
+    const data = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, 150).data
+    let red = 0
+    for (let i = 0; i < data.length; i += 4) if (data[i] === 0xea && data[i + 1] === 0x33 && data[i + 2] === 0x23) red++
+    return red
+  })
+}
+
+test('the guard is drawn in the room\'s ink, and red once O switches to the map\'s colours', async ({ page }) => {
+  await startGame(page)
+  await enterRoom(page, 'map-0--1', { x: 8, z: 8 })
+  await holdDaylight(page)
+  await page.waitForTimeout(300)
+  expect(await redPixels(page)).toBe(0)
+  await page.keyboard.press('KeyO')
+  await expect.poll(() => redPixels(page)).toBeGreaterThan(20)
+})
+
+test('O on the title screen switches the colours without beginning the game, and the choice is kept', async ({ page }) => {
+  await page.goto('/')
+  await page.waitForFunction(() => '__dbg' in window)
+  await expect(page.locator('#colours')).toHaveText(/ORIGINAL/)
+  await page.keyboard.press('KeyO')
+  await expect(page.locator('#colours')).toHaveText(/MAP/)
+  await expect(page.locator('#intro')).toBeVisible()
+  await page.reload()
+  await expect(page.locator('#colours')).toHaveText(/MAP/)
+})

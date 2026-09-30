@@ -34,6 +34,7 @@ import { SceneDynamics } from './view/SceneDynamics'
 import { CharacterLook, seizurePoses } from './view/CharacterLook'
 import { TitleScreen } from './view/TitleScreen'
 import { installDebugHooks } from './view/debugHooks'
+import { Palette } from './view/Palette'
 
 const DEATH_FLASH_FRAMES = 2
 const WIPE_SECONDS = 0.25
@@ -53,9 +54,10 @@ async function main(): Promise<void> {
   const overlays = new Overlays()
   const renderer = new IsoRenderer(container, SCREEN_W, SCREEN_H, PIXEL_SCALE)
   const sprites = await loadSprites()
-  renderer.setBackdropSprites(sprites.backdrop)
   const tints = new Tints()
-  const scene = new SceneDynamics(sprites, tints)
+  renderer.setBackdropSprites(sprites.backdrop, (sprite, ink) => tints.inHue(sprite, ink))
+  const palette = new Palette()
+  const scene = new SceneDynamics(sprites, tints, palette)
   const hud = new CanvasHud({ scroll: sprites.hud.scroll, day: sprites.hud.day, hero: sprites.hud.hero, items: sprites.items }, (hue) => tints.inHue(sprites.hud.frame, hue))
 
   const manager = new RoomManager(ROOM_BUILDERS, state)
@@ -116,7 +118,16 @@ async function main(): Promise<void> {
     else clearSave()
     return true
   }
+  // O switches between the original's colours and the map's, on the title
+  // screen (without beginning the game) or in play.
+  const toggleColours = (): void => {
+    palette.toggle()
+    title.showColours(palette.mapColours)
+  }
+  title.showColours(palette.mapColours)
+  document.getElementById('colours')?.addEventListener('click', toggleColours)
   window.addEventListener('keydown', (e) => {
+    if (e.code === 'KeyO') return toggleColours()
     // The key that began the game is not also a jump or a step.
     if (begin(e.code === 'KeyC')) input.forget(e.code)
     if (e.code === 'KeyR' && (state.gameOver || state.won)) location.reload()
@@ -338,7 +349,7 @@ async function main(): Promise<void> {
       renderer.clear()
       return
     }
-    renderer.render(room, [...scene.of(room, charmOverCauldron(state.wantedItem, state.form)), look.dynamic(player, sparkle, room.tint)])
+    renderer.render(room, [...scene.of(room, charmOverCauldron(state.wantedItem, state.form)), look.dynamic(player, sparkle, palette.ink('light', room.tint))], palette.inks(room.tint))
     const ctx = renderer.canvas.getContext('2d')
     if (ctx) hud.draw(ctx, SCREEN_H - HUD_HEIGHT, state, player.satchelSlots, room.tint)
     if (paused) drawPaused()

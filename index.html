@@ -32,6 +32,7 @@
       #intro .keys { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; margin: 18px 0; }
       #intro kbd { justify-self: start; align-self: start; min-width: 3.2em; text-align: center; background: #2a1f15; border: 1px solid #6a4a20; border-radius: 3px; padding: 2px 8px; color: #ffd95a; font-family: inherit; font-size: 13px; }
       #intro .dismiss { text-align: center; margin-top: 18px; color: #a08868; font-size: 13px; }
+      #intro .option { display: block; margin: 12px auto 0; padding: 4px 12px; font: 12px 'Courier New', monospace; letter-spacing: 1px; color: #ffd95a; background: #2a1f15; border: 1px solid #6a4a20; border-radius: 3px; cursor: pointer; }
 
       /* Touch screens: on-screen controls either side of the play area, no
          scrolling, zooming or long-press menus, and tap to begin. */
@@ -91,6 +92,7 @@
           <kbd>E</kbd><span>Pick up a charm (he carries three), or put one down under his feet to stand on. To brew one, jump up onto the cauldron and put it down there</span>
           <kbd>P</kbd><span>Pause. A gamepad works too: d-pad turns and walks, A jumps, B acts, Start pauses.</span>
           <kbd>M</kbd><span>Sound on / off</span>
+          <kbd>O</kbd><span>Colours: the original's, one to a room, or the map's (monsters red, charms white)</span>
           <kbd>R</kbd><span>Restart after game over</span>
         </div>
         <div class="keys touch-only">
@@ -101,6 +103,7 @@
         </div>
         <div id="sound-hint" style="display:none; text-align:center; color:#a08868; margin-top: 14px; font-size: 13px;">Click for sound</div>
         <div id="continue-hint" style="display:none; text-align:center; color:#ffd95a; margin-top: 14px; font-size: 13px;">A game is waiting — press C to continue it</div>
+        <button id="colours" class="option">COLOURS: THE ORIGINAL'S (O)</button>
         <div class="dismiss">Press any key to begin</div>
         <button id="begin" class="begin">TAP TO BEGIN</button>
         <button id="continue" class="begin" style="display:none">CONTINUE THE SAVED GAME</button>

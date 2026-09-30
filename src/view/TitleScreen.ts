@@ -18,6 +18,12 @@ export class TitleScreen {
     if (button) button.style.display = ''
   }
 
+  // The colours button says which are in use (see Palette).
+  showColours(mapColours: boolean): void {
+    const button = document.getElementById('colours')
+    if (button) button.textContent = `COLOURS: ${mapColours ? 'THE MAP\'S' : 'THE ORIGINAL\'S'} (O)`
+  }
+
   // The original's title tune. Browsers hold sound back until the page has
   // had a click or a key, and a key starts the game, so when sound is held
   // back a click on the title screen plays the tune instead. Whichever comes

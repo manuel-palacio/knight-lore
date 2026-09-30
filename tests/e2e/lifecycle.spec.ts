@@ -113,3 +113,26 @@ test('walking into a doorway well to the side of its middle still takes him thro
   await expect.poll(async () => (await debug(page)).room, { timeout: 5_000 }).toBe(north.target)
   await page.keyboard.up('ArrowUp')
 })
+
+// A raised door (the original's pieces 20-23): its doorway is four blocks up
+// on a sill, got up to from a charm, not walked into from the floor.
+test('the raised door of map-7-2 is not walked through from the floor, only at its sill\'s height', async ({ page }) => {
+  const room = specById('map-7-2')
+  const south = room.exits.find((e) => e.direction === 'south')!
+  expect(south.height).toBe(4)
+  await startGame(page)
+  await enterRoom(page, room.id, { x: 4, z: 8 })
+  await holdDaylight(page)
+  await standAt(page, { x: 4, y: 0, z: 14 })
+  await face(page, 'south')
+  await page.keyboard.down('ArrowUp')
+  await page.waitForTimeout(1_500)
+  await page.keyboard.up('ArrowUp')
+  expect((await debug(page)).room).toBe(room.id)
+
+  await standAt(page, { x: 4, y: 4, z: 15.8 })
+  await face(page, 'south')
+  await page.keyboard.down('ArrowUp')
+  await expect.poll(async () => (await debug(page)).room, { timeout: 5_000 }).toBe(south.target)
+  await page.keyboard.up('ArrowUp')
+})

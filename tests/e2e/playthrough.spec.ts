@@ -2,7 +2,7 @@ import { test, expect, type Page } from '@playwright/test'
 import { ROOM_SPECS, oppositeOf, type RoomSpec } from '../../src/scenes/rooms/roomSpecs'
 import { CHARM_HOVER } from '../../src/game/Pickup'
 import { dealtCharms, debug, face, jumpOntoCauldron, putDown, startGame, walkPath, walkUntil, type Cell, type Debug } from './support/game'
-import { dangersOf, doorOf, findFloorPath } from './support/roomPath'
+import { dangersOf, doorOf, exitOf, findFloorPath } from './support/roomPath'
 
 // A whole game played with the keyboard alone, on the real day clock: fetch
 // each charm the cauldron asks for, carry it back, wait out the night when
@@ -102,7 +102,7 @@ async function stepToward(page: Page, goal: string): Promise<void> {
     else await waitForNextMorning(page)
   }
   const spec = specOf(state.room)
-  await walkPath(page, findFloorPath(spec, cellOf(state), doorOf(spec, exit.direction)), dangersOf(spec))
+  await walkPath(page, findFloorPath(spec, cellOf(state), exitOf(spec, exit.direction)), dangersOf(spec))
   await face(page, exit.direction)
   await walkUntil(page, (s) => s.room === exit.target)
 }
@@ -242,14 +242,14 @@ function route(from: string, at: Cell, goal: string): Leg {
     queue.push(state)
   }
   for (const e of specOf(from).exits) {
-    if (canWalk(from, at, doorOf(specOf(from), e.direction))) reach(arrive(e), e, costOfEntering(e.target))
+    if (canWalk(from, at, exitOf(specOf(from), e.direction))) reach(arrive(e), e, costOfEntering(e.target))
   }
   while (queue.length > 0) {
     queue.sort((a, b) => cost.get(a.key)! - cost.get(b.key)!)
     const { id, entry, key } = queue.shift()!
     if (id === goal) return { exit: firstExit.get(key)!, rooms: cost.get(key)! }
     for (const e of specOf(id).exits) {
-      if (canWalk(id, entry, doorOf(specOf(id), e.direction))) reach(arrive(e), firstExit.get(key)!, cost.get(key)! + costOfEntering(e.target))
+      if (canWalk(id, entry, exitOf(specOf(id), e.direction))) reach(arrive(e), firstExit.get(key)!, cost.get(key)! + costOfEntering(e.target))
     }
   }
   throw new Error(`no route on foot ${from} -> ${goal}`)

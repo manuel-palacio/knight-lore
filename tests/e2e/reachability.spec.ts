@@ -1,8 +1,8 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 import { ROOM_SPECS, entryFor, oppositeOf, type RoomSpec } from '../../src/scenes/rooms/roomSpecs'
 import { itemAtSpot } from '../../src/game/GameState'
 import { clearestPath, debug, enterRoom, face, holdDaylight, startGame, walkPath, walkUntil } from './support/game'
-import { dangersOf, doorOf, findFloorPath, findFloorPaths } from './support/roomPath'
+import { dangersOf, doorOf, exitOf, findFloorPath, findFloorPaths } from './support/roomPath'
 
 // The castle walked for real: in every room, Sabreman comes in through the
 // first door, then walks with the arrow keys (climbing blocks and jumping
@@ -33,7 +33,7 @@ const walks = (spec: RoomSpec, from: { x: number; z: number }, to: { x: number; 
 for (const spec of ROOM_SPECS) {
   const entrance = spec.exits[0]!
   const entryDoor = doorOf(spec, entrance.direction)
-  const exits = spec.exits.slice(spec.exits.length > 1 ? 1 : 0).filter((e) => walks(spec, entryDoor, doorOf(spec, e.direction)))
+  const exits = spec.exits.slice(spec.exits.length > 1 ? 1 : 0).filter((e) => walks(spec, entryDoor, exitOf(spec, e.direction)))
   // Charm spots it can be walked to (many lie high, reached by stepping on other charms).
   // A spot half way between cells is reached from the cell below and left of it: within a stride.
   const charms = (spec.charmSpots ?? []).map((c) => ({ ...c, x: Math.floor(c.x), z: Math.floor(c.z), y: c.height })).filter((p) => walks(spec, entryDoor, p))
@@ -74,10 +74,13 @@ for (const spec of ROOM_SPECS) {
         await walkPath(page, await clearestPath(page, findFloorPaths(spec, entryDoor, charm), dangersOf(spec)), dangersOf(spec))
         // Down from a drop or off a sinking block before reaching for it.
         await expect.poll(async () => (await debug(page)).state, { timeout: 10_000 }).toBe('grounded')
-        await page.keyboard.press('KeyE')
         if (item === 'life') {
+          // Taken by touching it (0xC1AB): onto where it lies, which may be between cells.
+          const life = (await debug(page)).pickups.find((p) => p.id === 'life')
+          if (life) await stepOnto(page, life, lives)
           await expect.poll(async () => (await debug(page)).lives, { message: 'extra life taken' }).toBe(lives + 1)
         } else {
+          await page.keyboard.press('KeyE')
           await expect.poll(async () => (await debug(page)).carrying, { message: `${item} picked up` }).toContain(item)
         }
       })
@@ -85,10 +88,21 @@ for (const spec of ROOM_SPECS) {
 
     for (const exit of exits) {
       await walk(`out of the ${exit.direction} door`, async () => {
-        await walkPath(page, await clearestPath(page, findFloorPaths(spec, entryDoor, doorOf(spec, exit.direction)), dangersOf(spec)), dangersOf(spec))
+        await walkPath(page, await clearestPath(page, findFloorPaths(spec, entryDoor, exitOf(spec, exit.direction)), dangersOf(spec)), dangersOf(spec))
         await face(page, exit.direction)
         await walkUntil(page, (state) => state.room === exit.target)
       })
     }
   })
+}
+
+// Walks onto a point, one axis at a time, stopping as soon as a life is gained.
+async function stepOnto(page: Page, at: { x: number; z: number }, lives: number): Promise<void> {
+  for (const axis of ['x', 'z'] as const) {
+    const here = (await debug(page)).pos
+    if (Math.abs(here[axis] - at[axis]) < 0.3) continue
+    const ahead = here[axis] < at[axis]
+    await face(page, axis === 'x' ? (ahead ? 'east' : 'west') : (ahead ? 'south' : 'north'))
+    await walkUntil(page, (s) => s.lives > lives || Math.abs(s.pos[axis] - at[axis]) < 0.3)
+  }
 }

@@ -71,7 +71,7 @@ export function buildRoomFromSpec(spec: RoomSpec, sizeOf: (id: string) => RoomSi
     for (const e of spec.exits) {
       const target = sizeOf(e.target)
       const entry = entryFor(e.direction, target.width, target.depth)
-      room.addExit({ direction: e.direction, targetRoomId: e.target, entryX: entry.x, entryZ: entry.z })
+      room.addExit({ direction: e.direction, targetRoomId: e.target, entryX: entry.x, entryZ: entry.z, height: e.height })
     }
     room.setSpawn(tileCenter(spec.spawn.x), tileCenter(spec.spawn.z))
     return room

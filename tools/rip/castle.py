@@ -33,13 +33,16 @@ CHARM_TABLE, CHARM_ENTRY, CHARM_PLACES = 0x6FF2, 9, 32
 # Where the original has a thing, in pixels: a cell 16 across from 0x48, the floor at 0x80.
 FIRST_CELL_PX, CELL_PX, FLOOR_PX = 0x48, 16, 0x80
 FULL, NARROW, NARROW_FROM = 8, 4, 2
-# 0-3 arches, 4-7 garden gates; a narrow room draws its east and south arches
-# in two pieces, 20/22 and 21/23. The walls are where the original draws the
-# arches (backdrop.py): its y runs the other way to our z, so the arch at its
-# far y edge (piece 0) is in our north wall, and through it lies the room
-# 16 on in the table.
+# 0-3 arches, 4-7 garden gates, 20 and 21 raised arches: an east or south
+# doorway four blocks up (its arch at z 0xB0), on two blocks of sill (pieces
+# 22 and 23, at z 0xA4). The walls are where the original draws the arches
+# (backdrop.py): its y runs the other way to our z, so the arch at its far y
+# edge (piece 0) is in our north wall, and through it lies the room 16 on in
+# the table.
 DOORS = {0: 'north', 1: 'east', 2: 'south', 3: 'west', 4: 'north', 5: 'east', 6: 'south', 7: 'west',
-         20: 'east', 22: 'east', 21: 'south', 23: 'south'}
+         20: 'east', 21: 'south'}
+RAISED = {20, 21}
+RAISED_DOOR_HEIGHT = 4
 STEP = {'north': 16, 'east': 1, 'south': -16, 'west': -1}
 OPPOSITE = {'south': 'north', 'north': 'south', 'east': 'west', 'west': 'east'}
 TINT = {3: 'purple', 4: 'green', 5: 'cyan', 6: 'yellow'}
@@ -136,6 +139,10 @@ class RoomBuild:
         self.dx = NARROW_FROM if self.width == NARROW else 0
         self.dz = NARROW_FROM if self.depth == NARROW else 0
         self.exits = exits
+        # Doors up in the wall (their doorway four blocks up), and of them the
+        # ones with nothing under them to stand on: come in by, not gone out of
+        # on foot.
+        self.raised = {DOORS[t] for t in room['background'] if t in RAISED}
         self.doors = door_cells(self.width, self.depth, exits)
         self.fields = {}
         self.stacks = {}
@@ -220,6 +227,11 @@ class RoomBuild:
 
     def finish(self):
         """Lines for patrols, balls, moving blocks and gates, once every block is known."""
+        # A raised doorway with blocks four high under it inside (a column, or a
+        # ledge hung at its height) is walked out of from their top; with
+        # nothing under it, only up from a charm (not on foot).
+        self.out_of_reach = {d for d in self.raised
+                             if max(self.stacks.get(door_cells(self.width, self.depth, [d]).pop(), {-1})) + 1 < RAISED_DOOR_HEIGHT}
         self.fields['ghosts'] = [self.clear_of_doors(g) for g in self.fields.get('ghosts', [])]
         for x, z, axis in self.fields.pop('_gates', []):
             if axis == 'x':
@@ -518,11 +530,14 @@ class Walkable:
         return False
 
 
-def crossings(build):
-    """Which of a room's doors a walker can get between, and which doors lead to its charm."""
+def crossings(build, charm_jumps=False):
+    """Which of a room's doors a walker can get between, and which doors lead to its charm.
+    A raised doorway with nothing under it is got up to only from a charm put
+    down below it: gone out of with `charm_jumps`, not on foot."""
     walk = Walkable(build)
     cells = {d: c for d, c in zip(build.exits, door_list(build))}
-    through = {(a, b) for a in cells for b in cells if a != b and walk.reaches(cells[a], cells[b])}
+    shut = set() if charm_jumps else build.out_of_reach
+    through = {(a, b) for a in cells for b in cells if a != b and b not in shut and walk.reaches(cells[a], cells[b])}
     return walk, cells, through
 
 
@@ -532,16 +547,19 @@ def door_list(build):
     return [order[d] for d in build.exits]
 
 
-def walkable_rooms(builds, exits, start):
+def walkable_rooms(builds, exits, start, charm_jumps=False):
     """Rooms reached from a start room on foot: entering by a door, leaving by
-    any door the walker can get to from it."""
-    through = {room_id: crossings(build)[2] for room_id, build in builds.items()}
+    any door the walker can get to from it (and, with `charm_jumps`, up to a
+    raised doorway from a charm)."""
+    through = {room_id: crossings(build, charm_jumps)[2] for room_id, build in builds.items()}
     seen = set()
     queue = deque((start, d) for d in exits[start])
     entered = {start}
     while queue:
         room_id, came_by = queue.popleft()
         for leave, target in exits[room_id].items():
+            if leave in builds[room_id].out_of_reach and not charm_jumps:
+                continue
             if leave != came_by and (came_by, leave) not in through[room_id] and room_id != start:
                 continue
             state = (target, OPPOSITE[leave])
@@ -601,7 +619,8 @@ def mark_puzzles(builds):
     stepping stone or a push: a puzzle the walkers go round."""
     for build in builds.values():
         _, cells, through = crossings(build)
-        if len(through) < len(cells) * (len(cells) - 1):
+        ways_out = [d for d in cells if d not in build.out_of_reach]
+        if len(through) < len(ways_out) * (len(cells) - 1):
             build.puzzle = True
             warn(f'{build.id}: a puzzle room, not every door can be reached on foot')
 
@@ -623,7 +642,8 @@ FIELD_ORDER = ['platforms', 'decor', 'floatingBlocks', 'spikes', 'boxes', 'vanis
 
 
 def spec_text(room_id, build):
-    exits = ', '.join(f"{{ direction: '{d}', target: '{name_of(t)}' }}" for d, t in build.exits.items())
+    exits = ', '.join(f"{{ direction: '{d}', target: '{name_of(t)}'{f', height: {RAISED_DOOR_HEIGHT}' if d in build.raised else ''} }}"
+                      for d, t in build.exits.items())
     head = f"    id: '{build.id}', tint: '{TINT[ROOMS[room_id]['colour']]}',"
     if build.width != FULL:
         head += f' width: {build.width},'
@@ -668,8 +688,10 @@ if __name__ == '__main__':
         build.finish()
     mark_puzzles(builds)
     for start in starts:
+        if CAULDRON not in walkable_rooms(builds, exits, start, charm_jumps=True):
+            raise SystemExit(f'the cauldron cannot be reached from {name_of(start)}')
         if CAULDRON not in walkable_rooms(builds, exits, start):
-            raise SystemExit(f'the cauldron cannot be reached on foot from {name_of(start)}')
+            warn(f'{name_of(start)}: the cauldron is reached only up to a raised doorway from a charm')
     for room_id, build in builds.items():
         build.fields['backdrop'] = backdrop_of(memory, ROOMS[room_id])
     for room_id, spots in charm_spots(memory, builds).items():

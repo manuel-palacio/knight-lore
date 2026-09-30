@@ -23,7 +23,8 @@ export interface RoomSpec {
   // Cells across (x) and deep (z); the original's narrow rooms are 4 on one axis.
   width?: number
   depth?: number
-  exits: { direction: Direction; target: string }[]
+  // A raised door's doorway is `height` blocks up (see castle.py).
+  exits: { direction: Direction; target: string; height?: number }[]
   spawn: Cell
   platforms?: (Cell & { height: number })[]
   // Blocks drawn as themselves: a hedge or a gargoyle at a level of a column.
@@ -231,7 +232,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--8--7', tint: 'cyan', width: 4,
-    exits: [{ direction: 'north', target: 'map--8--6' }, { direction: 'south', target: 'map--8--8' }],
+    exits: [{ direction: 'north', target: 'map--8--6' }, { direction: 'south', target: 'map--8--8', height: 4 }],
     spawn: { x: 2, z: 0 },
     platforms: [{ x: 0, z: 6, height: 1 }, { x: 1, z: 6, height: 1 }, { x: 2, z: 6, height: 1 }, { x: 3, z: 7, height: 1 }],
     floatingBlocks: [{ x: 1, z: 7, bottom: 3 }, { x: 2, z: 7, bottom: 3 }],
@@ -250,7 +251,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--4--7', tint: 'yellow', width: 4,
-    exits: [{ direction: 'north', target: 'map--4--6' }, { direction: 'south', target: 'map--4--8' }],
+    exits: [{ direction: 'north', target: 'map--4--6' }, { direction: 'south', target: 'map--4--8', height: 4 }],
     spawn: { x: 2, z: 0 },
     platforms: [],
     floatingBlocks: [{ x: 1, z: 7, bottom: 3 }, { x: 2, z: 7, bottom: 3 }],
@@ -269,7 +270,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-5--7', tint: 'yellow', width: 4,
-    exits: [{ direction: 'north', target: 'map-5--6' }, { direction: 'south', target: 'map-5--8' }],
+    exits: [{ direction: 'north', target: 'map-5--6' }, { direction: 'south', target: 'map-5--8', height: 4 }],
     spawn: { x: 2, z: 0 },
     platforms: [{ x: 2, z: 1, height: 1 }, { x: 2, z: 2, height: 2 }, { x: 2, z: 3, height: 2 }, { x: 2, z: 6, height: 4 }],
     floatingBlocks: [{ x: 1, z: 7, bottom: 3 }, { x: 2, z: 7, bottom: 3 }],
@@ -288,7 +289,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--8--6', tint: 'purple',
-    exits: [{ direction: 'north', target: 'map--8--5' }, { direction: 'east', target: 'map--7--6' }, { direction: 'south', target: 'map--8--7' }],
+    exits: [{ direction: 'north', target: 'map--8--5' }, { direction: 'east', target: 'map--7--6' }, { direction: 'south', target: 'map--8--7', height: 4 }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 0, z: 4, height: 1 }],
     floatingBlocks: [{ x: 3, z: 7, bottom: 3 }, { x: 4, z: 7, bottom: 3 }],
@@ -298,7 +299,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--7--6', tint: 'yellow', depth: 4,
-    exits: [{ direction: 'east', target: 'map--6--6' }, { direction: 'west', target: 'map--8--6' }],
+    exits: [{ direction: 'east', target: 'map--6--6', height: 4 }, { direction: 'west', target: 'map--8--6' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 1, z: 1, height: 2 }, { x: 4, z: 1, height: 2 }, { x: 5, z: 1, height: 2 }, { x: 6, z: 1, height: 2 }],
     floatingBlocks: [{ x: 2, z: 1, bottom: 2 }, { x: 3, z: 1, bottom: 2 }, { x: 7, z: 1, bottom: 3 }, { x: 7, z: 2, bottom: 3 }],
@@ -337,7 +338,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-0--6', tint: 'yellow', width: 4,
-    exits: [{ direction: 'north', target: 'map-0--5' }, { direction: 'south', target: 'map-0--7' }],
+    exits: [{ direction: 'north', target: 'map-0--5' }, { direction: 'south', target: 'map-0--7', height: 4 }],
     spawn: { x: 2, z: 0 },
     platforms: [],
     floatingBlocks: [{ x: 1, z: 7, bottom: 3 }, { x: 2, z: 7, bottom: 3 }],
@@ -347,7 +348,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-5--6', tint: 'green',
-    exits: [{ direction: 'east', target: 'map-6--6' }, { direction: 'south', target: 'map-5--7' }],
+    exits: [{ direction: 'east', target: 'map-6--6', height: 4 }, { direction: 'south', target: 'map-5--7' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 3, z: 3, height: 3 }, { x: 3, z: 4, height: 2 }, { x: 3, z: 5, height: 1 }],
     floatingBlocks: [{ x: 7, z: 3, bottom: 3 }, { x: 7, z: 4, bottom: 3 }],
@@ -401,7 +402,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-0--5', tint: 'purple', width: 4,
-    exits: [{ direction: 'north', target: 'map-0--4' }, { direction: 'south', target: 'map-0--6' }],
+    exits: [{ direction: 'north', target: 'map-0--4' }, { direction: 'south', target: 'map-0--6', height: 4 }],
     spawn: { x: 2, z: 0 },
     platforms: [],
     floatingBlocks: [{ x: 0, z: 0, bottom: 1 }, { x: 0, z: 1, bottom: 3 }, { x: 0, z: 4, bottom: 3 }, { x: 0, z: 7, bottom: 3 }, { x: 1, z: 7, bottom: 3 }, { x: 2, z: 7, bottom: 3 }],
@@ -422,7 +423,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--8--4', tint: 'yellow',
-    exits: [{ direction: 'east', target: 'map--7--4' }, { direction: 'south', target: 'map--8--5' }],
+    exits: [{ direction: 'east', target: 'map--7--4', height: 4 }, { direction: 'south', target: 'map--8--5', height: 4 }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 6, z: 7, height: 1 }, { x: 7, z: 0, height: 1 }],
     floatingBlocks: [{ x: 0, z: 0, bottom: 2 }, { x: 3, z: 7, bottom: 3 }, { x: 4, z: 7, bottom: 3 }, { x: 7, z: 3, bottom: 3 }, { x: 7, z: 4, bottom: 3 }],
@@ -497,7 +498,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-0--4', tint: 'yellow', width: 4,
-    exits: [{ direction: 'north', target: 'map-0--3' }, { direction: 'south', target: 'map-0--5' }],
+    exits: [{ direction: 'north', target: 'map-0--3' }, { direction: 'south', target: 'map-0--5', height: 4 }],
     spawn: { x: 2, z: 0 },
     platforms: [{ x: 2, z: 2, height: 3 }, { x: 3, z: 2, height: 2 }, { x: 3, z: 3, height: 1 }],
     floatingBlocks: [{ x: 1, z: 7, bottom: 3 }, { x: 2, z: 6, bottom: 3 }, { x: 2, z: 7, bottom: 3 }],
@@ -533,7 +534,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-0--3', tint: 'cyan', width: 4,
-    exits: [{ direction: 'north', target: 'map-0--2' }, { direction: 'south', target: 'map-0--4' }],
+    exits: [{ direction: 'north', target: 'map-0--2' }, { direction: 'south', target: 'map-0--4', height: 4 }],
     spawn: { x: 2, z: 0 },
     platforms: [],
     floatingBlocks: [{ x: 3, z: 4, bottom: 1 }],
@@ -559,7 +560,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--4--2', tint: 'yellow', width: 4,
-    exits: [{ direction: 'north', target: 'map--4--1' }, { direction: 'south', target: 'map--4--3' }],
+    exits: [{ direction: 'north', target: 'map--4--1' }, { direction: 'south', target: 'map--4--3', height: 4 }],
     spawn: { x: 2, z: 0 },
     platforms: [{ x: 1, z: 2, height: 1 }, { x: 1, z: 3, height: 1 }, { x: 1, z: 6, height: 1 }, { x: 1, z: 7, height: 1 }, { x: 2, z: 2, height: 1 }, { x: 2, z: 3, height: 1 }, { x: 2, z: 6, height: 1 }],
     boxes: [{ x: 1, z: 3, height: 1, kind: 'chest' }],
@@ -593,7 +594,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-3--2', tint: 'green', depth: 4,
-    exits: [{ direction: 'east', target: 'map-4--2' }, { direction: 'west', target: 'map-2--2' }],
+    exits: [{ direction: 'east', target: 'map-4--2', height: 4 }, { direction: 'west', target: 'map-2--2' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 4, z: 1, height: 2 }, { x: 4, z: 2, height: 2 }],
     floatingBlocks: [{ x: 7, z: 1, bottom: 3 }, { x: 7, z: 2, bottom: 3 }],
@@ -659,7 +660,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--2--1', tint: 'yellow', depth: 4,
-    exits: [{ direction: 'east', target: 'map--1--1' }, { direction: 'west', target: 'map--3--1' }],
+    exits: [{ direction: 'east', target: 'map--1--1', height: 4 }, { direction: 'west', target: 'map--3--1' }],
     spawn: { x: 3, z: 0 },
     platforms: [{ x: 4, z: 0, height: 1 }],
     floatingBlocks: [{ x: 5, z: 0, bottom: 1 }, { x: 6, z: 0, bottom: 2 }, { x: 7, z: 0, bottom: 3 }, { x: 7, z: 1, bottom: 3 }, { x: 7, z: 2, bottom: 3 }, { x: 7, z: 3, bottom: 3 }],
@@ -721,7 +722,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--3-0', tint: 'green', depth: 4,
-    exits: [{ direction: 'east', target: 'map--2-0' }, { direction: 'west', target: 'map--4-0' }],
+    exits: [{ direction: 'east', target: 'map--2-0', height: 4 }, { direction: 'west', target: 'map--4-0' }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 0, z: 0, height: 1 }],
     floatingBlocks: [{ x: 1, z: 0, bottom: 1 }, { x: 2, z: 0, bottom: 2 }, { x: 3, z: 0, bottom: 3 }, { x: 7, z: 1, bottom: 3 }, { x: 7, z: 2, bottom: 3 }],
@@ -731,7 +732,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--2-0', tint: 'purple', depth: 4,
-    exits: [{ direction: 'east', target: 'map--1-0' }, { direction: 'west', target: 'map--3-0' }],
+    exits: [{ direction: 'east', target: 'map--1-0', height: 4 }, { direction: 'west', target: 'map--3-0' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
     floatingBlocks: [{ x: 3, z: 1, bottom: 1 }],
@@ -804,7 +805,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-6-0', tint: 'purple', depth: 4,
-    exits: [{ direction: 'east', target: 'map-7-0' }, { direction: 'west', target: 'map-5-0' }],
+    exits: [{ direction: 'east', target: 'map-7-0', height: 4 }, { direction: 'west', target: 'map-5-0' }],
     spawn: { x: 4, z: 0 },
     platforms: [],
     boxes: [{ x: 3, z: 1, height: 0, kind: 'table' }, { x: 3, z: 1, height: 1, kind: 'table' }],
@@ -848,7 +849,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-3-1', tint: 'purple', width: 4,
-    exits: [{ direction: 'north', target: 'map-3-2' }, { direction: 'south', target: 'map-3-0' }],
+    exits: [{ direction: 'north', target: 'map-3-2' }, { direction: 'south', target: 'map-3-0', height: 4 }],
     spawn: { x: 2, z: 0 },
     platforms: [{ x: 3, z: 0, height: 2 }, { x: 3, z: 1, height: 4 }],
     floatingBlocks: [{ x: 1, z: 7, bottom: 3 }, { x: 2, z: 7, bottom: 3 }],
@@ -867,7 +868,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--5-2', tint: 'purple', width: 4,
-    exits: [{ direction: 'north', target: 'map--5-3' }, { direction: 'south', target: 'map--5-1' }],
+    exits: [{ direction: 'north', target: 'map--5-3' }, { direction: 'south', target: 'map--5-1', height: 4 }],
     spawn: { x: 2, z: 0 },
     platforms: [{ x: 2, z: 1, height: 2 }, { x: 3, z: 0, height: 2 }],
     floatingBlocks: [{ x: 1, z: 7, bottom: 3 }, { x: 2, z: 7, bottom: 3 }, { x: 3, z: 1, bottom: 1 }],
@@ -911,7 +912,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-7-2', tint: 'green', width: 4,
-    exits: [{ direction: 'north', target: 'map-7-3' }, { direction: 'south', target: 'map-7-1' }],
+    exits: [{ direction: 'north', target: 'map-7-3' }, { direction: 'south', target: 'map-7-1', height: 4 }],
     spawn: { x: 2, z: 0 },
     platforms: [{ x: 1, z: 1, height: 1 }, { x: 1, z: 4, height: 1 }, { x: 2, z: 1, height: 1 }, { x: 2, z: 4, height: 1 }],
     boxes: [{ x: 2, z: 1, height: 1, kind: 'chest' }],
@@ -962,7 +963,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-7-3', tint: 'purple',
-    exits: [{ direction: 'north', target: 'map-7-4' }, { direction: 'south', target: 'map-7-2' }],
+    exits: [{ direction: 'north', target: 'map-7-4' }, { direction: 'south', target: 'map-7-2', height: 4 }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 5, z: 0, height: 1 }],
     floatingBlocks: [{ x: 3, z: 7, bottom: 3 }, { x: 4, z: 7, bottom: 3 }, { x: 6, z: 0, bottom: 1 }, { x: 6, z: 0, bottom: 2 }, { x: 7, z: 0, bottom: 2 }],
@@ -980,7 +981,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--1-4', tint: 'cyan',
-    exits: [{ direction: 'north', target: 'map--1-5' }, { direction: 'south', target: 'map--1-3' }],
+    exits: [{ direction: 'north', target: 'map--1-5' }, { direction: 'south', target: 'map--1-3', height: 4 }],
     spawn: { x: 4, z: 0 },
     platforms: [],
     floatingBlocks: [{ x: 3, z: 4, bottom: 1 }],
@@ -1068,7 +1069,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map-5-5', tint: 'yellow',
-    exits: [{ direction: 'north', target: 'map-5-6' }, { direction: 'east', target: 'map-6-5' }],
+    exits: [{ direction: 'north', target: 'map-5-6' }, { direction: 'east', target: 'map-6-5', height: 4 }],
     spawn: { x: 4, z: 0 },
     platforms: [{ x: 6, z: 3, height: 1 }, { x: 6, z: 4, height: 1 }, { x: 7, z: 2, height: 1 }, { x: 7, z: 5, height: 1 }],
     floatingBlocks: [{ x: 7, z: 3, bottom: 3 }, { x: 7, z: 4, bottom: 3 }],
@@ -1169,7 +1170,7 @@ export const ROOM_SPECS: RoomSpec[] = [
   },
   {
     id: 'map--8-7', tint: 'cyan',
-    exits: [{ direction: 'east', target: 'map--7-7' }, { direction: 'south', target: 'map--8-6' }],
+    exits: [{ direction: 'east', target: 'map--7-7', height: 4 }, { direction: 'south', target: 'map--8-6', height: 4 }],
     spawn: { x: 4, z: 0 },
     platforms: [],
     floatingBlocks: [{ x: 0, z: 0, bottom: 1 }, { x: 0, z: 2, bottom: 2 }, { x: 0, z: 5, bottom: 3 }, { x: 0, z: 7, bottom: 3 }, { x: 1, z: 7, bottom: 3 }, { x: 2, z: 7, bottom: 3 }, { x: 3, z: 7, bottom: 3 }, { x: 4, z: 7, bottom: 3 }, { x: 6, z: 0, bottom: 3 }, { x: 7, z: 0, bottom: 3 }, { x: 7, z: 3, bottom: 3 }, { x: 7, z: 4, bottom: 3 }],

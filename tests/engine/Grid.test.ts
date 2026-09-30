@@ -53,4 +53,11 @@ describe('Grid', () => {
     expect([grid.isSolid(3, 4), grid.isSolid(4, 4), grid.isSolid(8, 1), grid.isSolid(8, 2)]).toEqual([false, false, false, false])
     expect(grid.supportHeight(-1, 1)).toBe(0)
   })
+
+  it('a raised doorway\'s floor is its sill, four blocks up (the original\'s pieces 20-23)', () => {
+    const grid = new Grid(4, 8)
+    grid.openDoorway('south', 4)
+    expect([grid.supportHeight(1, 8), grid.supportHeight(2, 8)]).toEqual([4, 4])
+    expect(grid.isSolid(2, 8)).toBe(true)
+  })
 })

@@ -15,6 +15,13 @@ export function doorOf(spec: RoomSpec, direction: Direction): Cell {
   return doorCell(direction, spec.width ?? 8, spec.depth ?? 8)
 }
 
+// Where he must stand to go out by a door: its cell, and for a raised door
+// up at its doorway's height (see castle.py).
+export function exitOf(spec: RoomSpec, direction: Direction): Target {
+  const height = spec.exits.find((e) => e.direction === direction)?.height
+  return height ? { ...doorOf(spec, direction), y: height } : doorOf(spec, direction)
+}
+
 const key = (c: Cell) => `${c.x},${c.z}`
 // Room units to a cell.
 const TILE_UNITS = 2

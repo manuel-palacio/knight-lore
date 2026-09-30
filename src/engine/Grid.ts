@@ -10,8 +10,9 @@ export class Grid {
   readonly width: number
   readonly depth: number
   private cells: Cell[]
-  // Cells beyond the edge he may walk into: a doorway's, the wall's thickness under its arch.
-  private readonly doorways = new Set<string>()
+  // Cells beyond the edge he may walk into: a doorway's, the wall's thickness
+  // under its arch, and how high its floor is (a raised doorway's sill).
+  private readonly doorways = new Map<string, number>()
 
   constructor(width: number, depth: number) {
     this.width = width
@@ -30,8 +31,9 @@ export class Grid {
     return x >= 0 && x < this.width && z >= 0 && z < this.depth
   }
 
-  // The two cells beyond the middle of an edge, either side of the doorway's axis.
-  openDoorway(edge: Edge): void {
+  // The two cells beyond the middle of an edge, either side of the doorway's
+  // axis, their floor `height` blocks up.
+  openDoorway(edge: Edge, height = 0): void {
     const midX = this.width / 2
     const midZ = this.depth / 2
     const cells = {
@@ -40,11 +42,12 @@ export class Grid {
       west: [[-1, midZ - 1], [-1, midZ]],
       east: [[this.width, midZ - 1], [this.width, midZ]],
     }[edge]
-    for (const [x, z] of cells) this.doorways.add(`${x},${z}`)
+    for (const [x, z] of cells) this.doorways.set(`${x},${z}`, height)
   }
 
   isSolid(x: number, z: number): boolean {
-    if (!this.inBounds(x, z)) return !this.doorways.has(`${x},${z}`)
+    // A raised doorway stands like a column: passed at its sill's height.
+    if (!this.inBounds(x, z)) return (this.doorways.get(`${x},${z}`) ?? 1) > 0
     return this.cells[this.idx(x, z)]!.solid
   }
 
@@ -54,7 +57,7 @@ export class Grid {
   }
 
   supportHeight(x: number, z: number): number {
-    if (!this.inBounds(x, z)) return 0
+    if (!this.inBounds(x, z)) return this.doorways.get(`${x},${z}`) ?? 0
     return this.cells[this.idx(x, z)]!.supportHeight
   }
 

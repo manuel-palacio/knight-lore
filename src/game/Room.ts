@@ -11,6 +11,8 @@ export interface Exit {
   targetRoomId: string
   entryX: number
   entryZ: number
+  // How high its doorway's floor is: a raised arch's sill, four blocks up.
+  height?: number
 }
 
 export class Room {
@@ -50,7 +52,7 @@ export class Room {
 
   addExit(exit: Exit): void {
     this.exits.push(exit)
-    this.grid.openDoorway(exit.direction)
+    this.grid.openDoorway(exit.direction, exit.height)
   }
 
   // After a death: everything that moves goes back to its starting place.

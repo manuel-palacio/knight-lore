@@ -195,7 +195,8 @@ describe('Player jump', () => {
     const c = { ...ctx(grid, state), dynamicSupport: (x: number, z: number, y: number) => block.supportAt(x, z, y), dynamicSolid: (x: number, z: number, from: number, to: number) => blockFillsAt([block], x, z, from, to) }
     player.position.set(block.position.x, 5, block.position.z)
     player.state = 'airborne'
-    for (let i = 0; i < 400 && player.state !== 'grounded'; i++) tick(player, c)
+    tick(player, c, 400)
+    expect(player.state).toBe('grounded')
     expect(player.position.y).toBe(1)
   })
 

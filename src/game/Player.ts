@@ -146,8 +146,15 @@ export class Player extends Entity {
     this.riseSpeedPx -= holding ? 1 : 2
     const risen = this.position.y + this.riseSpeedPx / PIXELS_PER_BLOCK
     if (this.riseSpeedPx > 0 && this.bodyMeetsBlockAt(ctx, this.position.x, this.position.z, risen)) this.riseSpeedPx = 0
-    else this.position.y = risen
+    else this.position.y = Math.max(risen, this.topPassedFalling(ctx))
     this.tryLand(ctx)
+  }
+
+  // Falling up to a block a frame, he would pass a top in one frame and end
+  // up inside what it tops: what is under him before he drops stops him.
+  private topPassedFalling(ctx: PlayerCtx): number {
+    if (this.riseSpeedPx > 0) return -Infinity
+    return Math.min(this.supportAt(ctx), this.position.y)
   }
 
   private tryLand(ctx: PlayerCtx): void {

@@ -4,6 +4,8 @@ import { Player, STEP_LENGTH, TICKS_PER_STEP, JUMP_SPEED_PX } from '../../src/ga
 import { GameState } from '../../src/game/GameState'
 import { SIMULATION_DT } from '../../src/engine/GameLoop'
 import { Pickup, CHARM_HEIGHT } from '../../src/game/Pickup'
+import { FloatingBlock } from '../../src/game/FloatingBlock'
+import { blockFillsAt } from '../../src/game/BlockSolids'
 
 const TILE = 2
 
@@ -185,6 +187,16 @@ describe('Player jump', () => {
     player.position.set(8, 0, 0.5)
     tick(player, ctx(grid, state, { jump: true }))
     expect(player.state).toBe('jumping')
+  })
+
+  it('falling fast, lands on the top of a block he passes in one frame, not inside it', () => {
+    const { grid, state, player } = setupRoom()
+    const block = new FloatingBlock(4, 4, 0, 2)
+    const c = { ...ctx(grid, state), dynamicSupport: (x: number, z: number, y: number) => block.supportAt(x, z, y), dynamicSolid: (x: number, z: number, from: number, to: number) => blockFillsAt([block], x, z, from, to) }
+    player.position.set(block.position.x, 5, block.position.z)
+    player.state = 'airborne'
+    for (let i = 0; i < 400 && player.state !== 'grounded'; i++) tick(player, c)
+    expect(player.position.y).toBe(1)
   })
 
   it('a jump carried into a doorway rises no further (0xC86D)', () => {

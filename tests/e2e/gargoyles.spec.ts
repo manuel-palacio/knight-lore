@@ -12,7 +12,8 @@ test('walking into a gargoyle costs a life', async ({ page }) => {
   await standAt(page, { x: tileCentre(2), y: 0, z: tileCentre(3) })
   await face(page, 'east')
   await page.keyboard.down('ArrowUp')
-  await expect.poll(async () => (await debug(page)).lives, { timeout: 5_000 }).toBe(4)
+  // Let go at the first life lost: held on, he walks on from the door into the room's spikes.
+  await expect.poll(async () => (await debug(page)).lives, { timeout: 5_000, intervals: [20] }).toBeLessThan(5)
   await page.keyboard.up('ArrowUp')
 })
 

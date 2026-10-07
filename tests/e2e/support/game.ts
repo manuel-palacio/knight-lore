@@ -322,7 +322,7 @@ async function jumpTo(page: Page, path: Step[], into: number, spec?: RoomSpec, p
 
 // Space down, and up again at once for a low jump or once he is past the top
 // of a high one (held on, he would jump again as he lands); then down.
-async function jump(page: Page, held: boolean): Promise<void> {
+export async function jump(page: Page, held: boolean): Promise<void> {
   if (held) await page.keyboard.down('Space')
   else await page.keyboard.press('Space')
   try {

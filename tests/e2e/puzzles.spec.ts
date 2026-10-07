@@ -1,8 +1,8 @@
 import { test, expect, type Page } from '@playwright/test'
-import { entryFor, oppositeOf, type Direction, type RoomSpec } from '../../src/scenes/rooms/roomSpecs'
-import { debug, enterRoom, face, give, holdDaylight, putDown as putDownCharm, startGame, tileCentre, walkPath, walkUntil } from './support/game'
-import { dangersOf, doorOf, type Step } from './support/roomPath'
-import { SOLVED_PUZZLES } from './support/puzzles'
+import { entryFor, type Direction, type RoomSpec } from '../../src/scenes/rooms/roomSpecs'
+import { debug, enterRoom, face, holdDaylight, startGame, tileCentre, walkUntil } from './support/game'
+import { doorOf, type Step } from './support/roomPath'
+import { SOLVED_PUZZLES, enterBy, leaveBy, putDown, walk, withCharms } from './support/puzzles'
 import { specById } from './support/specs'
 
 // The puzzle rooms (tools/rip/castle.py marks them: some door cannot be
@@ -13,36 +13,6 @@ import { specById } from './support/specs'
 // into a table pushes it.
 
 const spec = (id: (typeof SOLVED_PUZZLES)[number]) => specById(id)
-
-// The room as the jump planner should see it once charms lie in it.
-function withCharms(room: RoomSpec, cells: Step[]): RoomSpec {
-  return { ...room, id: `${room.id} with charms at ${JSON.stringify(cells)}`, pickups: cells.map((c) => ({ x: c.x, z: c.z, item: 'gem', y: c.y + 0.4 })) }
-}
-
-async function enterBy(page: Page, room: RoomSpec, door: Direction, charms = 0): Promise<void> {
-  await enterRoom(page, room.id, entryFor(oppositeOf(door), room.width ?? 8, room.depth ?? 8))
-  await holdDaylight(page)
-  if (charms) await give(page, Array.from({ length: charms }, () => 'gem'))
-}
-
-// Only standing: having just walked off a charm, he may still be dropping to the floor.
-async function putDown(page: Page): Promise<void> {
-  await expect.poll(async () => (await debug(page)).state).toBe('grounded')
-  const { pos } = await debug(page)
-  await putDownCharm(page)
-  expect((await debug(page)).pos.y).toBe(pos.y + 1)
-}
-
-async function leaveBy(page: Page, room: RoomSpec, door: Direction): Promise<void> {
-  const target = room.exits.find((e) => e.direction === door)!.target
-  if ((await debug(page)).room === target) return
-  await face(page, door)
-  await walkUntil(page, (s) => s.room === target)
-}
-
-async function walk(page: Page, room: RoomSpec, path: Step[]): Promise<void> {
-  await walkPath(page, path, dangersOf(room))
-}
 
 // Over a wall three blocks high: two charms put down in line before it (the
 // one he stands on, the one he runs up across), a held jump onto the wall,

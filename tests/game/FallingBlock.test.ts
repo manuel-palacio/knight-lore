@@ -27,6 +27,13 @@ describe('FallingBlock', () => {
     expect(rider.y).toBeCloseTo(30 / 12, 5)
   })
 
+  it('sinks under him standing only half on it', () => {
+    const b = new FallingBlock(2, 2, 3, 2)
+    const rider = new THREE.Vector3(3.75, 3, 5)
+    runFrames(b, 6, { playerPosition: rider, playerExtents: new THREE.Vector3(0.8, 1.6, 0.8) })
+    expect(b.topPx).toBe(36 - 6)
+  })
+
   it('stops as soon as he steps off, and stays where it stopped', () => {
     const b = new FallingBlock(2, 2, 3, 2)
     const rider = new THREE.Vector3(5, 3, 5)

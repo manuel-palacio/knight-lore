@@ -27,6 +27,13 @@ describe('VanishingBlock', () => {
     expect(b.supportAt(5, 5, 1)).toBeNull()
   })
 
+  it('gives way under him standing only half on it (his feet, not his middle, over it)', () => {
+    const b = new VanishingBlock(2, 2, 1, 2)
+    const rider = new THREE.Vector3(3.75, 1, 5)
+    runFrames(b, VANISH_AFTER_FRAMES, { playerPosition: rider, playerExtents: new THREE.Vector3(0.8, 1.6, 0.8) })
+    expect(b.present).toBe(false)
+  })
+
   it('does not crumble for someone on the floor beside it', () => {
     const b = new VanishingBlock(2, 2, 1, 2)
     run(b, new THREE.Vector3(5, 0, 5), 20)

@@ -13,6 +13,7 @@ export const SINK_PER_FRAME_PX = 1
 
 interface RiderCtx extends GroundCtx {
   playerPosition?: THREE.Vector3
+  playerExtents?: THREE.Vector3
 }
 
 export class FallingBlock extends Entity {
@@ -49,14 +50,15 @@ export class FallingBlock extends Entity {
     if (!this.clock.tick()) return
     const ctx = ctxRaw as RiderCtx
     const rider = ctx.playerPosition
-    if (!rider || !this.isStandingOn(rider) || this.restsOnGround(ctx)) return
+    if (!rider || !this.isStandingOn(rider, ctx.playerExtents) || this.restsOnGround(ctx)) return
     this.topPx -= SINK_PER_FRAME_PX
     this.position.y = this.top - 1
     rider.y = this.top
   }
 
-  private isStandingOn(rider: THREE.Vector3): boolean {
-    return isStoodOn(this, this.top, rider)
+  // Anywhere under his feet: half on it, it gives way as surely.
+  private isStandingOn(rider: THREE.Vector3, size?: THREE.Vector3): boolean {
+    return isStoodOn(this, this.top, rider, (size?.x ?? 0) / 2)
   }
 
   private restsOnGround(ctx: GroundCtx): boolean {

@@ -13,6 +13,7 @@ export const VANISH_AFTER_FRAMES = 2
 
 interface RiderCtx extends UpdateContext {
   playerPosition?: THREE.Vector3
+  playerExtents?: THREE.Vector3
 }
 
 export class VanishingBlock extends Entity {
@@ -49,13 +50,14 @@ export class VanishingBlock extends Entity {
   update(_dt: number, ctxRaw: UpdateContext): void {
     if (!this.clock.tick()) return
     const rider = (ctxRaw as RiderCtx).playerPosition
-    if (this.present && this.countdown < 0 && rider && this.isStandingOn(rider)) this.countdown = VANISH_AFTER_FRAMES
+    if (this.present && this.countdown < 0 && rider && this.isStandingOn(rider, (ctxRaw as RiderCtx).playerExtents)) this.countdown = VANISH_AFTER_FRAMES
     if (!this.present || this.countdown < 0) return
     this.countdown--
     if (this.countdown === 0) this.present = false
   }
 
-  private isStandingOn(rider: THREE.Vector3): boolean {
-    return isStoodOn(this, this.height, rider)
+  // Anywhere under his feet: half on it, it gives way as surely.
+  private isStandingOn(rider: THREE.Vector3, size?: THREE.Vector3): boolean {
+    return isStoodOn(this, this.height, rider, (size?.x ?? 0) / 2)
   }
 }

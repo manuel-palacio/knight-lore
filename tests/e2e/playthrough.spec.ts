@@ -13,13 +13,13 @@ const CAULDRON_ROOM = 'room-001'
 // The take-off south of the cauldron (see CAULDRON_TAKE_OFF).
 const BESIDE_CAULDRON: Cell = { x: 4, z: 5 }
 const MAX_ATTEMPTS_PER_LEG = 4
-// Seconds of daylight a crossing needs, with the seizure to spare: a room
-// takes three to five seconds to walk, turns included.
-const DAYLIGHT_TO_CROSS = 12
-const DAYLIGHT_TO_DELIVER = 20
-// In a room with ghosts or hopping balls he may first wait for them to be
-// well away (up to eight seconds, see walkPath).
-const DAYLIGHT_TO_WAIT_FOR_WANDERERS = 8
+// Seconds of daylight the cauldron room needs (the wolf is hunted there the
+// moment he is in it): walk in, jump up onto the cauldron, put the charm down
+// (up to three presses) and stand while it sinks. Days are 49 s.
+const DAYLIGHT_TO_DELIVER = 11
+// Start rooms whose way to the cauldron needs a charm to stand on (a raised
+// doorway): the bot, on foot, starts another game.
+const NEW_GAMES_FOR_A_WALKABLE_START = 8
 
 test.skip(!process.env.PLAYTHROUGH, 'set PLAYTHROUGH=1 to play a whole game')
 
@@ -27,6 +27,10 @@ test('the game can be won from the start room with the keyboard', async ({ page 
   test.setTimeout(60 * 60_000)
   const started = Date.now()
   await startGame(page)
+  for (let game = 1; !reachesCauldron((await debug(page)).room); game++) {
+    if (game >= NEW_GAMES_FOR_A_WALKABLE_START) throw new Error('no start room with a way to the cauldron on foot')
+    await startGame(page)
+  }
   // Where each kind lies this game, as dealt round the castle's spots; those
   // high up (reached only by stepping on other charms) are left to a player.
   const whereabouts = new Map<string, string[]>()
@@ -40,14 +44,10 @@ test('the game can be won from the start room with the keyboard', async ({ page 
     if (state.won) break
     expect(state.lives, 'ran out of lives').toBeGreaterThan(0)
     const wanted = state.wanted!
-    if (state.night && noPlaceToLinger(state.room)) {
+    // The wolf carries as the man does, but the cauldron room is death to
+    // him: at night he leaves it, and goes on with his errand elsewhere.
+    if (state.night && state.room === CAULDRON_ROOM) {
       await retrying(page, () => stepToward(page, safeNeighbourOf(state.room)))
-      continue
-    }
-    // The wolf can neither carry nor deliver, and jumps higher into what hangs
-    // above: at night he waits for the morning where he is.
-    if (state.night) {
-      await waitForDaylight(page)
       continue
     }
     if (state.carrying.includes(wanted)) {
@@ -90,16 +90,14 @@ async function retrying(page: Page, leg: () => Promise<void>): Promise<void> {
 async function stepToward(page: Page, goal: string): Promise<void> {
   const state = await debug(page)
   let exit = nextExit(state.room, cellOf(state), goal)
-  // The spirit rises out of the cauldron at night, and ghosts and hopping
-  // balls wander day and night: the wolf waits for the morning outside
-  // their rooms, never in one.
-  if (state.night && noPlaceToLinger(exit.target)) {
+  // Into the cauldron room only with daylight enough to deliver: the wolf is
+  // hunted there the moment he is in it. He waits for the morning outside a
+  // room ghosts or hopping balls wander, never in one.
+  if (exit.target === CAULDRON_ROOM && (state.night || state.timer < DAYLIGHT_TO_DELIVER)) {
     if (noPlaceToLinger(state.room)) exit = nextExit(state.room, cellOf(state), safeNeighbourOf(state.room))
-    else await waitForDaylight(page)
-  } else if (!state.night && state.timer < daylightNeededIn(exit.target)) {
-    // Never set off into a room with dusk near: the wolf is caught half-way.
-    if (noPlaceToLinger(state.room)) exit = nextExit(state.room, cellOf(state), safeNeighbourOf(state.room))
+    else if (state.night) await waitForDaylight(page)
     else await waitForNextMorning(page)
+    if (exit.target === CAULDRON_ROOM) return
   }
   const spec = specOf(state.room)
   await walkPath(page, findFloorPath(spec, cellOf(state), exitOf(spec, exit.direction)), dangersOf(spec))
@@ -107,14 +105,11 @@ async function stepToward(page: Page, goal: string): Promise<void> {
   await walkUntil(page, (s) => s.room === exit.target)
 }
 
-// Night falls whenever it likes. Where a wolf would be hunted, give up the
-// errand and let the main loop walk him out; elsewhere, wait for the morning.
+// Night falls whenever it likes: in the cauldron room the errand is given up
+// and the main loop walks him out; elsewhere the wolf goes on.
 async function nightfallStopsErrand(page: Page): Promise<boolean> {
   const state = await debug(page)
-  if (!state.night) return false
-  if (noPlaceToLinger(state.room)) return true
-  await waitForDaylight(page)
-  return false
+  return state.night && state.room === CAULDRON_ROOM
 }
 
 async function pickUp(page: Page, charm: { id: string; x: number; y: number; z: number }): Promise<void> {
@@ -176,11 +171,6 @@ function specOf(id: string): RoomSpec {
   return spec
 }
 
-function daylightNeededIn(roomId: string): number {
-  const crossing = roomId === CAULDRON_ROOM ? DAYLIGHT_TO_DELIVER : DAYLIGHT_TO_CROSS
-  return crossing + (wandered(roomId) ? DAYLIGHT_TO_WAIT_FOR_WANDERERS : 0)
-}
-
 function noPlaceToLinger(roomId: string): boolean {
   return Boolean(specOf(roomId).cauldron) || wandered(roomId)
 }
@@ -188,6 +178,15 @@ function noPlaceToLinger(roomId: string): boolean {
 function safeNeighbourOf(roomId: string): string {
   const safe = specOf(roomId).exits.find((e) => !noPlaceToLinger(e.target))
   return (safe ?? specOf(roomId).exits[0]!).target
+}
+
+function reachesCauldron(start: string): boolean {
+  try {
+    roomsBetween(start, doorOf(specOf(start), specOf(start).exits[0]!.direction), CAULDRON_ROOM)
+    return true
+  } catch {
+    return false
+  }
 }
 
 function nearest(from: string, at: Cell, rooms: string[]): string {

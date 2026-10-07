@@ -1,5 +1,4 @@
 import { mulberry32 } from '../engine/Random'
-import { TICKS_PER_FRAME } from '../engine/StepClock'
 import { endSummary, type EndSummary } from './EndSummary'
 import type { Facing } from './Facing'
 
@@ -7,9 +6,12 @@ export type Form = 'human' | 'werewolf'
 
 // Day and night are the same length: every 8 frames the sun (or moon) moves
 // a step along the scroll, 0xB0 to 0xE1, then the other rises (0xC397): 392
-// frames, on the original's clock (FrameClock).
+// of the original's frames. It draws about eight frames a second (measured on
+// a longplay: half-days of 33 to 62 s, about 49 s on the whole), so a day
+// lasts that long in seconds, though he moves at our quicker frame clock.
 const HALF_DAY_FRAMES = (0xe1 - 0xb0) * 8
-export const HUMAN_DURATION = (HALF_DAY_FRAMES * TICKS_PER_FRAME) / 60
+const ORIGINAL_FRAMES_A_SECOND = 8
+export const HUMAN_DURATION = HALF_DAY_FRAMES / ORIGINAL_FRAMES_A_SECOND
 export const WEREWOLF_DURATION = HUMAN_DURATION
 
 const TOTAL_DAYS = 40

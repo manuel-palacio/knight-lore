@@ -9,8 +9,8 @@ describe('GameState', () => {
     expect(s.won).toBe(false)
   })
 
-  it('a day and a night each last 392 of the original frames (0xC397: 49 steps of 8), 19.6 s at 20 a second', () => {
-    expect(HUMAN_DURATION).toBeCloseTo(19.6, 9)
+  it('a day and a night each last 392 of the original\'s frames (0xC397: 49 steps of 8), 49 s at its eight a second', () => {
+    expect(HUMAN_DURATION).toBe(49)
     expect(WEREWOLF_DURATION).toBe(HUMAN_DURATION)
   })
 

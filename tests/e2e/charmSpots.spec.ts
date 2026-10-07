@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test'
 import { CHARMS } from '../../src/game/GameState'
-import { debug, face, give, jump, startGame } from './support/game'
+import { debug, face, give, jump, startGame, walkUntil } from './support/game'
 import { doorOf, type Step } from './support/roomPath'
 import { enterBy, leaveBy, putDown, walk, withCharms } from './support/puzzles'
 import { specById } from './support/specs'
@@ -29,8 +29,10 @@ async function charmAt(page: Page, cell: { x: number; z: number }): Promise<{ id
   return { id: charm.id, spares: CHARMS.filter((c) => c !== charm.id).slice(0, 2) }
 }
 
-async function hasTaken(page: Page, id: string): Promise<void> {
-  await expect.poll(async () => (await debug(page)).carrying).toContain(id)
+// Taken: a charm into the satchel, the extra life (taken by touch) a life more.
+async function hasTaken(page: Page, id: string, livesBefore = 5): Promise<void> {
+  if (id === 'life') await expect.poll(async () => (await debug(page)).lives).toBe(livesBefore + 1)
+  else await expect.poll(async () => (await debug(page)).carrying).toContain(id)
 }
 
 // From the spare the pick-up let go of under him, a held jump onto what is `height` high that way.
@@ -42,10 +44,15 @@ async function upFromTheSpare(page: Page, facing: string, height: number): Promi
   expect((await debug(page)).pos.y).toBe(height)
 }
 
+async function backToTheEdge(page: Page, facing: string, there: (x: number, z: number) => boolean): Promise<void> {
+  await face(page, facing)
+  await walkUntil(page, (s) => there(s.pos.x, s.pos.z))
+}
+
 async function stillAliveWith(page: Page, id: string): Promise<void> {
   const end = await debug(page)
-  expect(end.lives).toBe(5)
-  expect(end.carrying).toContain(id)
+  expect(end.lives).toBe(id === 'life' ? 6 : 5)
+  if (id !== 'life') expect(end.carrying).toContain(id)
 }
 
 // Spot 4: on the floor in a pit, columns three high north and south of it,
@@ -149,4 +156,101 @@ test('spot 28 (map--4--1): down through the crumbling roof onto the charm, and o
   await page.keyboard.up('ArrowUp')
   await expect.poll(async () => (await debug(page)).dying, { timeout: 10_000 }).toBe(false)
   expect((await debug(page)).carrying).toContain(id)
+})
+
+// Spot 27: on a floating block four high, crumbling blocks round it over
+// spikes. Up a floating block two high from the floor, and up again from it.
+test('spot 27 (map--4--8): up the floating blocks to the charm four high', async ({ page }) => {
+  const room = specById('map--4--8')
+  await pinRandom(page, 0.1)
+  await startGame(page)
+  await enterBy(page, room, 'north')
+  const { id } = await charmAt(page, { x: 3, z: 4 })
+  await walk(page, room, [doorOf(room, 'north') as Step, at(4, 1), at(3, 1), at(3, 2), at(3, 3, 2)])
+  await walk(page, room, [at(3, 3, 2), at(3, 4, 4)])
+  await page.keyboard.press('KeyE')
+  await hasTaken(page, id)
+  await walk(page, room, [at(3, 4, 4), at(3, 3, 2), at(3, 2), at(3, 1), at(4, 1), at(4, 0)])
+  await leaveBy(page, room, 'north')
+  await stillAliveWith(page, id)
+})
+
+// Spot 5: on a floating block four high, behind a stair of a block one high
+// and falling blocks two and three high, spikes round it all. Up the stair
+// before the falling blocks sink from under him.
+test('spot 5 (map--6--4): up the stair of falling blocks before they sink', async ({ page }) => {
+  const room = specById('map--6--4')
+  await pinRandom(page, 0.1)
+  await startGame(page)
+  await enterBy(page, room, 'east')
+  const { id } = await charmAt(page, { x: 4, z: 4 })
+  await walk(page, room, [doorOf(room, 'east') as Step, at(6, 4), at(6, 5), at(6, 6), at(5, 6), at(4, 6), at(3, 6), at(3, 5), at(3, 4, 1)])
+  await walk(page, room, [at(3, 4, 1), at(3, 3, 2)])
+  // A held jump carries him nearly four units and each block is two across
+  // with spikes beyond: back to the near edge first, quickly, as each sinks.
+  await backToTheEdge(page, 'west', (x) => x <= 6.5)
+  await face(page, 'east')
+  await jump(page, true)
+  await backToTheEdge(page, 'north', (_, z) => z <= 6.5)
+  await face(page, 'south')
+  await jump(page, true)
+  expect((await debug(page)).pos.y).toBe(4)
+  await page.keyboard.press('KeyE')
+  await hasTaken(page, id)
+  await face(page, 'east')
+  await jump(page, true)
+  await walk(page, room, [at(6, 4), at(7, 4)])
+  await leaveBy(page, room, 'east')
+  await stillAliveWith(page, id)
+})
+
+// Spot 30: on a floating block four high in a row along the wall, between
+// blocks at the same height that crumble, over spikes. Up a floating block
+// two high and onto the row, then a held jump from its edge clear over the
+// crumbling ones. (Dealt the extra life, it is not got: landed on, as it
+// must be here, it is not touched, 0xC1AB; only a charm is taken from above.)
+test('spot 30 (map-0--5): along the row of blocks on the wall, over the crumbling ones', async ({ page }) => {
+  const room = specById('map-0--5')
+  await pinRandom(page, 0.3)
+  await startGame(page)
+  await enterBy(page, room, 'north')
+  const { id } = await charmAt(page, { x: 0, z: 4 })
+  const lives = (await debug(page)).lives
+  await walk(page, room, [doorOf(room, 'north') as Step, at(1, 0), at(0, 0, 2), at(0, 1, 4)])
+  await backToTheEdge(page, 'south', (_, z) => z >= 3.5)
+  await jump(page, true)
+  // On the block, or on what lies on it.
+  expect((await debug(page)).pos.y).toBeGreaterThanOrEqual(4)
+  await page.keyboard.press('KeyE')
+  await hasTaken(page, id, lives)
+  await face(page, 'east')
+  await walkUntil(page, (s) => s.pos.x >= 3 && s.state === 'grounded')
+  await walk(page, room, [at(1, 4), at(1, 3), at(1, 2), at(1, 1), at(1, 0), at(2, 0)])
+  await leaveBy(page, room, 'north')
+  await stillAliveWith(page, id)
+})
+
+// Spot 0: across two hedge blocks three high, between pillars four high
+// capped with gargoyles (deadly at a touch). Up from a charm put down west of
+// them, a held jump that keeps to the middle of the cell, clear of the
+// gargoyles; back down onto the charm.
+test('spot 0 (map-5--2): onto the hedges between the gargoyles and back', async ({ page }) => {
+  const room = specById('map-5--2')
+  await pinRandom(page, 0.1)
+  await startGame(page)
+  await enterBy(page, room, 'west')
+  const { id, spares } = await charmAt(page, { x: 4, z: 4 })
+  await give(page, spares.slice(0, 1))
+  await walk(page, room, [doorOf(room, 'west') as Step, at(1, 4), at(2, 4), at(3, 4), at(3, 3)])
+  await putDown(page)
+  await face(page, 'east')
+  await jump(page, true)
+  expect((await debug(page)).pos.y).toBeGreaterThanOrEqual(3)
+  await page.keyboard.press('KeyE')
+  await hasTaken(page, id)
+  await face(page, 'west')
+  await jump(page, true)
+  await walk(page, withCharms(room, [at(3, 3)]), [at(2, 3), at(1, 3), at(1, 4), at(0, 4)])
+  await leaveBy(page, room, 'west')
+  await stillAliveWith(page, id)
 })

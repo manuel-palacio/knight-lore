@@ -124,3 +124,29 @@ test('spot 12 (map--8--8): down into the shut corner on the falling block, and o
   await leaveBy(page, room, 'north')
   await stillAliveWith(page, id)
 })
+
+// Spot 28: on the floor of a corner, spikes on the floor round it, and over
+// all four cells blocks that crumble two frames after he lands on them, at
+// three. A held jump from the platform two high clears the first and lands
+// on the corner's, which drops him onto the charm. The way out is under the
+// roof, over the spikes: he loses a life, and comes back at the door with
+// the charm (what he carries is kept, 0xD12A).
+test('spot 28 (map--4--1): down through the crumbling roof onto the charm, and out at the cost of a life', async ({ page }) => {
+  const room = specById('map--4--1')
+  await pinRandom(page, 0.1)
+  await startGame(page)
+  await enterBy(page, room, 'east')
+  const { id } = await charmAt(page, { x: 0, z: 0 })
+  await walk(page, room, [doorOf(room, 'east') as Step, at(6, 4), at(5, 4), at(4, 4), at(3, 4), at(3, 3), at(3, 2), at(3, 1), at(2, 1, 2), at(2, 0, 2)])
+  await face(page, 'west')
+  await jump(page, true)
+  await expect.poll(async () => (await debug(page)).pos, { timeout: 5_000 }).toMatchObject({ y: 1 })
+  await page.keyboard.press('KeyE')
+  await hasTaken(page, id)
+  await face(page, 'east')
+  await page.keyboard.down('ArrowUp')
+  await expect.poll(async () => (await debug(page)).lives, { timeout: 5_000 }).toBe(4)
+  await page.keyboard.up('ArrowUp')
+  await expect.poll(async () => (await debug(page)).dying, { timeout: 10_000 }).toBe(false)
+  expect((await debug(page)).carrying).toContain(id)
+})

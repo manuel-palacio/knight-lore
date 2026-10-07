@@ -254,3 +254,52 @@ test('spot 0 (map-5--2): onto the hedges between the gargoyles and back', async 
   await leaveBy(page, room, 'west')
   await stillAliveWith(page, id)
 })
+
+// Spot 26: on a column four high, a platform a block high beside it. A charm
+// put down on the platform, and a held jump from it onto the column.
+test('spot 26 (map--4-3): onto the column four high from a charm on the platform', async ({ page }) => {
+  const room = specById('map--4-3')
+  await pinRandom(page, 0.1)
+  await startGame(page)
+  await enterBy(page, room, 'west')
+  const { id, spares } = await charmAt(page, { x: 3, z: 3 })
+  await give(page, spares.slice(0, 1))
+  await walk(page, room, [doorOf(room, 'west') as Step, at(1, 4), at(2, 4), at(3, 4, 1)])
+  await putDown(page)
+  await face(page, 'north')
+  await jump(page, true)
+  expect((await debug(page)).pos.y).toBeGreaterThanOrEqual(4)
+  await page.keyboard.press('KeyE')
+  await hasTaken(page, id)
+  await face(page, 'south')
+  await jump(page, true)
+  await walk(page, withCharms(room, [at(3, 4, 1)]), [at(2, 4), at(1, 4), at(0, 4)])
+  await leaveBy(page, room, 'west')
+  await stillAliveWith(page, id)
+})
+
+// Spot 19: on a platform a block high in the middle of a ring of floating
+// blocks two high, under a crumbling block a block over it (too low to stand
+// under). Up the ring from the floor, onto the crumbling block, which drops
+// him onto the charm. In this odd-numbered room the spiked balls over the
+// ring wait for a pick-up: then they let go, one at a time, so out at once.
+test('spot 19 (map-7--8): through the crumbling roof of the ring, and out before the balls drop', async ({ page }) => {
+  const room = specById('map-7--8')
+  await pinRandom(page, 0.1)
+  await startGame(page)
+  await enterBy(page, room, 'west')
+  const { id } = await charmAt(page, { x: 4, z: 4 })
+  await walk(page, room, [doorOf(room, 'west') as Step, at(1, 4), at(2, 4), at(3, 4, 2)])
+  await face(page, 'east')
+  await jump(page, false)
+  // The crumbling block gives way two frames on, and he drops onto the charm.
+  await expect.poll(async () => { const s = await debug(page); return s.state === 'grounded' && s.pos.y <= 2 }, { timeout: 5_000 }).toBe(true)
+  await page.keyboard.press('KeyE')
+  await hasTaken(page, id)
+  // Low, under the balls hung over the ring: a tapped jump onto it, and off.
+  await face(page, 'west')
+  await jump(page, false)
+  await walk(page, room, [at(3, 4, 2), at(2, 4), at(1, 4), at(0, 4)])
+  await leaveBy(page, room, 'west')
+  await stillAliveWith(page, id)
+})

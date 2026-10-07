@@ -411,3 +411,69 @@ test('spot 16 (map--2-5): along the row of hedges to the one four high', async (
   await leaveBy(page, room, 'east')
   await stillAliveWith(page, id)
 })
+
+// Spot 18: on a hedge four high, a table and a chest in the room. The table
+// (it moves only while pushed) pushed west in line with the hedge, then south
+// against it; up onto the table, a charm put down on it, and a held jump from
+// the charm onto the hedge.
+test('spot 18 (map--2-7): the table pushed against the tall hedge, a charm on it, and up', async ({ page }) => {
+  const room = specById('map--2-7')
+  await pinRandom(page, 0.1)
+  await startGame(page)
+  await enterBy(page, room, 'east')
+  const { id, spares } = await charmAt(page, { x: 3, z: 4 })
+  await give(page, spares.slice(0, 1))
+  await walk(page, room, [doorOf(room, 'east') as Step, at(6, 4), at(6, 3), at(6, 2), at(6, 1), at(5, 1)])
+  const tableIn = (s: { boxes: { kind: string; x: number; z: number }[] }) => s.boxes.find((b) => b.kind === 'table')!
+  await face(page, 'west')
+  await walkUntil(page, (s) => tableIn(s).x <= 7.1)
+  // Round to its north side, and south with it until the hedge stops it.
+  await face(page, 'north')
+  await walkUntil(page, (s) => s.pos.z <= 0.6)
+  await face(page, 'west')
+  await walkUntil(page, (s) => s.pos.x <= 7.1)
+  await face(page, 'south')
+  await walkUntil(page, (s) => tableIn(s).z >= 6.7)
+  await jump(page, true)
+  expect((await debug(page)).pos.y).toBe(1)
+  await putDown(page)
+  await face(page, 'south')
+  await jump(page, true)
+  expect((await debug(page)).pos.y).toBeGreaterThanOrEqual(4)
+  await page.keyboard.press('KeyE')
+  await hasTaken(page, id)
+  await face(page, 'east')
+  await jump(page, true)
+  await expect.poll(async () => (await debug(page)).state).toBe('grounded')
+  // Into line with the east door, and out.
+  await face(page, 'north')
+  await walkUntil(page, (s) => s.pos.z <= 9)
+  await face(page, 'east')
+  await walkUntil(page, (s) => s.room !== room.id)
+  await stillAliveWith(page, id)
+})
+
+// Spot 9: at the shut end of a corridor between columns two high, under
+// floating blocks with just room for him, a pile of two chests in its mouth
+// and a ghost in it. With the random numbers pinned the ghost drifts away
+// south-east; the chests (they slide on until stopped) pushed out east one
+// after the other, and in.
+test('spot 9 (map--5-7): the chests pushed out of the mouth of the corridor, and in under the blocks', async ({ page }) => {
+  const room = specById('map--5-7')
+  await pinRandom(page, 0.3)
+  await startGame(page)
+  await enterBy(page, room, 'west')
+  const { id } = await charmAt(page, { x: 3, z: 0 })
+  const chestsOut = (s: { boxes: { kind: string; x: number; bottom: number }[] }) => s.boxes.filter((b) => b.x > 9).length
+  await walk(page, room, [doorOf(room, 'west') as Step, at(1, 4), at(1, 3), at(1, 2), at(2, 2)])
+  await face(page, 'east')
+  await walkUntil(page, (s) => chestsOut(s) >= 1)
+  await expect.poll(async () => (await debug(page)).boxes.every((b) => b.bottom === 0), { timeout: 5_000 }).toBe(true)
+  await walkUntil(page, (s) => chestsOut(s) >= 2)
+  await walk(page, room, [at(3, 2), at(3, 1), at(3, 0)])
+  await page.keyboard.press('KeyE')
+  await hasTaken(page, id)
+  await walk(page, room, [at(3, 0), at(3, 1), at(3, 2), at(2, 2), at(1, 2), at(1, 3), at(1, 4), at(0, 4)])
+  await leaveBy(page, room, 'west')
+  await stillAliveWith(page, id)
+})

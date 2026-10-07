@@ -1,6 +1,7 @@
 import { test, expect, type Page } from '@playwright/test'
 import { ROOM_SPECS, oppositeOf, type RoomSpec } from '../../src/scenes/rooms/roomSpecs'
 import { CHARM_HOVER } from '../../src/game/Pickup'
+import { CHARMS } from '../../src/game/GameState'
 import { dealtCharms, debug, face, jumpOntoCauldron, putDown, startGame, walkPath, walkUntil, type Cell, type Debug } from './support/game'
 import { dangersOf, doorOf, exitOf, findFloorPath } from './support/roomPath'
 
@@ -18,8 +19,9 @@ const MAX_ATTEMPTS_PER_LEG = 4
 // (up to three presses) and stand while it sinks. Days are 49 s.
 const DAYLIGHT_TO_DELIVER = 11
 // Start rooms whose way to the cauldron needs a charm to stand on (a raised
-// doorway): the bot, on foot, starts another game.
-const NEW_GAMES_FOR_A_WALKABLE_START = 8
+// doorway), or deals with a kind of charm only up high (the cure wants each
+// kind twice): the bot, on foot, starts another game.
+const NEW_GAMES_FOR_A_WALKABLE_START = 20
 
 test.skip(!process.env.PLAYTHROUGH, 'set PLAYTHROUGH=1 to play a whole game')
 
@@ -27,15 +29,11 @@ test('the game can be won from the start room with the keyboard', async ({ page 
   test.setTimeout(60 * 60_000)
   const started = Date.now()
   await startGame(page)
-  for (let game = 1; !reachesCauldron((await debug(page)).room); game++) {
-    if (game >= NEW_GAMES_FOR_A_WALKABLE_START) throw new Error('no start room with a way to the cauldron on foot')
+  let whereabouts = await walkableWhereabouts(page)
+  for (let game = 1; !reachesCauldron((await debug(page)).room) || !CHARMS.every((c) => (whereabouts.get(c)?.length ?? 0) >= 2); game++) {
+    if (game >= NEW_GAMES_FOR_A_WALKABLE_START) throw new Error('no game whose start and charms the bot can walk to')
     await startGame(page)
-  }
-  // Where each kind lies this game, as dealt round the castle's spots; those
-  // high up (reached only by stepping on other charms) are left to a player.
-  const whereabouts = new Map<string, string[]>()
-  for (const c of await dealtCharms(page)) {
-    if (onFoot(c)) whereabouts.set(c.item, [...(whereabouts.get(c.item) ?? []), c.room])
+    whereabouts = await walkableWhereabouts(page)
   }
 
   for (let leg = 0; leg < 2_000; leg++) {
@@ -75,6 +73,16 @@ test('the game can be won from the start room with the keyboard', async ({ page 
   expect(end.won).toBe(true)
 })
 
+// Where each kind lies this game, as dealt round the castle's spots; those
+// high up (reached only by stepping on other charms) are left to a player.
+async function walkableWhereabouts(page: Page): Promise<Map<string, string[]>> {
+  const whereabouts = new Map<string, string[]>()
+  for (const c of await dealtCharms(page)) {
+    if (onFoot(c)) whereabouts.set(c.item, [...(whereabouts.get(c.item) ?? []), c.room])
+  }
+  return whereabouts
+}
+
 async function retrying(page: Page, leg: () => Promise<void>): Promise<void> {
   for (let attempt = 1; ; attempt++) {
     try {
@@ -103,6 +111,10 @@ async function stepToward(page: Page, goal: string): Promise<void> {
   await walkPath(page, findFloorPath(spec, cellOf(state), exitOf(spec, exit.direction)), dangersOf(spec))
   await face(page, exit.direction)
   await walkUntil(page, (s) => s.room === exit.target)
+  // A sparkle cloud (map-6--3, map--3--1, map--8-6) makes for him and is
+  // stepped round, which the bot cannot do. It does no harm, so it is taken
+  // out of the room: the game is still won or lost on everything that can.
+  if (specOf(exit.target).followers) await page.evaluate(() => (window as unknown as { __noFollowers: () => void }).__noFollowers())
 }
 
 // Night falls whenever it likes: in the cauldron room the errand is given up

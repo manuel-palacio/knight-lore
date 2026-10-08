@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
-import { CAULDRON_TAKE_OFF, debug, enterRoom, give, holdDaylight, jumpOntoCauldron, putDown, standAt, startGame } from './support/game'
+import { CAULDRON_TAKE_OFF, debug, enterRoom, face, give, holdDaylight, jumpOntoCauldron, putDown, standAt, startGame } from './support/game'
+import { entryFor } from '../../src/scenes/rooms/roomSpecs'
 
 // Melkhior's room is no place for the wolf: the sparkle over the cauldron
 // turns on him the moment he is in the room, and is faster than he is.
@@ -18,13 +19,29 @@ test('the wolf left standing in the cauldron room loses a life', async ({ page }
   await expect.poll(async () => (await debug(page)).lives, { timeout: 10_000 }).toBeLessThan(5)
 })
 
-test('the wolf coming into the cauldron room is caught within a second and a half', async ({ page }) => {
+test('the wolf staying in the cauldron room is caught once the sparkle has risen', async ({ page }) => {
   await startGame(page)
   await nightfall(page)
   await page.evaluate(() => (window as unknown as { __timer: (s: number) => void }).__timer(9_999))
   await enterRoom(page, 'room-001')
   await standAt(page, { x: 3, y: 0, z: 13 })
-  await expect.poll(async () => (await debug(page)).lives, { timeout: 1_500 }).toBeLessThan(5)
+  await expect.poll(async () => (await debug(page)).lives, { timeout: 3_000 }).toBeLessThan(5)
+})
+
+// The sparkle rises sixteen frames before it looks at him (0xB8EE): the wolf
+// who comes in by a door and goes straight back out is gone before it turns,
+// and so after a death, when he comes back at that door.
+test('the wolf who goes straight back out by the door he came in by gets away', async ({ page }) => {
+  await startGame(page)
+  await nightfall(page)
+  await page.evaluate(() => (window as unknown as { __timer: (s: number) => void }).__timer(9_999))
+  const room = await enterRoom(page, 'room-001', entryFor('north', 8, 8))
+  // Come in northward by the south door: straight back out of it.
+  await face(page, 'south')
+  await page.keyboard.down('ArrowUp')
+  await expect.poll(async () => (await debug(page)).room, { timeout: 5_000 }).not.toBe(room.room)
+  await page.keyboard.up('ArrowUp')
+  expect((await debug(page)).lives).toBe(5)
 })
 
 test('the man can stand in the cauldron room all day', async ({ page }) => {
@@ -66,4 +83,21 @@ test('a wrong charm put into the cauldron is lost for good', async ({ page }) =>
   expect(after.delivered).toBe(0)
   expect(after.carrying).toEqual([])
   expect(after.pickups.map((p) => p.id)).not.toContain(wrong)
+})
+
+// Caught there, he comes back at the door he came in by, and the sparkle,
+// set up again with the room, rises afresh: he gets away, one life the less,
+// not killed over and over.
+test('the wolf caught in the cauldron room comes back at the door and gets away, not killed over and over', async ({ page }) => {
+  await startGame(page)
+  await nightfall(page)
+  await page.evaluate(() => (window as unknown as { __timer: (s: number) => void }).__timer(9_999))
+  const room = await enterRoom(page, 'room-001', entryFor('north', 8, 8))
+  await expect.poll(async () => (await debug(page)).lives, { timeout: 5_000 }).toBe(4)
+  await expect.poll(async () => (await debug(page)).dying, { timeout: 5_000 }).toBe(false)
+  await face(page, 'south')
+  await page.keyboard.down('ArrowUp')
+  await expect.poll(async () => (await debug(page)).room, { timeout: 5_000 }).not.toBe(room.room)
+  await page.keyboard.up('ArrowUp')
+  expect((await debug(page)).lives).toBe(4)
 })

@@ -215,8 +215,7 @@ function backdropItem(part: BackdropPart, sprite: CanvasImageSource & { width: n
     gz: at.z / TILE,
     height: at.y,
     depth: isoDepth(at.x, at.y, at.z),
-    // A wall stands at its place, as thin as a line: behind the room, or in front of it.
-    box: { x0: at.x, x1: at.x, z0: at.z, z1: at.z, y0: at.y, y1: at.y + WALL_HEIGHT },
+    box: wallBox(at, width * TILE, depth * TILE),
     draw: (ctx) => {
       if (!part.flip) return ctx.drawImage(sprite, left, top)
       ctx.save()
@@ -227,6 +226,27 @@ function backdropItem(part: BackdropPart, sprite: CanvasImageSource & { width: n
     },
   }
 }
+
+// A wall piece stands along its wall, the whole length of it: a far wall's
+// behind everything in the room, a near wall's in front. (Kept to its own
+// place, a piece along the north wall a little east of him in the north-west
+// corner was behind him one way and in front the other, and drawn over him.)
+// A piece inside the room, if ever there is one, keeps to its own place.
+export function wallBox(at: { x: number; y: number; z: number }, width: number, depth: number): Box {
+  // A wall is behind (or in front of) the room at every height: a piece high
+  // up the far wall is still behind him, not above him.
+  const span = { y0: -WALL_REACH, y1: WALL_REACH }
+  const across = { x0: -1, x1: width + 1 }
+  const along = { z0: -1, z1: depth + 1 }
+  if (at.z <= 0) return { ...across, z0: Math.min(at.z, -EDGE), z1: Math.min(at.z, -EDGE), ...span }
+  if (at.x <= 0) return { ...along, x0: Math.min(at.x, -EDGE), x1: Math.min(at.x, -EDGE), ...span }
+  if (at.z >= depth) return { ...across, z0: Math.max(at.z, depth + EDGE), z1: Math.max(at.z, depth + EDGE), ...span }
+  if (at.x >= width) return { ...along, x0: Math.max(at.x, width + EDGE), x1: Math.max(at.x, width + EDGE), ...span }
+  return { x0: at.x, x1: at.x, z0: at.z, z1: at.z, y0: at.y, y1: at.y + WALL_HEIGHT }
+}
+
+const EDGE = 0.01
+const WALL_REACH = 100
 
 // A stack of the original's blocks that moves or goes (a floating, falling,
 // crumbling or moving block), a block a level from bottom to top.

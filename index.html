@@ -7,32 +7,45 @@
     <title>Knight Lore — 2D Filmation</title>
     <link rel="icon" type="image/png" sizes="96x96" href="/favicon.png" />
     <style>
-      body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; }
+      /* Everything round the picture is set in the picture's own terms: --u is
+         the size of one of its 256x192 pixels on the page (set by the renderer
+         as it fits the window), the inks are the rooms', the font an 8x8 one. */
+      :root { --u: 3px; --yellow: #ffff55; --cyan: #75fbfd; --green: #75fb4c; --white: #fff; --dim: #9a9a9a; --font: 'Press Start 2P', 'Courier New', monospace; }
+      body { margin: 0; overflow: hidden; background: #000; font-family: var(--font); }
       #app { width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; }
       #app { position: fixed; inset: 0; }
       #app canvas { background: #000; image-rendering: pixelated; }
 
-      .overlay { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.7); color: #ffefc4; font-size: 48px; text-align: center; z-index: 20; }
-      #intro { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.88); color: #ffefc4; font-family: 'Courier New', monospace; z-index: 30; }
-      #intro .panel { max-width: 560px; padding: 28px 36px; border: 1px solid #6a4a20; border-radius: 8px; background: rgba(20,12,6,0.9); }
-      #intro h1 { font-size: 44px; margin: 0 0 6px; color: #ffd95a; letter-spacing: 6px; text-align: center; text-shadow: 3px 3px 0 #6a4a20, 6px 6px 0 #2a1f15; }
-      #intro .byline { text-align: center; color: #a08868; font-size: 12px; letter-spacing: 3px; margin-bottom: 16px; }
-      /* The man and the wolf, the first frame of each 12-frame strip (24 px a frame), drawn 3x. */
-      #intro .hero { display: flex; justify-content: center; gap: 40px; margin: 4px auto 14px; }
-      #intro .hero figure { margin: 0; text-align: center; color: #a08868; font-size: 11px; letter-spacing: 3px; }
-      #intro .hero .figure { display: block; width: 72px; height: 111px; margin: 0 auto 6px; background: no-repeat 0 100% / 864px auto; image-rendering: pixelated; }
+      /* The end screens: the original's, text on black over the whole picture, a character cell a letter. */
+      .overlay { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: #000; color: var(--white); text-align: center; z-index: 20; }
+      .overlay .screen { box-sizing: border-box; width: calc(256 * var(--u)); height: calc(192 * var(--u)); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(10 * var(--u)); font-size: calc(7 * var(--u)); line-height: calc(12 * var(--u)); }
+      .overlay .summary, #win-verse { white-space: pre; }
+      #win-verse { color: var(--yellow); }
+      .overlay .again { color: var(--cyan); animation: blink 1s steps(1) infinite; }
+
+      /* The title: a screen of its own, the size of the picture. */
+      #intro { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #000; color: var(--white); z-index: 30; }
+      #intro .panel { box-sizing: border-box; width: calc(256 * var(--u)); height: calc(192 * var(--u)); padding: calc(6 * var(--u)) calc(10 * var(--u)); overflow-y: auto; scrollbar-width: none; font-size: max(calc(4 * var(--u)), 8px); line-height: 1.25; }
+      #intro .masthead { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: calc(5 * var(--u)); }
+      #intro h1 { font-size: calc(14 * var(--u)); font-weight: normal; line-height: 1; margin: 0 0 calc(5 * var(--u)); color: var(--yellow); text-align: center; white-space: nowrap; }
+      #intro .byline { text-align: center; color: var(--cyan); margin-bottom: calc(8 * var(--u)); }
+      /* The man and the wolf, the first frame of each 12-frame strip (24 px a frame), a picture pixel a pixel. */
+      #intro .hero { display: contents; }
+      #intro .hero figure { margin: 0; text-align: center; color: var(--dim); font-size: max(calc(3 * var(--u)), 6px); }
+      #intro .hero .figure { display: block; width: calc(24 * var(--u)); height: calc(37 * var(--u)); margin: 0 auto calc(2 * var(--u)); background: no-repeat 0 100% / calc(288 * var(--u)) auto; image-rendering: pixelated; }
+      #intro .hero figure:first-child { order: -1; }
       #intro .hero .man { background-image: url('/sprites/sabreman-front.png'); }
       #intro .hero .wolf { background-image: url('/sprites/sabrewulf-front.png'); }
       @keyframes blink { 50% { opacity: 0; } }
-      #intro .dismiss { animation: blink 1s steps(1) infinite; }
-      .overlay .big { font-size: 40px; letter-spacing: 4px; }
-      .overlay .small { font-size: 18px; margin-top: 14px; color: #a08868; }
-      #win-verse, .overlay .summary { white-space: pre-line; line-height: 1.7; font-size: 22px; color: #ffefc4; }
-      #intro p { margin: 10px 0; font-size: 15px; line-height: 1.55; }
-      #intro .keys { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; margin: 18px 0; }
-      #intro kbd { justify-self: start; align-self: start; min-width: 3.2em; text-align: center; background: #2a1f15; border: 1px solid #6a4a20; border-radius: 3px; padding: 2px 8px; color: #ffd95a; font-family: inherit; font-size: 13px; }
-      #intro .dismiss { text-align: center; margin-top: 18px; color: #a08868; font-size: 13px; }
-      #intro .option { display: block; margin: 12px auto 0; padding: 4px 12px; font: 12px 'Courier New', monospace; letter-spacing: 1px; color: #ffd95a; background: #2a1f15; border: 1px solid #6a4a20; border-radius: 3px; cursor: pointer; }
+      #intro p { margin: 0 0 calc(5 * var(--u)); }
+      #intro .keys { display: grid; grid-template-columns: auto 1fr; gap: calc(2.5 * var(--u)) calc(6 * var(--u)); margin: 0 0 calc(5 * var(--u)); }
+      #intro kbd { font-family: inherit; color: var(--cyan); white-space: nowrap; }
+      #intro .foot { white-space: nowrap; display: flex; align-items: center; justify-content: space-between; gap: calc(6 * var(--u)); }
+      #intro .dismiss { color: var(--yellow); animation: blink 1s steps(1) infinite; }
+      #intro .hint { display: none; color: var(--dim); }
+      #intro .hint { margin-bottom: calc(3 * var(--u)); }
+      #intro #continue-hint { color: var(--green); }
+      #intro .option { padding: calc(1.5 * var(--u)) calc(3 * var(--u)); font: inherit; color: #000; background: var(--cyan); border: 0; border-radius: 0; cursor: pointer; }
 
       /* Touch screens: on-screen controls either side of the play area, no
          scrolling, zooming or long-press menus, and tap to begin. */
@@ -44,29 +57,32 @@
       #intro .keys.touch-only, body.touch #intro .keys.keys-only { display: none; }
       body.touch #intro .keys.touch-only { display: grid; }
       body.touch .keys-only { display: none; }
-      #touch button { position: fixed; z-index: 25; border: 2px solid rgba(255, 217, 90, 0.55); background: rgba(40, 28, 14, 0.55); color: #ffd95a; font: bold 16px 'Courier New', monospace; border-radius: 50%; padding: 0; }
-      #touch button:active, #touch button.held { background: rgba(255, 217, 90, 0.35); }
-      #touch .pad { width: 54px; height: 54px; font-size: 22px; border-radius: 12px; }
+      #touch button { position: fixed; z-index: 25; box-sizing: border-box; border: 2px solid var(--yellow); background: rgba(0, 0, 0, 0.55); color: var(--yellow); font: 10px var(--font); border-radius: 0; padding: 0; }
+      #touch button:active, #touch button.held { background: var(--yellow); color: #000; }
+      #touch .pad { width: 54px; height: 54px; font-size: 20px; }
       #touch [data-key="ArrowUp"] { left: calc(env(safe-area-inset-left) + 34px); bottom: 92px; }
       #touch [data-key="ArrowLeft"] { left: calc(env(safe-area-inset-left) + 6px); bottom: 30px; }
       #touch [data-key="ArrowRight"] { left: calc(env(safe-area-inset-left) + 62px); bottom: 30px; }
       #touch [data-key="Space"] { right: calc(env(safe-area-inset-right) + 8px); bottom: 28px; width: 76px; height: 76px; }
-      #touch [data-key="KeyE"] { right: calc(env(safe-area-inset-right) + 38px); bottom: 116px; width: 56px; height: 56px; }
-      #touch .small { width: 44px; height: 44px; font-size: 13px; top: 12px; }
+      #touch [data-key="KeyE"] { right: calc(env(safe-area-inset-right) + 38px); bottom: 116px; width: 56px; height: 56px; font-size: 16px; }
+      #touch .small { width: 44px; height: 44px; font-size: 12px; top: 12px; }
       #touch [data-key="KeyP"] { right: calc(env(safe-area-inset-right) + 70px); }
       #touch [data-key="KeyM"] { right: calc(env(safe-area-inset-right) + 16px); }
-      #intro .begin { display: none; margin: 18px auto 0; padding: 12px 28px; font: bold 18px 'Courier New', monospace; color: #1a1208; background: #ffd95a; border: 0; border-radius: 6px; }
+      #intro .begin { display: none; margin: 10px auto 0; padding: 12px 20px; font: 12px var(--font); color: #000; background: var(--yellow); border: 0; border-radius: 0; }
       body.touch #intro .begin { display: block; }
       body.touch #intro .dismiss { display: none; }
       body.touch #intro, body.touch #intro * { touch-action: pan-y; }
-      body.touch #intro .panel { max-height: 94vh; overflow: auto; padding: 10px 18px; }
-      body.touch #intro h1 { font-size: 30px; }
+      /* A phone's picture is too small to read at its own pixel: the title takes the window. */
+      body.touch #intro .panel { width: min(96vw, 640px); height: auto; max-height: 96vh; padding: 10px 14px; font-size: 9px; line-height: 1.5; }
+      body.touch #intro .masthead { display: block; margin-bottom: 8px; }
+      body.touch #intro h1 { font-size: 22px; margin-bottom: 6px; }
+      body.touch #intro .byline { margin-bottom: 0; }
       body.touch #intro .hero { display: none; }
-      body.touch #intro p { font-size: 12px; margin: 6px 0; }
-      body.touch #intro .keys { margin: 8px 0; font-size: 12px; }
-      body.touch #intro .begin { margin-top: 10px; }
+      body.touch #intro p, body.touch #intro .keys { margin-bottom: 8px; }
+      body.touch #intro .keys { gap: 5px 12px; }
+      body.touch #intro .option { padding: 6px 8px; }
       @media (orientation: portrait) {
-        body.touch #rotate { display: flex; position: fixed; inset: 0; z-index: 40; align-items: center; justify-content: center; text-align: center; background: #000; color: #ffd95a; font: 20px 'Courier New', monospace; padding: 24px; }
+        body.touch #rotate { display: flex; position: fixed; inset: 0; z-index: 40; align-items: center; justify-content: center; text-align: center; background: #000; color: var(--yellow); font: 14px/1.6 var(--font); padding: 24px; }
       }
     </style>
   </head>
@@ -75,20 +91,24 @@
 
     <div id="intro">
       <div class="panel">
-        <h1>KNIGHT LORE</h1>
-        <div class="byline">A FILMATION ADVENTURE</div>
-        <div class="hero">
-          <figure><span class="figure man"></span>BY DAY</figure>
-          <figure><span class="figure wolf"></span>BY NIGHT</figure>
+        <div class="masthead">
+          <div>
+            <h1>KNIGHT LORE</h1>
+            <div class="byline">A FILMATION ADVENTURE</div>
+          </div>
+          <div class="hero">
+            <figure><span class="figure man"></span>BY DAY</figure>
+            <figure><span class="figure wolf"></span>BY NIGHT</figure>
+          </div>
         </div>
         <p>You are Sabreman, cursed to turn into a werewolf at sundown.
           The only cure: brew the potion by delivering fourteen charms to the cauldron,
           each in the order it asks for, before 40 days pass. Never let the wolf
           into the cauldron room.</p>
         <div class="keys keys-only">
-          <kbd>← →</kbd><span>Turn left / right</span>
-          <kbd>↑</kbd><span>Walk forward. Walk into a table or a chest to push it.</span>
-          <kbd>Space</kbd><span>Jump, always forward: tap for a low jump, hold for a high one</span>
+          <kbd>LEFT RIGHT</kbd><span>Turn left / right</span>
+          <kbd>UP</kbd><span>Walk forward. Walk into a table or a chest to push it.</span>
+          <kbd>SPACE</kbd><span>Jump, always forward: tap for a low jump, hold for a high one</span>
           <kbd>E</kbd><span>Pick up a charm (he carries three), or put one down under his feet to stand on. To brew one, jump up onto the cauldron and put it down there</span>
           <kbd>P</kbd><span>Pause. A gamepad works too: d-pad turns and walks, A jumps, B acts, Start pauses.</span>
           <kbd>M</kbd><span>Sound on / off</span>
@@ -101,10 +121,12 @@
           <kbd>JUMP</kbd><span>Tap for a low jump, hold for a high one</span>
           <kbd>E</kbd><span>Pick up, put down under his feet (up on the cauldron: into it)</span>
         </div>
-        <div id="sound-hint" style="display:none; text-align:center; color:#a08868; margin-top: 14px; font-size: 13px;">Click for sound</div>
-        <div id="continue-hint" style="display:none; text-align:center; color:#ffd95a; margin-top: 14px; font-size: 13px;">A game is waiting — press C to continue it</div>
-        <button id="colours" class="option">COLOURS: THE ORIGINAL'S (O)</button>
-        <div class="dismiss">Press any key to begin</div>
+        <div id="continue-hint" class="hint">A game is waiting: press C to continue it</div>
+        <div id="sound-hint" class="hint">Click for sound</div>
+        <div class="foot">
+          <button id="colours" class="option">COLOURS: THE ORIGINAL'S (O)</button>
+          <div class="dismiss">PRESS ANY KEY</div>
+        </div>
         <button id="begin" class="begin">TAP TO BEGIN</button>
         <button id="continue" class="begin" style="display:none">CONTINUE THE SAVED GAME</button>
       </div>
@@ -122,16 +144,16 @@
     <div id="rotate">Turn your phone on its side to play</div>
 
     <div id="win" class="overlay">
-      <div>
-        <div id="win-verse" class="small"></div>
-        <div id="win-summary" class="small summary"></div>
-        <div class="small"><span class="keys-only">PRESS R</span><span class="touch-only">TAP</span> TO PLAY AGAIN</div>
+      <div class="screen">
+        <div id="win-verse"></div>
+        <div id="win-summary" class="summary"></div>
+        <div class="again"><span class="keys-only">PRESS R</span><span class="touch-only">TAP</span> TO PLAY AGAIN</div>
       </div>
     </div>
     <div id="gameover" class="overlay">
-      <div>
-        <div id="gameover-summary" class="small summary"></div>
-        <div style="font-size: 20px; margin-top: 12px;"><span class="keys-only">PRESS R</span><span class="touch-only">TAP</span> TO RESTART</div>
+      <div class="screen">
+        <div id="gameover-summary" class="summary"></div>
+        <div class="again"><span class="keys-only">PRESS R</span><span class="touch-only">TAP</span> TO RESTART</div>
       </div>
     </div>
 

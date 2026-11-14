@@ -51,7 +51,7 @@ npm run build             # tsc + vite build into dist/
 
 **Simulation.** Everything acts on one coarse step clock: five simulation ticks per step, a quarter tile per step, so positions stay on a lattice and movement has the original's cadence. Tank controls, committed jump arcs, grid collision with support heights, dynamic supports for moving platforms and tables. Rooms are 8x8 cells with doors mid-edge.
 
-**Rendering.** `IsoRenderer` draws the original's 256x192 screen at 32x16 pixels per tile onto a canvas scaled to the window. Walls are corner columns and a sparse slab lattice, doors are pointed voussoir arches, blocks have the Spectrum's solid and checker faces. The HUD is drawn on the canvas from the original's pixels. One hue per room; monsters take the hue, Sabreman and the charms are white, the wizard and fire are red.
+**Rendering.** `IsoRenderer` draws the original's 256x192 screen at 32x16 pixels per tile onto a canvas scaled to the window. Walls are corner columns and a sparse slab lattice, doors are pointed voussoir arches, blocks have the Spectrum's solid and checker faces. The HUD is drawn on the canvas from the original's pixels. The sun and moon in its scroll are pixel bitmaps. The page round the picture (title, end screens, touch buttons) is sized in the picture's pixels and set in the rooms' inks and an 8x8 font, Press Start 2P (`@fontsource/press-start-2p`); PAUSED is written on the canvas in the same font, each pixel lit or not. One hue per room; monsters take the hue, Sabreman and the charms are white, the wizard and fire are red.
 
 **Assets.** Sprites come from three sources, all in `public/sprites`:
 

@@ -17,15 +17,18 @@ export const DIGIT_GLYPHS: Record<string, string[]> = {
 }
 
 export function drawDigits(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, color: string): void {
-  ctx.fillStyle = color
   let cx = x
   for (const ch of text) {
     const rows = DIGIT_GLYPHS[ch]
-    if (rows) {
-      rows.forEach((row, ry) => {
-        for (let rx = 0; rx < row.length; rx++) if (row[rx] === '#') ctx.fillRect(cx + rx, y + ry, 1, 1)
-      })
-    }
+    if (rows) drawBitmap(ctx, rows, cx, y, color)
     cx += GLYPH_WIDTH + 1
   }
+}
+
+// Rows of '#' for a lit pixel, drawn a pixel each from the top left.
+export function drawBitmap(ctx: CanvasRenderingContext2D, rows: readonly string[], x: number, y: number, color: string): void {
+  ctx.fillStyle = color
+  rows.forEach((row, ry) => {
+    for (let rx = 0; rx < row.length; rx++) if (row[rx] === '#') ctx.fillRect(x + rx, y + ry, 1, 1)
+  })
 }

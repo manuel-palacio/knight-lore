@@ -36,7 +36,7 @@ test('the title screen shows the man and the wolf standing, one whole frame of e
     expect(look.sheetWidth / look.width).toBe(STRIP_CELLS[form === 'man' ? 'human' : 'werewolf'])
     expect(look.x).toBe(0)
   }
-  await page.locator('#intro .hero').screenshot({ path: 'test-results/characters/title-hero.png' })
+  await page.locator('#intro .masthead').screenshot({ path: 'test-results/characters/title-hero.png' })
 })
 
 // Now and then he glances aside (0xCDDA, see HeadTurn): with every random

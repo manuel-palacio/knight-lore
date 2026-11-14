@@ -1,5 +1,5 @@
 import type { GameState } from './GameState'
-import { drawDigits } from './PixelFont'
+import { drawBitmap, drawDigits } from './PixelFont'
 
 // The original's HUD, drawn into the bottom 62 rows of the 256x192 screen:
 // pillars and cords in the room hue, white hero and lives, green DAY, the
@@ -14,6 +14,36 @@ const DAY = { x: 120, y: 57 }
 const CARRY = { x: 28, y: 44, apart: 16 }
 const SCROLL = { x: 186, y: 33, w: 44, h: 30 }
 const DIAL_TRAVEL = 26
+
+// Drawn in the picture's own hard pixels, in the style of the original's.
+const SUN = [
+  '......#......',
+  '.#....#....#.',
+  '..#.......#..',
+  '....#####....',
+  '...#######...',
+  '...#######...',
+  '##.#######.##',
+  '...#######...',
+  '...#######...',
+  '....#####....',
+  '..#.......#..',
+  '.#....#....#.',
+  '......#......',
+]
+const MOON = [
+  '...###...',
+  '..###....',
+  '.###.....',
+  '.###.....',
+  '####.....',
+  '####.....',
+  '####....#',
+  '.####..##',
+  '.#######.',
+  '..#####..',
+  '...###...',
+]
 
 export interface HudImages {
   scroll: HTMLCanvasElement
@@ -42,21 +72,8 @@ export class CanvasHud {
   private drawDial(ctx: CanvasRenderingContext2D, top: number, state: GameState): void {
     const x = SCROLL.x + 8 + Math.round(state.dayProgress * DIAL_TRAVEL)
     const y = top + SCROLL.y + 12
-    ctx.fillStyle = state.form === 'human' ? '#ffd95a' : '#cce4ff'
-    ctx.beginPath()
-    ctx.arc(x, y, 5, 0, Math.PI * 2)
-    ctx.fill()
-    if (state.form === 'human') {
-      for (let k = 0; k < 8; k++) {
-        const a = (k / 8) * Math.PI * 2
-        ctx.fillRect(Math.round(x + Math.cos(a) * 7), Math.round(y + Math.sin(a) * 7), 1, 1)
-      }
-    } else {
-      ctx.fillStyle = '#000'
-      ctx.beginPath()
-      ctx.arc(x + 3, y - 2, 4, 0, Math.PI * 2)
-      ctx.fill()
-    }
+    const [rows, ink] = state.form === 'human' ? [SUN, '#ffff55'] : [MOON, '#ffffff']
+    drawBitmap(ctx, rows, x - (rows[0]!.length >> 1), y - (rows.length >> 1), ink)
   }
 
   private drawItem(ctx: CanvasRenderingContext2D, id: string, centreX: number, y: number, scale: number): void {

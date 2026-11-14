@@ -1,4 +1,5 @@
 // Knight Lore: the Filmation simulation drawn by IsoRenderer onto a canvas.
+import '@fontsource/press-start-2p/latin-400.css'
 import { Input } from './engine/Input'
 import { GameLoop } from './engine/GameLoop'
 import { GameState, type SavedGame } from './game/GameState'
@@ -35,6 +36,7 @@ import { CharacterLook, seizurePoses } from './view/CharacterLook'
 import { TitleScreen } from './view/TitleScreen'
 import { installDebugHooks } from './view/debugHooks'
 import { Palette } from './view/Palette'
+import { CELL, drawPixelText, loadPixelFont } from './view/PixelText'
 
 const DEATH_FLASH_FRAMES = 2
 const WIPE_SECONDS = 0.25
@@ -42,6 +44,7 @@ const ROOM_CENTRE = (FULL_ROOM_CELLS * 2) / 2
 const SCREEN_W = 256
 const SCREEN_H = 192
 const PIXEL_SCALE = 4
+const PAUSED = 'PAUSED'
 const NO_INPUT = { isDown: () => false, wasPressed: () => false }
 
 async function main(): Promise<void> {
@@ -54,6 +57,7 @@ async function main(): Promise<void> {
   const overlays = new Overlays()
   const renderer = new IsoRenderer(container, SCREEN_W, SCREEN_H, PIXEL_SCALE)
   const sprites = await loadSprites()
+  await loadPixelFont()
   const tints = new Tints()
   renderer.setBackdropSprites(sprites.backdrop, (sprite, ink) => tints.inHue(sprite, ink))
   const palette = new Palette()
@@ -365,10 +369,7 @@ async function main(): Promise<void> {
     if (!ctx) return
     ctx.fillStyle = 'rgba(0,0,0,0.6)'
     ctx.fillRect(0, 0, renderer.canvas.width, renderer.canvas.height)
-    ctx.fillStyle = '#ffefc4'
-    ctx.font = '16px "Courier New", monospace'
-    ctx.textAlign = 'center'
-    ctx.fillText('PAUSED', renderer.canvas.width / 2, renderer.canvas.height / 2)
+    drawPixelText(ctx, PAUSED, (renderer.canvas.width - PAUSED.length * CELL) / 2, (renderer.canvas.height - CELL) / 2, '#ffff55')
   }
 
   function drawFlash(): void {

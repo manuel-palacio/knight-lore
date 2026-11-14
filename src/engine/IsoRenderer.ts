@@ -79,6 +79,8 @@ export class IsoRenderer {
     const scale = whole >= 1 && !touch ? Math.min(whole, maxScale) : fit
     this.canvas.style.width = `${Math.floor(w * scale)}px`
     this.canvas.style.height = `${Math.floor(h * scale)}px`
+    // The page round the picture (title, end screens) is sized in its pixels.
+    document.documentElement.style.setProperty('--u', `${scale}px`)
   }
 
   get config(): IsoConfig {
